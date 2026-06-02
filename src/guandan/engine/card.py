@@ -8,6 +8,7 @@
 - 不可变（frozen=True），可哈希、可放入 set
 - 顺序：大王 > 小王 > A > K > Q > J > 10 > ... > 2（按 rank 升序排列时实际是降序）
 - 花色顺序仅用于显示，不参与牌力比较
+- 展示用 rich markup：[red]♥[/red]5（红桃）、[red]♦[/red]7（方块）、♠K（黑桃）、♣3（梅花）
 """
 from __future__ import annotations
 
@@ -36,6 +37,11 @@ class Suit(IntEnum):
     def cn(self) -> str:
         return _SUIT_CN.get(self, "?")
 
+    @property
+    def symbol(self) -> str:
+        """花色 Unicode 符号。"""
+        return _SUIT_SYMBOL.get(self, "?")
+
 
 _SUIT_CN = {
     Suit.SMALL_JOKER: "小王",
@@ -44,6 +50,15 @@ _SUIT_CN = {
     Suit.DIAMONDS: "方块",
     Suit.SPADES: "黑桃",
     Suit.CLUBS: "梅花",
+}
+
+_SUIT_SYMBOL = {
+    Suit.HEARTS: "[red]♥[/red]",
+    Suit.DIAMONDS: "[red]♦[/red]",
+    Suit.SPADES: "♠",
+    Suit.CLUBS: "♣",
+    Suit.BIG_JOKER: "[yellow]JOKER[/yellow]",
+    Suit.SMALL_JOKER: "[yellow]joker[/yellow]",
 }
 
 
@@ -68,7 +83,7 @@ RANK_BIG_JOKER = 101
 NORMAL_MIN = RANK_2
 NORMAL_MAX = RANK_A
 
-# 牌面中文
+# 牌面字符
 _RANK_CN = {
     RANK_2: "2",
     RANK_3: "3",
@@ -83,8 +98,6 @@ _RANK_CN = {
     RANK_Q: "Q",
     RANK_K: "K",
     RANK_A: "A",
-    RANK_SMALL_JOKER: "joker",
-    RANK_BIG_JOKER: "JOKER",
 }
 
 
@@ -93,9 +106,6 @@ class Card:
     """一张牌。不可变。
 
     排序规则：先按 rank 升序（rank 大的牌"大"），rank 相同按 suit 升序。
-    注：因为 rank 小的值小，所以"按 rank 升序排序"等于"按牌力降序展示"在
-    普通 2..A 的范围内是反的——为符合掼蛋玩家习惯，本类用 rank 升序（2 在前 A 在后）
-    的"出牌"序；UI 展示时再 reversed。
     """
 
     rank: int
@@ -128,14 +138,21 @@ class Card:
 
     @property
     def short(self) -> str:
-        """短文本表示，如 '红桃5' / '大王'。"""
+        """短文本（中文）。如 '红桃5' / '大王'。"""
         if self.is_joker:
             return self.suit.cn
         return f"{self.suit.cn}{_RANK_CN[self.rank]}"
 
     @property
+    def rich(self) -> str:
+        """rich markup 形式（带花色颜色和符号）。如 '[red]♥[/red]5' / '[yellow]JOKER[/yellow]'。"""
+        if self.is_joker:
+            return self.suit.symbol
+        return f"{self.suit.symbol}{_RANK_CN[self.rank]}"
+
+    @property
     def compact(self) -> str:
-        """紧凑表示，如 '5H' / 'BJ'（Big Joker）。"""
+        """紧凑表示（无颜色），如 '5H' / 'BJ'。"""
         if self.is_joker:
             return "BJ" if self.is_big_joker else "SJ"
         rank_char = _RANK_CN[self.rank]
@@ -163,3 +180,4 @@ def make_joker() -> tuple[Card, Card]:
 
 def card_str(card: Card) -> str:
     return card.short
+

@@ -26,6 +26,15 @@ from ...engine.state import (
 class OpponentWidget(Static):
     """显示对手一方的信息：名字 + 剩余张数 + AI 等级。"""
 
+    DEFAULT_CSS = """
+    OpponentWidget {
+        width: 1fr;
+        height: 3;
+        content-align: center middle;
+        border: round $primary;
+    }
+    """
+
     def __init__(self, player: int, seat_name: str, ai_label: str, **kwargs) -> None:
         super().__init__("[X] AI\n27 张", **kwargs)
         self._player = player
@@ -47,9 +56,9 @@ class OpponentWidget(Static):
         self._do_render()
 
     def _do_render(self) -> None:
-        marker = " ←" if self._is_turn else ""
+        marker = " [bold yellow]←[/bold yellow]" if self._is_turn else ""
         done = "（已出完）" if self._finished else f"{self._hand_size:2d} 张"
-        text = f"[{self._seat_name}] {self._ai_label}\n{done}{marker}"
+        text = f"[bold][{self._seat_name}][/bold] [dim]{self._ai_label}[/dim]\n{done}{marker}"
         self.update(text)
 
 
@@ -71,10 +80,10 @@ class TableWidget(Static):
 
     def _pattern_str(self, p: Pattern) -> str:
         if p.type == PatternType.SINGLE:
-            return p.cards[0].short
+            return p.cards[0].rich
         if p.type == PatternType.PAIR:
-            return f"对{p.cards[0].short}"
-        cards_str = " ".join(c.short for c in p.cards)
+            return f"对{p.cards[0].rich}"
+        cards_str = " ".join(c.rich for c in p.cards)
         return f"{p.type.value} [{cards_str}]"
 
     def _do_render(self) -> None:
@@ -83,7 +92,7 @@ class TableWidget(Static):
             return
         lines = []
         for p, who in zip(self._table_patterns, self._players):
-            lines.append(f"  {SEAT_NAMES[who]}: {self._pattern_str(p)}")
+            lines.append(f"  [bold]{SEAT_NAMES[who]}[/bold]: {self._pattern_str(p)}")
         self.update("\n".join(lines))
 
 
@@ -125,11 +134,13 @@ class GameScreen(Screen):
     def compose(self) -> None:
         yield Header()
         with Vertical():
+            # 顶部对手区：西 + 北，Grid 确保两者都可见
             with Horizontal(id="top-opponents"):
                 yield OpponentWidget(2, "西", "AI·进阶", id="opp-west")
                 yield OpponentWidget(3, "北", "AI·进阶", id="opp-north")
             with Center():
                 yield TableWidget(id="table")
+            # 底部：南
             with Horizontal(id="bottom-area"):
                 yield OpponentWidget(1, "南", "AI·进阶", id="opp-south")
             yield Static("hand", id="my-hand")
@@ -180,10 +191,10 @@ class GameScreen(Screen):
         for i, c in enumerate(self._hand_cards):
             marker = "  "
             if i == self._hand_cursor:
-                marker = "▶ " if c not in self._hand_selected else "★ "
+                marker = "[bold yellow]▶ [/bold yellow]" if c not in self._hand_selected else "[bold yellow]★ [/bold yellow]"
             elif c in self._hand_selected:
-                marker = "■ "
-            parts.append(f"{marker}{c.short}")
+                marker = "[green]■ [/green]"
+            parts.append(f"{marker}{c.rich}")
         self.query_one("#my-hand", Static).update("  ".join(parts))
 
     def _last_player_of(self, p: Pattern) -> int:
@@ -256,7 +267,7 @@ class GameScreen(Screen):
         if p is None:
             self.sub_title = "（无提示：过牌）"
         else:
-            cards_str = " ".join(c.short for c in p.cards)
+            cards_str = " ".join(c.rich for c in p.cards)
             self.sub_title = f"💡 提示：{p.type.value} [{cards_str}]"
 
     def action_claim(self) -> None:
