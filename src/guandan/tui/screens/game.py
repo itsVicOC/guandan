@@ -290,14 +290,25 @@ class GameScreen(Screen):
             self._refresh_all()
             return
         try:
+            # 阶段 1：trick 进行中（table 有牌），让 AIs 压
             while (
                 not self.state.finished
                 and self.state.turn_index != self.human
+                and self.state.table
             ):
                 _ai_play(self.state, self.state.turn_index)
                 self._refresh_all()
                 import time
                 time.sleep(0.05)
+            # 阶段 2：trick 刚结束（table 空），新 leader 是 AI → 让它出 1 张
+            # 出 1 张后**退出**，让人类决定是否"过"（不能继续循环让所有 AI 出完）
+            if (
+                not self.state.finished
+                and not self.state.table
+                and self.state.turn_index != self.human
+            ):
+                _ai_play(self.state, self.state.turn_index)
+                self._refresh_all()
         except IllegalPlayError as e:
             self.sub_title = f"AI 错误：{e}"
         self._refresh_all()

@@ -139,11 +139,34 @@ def _greedy_ai_select(state, player: int) -> Optional[Pattern]:
 
 
 def _ai_play(state, player: int) -> bool:
-    """AI 玩家行动：返回 True 表示出牌，False 表示过牌。"""
+    """AI 玩家行动：返回 True 表示出牌，False 表示过牌。
+
+    决策逻辑：
+    - 找不到可压的牌 → 必须过
+    - 是新一轮 leader（空表）→ 必须出
+    - 压角色：模拟真实玩家，"明显小"才压，否则过牌
+      概率：随牌力提升而过牌概率提高（手牌越强越舍不得出大牌）
+    """
     if state.turn_index != player:
         return False
     p = _greedy_ai_select(state, player)
     if p is None:
+        # 找不到可压的牌 → 过
+        pass_turn(state, player)
+        return False
+    # 新一轮 leader（空表）→ 必须出
+    if not state.table:
+        play_pattern(state, player, p)
+        return True
+    # 压角色：有过牌概率（避免 AIs 100% 压让玩家被无限卡住）
+    # 用 target_rank / RANK_A 作为过牌概率
+    from .engine.card import RANK_A as _RANK_A
+    table_top = state.table[-1]
+    rank = table_top.rank if table_top.rank <= _RANK_A else _RANK_A
+    pass_prob = (rank - 2) / (_RANK_A - 2) * 0.6 + 0.1  # 0.1~0.7 之间
+    import random as _r
+    if _r.random() < pass_prob:
+        # 主动过牌
         pass_turn(state, player)
         return False
     play_pattern(state, player, p)
