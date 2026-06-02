@@ -413,6 +413,8 @@ def _try_straight(
     """顺子 / 同花顺：5+ 张连续单张。
 
     suit_filter: None = 顺子（任意花色），int = 同花顺（指定花色 Suit 值）
+
+    wild 处理：wild 可填入窗口中的"缺口"（即 rank_count[r]==0 的位置）。
     """
     if _has_joker(normal):
         return []  # 顺子不含王
@@ -423,137 +425,74 @@ def _try_straight(
     else:
         cards_of_filter = list(normal)
 
-    # 按 rank 统计（每种 rank 最多 4 张同 rank，但顺子中每种 rank 只取 1 张）
+    # 按 rank 统计
     rank_count: dict[int, int] = {}
     for c in cards_of_filter:
         if not _is_normal(c):
             continue
-        rank_count[c.rank] = min(rank_count.get(c.rank, 0) + 1, 4)
+        rank_count[c.rank] = rank_count.get(c.rank, 0) + 1
 
     patterns: list[Pattern] = []
     ptype = PatternType.STRAIGHT_FLUSH if suit_filter is not None else PatternType.STRAIGHT
 
-    # 枚举所有可能的"窗口"（连续 rank 段，长度 ≥ 5）
-    # 顺子规则：
-    # - A-2-3-4-5 合法（A 作最小）
-    # - 10-J-Q-K-A 合法（A 作最大）
-    # - A-2-3-4-5-6 不合法（A 只在端点 wrap 一次）
-    # - 2-3-4-5-6 不合法（2 不能在非 wrap 顺子中）
-    # - 2345678 长度 7 是合法（不含 2 wrap 的情况下，但 2 在内就不行）
-    # 实施：枚举 [start, end] range，处理两种 A 情形
-    if not rank_count:
-        return patterns
+    def _window_uses(rank_list: list[int]) -> tuple[bool, int, list[Card]]:
+        """计算用 rank_list 长度对应的牌所需 wild 数和实际可用牌。
 
-    # 找所有"连续"rank 段（rank 在 [RANK_2..RANK_A] 内）
-    # 不含 2：rank_count[RANK_2] 不参与普通顺子（除非 wrap A2345）
-    # 我们先处理非 wrap 情形
-    present = sorted(r for r in rank_count if r != RANK_2)  # 排除 2
-    # 枚举连续段
-    runs: list[list[int]] = []
-    if present:
-        cur = [present[0]]
-        for r in present[1:]:
-            if r == cur[-1] + 1:
-                cur.append(r)
-            else:
-                runs.append(cur)
-                cur = [r]
-        runs.append(cur)
-
-    # 枚举每段中所有 ≥5 长度的窗口
-    for run in runs:
-        for i in range(len(run)):
-            for j in range(i + 4, len(run)):
-                window = run[i : j + 1]
-                if not _is_valid_straight_window(window):
-                    continue
-                # 找该 window 对应的牌（每种 rank 1 张）
-                used_cards = []
-                for r in window:
-                    # 找一张该 rank 的牌
-                    found = next((c for c in cards_of_filter if c.rank == r), None)
-                    if found is None:
+        返回 (valid, wild_needed, actual_cards)。
+        actual_cards 是从 cards_of_filter 中按 rank 找的 + wild_card 补的。
+        """
+        wild_needed = 0
+        actual: list[Card] = []
+        for r in rank_list:
+            if rank_count.get(r, 0) > 0:
+                # 找一张该 rank 的牌
+                for c in cards_of_filter:
+                    if c.rank == r and c not in actual:
+                        actual.append(c)
                         break
-                    used_cards.append(found)
-                if len(used_cards) != len(window):
-                    continue
-                patterns.append(
-                    Pattern(
-                        type=ptype,
-                        rank=window[-1],  # 最大一张的 rank
-                        length=len(window),
-                        cards=tuple(used_cards),
-                        wild_used=0,
-                        suit=suit_filter,
-                    )
-                )
+            else:
+                wild_needed += 1
+                if wild_needed > wild_count:
+                    return False, wild_needed, []
+                if wild_card is not None:
+                    actual.append(wild_card)
+        return True, wild_needed, actual
 
-    # A2345 wrap 情形
-    if RANK_2 in rank_count and RANK_A in rank_count and wild_count == 0:
-        # 无 wild 才能用 2 当普通牌进 wrap
-        # 5 张：A, 2, 3, 4, 5
-        need = [RANK_A, RANK_2, RANK_3, RANK_4, RANK_5]
-        used_cards = []
-        for r in need:
-            if r not in rank_count:
-                break
-            found = next((c for c in cards_of_filter if c.rank == r), None)
-            if found is None:
-                break
-            used_cards.append(found)
-        if len(used_cards) == 5:
+    # 1. 非 wrap 情形：枚举 [start, end] 长度 ≥ 5 的窗口
+    for start in range(RANK_3, RANK_A):  # start 不能是 A
+        for end in range(start + 4, RANK_A + 1):  # end ≥ start+4
+            window = list(range(start, end + 1))
+            if RANK_2 in window:
+                continue
+            valid, w, used = _window_uses(window)
+            if not valid:
+                continue
             patterns.append(
                 Pattern(
                     type=ptype,
-                    rank=RANK_5,  # 最大一张是 5
-                    length=5,
-                    cards=tuple(used_cards),
-                    wild_used=0,
+                    rank=window[-1],
+                    length=len(window),
+                    cards=tuple(used),
+                    wild_used=w,
                     suit=suit_filter,
                 )
             )
 
-    # 1+ wild 参与顺子：每张 wild 顶替一段缺口
-    # 实现：枚举用 k 张 wild 顶替 5+k 张连续 rank 中的 k 个
-    if wild_count >= 1 and wild_card is not None:
-        for k_used in range(1, wild_count + 1):
-            # 至少 5 张普通/wild 混合 = 5 - k_used 实际普通 + k_used wild
-            min_len = 5
-            for length in range(min_len, min_len + k_used + 5):  # 探索合理长度
-                # 枚举所有连续的 (length - k_used) 段
-                # 因为 k_used 张 wild 顶替后总长 = length
-                # 实际普通数 = length - k_used
-                # 即：枚举 length-k_used 张连续普通牌 + k_used wild
-                actual_normal = length - k_used
-                if actual_normal < 1:
-                    continue
-                # 枚举连续段
-                for start_rank in range(RANK_2, RANK_A - actual_normal + 2):
-                    window = list(range(start_rank, start_rank + actual_normal))
-                    if not _is_valid_straight_window(window):
-                        continue
-                    # 构造牌：window 中每 rank 1 张 + k_used wild
-                    used_cards = []
-                    for r in window:
-                        if r not in rank_count:
-                            break
-                        found = next((c for c in cards_of_filter if c.rank == r), None)
-                        if found is None:
-                            break
-                        used_cards.append(found)
-                    if len(used_cards) != actual_normal:
-                        continue
-                    used_cards.extend([wild_card] * k_used)
-                    patterns.append(
-                        Pattern(
-                            type=ptype,
-                            rank=window[-1],
-                            length=length,
-                            cards=tuple(used_cards),
-                            wild_used=k_used,
-                            suit=suit_filter,
-                        )
-                    )
+    # 2. A2345 wrap 情形
+    # 需要 A, 2, 3, 4, 5 都在或由 wild 替代
+    wrap = [RANK_A, RANK_2, RANK_3, RANK_4, RANK_5]
+    valid, w, used = _window_uses(wrap)
+    if valid:
+        patterns.append(
+            Pattern(
+                type=ptype,
+                rank=RANK_5,
+                length=5,
+                cards=tuple(used),
+                wild_used=w,
+                suit=suit_filter,
+            )
+        )
 
     return patterns
 
@@ -785,50 +724,51 @@ def _try_bomb(
                     )
                 )
 
-    # 1 wild：3 张普通 + 1 wild
+    # 1 wild：k 张普通 + 1 wild（k ≥ 3）
     if wild_count >= 1 and wild_card is not None:
         for rank, cards in by_rank.items():
-            if len(cards) >= 3:
+            for k in range(3, len(cards) + 1):
                 patterns.append(
                     Pattern(
                         type=PatternType.BOMB,
                         rank=rank,
-                        length=4,
-                        cards=tuple(cards[:3] + [wild_card]),
+                        length=k + 1,
+                        cards=tuple(cards[:k] + [wild_card]),
                         wild_used=1,
                     )
                 )
 
-    # 2 wilds: 2 普通 + 2 wild / 3 普通 + 1 wild 已经上面
+    # 2 wilds
     if wild_count >= 2 and wild_card is not None:
         for rank, cards in by_rank.items():
-            if len(cards) >= 2:
+            for k in range(2, len(cards) + 1):
                 patterns.append(
                     Pattern(
                         type=PatternType.BOMB,
                         rank=rank,
-                        length=4,
-                        cards=tuple(cards[:2] + [wild_card, wild_card]),
+                        length=k + 2,
+                        cards=tuple(cards[:k] + [wild_card, wild_card]),
                         wild_used=2,
                     )
                 )
 
-    # 3 wilds: 1 普通 + 3 wild
+    # 3 wilds
     if wild_count >= 3 and wild_card is not None:
         for rank, cards in by_rank.items():
-            if len(cards) >= 1:
+            for k in range(1, len(cards) + 1):
                 patterns.append(
                     Pattern(
                         type=PatternType.BOMB,
                         rank=rank,
-                        length=4,
-                        cards=tuple([cards[0]] + [wild_card] * 3),
+                        length=k + 3,
+                        cards=tuple(cards[:k] + [wild_card] * 3),
                         wild_used=3,
                     )
                 )
 
-    # 4 wilds: 4 wild 凑炸弹（rank = wild.rank）
+    # 4 wilds
     if wild_count >= 4 and wild_card is not None:
+        # 至少 4 wild，组成 4 张炸弹
         patterns.append(
             Pattern(
                 type=PatternType.BOMB,
@@ -838,6 +778,17 @@ def _try_bomb(
                 wild_used=4,
             )
         )
+        # 5+ 张 wild 凑炸弹
+        for n in range(5, wild_count + 1):
+            patterns.append(
+                Pattern(
+                    type=PatternType.BOMB,
+                    rank=wild_card.rank,
+                    length=n,
+                    cards=tuple([wild_card] * n),
+                    wild_used=n,
+                )
+            )
 
     return patterns
 
