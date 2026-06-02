@@ -3,11 +3,17 @@ from __future__ import annotations
 
 import random
 
+from rich.markup import render
+
 from guandan.engine.card import (
     Card,
     RANK_2,
     RANK_3,
+    RANK_4,
     RANK_5,
+    RANK_6,
+    RANK_7,
+    RANK_8,
     RANK_A,
     RANK_BIG_JOKER,
     RANK_SMALL_JOKER,
@@ -38,6 +44,46 @@ class TestCard:
         assert Card(RANK_A, Suit.SPADES).compact == "AS"
         assert make_joker()[0].compact == "BJ"
         assert make_joker()[1].compact == "SJ"
+
+    def test_card_rich_markup(self):
+        # .rich 输出 rich markup（不直接渲染，只确认结构）
+        h = Card(RANK_5, Suit.HEARTS).rich
+        d = Card(RANK_7, Suit.DIAMONDS).rich
+        s = Card(RANK_A, Suit.SPADES).rich
+        c = Card(RANK_3, Suit.CLUBS).rich
+        assert "[red]" in h and "♥" in h
+        assert "[red]" in d and "♦" in d
+        assert "♠" in s and "[red]" not in s
+        assert "♣" in c and "[red]" not in c
+        # 大小王用 yellow
+        big = make_joker()[0].rich
+        small = make_joker()[1].rich
+        assert "[yellow]" in big and "JOKER" in big
+        assert "[yellow]" in small and "joker" in small
+
+    def test_rich_markup_renderable(self):
+        """回归测试：含 suit 的 markup 必须能正常被 rich 渲染（防止 v0.2.2 错误重现）。
+
+        错误：把 markup 包在 '[]' 里导致 rich 把 '♠' 当成 tag 名 → MarkupError。
+        """
+        from rich.console import Console
+        from io import StringIO
+        # 模拟 _pattern_str 的输出
+        cards = [
+            Card(RANK_4, Suit.SPADES),  # ♠
+            Card(RANK_4, Suit.HEARTS),  # [red]♥[/red]
+            Card(RANK_5, Suit.CLUBS),
+            Card(RANK_5, Suit.DIAMONDS),
+            Card(RANK_6, Suit.CLUBS),
+            Card(RANK_6, Suit.HEARTS),
+        ]
+        cards_str = " ".join(c.rich for c in cards)
+        # 错误版本（会失败）：f"pair_sequence [{cards_str}]"
+        content = f"pair_sequence  {cards_str}"  # 修正版本：去掉外层 []
+        # 关键：用 rich 渲染不应报错
+        buf = StringIO()
+        console = Console(file=buf, width=80, force_terminal=True)
+        console.print(content)  # 不抛异常 = 通过
 
     def test_card_invalid_rank(self):
         try:

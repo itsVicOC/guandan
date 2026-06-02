@@ -84,7 +84,8 @@ class TableWidget(Static):
         if p.type == PatternType.PAIR:
             return f"对{p.cards[0].rich}"
         cards_str = " ".join(c.rich for c in p.cards)
-        return f"{p.type.value} [{cards_str}]"
+        # 不加外层 [] 避免 rich 解析器把 ♠ 等 Unicode 当成 tag
+        return f"{p.type.value}  {cards_str}"
 
     def _do_render(self) -> None:
         if not self._table_patterns:
