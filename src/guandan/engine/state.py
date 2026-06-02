@@ -165,8 +165,12 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
     if not hand:
         if player not in state.finish_order:
             state.finish_order.append(player)
-        # 上游产生：游戏结束（剩余玩家按手牌数排中游/末游）
-        _finish_game(state)
+        if len(state.finish_order) == 1:
+            # 上游产生：接风——对家成为下一轮先手，本轮出牌区清空
+            _handle_upstream(state, player)
+        elif len(state.finish_order) == 2:
+            # 二游产生：游戏结束
+            _finish_game(state)
         return
 
     # 推进到下一个玩家
@@ -212,9 +216,32 @@ def claim(state: GameState, player: int, count: int) -> None:
 # ---- 内部工具 ----
 
 
+def _partner(player: int) -> int:
+    """对家（队友）。座位按 东=0 南=1 西=2 北=3，对家 = (p+2) % 4。"""
+    return (player + 2) % 4
+
+
 def _next_player(state: GameState, current: int) -> int:
     """下一个玩家（按逆时针）。"""
     return (current + 1) % 4
+
+
+def _handle_upstream(state: GameState, player: int) -> None:
+    """处理"上游产生"事件：对家接风成为下一轮先手。
+
+    规则：
+    - 清空当前出牌区
+    - 对家 (player+2) % 4 成为下一轮先手
+    - turn_index 切到对家
+    - 不结束游戏（等二游）
+    """
+    partner = _partner(player)
+    state.table = []
+    state.pass_count = 0
+    state.leader = partner
+    state.trick_number += 1
+    state.next_trick_starter = partner
+    state.turn_index = partner
 
 
 def _end_trick(state: GameState, last_player: Optional[int]) -> None:
@@ -232,16 +259,16 @@ def _finish_game(state: GameState) -> None:
     """结束一局。计算升级、漂牌、过 A。"""
     state.finished = True
 
-    # 找出尚未 finish_order 的玩家，按当前手牌数排
+    # 上游 = finish_order[0]，二游 = finish_order[1]
+    # 三游 = 剩余 2 人中手牌少者，末游 = 剩余 2 人中手牌多者
+    # 即剩余两人按手牌数升序排
     remaining = [p for p in range(4) if p not in state.finish_order]
-    # 简化：手牌多者排后面
-    remaining.sort(key=lambda p: -len(state.hands[p]))
+    remaining.sort(key=lambda p: len(state.hands[p]))
     full_order = list(state.finish_order) + remaining
 
     # 计算升级
     from .rules.scoring import compute_level_change
 
-    team_levels = [state.level, state.level]  # 简化：双方起始级牌相同
     delta_team0, delta_team1 = compute_level_change(
         state.finish_order, state.team_bomb_count
     )
@@ -254,30 +281,31 @@ def _finish_game(state: GameState) -> None:
 
     drift = False
     if state.history:
-        last = state.history[-1]
-        if (
-            isinstance(last, TurnPlayed)
-            and state.finish_order
-            and last.player == state.finish_order[0]
-            and last.pattern.type == PatternType.BOMB
-            and last.pattern.length >= 5
-            and all(c.rank == state.level for c in last.pattern.cards)
-        ):
-            drift = True
-            state.drift = True
-            # 漂牌：上游队额外 +3
+        # 找上游的最后一手
+        for ev in reversed(state.history):
+            if isinstance(ev, TurnPlayed) and ev.player == state.finish_order[0]:
+                p = ev.pattern
+                if (
+                    p.type == PatternType.BOMB
+                    and p.length >= 5
+                    and all(c.rank == state.level for c in p.cards)
+                ):
+                    drift = True
+                    state.drift = True
+                break  # 只看上游的最后一手
+
+        if drift:
+            # 上游队额外 +3
             upstream_team = team_of(state.finish_order[0])
-            new_levels[upstream_team] = min(
-                RANK_A, new_levels[upstream_team] + 3
-            )
+            new_levels[upstream_team] = min(RANK_A, new_levels[upstream_team] + 3)
 
     # 过 A：升到 A 后下一局为 2，再升即过 A
-    # 简化：单局结束后，若上游队级牌 = A，标记 guo_a_candidate
+    # 简化：单局结束后，若上游队级牌 > A，强制回到 2 并标 guo_a
     guo_a = False
-    if new_levels[0] > RANK_A or new_levels[1] > RANK_A:
-        guo_a = True
-        new_levels[0] = RANK_2  # 强制回到 2
-        new_levels[1] = RANK_2
+    for team in (0, 1):
+        if new_levels[team] > RANK_A:
+            guo_a = True
+            new_levels[team] = RANK_2
 
     state.team_levels_final = new_levels  # type: ignore[attr-defined]
     state.drift_flag = drift  # type: ignore[attr-defined]
@@ -286,11 +314,11 @@ def _finish_game(state: GameState) -> None:
     from .events import GameOver, LevelUp
 
     if not guo_a:
-        if delta_team0 > 0:
+        if delta_team0 != 0:
             state.history.append(
                 LevelUp(team=0, new_level=new_levels[0], delta=delta_team0)
             )
-        if delta_team1 > 0:
+        if delta_team1 != 0:
             state.history.append(
                 LevelUp(team=1, new_level=new_levels[1], delta=delta_team1)
             )

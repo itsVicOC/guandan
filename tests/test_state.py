@@ -122,20 +122,97 @@ class TestPassTurn:
 
 
 class TestGameCompletion:
-    def test_one_player_finishes(self):
-        """模拟一个玩家出完所有牌。"""
+    def test_one_player_finishes_triggers_jiefeng(self):
+        """1st player 完成后不停局，对家接风成为下一轮先手。"""
         state = make_initial_state(level=2, first_player=0, seed=42)
-        # 让 player 0 把所有 27 张牌都按单张出；其他玩家始终过牌
+        # 让 player 0 把所有 27 张牌都按单张出
         all_cards = list(state.hands[0])
-        # 排序：从小到大，最后几张出完时容易清空
         for c in all_cards:
             if state.finished:
                 break
-            # 如果不是 player 0 的回合，其他玩家过牌
+            while state.turn_index != 0 and not state.finished:
+                pass_turn(state, state.turn_index)
+            p = single_pattern(c)
+            play_pattern(state, 0, p)
+
+        # 0 应该已经完成
+        assert 0 in state.finish_order
+        # 但游戏还没结束（要等 2nd finish）
+        assert not state.finished
+        # 对家 (2) 应成为下一轮先手
+        assert state.turn_index == 2
+        assert state.leader == 2
+        assert state.table == []
+
+    def test_two_players_finish_ends_game(self):
+        """2nd player 完成后游戏才结束。"""
+        state = make_initial_state(level=2, first_player=0, seed=42)
+        # 让 player 0 先出完
+        all_cards_0 = list(state.hands[0])
+        for c in all_cards_0:
+            if state.finished:
+                break
             while state.turn_index != 0 and not state.finished:
                 pass_turn(state, state.turn_index)
             p = single_pattern(c)
             play_pattern(state, 0, p)
 
         assert 0 in state.finish_order
+        assert not state.finished  # 还没结束
+
+        # 现在让 player 2（对家接风后是 leader）出完
+        # 实际场景：player 2 是新 leader, 玩家 2 一直出到出完
+        all_cards_2 = list(state.hands[2])
+        for c in all_cards_2:
+            if state.finished:
+                break
+            while state.turn_index != 2 and not state.finished:
+                pass_turn(state, state.turn_index)
+            p = single_pattern(c)
+            play_pattern(state, 2, p)
+
+        # 现在 game over
         assert state.finished
+        # finish_order 头两个是 0 和 2
+        assert state.finish_order[0] == 0
+        assert state.finish_order[1] == 2
+        # 同队 → 双上
+        if hasattr(state, "team_levels_final"):
+            assert state.team_levels_final[0] >= 3  # 至少 +3
+
+    def test_third_fourth_by_hand_count(self):
+        """三游/末游按手牌数：少者=三游，多者=末游。"""
+        # 简化测试：手动构造状态
+        from guandan.engine.card import Card, Suit
+        from guandan.engine.hand import Pattern, PatternType
+        from guandan.engine.events import ShuffleDeal, TurnPlayed
+
+        # 构造一个状态：player 0 已完成, player 1 即将完成
+        state = make_initial_state(level=2, first_player=0, seed=42)
+
+        # 让 player 0 立即完成（出 1 张牌）
+        # 但 state 已经有 27 张在 player 0 手牌里
+        # 简化：直接修改 finish_order 然后 finish
+        # 这里我们调用 _finish_game
+        state.finish_order = [0, 1]  # 上游 0, 二游 1
+        # 给剩余 player 2 一些牌，player 3 更多牌
+        state.hands = [
+            [],  # 0 finished
+            [],  # 1 finished
+            [Card(RANK_5, Suit.HEARTS)],  # 2 少
+            [Card(RANK_5, Suit.HEARTS), Card(RANK_5, Suit.DIAMONDS)],  # 3 多
+        ]
+        # 调用内部 _finish_game
+        from guandan.engine.state import _finish_game
+
+        _finish_game(state)
+
+        assert state.finished
+        assert state.finish_order == [0, 1]
+        # 三游 = 2 (少), 末游 = 3 (多)
+        # 在 history 的 GameOver 事件里
+        from guandan.engine.events import GameOver
+
+        last = state.history[-1]
+        assert isinstance(last, GameOver)
+        assert last.finish_order == (0, 1, 2, 3)
