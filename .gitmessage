@@ -1,0 +1,14 @@
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+#
+# type:    feat / fix / docs / style / refactor / test / chore / perf
+# scope:   engine / ai / tui / storage / rules / cli / docs
+# subject: 祈使句，不超过 50 字符，不加句号
+#
+# 示例:
+#   feat(engine): add wild card pattern detector
+#   fix(rules): correct triple+pair split when 3 jokers present
+#   docs(adr): record event flow contract decision
