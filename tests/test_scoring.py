@@ -29,10 +29,11 @@ class TestComputeLevelChange:
         assert d0 == 0
         assert d1 == 3
 
-    def test_bomb_bonus(self):
-        # 头游=0(队0), 二游=2(队0), team0 出了 2 炸弹 → +3 + 2 = +5
+    def test_bomb_does_not_bonus(self):
+        """按文档：炸弹不影响升级，只有漂牌和名次组合。"""
+        # 即使出了 2 个炸弹，也只升 +3（头游+二游同队）
         d0, d1 = compute_level_change(head=0, second=2, third=1, last=3, team_bomb_count=[2, 0])
-        assert d0 == 5
+        assert d0 == 3
         assert d1 == 0
 
     def test_no_level_change_for_loser(self):
