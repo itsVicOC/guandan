@@ -1,5 +1,42 @@
 # 变更日志
 
+## [0.2.0] - 2026-06-02
+
+### M1 完成 - textual TUI 替换 CLI
+
+#### 5 屏架构
+- **MainMenuScreen** (主菜单)：5 个选项（开始新局 / 续局 / 战绩 / 规则 / 退出）+ 数字键快捷键
+- **DifficultySelectScreen** (难度选择)：5 档 AI（新手/进阶/高手/职业/戴长胜）
+- **GameScreen** (牌桌屏)：3 OpponentWidget + TableWidget + 玩家手牌 + 状态栏
+- **RuleScreen** (规则说明)：完整规则可滚动
+- **HistoryScreen / LoadSaveScreen**：M5 阶段实现的占位
+
+#### GameScreen 交互
+- 方向键（←/→/↑/↓）移动光标
+- Space 选择/取消选牌
+- Enter 出牌
+- P 过牌
+- T AI 提示
+- B 报牌
+- ? 查看规则
+- Escape 返回
+
+#### GameScreen 显示
+- 4 家手牌（西/北/南为 AI，对家视角的"你"为真人）
+- 中央出牌区（按出牌顺序展示）
+- 玩家手牌按从大到小排序，光标 ▶ 选中 ■，已选 ★
+- sub_title 显示当前状态（轮到你/等待 X 出牌/本局结束）
+
+#### 关键 fix
+- **textual 的 `_render` 是保留方法名**：自定义 widget 用此名会触发
+  `get_content_height` 错误（visual=None）。重命名为 `_do_render` 解决。
+  原因：textual 内部 Widget 在 mount 时会调用 `_render` 钩子来获取初始 visual。
+- 同样原因，方法名不要用 `name` / `cursor` / `cards` / `selected` / `hand`（widget 内部属性）
+
+#### 测试
+- 106 个单元测试 + property-based 测试 全部通过
+- TUI headless 端到端测试（pilot）：主菜单 → 难度选择 → 牌桌 → 玩家出牌 → AI 应答 ✓
+
 ## [0.1.2] - 2026-06-02
 
 ### 修复（按《掼蛋的接风判定与四名次的产生规则》文档）
