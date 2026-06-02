@@ -165,12 +165,13 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
     if not hand:
         if player not in state.finish_order:
             state.finish_order.append(player)
-        if len(state.finish_order) == 1:
-            # 上游产生：接风——对家成为下一轮先手，本轮出牌区清空
-            _handle_upstream(state, player)
-        elif len(state.finish_order) == 2:
-            # 二游产生：游戏结束
+        # 3rd finisher 产生时游戏结束（剩 1 人即末游）
+        if len(state.finish_order) == 3:
             _finish_game(state)
+            return
+        # 1st / 2nd finisher：不立即触发接风，要等其他 3 人是否压牌
+        # 让 turn 继续推进，下家可以选择压牌或过牌
+        state.turn_index = _next_player(state, player)
         return
 
     # 推进到下一个玩家
@@ -195,12 +196,9 @@ def pass_turn(state: GameState, player: int) -> None:
 
     state.pass_count += 1
 
-    # 检查本轮是否结束
-    # 一轮内"全过"或"全炸完"后，最后一个出牌者获得下一轮先手
-    if state.pass_count >= 3:
-        # 3 个非 leader 都过了 → 本轮结束
-        # leader 是最后一个出牌的人 → 下一轮先手
-        _end_trick(state, last_player=state.leader)
+    # 检查本轮是否结束：所有"能行动的非 leader 玩家"都过了
+    if state.pass_count >= _active_non_leader_count(state):
+        _end_trick_or_jiefeng(state)
         return
 
     state.turn_index = _next_player(state, player)
@@ -222,68 +220,110 @@ def _partner(player: int) -> int:
 
 
 def _next_player(state: GameState, current: int) -> int:
-    """下一个玩家（按逆时针）。"""
-    return (current + 1) % 4
+    """下一个玩家（按逆时针），跳过已出完手牌的玩家。"""
+    nxt = (current + 1) % 4
+    visited = 0
+    while nxt in state.finish_order:
+        nxt = (nxt + 1) % 4
+        visited += 1
+        if visited >= 4:
+            # 全部出完（理论上不该走到这里，因为 3rd 出完时会结束游戏）
+            return current
+    return nxt
 
 
-def _handle_upstream(state: GameState, player: int) -> None:
-    """处理"上游产生"事件：对家接风成为下一轮先手。
+def _active_non_leader_count(state: GameState) -> int:
+    """当前轮中"能行动的非 leader 玩家"数量（未出完手牌）。
 
-    规则：
-    - 清空当前出牌区
-    - 对家 (player+2) % 4 成为下一轮先手
-    - turn_index 切到对家
-    - 不结束游戏（等二游）
+    用于判断本轮是否结束：当 pass_count >= 此值时，触发 _end_trick_or_jiefeng。
+    例如：
+    - 4 人都未出完：非 leader = 3
+    - leader 出完、1 个非 leader 也出完：非 leader = 2
+    - leader 出完、2 个非 leader 也出完：非 leader = 1
     """
-    partner = _partner(player)
-    state.table = []
-    state.pass_count = 0
-    state.leader = partner
-    state.trick_number += 1
-    state.next_trick_starter = partner
-    state.turn_index = partner
+    leader = state.leader
+    n = 0
+    for p in range(4):
+        if p != leader and p not in state.finish_order:
+            n += 1
+    return n
 
 
-def _end_trick(state: GameState, last_player: Optional[int]) -> None:
-    """结束当前轮，开新轮。"""
+def _end_trick_or_jiefeng(state: GameState) -> None:
+    """所有"能行动的非 leader 玩家"都过牌后调用。
+
+    规则（按文档）：
+    - 若当前 leader 已出完手牌 → 触发接风：
+      - 新的 leader = leader 的对家（如果对家未出完手牌）
+      - 如果对家也已出完（如头游+二游同队的极端情况）→ 找下一个未出完的玩家
+    - 若当前 leader 还在玩 → 正常开新轮，leader 继续
+    - 清空 table、重置 pass_count
+    """
+    last_leader = state.leader
     state.table = []
     state.pass_count = 0
-    state.leader = last_player
     state.trick_number += 1
-    state.next_trick_starter = last_player
-    if last_player is not None:
-        state.turn_index = last_player
+
+    if last_leader is not None and last_leader in state.finish_order:
+        # 触发接风：对家成为新 leader
+        partner = _partner(last_leader)
+        if partner not in state.finish_order:
+            new_leader = partner
+        else:
+            # 对家也出完了（如头游+二游同队），找下一个 active 玩家
+            new_leader = (last_leader + 1) % 4
+            while new_leader in state.finish_order:
+                new_leader = (new_leader + 1) % 4
+                if new_leader == last_leader:
+                    return  # 全部出完（不该发生）
+    else:
+        new_leader = last_leader
+
+    state.leader = new_leader
+    state.next_trick_starter = new_leader
+    if new_leader is not None:
+        state.turn_index = new_leader
 
 
 def _finish_game(state: GameState) -> None:
-    """结束一局。计算升级、漂牌、过 A。"""
+    """结束一局。计算升级、漂牌、过 A。
+
+    文档规则：
+    - 3rd finisher 产生时结束游戏，剩 1 人为末游
+    - 升级：头游+二游=+3, 头游+三游=+2, 头游+末游=+1
+    - 对方不降级
+    - 漂牌：上游最后一手为 5+ 张级牌炸弹 → 额外 +3
+    - 过 A：必须"双上"（头游方队友非末游）才算成功
+    """
     state.finished = True
 
-    # 上游 = finish_order[0]，二游 = finish_order[1]
-    # 三游 = 剩余 2 人中手牌少者，末游 = 剩余 2 人中手牌多者
-    # 即剩余两人按手牌数升序排
-    remaining = [p for p in range(4) if p not in state.finish_order]
-    remaining.sort(key=lambda p: len(state.hands[p]))
-    full_order = list(state.finish_order) + remaining
+    # finish_order = [头游, 二游, 三游]，剩 1 人是末游
+    if len(state.finish_order) != 3:
+        # 异常：理论上不该走到这里
+        return
+    head = state.finish_order[0]
+    second = state.finish_order[1]
+    third = state.finish_order[2]
+    last = [p for p in range(4) if p not in state.finish_order][0]
+    full_order = [head, second, third, last]
 
-    # 计算升级
+    # 升级：按头游方的两个名次组合
     from .rules.scoring import compute_level_change
 
     delta_team0, delta_team1 = compute_level_change(
-        state.finish_order, state.team_bomb_count
+        head, second, third, last, state.team_bomb_count
     )
     new_level_0 = min(RANK_A, max(RANK_2, state.level + delta_team0))
     new_level_1 = min(RANK_A, max(RANK_2, state.level + delta_team1))
     new_levels = [new_level_0, new_level_1]
 
-    # 漂牌检查：上游方最后一手为 5 张+级牌炸弹
+    # 漂牌检查
     from .hand import PatternType
 
     drift = False
     if state.history:
-        # 找上游的最后一手
         for ev in reversed(state.history):
-            if isinstance(ev, TurnPlayed) and ev.player == state.finish_order[0]:
+            if isinstance(ev, TurnPlayed) and ev.player == head:
                 p = ev.pattern
                 if (
                     p.type == PatternType.BOMB
@@ -292,36 +332,58 @@ def _finish_game(state: GameState) -> None:
                 ):
                     drift = True
                     state.drift = True
-                break  # 只看上游的最后一手
-
+                break
         if drift:
-            # 上游队额外 +3
-            upstream_team = team_of(state.finish_order[0])
+            upstream_team = team_of(head)
             new_levels[upstream_team] = min(RANK_A, new_levels[upstream_team] + 3)
 
-    # 过 A：升到 A 后下一局为 2，再升即过 A
-    # 简化：单局结束后，若上游队级牌 > A，强制回到 2 并标 guo_a
+    # 过 A 判定：头游方 + 队友非末游（= 头游+二游 或 头游+三游）
+    # 当前局打到 A 才能"冲 A"
+    # 升级前的级牌是 state.level
     guo_a = False
-    for team in (0, 1):
-        if new_levels[team] > RANK_A:
+    guo_a_failed = False
+    upstream_team = team_of(head)
+    upstream_partner_rank = (
+        2 if (second == _partner(head)) else (3 if (third == _partner(head)) else 4)
+    )
+    if state.level == RANK_A:
+        if upstream_partner_rank in (2, 3):
+            # 队友是 2nd 或 3rd → 双上 → 过 A 成功
             guo_a = True
-            new_levels[team] = RANK_2
+            new_levels[upstream_team] = RANK_2  # 过 A 后回到 2
+            # 另一队不降级
+        else:
+            # 队友是末游 → 冲 A 失败
+            guo_a_failed = True
+            # 文档说"退回级牌2重打或重新打A"
+            # 我们这里简化为：上游方降回 2
+            new_levels[upstream_team] = RANK_2
+            # 另一方不变
 
     state.team_levels_final = new_levels  # type: ignore[attr-defined]
     state.drift_flag = drift  # type: ignore[attr-defined]
     state.guo_a = guo_a  # type: ignore[attr-defined]
+    state.guo_a_failed = guo_a_failed  # type: ignore[attr-defined]
 
     from .events import GameOver, LevelUp
 
-    if not guo_a:
-        if delta_team0 != 0:
-            state.history.append(
-                LevelUp(team=0, new_level=new_levels[0], delta=delta_team0)
+    # 即使过 A 成功或失败也记录 LevelUp（用于显示）
+    if delta_team0 != 0 or guo_a or guo_a_failed:
+        state.history.append(
+            LevelUp(
+                team=0,
+                new_level=new_levels[0],
+                delta=new_levels[0] - state.level,
             )
-        if delta_team1 != 0:
-            state.history.append(
-                LevelUp(team=1, new_level=new_levels[1], delta=delta_team1)
+        )
+    if delta_team1 != 0 or guo_a or guo_a_failed:
+        state.history.append(
+            LevelUp(
+                team=1,
+                new_level=new_levels[1],
+                delta=new_levels[1] - state.level,
             )
+        )
     state.history.append(
         GameOver(
             finish_order=tuple(full_order),
