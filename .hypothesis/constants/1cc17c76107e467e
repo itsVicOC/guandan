@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/engine/state.py
+# hypothesis_version: 6.141.1
+
+['game is finished', 'leader cannot pass', '东', '北', '南', '西']

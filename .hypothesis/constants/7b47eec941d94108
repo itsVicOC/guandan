@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/engine/card.py
+# hypothesis_version: 6.141.1
+
+[100, 101, '10', '2', '3', '4', '5', '6', '7', '8', '9', '?', 'A', 'BJ', 'C', 'D', 'H', 'J', 'JOKER', 'K', 'Q', 'S', 'SJ', 'joker', '大王', '小王', '方块', '梅花', '红桃', '黑桃']
