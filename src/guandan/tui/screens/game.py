@@ -69,13 +69,20 @@ class TableWidget(Static):
         super().__init__("（空）", **kwargs)
         self._table_patterns: List[Pattern] = []
         self._players: List[int] = []
+        self._passed: List[int] = []  # 本轮已过牌的玩家
 
     def on_mount(self) -> None:
         self._do_render()
 
-    def update_table(self, patterns: List[Pattern], players: List[int]) -> None:
+    def update_table(
+        self,
+        patterns: List[Pattern],
+        players: List[int],
+        passed: List[int] = None,
+    ) -> None:
         self._table_patterns = patterns
         self._players = players
+        self._passed = passed if passed is not None else []
         self._do_render()
 
     def _pattern_str(self, p: Pattern) -> str:
@@ -84,16 +91,19 @@ class TableWidget(Static):
         if p.type == PatternType.PAIR:
             return f"对{p.cards[0].rich}"
         cards_str = " ".join(c.rich for c in p.cards)
-        # 不加外层 [] 避免 rich 解析器把 ♠ 等 Unicode 当成 tag
         return f"{p.type.value}  {cards_str}"
 
     def _do_render(self) -> None:
-        if not self._table_patterns:
+        if not self._table_patterns and not self._passed:
             self.update("（空）")
             return
         lines = []
+        # 出牌
         for p, who in zip(self._table_patterns, self._players):
             lines.append(f"  [bold]{SEAT_NAMES[who]}[/bold]: {self._pattern_str(p)}")
+        # 过牌（灰色显示）
+        for who in self._passed:
+            lines.append(f"  [dim]{SEAT_NAMES[who]}: 过牌[/dim]")
         self.update("\n".join(lines))
 
 
@@ -172,7 +182,13 @@ class GameScreen(Screen):
             self._hand_cursor = max(0, len(self._hand_cards) - 1)
         self._do_render_hand()
         tbl = self.query_one("#table", TableWidget)
-        tbl.update_table(s.table, [self._last_player_of(p) for p in s.table])
+        # 提取本轮已过牌的玩家（自上次 TurnPlayed 之后的 Pass 事件）
+        passed_players = self._passed_in_current_trick()
+        tbl.update_table(
+            s.table,
+            [self._last_player_of(p) for p in s.table],
+            passed=passed_players,
+        )
         # 状态信息写入 screen title
         turn_name = SEAT_NAMES[s.turn_index]
         if s.finished:
@@ -203,6 +219,21 @@ class GameScreen(Screen):
             if hasattr(ev, "pattern") and getattr(ev, "pattern", None) == p:
                 return ev.player
         return 0
+
+    def _passed_in_current_trick(self) -> List[int]:
+        """提取本轮（自上次 TurnPlayed 之后）已过牌的玩家，按过牌顺序。"""
+        from ...engine.events import Pass, TurnPlayed
+        # 找到最后一次 TurnPlayed 的索引
+        last_turn_idx = -1
+        for i, ev in enumerate(self.state.history):
+            if isinstance(ev, TurnPlayed):
+                last_turn_idx = i
+        # 在 last_turn_idx 之后的 Pass 事件
+        passed = []
+        for ev in self.state.history[last_turn_idx + 1:]:
+            if isinstance(ev, Pass):
+                passed.append(ev.player)
+        return passed
 
     def action_cursor_left(self) -> None:
         if not self._hand_cards:
