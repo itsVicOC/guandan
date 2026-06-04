@@ -1,5 +1,29 @@
 # 变更日志
 
+## [0.3.1] - 2026-06-04
+
+### Hotfix - 过牌锁住规则（spec 规则 3）
+
+v0.3.0 发现的预存 bug：`pass_count` 计数器无法保证"过牌后本圈不能再出"。
+- 0 出牌 → 1 过 → 2 出牌（重置 pass_count）→ 3 过 → 0 再出 → 1 已被重置可重新出
+- 违反掼蛋 spec 规则 3：「一旦选择"过"，该玩家在本圈牌中将失去出牌机会」
+
+#### 修复
+- `GameState.pass_count: int` → `GameState.passed_players: set[int]`
+- `pass_turn` 把当前玩家加入 `passed_players`，不重置
+- `play_pattern` 检查 `player in passed_players` → 抛 `IllegalPlayError`
+- 新增 `_next_active_player`：`pass_turn` 和 `play_pattern` 都用它推进 turn，跳过 finish_order + passed_players
+- `_end_trick_or_jiefeng` 清空 `passed_players`（新一轮重新计数）
+
+#### 行为
+- 已过牌玩家在同一 trick 内再调 `play_pattern` 抛 `IllegalPlayError`
+- turn 推进跳过已过牌玩家（去到下一个未过且未 finish 的玩家）
+- 3 个非 leader 全过 → trick 结束，`passed_players` 清空 → 玩家在新 trick 重新可行动
+
+#### 测试
+- 新增 4 个测试（`TestPassedLockout`）：覆盖 spec 规则 3 的 4 个场景
+- 总计 151 个测试全过
+
 ## [0.3.0] - 2026-06-04
 
 ### M2 完成 - AI 策略包（档 0/1/2）

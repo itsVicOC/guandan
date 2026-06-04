@@ -78,7 +78,8 @@ class GameState:
     hands: list[list[Card]]  # 4 家手牌
     turn_index: int  # 0-3
     table: list[Pattern] = field(default_factory=list)
-    pass_count: int = 0
+    # 本轮已过牌的玩家集合（spec 规则 3：一旦过牌，本圈不能再出）
+    passed_players: set[int] = field(default_factory=set)
     leader: Optional[int] = None  # 本轮先手
     history: list[Event] = field(default_factory=list)
     finish_order: list[int] = field(default_factory=list)
@@ -121,12 +122,15 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
     - player == state.turn_index
     - pattern.cards 全部在 player 手牌中
     - 当前 table 为空（新一轮先手）或 pattern 可压 table[-1]
-    - 玩家未在该轮过牌
+    - 玩家未在该轮过牌（spec 规则 3）
     """
     if state.finished:
         raise IllegalPlayError("game is finished")
     if player != state.turn_index:
         raise IllegalPlayError(f"not player's turn: {player} != {state.turn_index}")
+    if player in state.passed_players:
+        # spec 规则 3：已过牌玩家本圈不能再出
+        raise IllegalPlayError(f"player {player} already passed this trick")
 
     # 验证 pattern 的牌都在手牌中
     hand = state.hands[player]
@@ -161,7 +165,9 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
     # 更新本轮 leader
     if state.leader is None:
         state.leader = player
-    state.pass_count = 0
+    # 注意：不清空 passed_players —— spec 规则 3 的"本圈"是整个 trick，
+    # 已过牌的玩家在 trick 结束前一直锁出，不管 leader 中途再出几次。
+    # passed_players 只在 _end_trick_or_jiefeng 里清空。
 
     # 累计本队炸弹数
     from .hand import PatternType
@@ -184,11 +190,12 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
             return
         # 1st / 2nd finisher：不立即触发接风，要等其他 3 人是否压牌
         # 让 turn 继续推进，下家可以选择压牌或过牌
-        state.turn_index = _next_player(state, player)
+        # 用 _next_active_player 跳过已过牌的玩家
+        state.turn_index = _next_active_player(state, player)
         return
 
-    # 推进到下一个玩家
-    state.turn_index = _next_player(state, player)
+    # 推进到下一个"未过牌且未出完"的玩家
+    state.turn_index = _next_active_player(state, player)
 
 
 def pass_turn(state: GameState, player: int) -> None:
@@ -207,14 +214,18 @@ def pass_turn(state: GameState, player: int) -> None:
         PassEvent(player=player, hand_remaining=len(state.hands[player]))
     )
 
-    state.pass_count += 1
+    # 记录该玩家本轮已过牌（spec 规则 3：本圈不能再出）
+    state.passed_players.add(player)
 
     # 检查本轮是否结束：所有"能行动的非 leader 玩家"都过了
-    if state.pass_count >= _active_non_leader_count(state):
+    if len(state.passed_players & _active_non_leader_set(state)) >= _active_non_leader_count(
+        state
+    ):
         _end_trick_or_jiefeng(state)
         return
 
-    state.turn_index = _next_player(state, player)
+    # 推进到下一个"未过牌且未出完"的玩家
+    state.turn_index = _next_active_player(state, player)
 
 
 def claim(state: GameState, player: int, count: int) -> None:
@@ -240,10 +251,29 @@ def _next_player(state: GameState, current: int) -> int:
     return nxt
 
 
+def _next_active_player(state: GameState, current: int) -> int:
+    """下一个"未过牌且未出完"的玩家（按逆时针）。
+
+    区别于 `_next_player`：后者只跳过 finish_order，本函数同时跳过
+    `passed_players`（spec 规则 3：已过牌玩家本圈不能再被轮询）。
+    """
+    nxt = (current + 1) % 4
+    visited = 0
+    while nxt in state.finish_order or nxt in state.passed_players:
+        nxt = (nxt + 1) % 4
+        visited += 1
+        if visited >= 4:
+            # 全部跳过：理论上不该走到这里，因为 pass_turn 之前已
+            # 检查过 "是否所有非 leader 都过了"
+            return current
+    return nxt
+
+
 def _active_non_leader_count(state: GameState) -> int:
     """当前轮中"能行动的非 leader 玩家"数量（未出完手牌）。
 
-    用于判断本轮是否结束：当 pass_count >= 此值时，触发 _end_trick_or_jiefeng。
+    用于判断本轮是否结束：当 `passed_players` 覆盖所有这些玩家时，
+    触发 `_end_trick_or_jiefeng`。
     例如：
     - 4 人都未出完：非 leader = 3
     - leader 出完、1 个非 leader 也出完：非 leader = 2
@@ -257,6 +287,12 @@ def _active_non_leader_count(state: GameState) -> int:
     return n
 
 
+def _active_non_leader_set(state: GameState) -> set[int]:
+    """当前轮中"能行动的非 leader 玩家"集合（未出完手牌）。"""
+    leader = state.leader
+    return {p for p in range(4) if p != leader and p not in state.finish_order}
+
+
 def _end_trick_or_jiefeng(state: GameState) -> None:
     """所有"能行动的非 leader 玩家"都过牌后调用。
 
@@ -265,11 +301,11 @@ def _end_trick_or_jiefeng(state: GameState) -> None:
       - 新的 leader = leader 的对家（如果对家未出完手牌）
       - 如果对家也已出完（如头游+二游同队的极端情况）→ 找下一个未出完的玩家
     - 若当前 leader 还在玩 → 正常开新轮，leader 继续
-    - 清空 table、重置 pass_count
+    - 清空 table、重置 passed_players
     """
     last_leader = state.leader
     state.table = []
-    state.pass_count = 0
+    state.passed_players.clear()
     state.trick_number += 1
 
     if last_leader is not None and last_leader in state.finish_order:

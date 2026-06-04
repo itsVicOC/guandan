@@ -4,11 +4,16 @@ from __future__ import annotations
 import pytest
 
 from guandan.engine.card import (
+    RANK_2,
+    RANK_3,
+    RANK_4,
     RANK_5,
     RANK_6,
     RANK_7,
     RANK_8,
+    RANK_9,
     RANK_A,
+    RANK_J,
     RANK_K,
     Card,
     Suit,
@@ -280,3 +285,84 @@ class TestGameCompletion_Document:
         assert state.guo_a_failed is True
         # 头游方降回 2
         assert state.team_levels_final[0] == 2
+
+
+class TestPassedLockout:
+    """spec 规则 3：一旦选择"过"，该玩家在本圈牌中将失去出牌机会。
+
+    修复 v0.3.0 → v0.3.1：`pass_count` 计数器改为 `passed_players: set`，
+    锁住过牌玩家直到本 trick 结束（`_end_trick_or_jiefeng`）。
+    """
+
+    def test_passed_player_cannot_play_via_engine(self):
+        """过牌后该玩家在同 trick 内 play_pattern 抛 IllegalPlayError。"""
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
+        state.wild_card = None
+        state.hands[0] = [c(RANK_2, "H"), c(RANK_6, "H")]
+        state.hands[1] = [c(RANK_7, "H"), c(RANK_9, "H")]
+        state.hands[2] = [c(RANK_3, "H"), c(RANK_8, "H")]
+        state.hands[3] = [c(RANK_4, "H"), c(RANK_J, "H")]
+
+        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))  # 0 出
+        pass_turn(state, 1)  # 1 过
+        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # 2 出
+        pass_turn(state, 3)  # 3 过
+        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))  # 0 再出
+        # 1 已过 → 即便手牌更大也不能出
+        assert 1 in state.passed_players
+        with pytest.raises(IllegalPlayError):
+            play_pattern(state, 1, single_pattern(c(RANK_7, "H")))
+
+    def test_passed_players_set_persists_across_leader_replay(self):
+        """0 在 trick 中再出牌时，passed_players 不应被清空。"""
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
+        state.wild_card = None
+        state.hands[0] = [c(RANK_2, "H"), c(RANK_6, "H")]
+        state.hands[1] = [c(RANK_7, "H"), c(RANK_9, "H")]
+        state.hands[2] = [c(RANK_3, "H"), c(RANK_8, "H")]
+        state.hands[3] = [c(RANK_4, "H"), c(RANK_J, "H")]
+
+        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))
+        pass_turn(state, 1)  # passed = {1}
+        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # passed 应仍 = {1}
+        assert state.passed_players == {1}
+        pass_turn(state, 3)  # passed = {1, 3}
+        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))  # passed 应仍 = {1, 3}
+        assert state.passed_players == {1, 3}
+
+    def test_turn_skips_passed_players(self):
+        """turn 推进应跳过已过牌玩家。"""
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
+        state.wild_card = None
+        state.hands[0] = [c(RANK_2, "H"), c(RANK_6, "H")]
+        state.hands[1] = [c(RANK_7, "H"), c(RANK_9, "H")]
+        state.hands[2] = [c(RANK_3, "H"), c(RANK_8, "H")]
+        state.hands[3] = [c(RANK_4, "H"), c(RANK_J, "H")]
+
+        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))  # turn=1
+        pass_turn(state, 1)  # turn=2
+        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # turn=3
+        pass_turn(state, 3)  # turn 应跳过 1, 跳到 0
+        assert state.turn_index == 0
+        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))  # turn 应跳过 1, 跳到 2
+        assert state.turn_index == 2
+
+    def test_passed_players_cleared_on_new_trick(self):
+        """3 个非 leader 全过 → trick 结束，passed_players 清空，1 可在新 trick 再行动。"""
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
+        state.wild_card = None
+        state.hands[0] = [c(RANK_2, "H"), c(RANK_6, "H")]
+        state.hands[1] = [c(RANK_7, "H")]
+        state.hands[2] = [c(RANK_3, "H")]
+        state.hands[3] = [c(RANK_4, "H")]
+
+        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))
+        pass_turn(state, 1)
+        pass_turn(state, 2)
+        pass_turn(state, 3)  # 1, 2, 3 都过 → trick ends
+        assert state.table == []
+        assert state.passed_players == set()
+        # 0 重新领出 → 1 重新能动
+        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))
+        play_pattern(state, 1, single_pattern(c(RANK_7, "H")))  # 不抛异常
+        assert state.table[-1].rank == RANK_7
