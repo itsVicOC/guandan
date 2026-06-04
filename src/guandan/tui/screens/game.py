@@ -1,7 +1,8 @@
-"""牌桌屏（M1 核心）。"""
+"""牌桌屏（M1 核心，M2 接入 AI 包）。"""
 from __future__ import annotations
 
 import asyncio
+import random
 from typing import List, Optional
 
 from rich.text import Text
@@ -10,7 +11,7 @@ from textual.containers import Center, Grid, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
-from ...cli import _ai_play
+from ...ai import AINotImplementedError, make_strategy, play_or_pass
 from ...engine.card import Card
 from ...engine.hand import Hand, Pattern, PatternType, sort_cards
 from ...engine.state import (
@@ -137,23 +138,33 @@ class GameScreen(Screen):
         self.human = human
         self.state = None
         self.message = ""
+        # 注入 AI 策略（档 3/4 会在 DifficultySelectScreen._start_game 阻断）
+        # 这里再兜底一次：万一直接构造 GameScreen 时给了一个未实现的档
+        try:
+            self._strategy = make_strategy(difficulty)
+        except AINotImplementedError:
+            # 降级到 档 1 (进阶)
+            self._strategy = make_strategy(1)
+            self.difficulty = 1
+        self._ai_rng = random.Random()
         # 交互状态（不放在 widget 上以避免 textual 命名冲突）
         self._hand_cards: List[Card] = []
         self._hand_selected = set()
         self._hand_cursor = 0
 
     def compose(self) -> None:
+        ai_label = f"AI·{self._strategy.name}"
         yield Header()
         with Vertical():
             # 顶部对手区：西 + 北，Grid 确保两者都可见
             with Horizontal(id="top-opponents"):
-                yield OpponentWidget(2, "西", "AI·进阶", id="opp-west")
-                yield OpponentWidget(3, "北", "AI·进阶", id="opp-north")
+                yield OpponentWidget(2, "西", ai_label, id="opp-west")
+                yield OpponentWidget(3, "北", ai_label, id="opp-north")
             with Center():
                 yield TableWidget(id="table")
             # 底部：南
             with Horizontal(id="bottom-area"):
-                yield OpponentWidget(1, "南", "AI·进阶", id="opp-south")
+                yield OpponentWidget(1, "南", ai_label, id="opp-south")
             yield Static("hand", id="my-hand")
             yield Static("ready", id="status-bar")
         yield Footer()
@@ -293,9 +304,9 @@ class GameScreen(Screen):
     def action_hint(self) -> None:
         if self.state.finished or self.state.turn_index != self.human:
             return
-        from ...cli import _greedy_ai_select
-
-        p = _greedy_ai_select(self.state, self.human)
+        # 提示固定用 档 1 (进阶) —— 用户决策：避免新手档提示太弱 / 高档太怪
+        hint_strategy = make_strategy(1)
+        p = hint_strategy.select_pattern(self.state, self.human)
         if p is None:
             self.sub_title = "（无提示：过牌）"
         else:
@@ -327,7 +338,12 @@ class GameScreen(Screen):
                 and self.state.turn_index != self.human
                 and self.state.table
             ):
-                _ai_play(self.state, self.state.turn_index)
+                play_or_pass(
+                    self.state,
+                    self.state.turn_index,
+                    self._strategy,
+                    self._ai_rng,
+                )
                 self._refresh_all()
                 import time
                 time.sleep(0.05)
@@ -338,7 +354,12 @@ class GameScreen(Screen):
                 and not self.state.table
                 and self.state.turn_index != self.human
             ):
-                _ai_play(self.state, self.state.turn_index)
+                play_or_pass(
+                    self.state,
+                    self.state.turn_index,
+                    self._strategy,
+                    self._ai_rng,
+                )
                 self._refresh_all()
         except IllegalPlayError as e:
             self.sub_title = f"AI 错误：{e}"

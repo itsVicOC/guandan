@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/ai/strategies/__init__.py
+# hypothesis_version: 6.141.1
+
+['AdvancedStrategy', 'IntermediateStrategy', 'NoviceStrategy']

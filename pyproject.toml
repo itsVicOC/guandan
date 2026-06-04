@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guandan"
-version = "0.1.0"
+version = "0.3.0"
 description = "本地掼蛋游戏（终端 TUI），5 档 AI 含致敬戴长胜牌风"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -36,7 +36,8 @@ dev = [
 ]
 
 [project.scripts]
-guandan = "guandan.cli:main"
+guandan = "guandan.tui.app:run"
+guandan-cli = "guandan.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/ai/__init__.py
+# hypothesis_version: 6.141.1
+
+['AIStrategy', 'DIFFICULTY_NAMES', 'make_strategy', 'play_or_pass']

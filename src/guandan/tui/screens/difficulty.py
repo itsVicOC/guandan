@@ -82,8 +82,15 @@ class DifficultySelectScreen(Screen):
         self.app.pop_screen()
 
     def _start_game(self, difficulty: int) -> None:
+        from ...ai import AINotImplementedError, make_strategy
+        from .error import ErrorModal
         from .game import GameScreen
 
+        try:
+            make_strategy(difficulty)
+        except AINotImplementedError as e:
+            self.app.push_screen(ErrorModal(str(e), title="AI 档位未上线"))
+            return
         screen = GameScreen(
             difficulty=difficulty,
             level=self.previous_level,

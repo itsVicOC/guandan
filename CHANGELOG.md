@@ -1,5 +1,56 @@
 # 变更日志
 
+## [0.3.0] - 2026-06-04
+
+### M2 完成 - AI 策略包（档 0/1/2）
+
+#### 新增 `guandan.ai` 包
+- **抽象**：`AIStrategy` Protocol（`name` / `difficulty` / `select_pattern`）
+- **工厂**：`make_strategy(d: int) -> AIStrategy`，档 3/4 抛 `AINotImplementedError`
+- **共享层**：
+  - `greedy.select_min_winning(state, player)` —— 基础出牌选择（从 cli.py 抽出来、清理）
+  - `valuation.estimate_pattern_cost(...)` —— 手牌价值评估（拆对/拆王/wild 浪费/炸弹溢价/完牌奖励）
+  - `valuation.enumerate_candidate_plays(...)` —— top-N 候选出牌
+  - `memory.PlayedTracker` —— 记牌器（已出牌 → remaining/in_someone_hand/bomb_count）
+  - `stochastic.should_pass(...)` —— 概率过牌（注入 rng，测试可 seed）
+  - `play.play_or_pass(state, player, strategy, rng)` —— CLI + TUI 共享的动作
+
+#### 3 档策略
+- **NoviceStrategy（档 0 新手）**：纯贪心 + 概率过牌（base=0.10, scale=0.60）
+- **IntermediateStrategy（档 1 进阶）**：top-5 候选估值排序
+- **AdvancedStrategy（档 2 高手）**：估值 + 协作分（队友领先时主动过牌）+ 记牌（关键 rank 绝张加成）
+
+#### 引擎改动
+- 把私有的 `_partner(player)` 提升为公开的 `partner_of(player)`
+- 新增 `is_teammate(a, b)` 模块函数
+- 内部接风 / 过 A 判定改用新 API（行为不变）
+
+#### CLI 改动
+- 删除 `_greedy_ai_select` / `_ai_play`（移到 `guandan.ai`）
+- 新增 `--difficulty {0,1,2}` argparse 选项（默认 0）
+- AI 行动通过 `guandan.ai.play_or_pass` 统一
+- 遇 `AINotImplementedError` 友好退出（退出码 2）
+
+#### TUI 改动
+- `GameScreen.__init__` 注入 `self._strategy = make_strategy(difficulty)`，AI 牌桌标签动态显示档名
+- `action_hint` 固定用档 1（进阶）策略（M2 决策）
+- 难度选择屏档 3/4 弹 `ErrorModal`（"AI 档位未上线"）+ 不进入游戏
+- 新增 `tui/screens/error.py` 通用错误 Modal屏
+- App SUB_TITLE 升级为 `v0.3.0 · M2`
+
+#### 测试
+- 33 个新 AI 测试（`tests/test_ai.py`）覆盖：
+  - 工厂 + DIFFICULTY_NAMES + AINotImplementedError
+  - 贪心选择（leader / follower / 无法压 / 炸弹）
+  - 估值（完牌奖励 / 拆对惩罚 / wild 浪费 / 炸弹溢价）
+  - 候选枚举（leader / 排序）
+  - 记牌器（remaining / in_someone_hand / bomb_count）
+  - 概率过牌（leader 不过 / 无牌必过 / 桌顶越大越倾向过 / 确定性）
+  - 策略差异化（Advanced 协作分 / Intermediate 估值）
+  - `play_or_pass` 集成（leader 必出 / 协作分过牌）
+- 6 个新引擎助手测试（`tests/test_engine_helpers.py`）
+- **总计 147 个测试全过**（108 既有 + 39 新增）
+
 ## [0.2.0] - 2026-06-02
 
 ### M1 完成 - textual TUI 替换 CLI

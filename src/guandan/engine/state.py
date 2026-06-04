@@ -41,6 +41,19 @@ def team_of(player: int) -> int:
     return player % 2
 
 
+def partner_of(player: int) -> int:
+    """对家（队友）。座位按 东=0 南=1 西=2 北=3，对家 = (p+2) % 4。
+
+    例如：partner_of(0) == 2（西是东的对家），partner_of(1) == 3（北是南的对家）。
+    """
+    return (player + 2) % 4
+
+
+def is_teammate(a: int, b: int) -> bool:
+    """a 和 b 是否同队。"""
+    return team_of(a) == team_of(b)
+
+
 # 座位名
 SEAT_NAMES = ["东", "南", "西", "北"]
 
@@ -214,11 +227,6 @@ def claim(state: GameState, player: int, count: int) -> None:
 # ---- 内部工具 ----
 
 
-def _partner(player: int) -> int:
-    """对家（队友）。座位按 东=0 南=1 西=2 北=3，对家 = (p+2) % 4。"""
-    return (player + 2) % 4
-
-
 def _next_player(state: GameState, current: int) -> int:
     """下一个玩家（按逆时针），跳过已出完手牌的玩家。"""
     nxt = (current + 1) % 4
@@ -266,7 +274,7 @@ def _end_trick_or_jiefeng(state: GameState) -> None:
 
     if last_leader is not None and last_leader in state.finish_order:
         # 触发接风：对家成为新 leader
-        partner = _partner(last_leader)
+        partner = partner_of(last_leader)
         if partner not in state.finish_order:
             new_leader = partner
         else:
@@ -344,7 +352,7 @@ def _finish_game(state: GameState) -> None:
     guo_a_failed = False
     upstream_team = team_of(head)
     upstream_partner_rank = (
-        2 if (second == _partner(head)) else (3 if (third == _partner(head)) else 4)
+        2 if (second == partner_of(head)) else (3 if (third == partner_of(head)) else 4)
     )
     if state.level == RANK_A:
         if upstream_partner_rank in (2, 3):
