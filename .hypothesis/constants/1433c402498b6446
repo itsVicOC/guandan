@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/storage/history.py
+# hypothesis_version: 6.141.1
+
+['%Y-%m-%d_%H%M%S', '*.json', '1.0', 'ai_difficulties', 'drift', 'duration_seconds', 'events', 'file_path', 'final_levels', 'finish_order', 'game_id', 'guo_a', 'level', 'load_history_detail', 'load_history_list', 'metadata', 'played_at', 'player_rank', 'player_seat', 'r', 'result', 'save_history', 'seed', 'utf-8', 'version', 'w']

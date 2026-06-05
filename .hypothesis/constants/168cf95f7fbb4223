@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/storage/paths.py
+# hypothesis_version: 6.141.1
+
+['.guandan', 'get_history_dir', 'get_profile_path', 'get_savegame_path', 'get_storage_dir', 'history', 'profile.json', 'savegame.json']

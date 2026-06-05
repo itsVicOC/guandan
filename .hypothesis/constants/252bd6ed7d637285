@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/storage/serialization.py
+# hypothesis_version: 6.141.1
+
+['GameOver', 'ShuffleDeal', 'TributeReturned', 'TributeSent', 'TurnPlayed', '_type', 'card', 'cards', 'deserialize_events', 'dict_to_event', 'finish_order', 'hand_sizes', 'length', 'pattern', 'rank', 'serialize_events', 'suit', 'team_levels', 'type', 'wild_card']

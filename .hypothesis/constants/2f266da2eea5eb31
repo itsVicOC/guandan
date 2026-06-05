@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/storage/savegame.py
+# hypothesis_version: 6.141.1
+
+['1.0', 'ai_difficulties', 'delete_savegame', 'events', 'finish_order', 'finished', 'game_id', 'hand_sizes', 'has_savegame', 'level', 'load_game', 'metadata', 'player_seat', 'r', 'save_game', 'saved_at', 'seed', 'turn_index', 'utf-8', 'version', 'w']

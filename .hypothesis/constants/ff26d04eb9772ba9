@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/storage/profile.py
+# hypothesis_version: 6.141.1
+
+[0.0, '1.0', 'DEFAULT_PROFILE', 'by_difficulty', 'created_at', 'default_difficulty', 'games', 'load_profile', 'losses', 'player_name', 'preferences', 'r', 'save_profile', 'show_hints', 'statistics', 'total_games', 'update_statistics', 'updated_at', 'utf-8', 'version', 'w', 'win_rate', 'wins', '玩家']
