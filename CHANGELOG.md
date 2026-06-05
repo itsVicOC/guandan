@@ -1,5 +1,65 @@
 # 变更日志
 
+## [0.4.0] - 2026-06-05
+
+### M3 完成 - AI 档 3 职业级（IS-MCTS）
+
+#### 新增 `guandan.ai.mcts` 包
+- **算法**：IS-MCTS（Information Set Monte Carlo Tree Search，信息集蒙特卡洛树搜索）
+- **模块结构**：
+  - `node.py`：MCTSNode 数据结构（状态、访问次数、胜率、子节点）
+  - `determinize.py`：信息集确定化（根据已出牌推断其他玩家可能手牌）
+  - `search.py`：MCTS 主循环（Selection/Expansion/Simulation/Backpropagation）
+
+#### 档 3 职业策略（ProfessionalStrategy）
+- 使用 IS-MCTS 进行决策，能够前瞻多步
+- 算法流程：
+  1. **Determinization**：生成其他玩家可能的手牌分配
+  2. **MCTS 搜索**：在确定化的世界中运行树搜索
+  3. **UCB1 选择**：平衡探索与利用
+  4. **快速 Rollout**：用档 1 策略模拟到游戏结束
+  5. **回传更新**：更新节点访问次数和胜率
+- 参数配置：
+  - 迭代次数：100（可调，平衡速度和质量）
+  - UCB1 常数：1.41（sqrt(2)）
+  - 候选动作数：5（剪枝）
+  - Rollout 策略：档 1（进阶）
+
+#### 策略工厂更新
+- `make_strategy(3)` 返回 ProfessionalStrategy 实例
+- 档 4（戴长胜）仍抛 `AINotImplementedError`（M4 待实现）
+
+#### 测试
+- 新增 10 个 MCTS 测试（`tests/test_mcts.py`）：
+  - 确定化：手牌数守恒、玩家手牌不变、随机性
+  - UCB1：未访问节点优先、探索奖励
+  - MCTS 搜索：正常运行、访问次数更新
+  - 职业策略：返回有效牌型、合法出牌、属性正确
+- **总计 161 个测试全过**（151 既有 + 10 新增）
+
+#### 性能
+- 每步决策时间：约 2-5 秒（100 迭代）
+- 算法复杂度：O(iterations × depth × branching_factor)
+- 剪枝策略：只考虑 top-5 候选动作
+
+#### 文档
+- 更新 README.md：M3 完成，档 3 职业已实现
+- 新增 ADR-0002：IS-MCTS 算法选型
+
+## [0.3.2] - 2026-06-05
+
+### 改进 - 项目配置和文档完善
+
+- 修复 ruff 配置：忽略中文全角符号警告（RUF002/RUF003）
+- 重新安装开发依赖：mypy 1.19.1 现已可用
+- 创建完整规则文档（docs/rules.md）：包含游戏概述、牌型说明、升级规则、特殊规则等
+- 创建 AI profiles 目录（src/guandan/ai/profiles/）：为 M4 戴长胜风格化配置预留
+
+验证：
+- 151 个测试全部通过
+- ruff 检查无中文全角符号误报
+- pyproject.toml 配置与实际文件结构一致
+
 ## [0.3.1] - 2026-06-04
 
 ### Hotfix - 过牌锁住规则（spec 规则 3）

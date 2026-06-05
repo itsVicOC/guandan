@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/ai/mcts/__init__.py
+# hypothesis_version: 6.141.1
+
+[1.41, 100, 'MCTSNode', 'MCTS_CONFIG', 'determinize', 'iterations', 'max_depth', 'mcts_search', 'rollout_strategy', 'top_actions', 'ucb_c']

@@ -81,12 +81,15 @@ class TestFactory:
         assert make_strategy(2).difficulty == 2
 
     def test_make_strategy_3_4_raises(self) -> None:
-        with pytest.raises(AINotImplementedError) as exc_info:
-            make_strategy(3)
-        assert "M3" in str(exc_info.value)
+        # 档 3 已实现（M3）
+        s3 = make_strategy(3)
+        assert s3.difficulty == 3
+        assert s3.name == "职业"
+
+        # 档 4 未实现（M4）
         with pytest.raises(AINotImplementedError) as exc_info:
             make_strategy(4)
-        assert "M3" in str(exc_info.value) or "M4" in str(exc_info.value)
+        assert "M4" in str(exc_info.value)
 
     def test_make_strategy_negative_raises(self) -> None:
         with pytest.raises(AINotImplementedError):

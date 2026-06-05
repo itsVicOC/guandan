@@ -38,11 +38,12 @@ class AINotImplementedError(NotImplementedError):
     """请求的 AI 档位尚未实现。"""
 
 
-# 档位 → 策略类。M2 只支持 0/1/2。
+# 档位 → 策略类。M2 支持 0/1/2，M3 支持 3。
 _STRATEGIES: Dict[int, str] = {
     0: "guandan.ai.strategies.novice.NoviceStrategy",
     1: "guandan.ai.strategies.intermediate.IntermediateStrategy",
     2: "guandan.ai.strategies.advanced.AdvancedStrategy",
+    3: "guandan.ai.strategies.professional.ProfessionalStrategy",
 }
 
 
@@ -57,11 +58,11 @@ DIFFICULTY_NAMES: Dict[int, str] = {
 
 
 def make_strategy(difficulty: int) -> AIStrategy:
-    """档位 → 策略实例。档 3/4 抛 `AINotImplementedError`。"""
+    """档位 → 策略实例。档 4 抛 `AINotImplementedError`。"""
     if difficulty not in _STRATEGIES:
         raise AINotImplementedError(
             f"AI 档 {difficulty} ({DIFFICULTY_NAMES.get(difficulty, '?')}) "
-            f"计划在 M3/M4 上线"
+            f"计划在 M4 上线"
         )
     path = _STRATEGIES[difficulty]
     mod_name, _, cls_name = path.rpartition(".")
