@@ -1,8 +1,9 @@
-"""牌桌屏（M1 核心，M2 接入 AI 包）。"""
+"""牌桌屏（M1 核心，M2 接入 AI 包，M5 存储集成）。"""
 from __future__ import annotations
 
 import asyncio
 import random
+import time
 from typing import List, Optional
 
 from rich.text import Text
@@ -21,6 +22,14 @@ from ...engine.state import (
     pass_turn,
     play_pattern,
     team_of,
+)
+from ...storage import (
+    delete_savegame,
+    load_profile,
+    save_game,
+    save_history,
+    save_profile,
+    update_statistics,
 )
 
 
@@ -151,6 +160,11 @@ class GameScreen(Screen):
         self._hand_cards: List[Card] = []
         self._hand_selected = set()
         self._hand_cursor = 0
+        # M5 存储：追踪对局元数据
+        self._game_id = f"game_{int(time.time())}"
+        self._start_time = time.time()
+        self._seed = random.randint(1, 10000)
+        self._game_saved = False  # 防止重复保存
 
     def compose(self) -> None:
         ai_label = f"AI·{self._strategy.name}"
@@ -170,10 +184,8 @@ class GameScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        import random
-
         self.state = make_initial_state(
-            level=self.level, first_player=self.human, seed=random.randint(1, 10000)
+            level=self.level, first_player=self.human, seed=self._seed
         )
         self._refresh_all()
         self.set_timer(0.3, self._maybe_ai_turn)
@@ -325,11 +337,30 @@ class GameScreen(Screen):
         self.app.push_screen(RuleScreen())
 
     def action_back(self) -> None:
+        # M5: 退出时保存存档（如果游戏未完成）
+        if not self.state.finished and not self._game_saved:
+            try:
+                ai_difficulties = [
+                    None if i == self.human else self.difficulty for i in range(4)
+                ]
+                save_game(
+                    state=self.state,
+                    game_id=self._game_id,
+                    player_seat=self.human,
+                    ai_difficulties=ai_difficulties,
+                    seed=self._seed,
+                )
+            except Exception:
+                # 保存失败不影响退出
+                pass
         self.app.pop_screen()
 
     def _maybe_ai_turn(self) -> None:
         if self.state.finished:
             self._refresh_all()
+            # M5: 游戏结束，保存历史和统计
+            if not self._game_saved:
+                self._save_game_result()
             return
         try:
             # 阶段 1：trick 进行中（table 有牌），让 AIs 压
@@ -364,3 +395,44 @@ class GameScreen(Screen):
         except IllegalPlayError as e:
             self.sub_title = f"AI 错误：{e}"
         self._refresh_all()
+        # 检查游戏是否刚结束
+        if self.state.finished and not self._game_saved:
+            self._save_game_result()
+
+    def _save_game_result(self) -> None:
+        """保存游戏结果（历史和统计）。"""
+        if self._game_saved:
+            return
+        self._game_saved = True
+
+        try:
+            # 计算对局时长
+            duration = int(time.time() - self._start_time)
+
+            # AI 难度列表
+            ai_difficulties = [
+                None if i == self.human else self.difficulty for i in range(4)
+            ]
+
+            # 保存历史记录
+            save_history(
+                state=self.state,
+                game_id=self._game_id,
+                player_seat=self.human,
+                ai_difficulties=ai_difficulties,
+                seed=self._seed,
+                duration_seconds=duration,
+            )
+
+            # 更新统计
+            player_rank = self.state.finish_order.index(self.human) + 1
+            profile = load_profile()
+            update_statistics(profile, player_rank=player_rank, difficulty=self.difficulty)
+            save_profile(profile)
+
+            # 删除存档（如果存在）
+            delete_savegame()
+
+        except Exception as e:
+            # 保存失败不影响游戏，但记录错误
+            self.sub_title = f"保存失败：{e}"
