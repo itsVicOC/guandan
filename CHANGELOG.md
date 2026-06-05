@@ -1,5 +1,50 @@
 # 变更日志
 
+## [0.5.0] - 2026-06-05
+
+### M4 完成 - AI 档 4 戴长胜（风格化）
+
+#### 新增 Profile 系统
+- **风格化配置**：通过 JSON 文件定义 AI 风格参数
+- **配置文件**：`src/guandan/ai/profiles/dachangsheng.json`
+  - MCTS 参数：迭代次数 150、UCB 常数 1.41、Rollout 策略档 2
+  - 风格参数：炸弹吝啬 0.80、控场优先 0.90、配合意识 0.95、漂牌追求 0.70
+
+#### 档 4 戴长胜策略（DaiChangshengStrategy）
+- 继承档 3 职业策略（IS-MCTS）
+- 加载 profile 定义风格参数
+- 实现风格化决策：
+  1. **炸弹吝啬**：不轻易出炸弹，保留控场能力（bomb_threshold=0.80）
+  2. **控场节奏**：优先控制出牌节奏
+  3. **配合意识**：队友领先时高概率让牌（teammate_awareness=0.95）
+  4. **漂牌决策**：主动追求5张+级牌炸弹的最后一手（drift_bonus=0.70）
+
+#### Profile 加载器
+- **模块**：`src/guandan/ai/profiles/__init__.py`
+- **功能**：
+  - `load_profile(name)` - 从 JSON 加载配置
+  - 验证配置格式
+  - 错误处理（文件不存在、格式错误）
+
+#### 策略工厂更新
+- `make_strategy(4)` 返回 DaiChangshengStrategy 实例
+- 所有 5 档 AI 已实现（0/1/2/3/4）
+
+#### 测试
+- 新增 11 个戴长胜测试（`tests/test_dachangsheng.py`）：
+  - Profile 加载：成功加载、文件不存在、Schema 验证
+  - 策略初始化：属性正确、使用 profile 参数
+  - 风格化行为：炸弹识别、队友判断、对手手牌统计
+- **总计 172 个测试全过**（161 既有 + 11 新增）
+
+#### 性能
+- 每步决策时间：约 3-8 秒（150 迭代）
+- 相比档 3 更强（更多迭代 + 风格化）
+
+#### 文档
+- 更新 README.md：M4 完成，所有档位已实现
+- 更新 CHANGELOG.md：v0.5.0 条目
+
 ## [0.4.0] - 2026-06-05
 
 ### M3 完成 - AI 档 3 职业级（IS-MCTS）

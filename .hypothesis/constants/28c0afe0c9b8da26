@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/ai/strategies/dachangsheng.py
+# hypothesis_version: 6.141.1
+
+[0.0, 1.0, 1.41, 150, 'bomb_threshold', 'dachangsheng', 'iterations', 'mcts', 'rollout_strategy', 'style', 'teammate_awareness', 'top_actions', 'ucb_c', '戴长胜']

@@ -1,0 +1,4 @@
+# file: /Users/itsvic/projects/guandan/src/guandan/ai/profiles/__init__.py
+# hypothesis_version: 6.141.1
+
+['.json', 'description', 'difficulty', 'iterations', 'load_profile', 'mcts', 'name', 'r', 'style', 'utf-8']

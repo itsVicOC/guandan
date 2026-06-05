@@ -86,10 +86,14 @@ class TestFactory:
         assert s3.difficulty == 3
         assert s3.name == "职业"
 
-        # 档 4 未实现（M4）
-        with pytest.raises(AINotImplementedError) as exc_info:
-            make_strategy(4)
-        assert "M4" in str(exc_info.value)
+        # 档 4 已实现（M4）
+        s4 = make_strategy(4)
+        assert s4.difficulty == 4
+        assert s4.name == "戴长胜"
+
+        # 档 5+ 未实现
+        with pytest.raises(AINotImplementedError):
+            make_strategy(5)
 
     def test_make_strategy_negative_raises(self) -> None:
         with pytest.raises(AINotImplementedError):
