@@ -6,6 +6,7 @@ from textual.containers import Center, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
+from ...engine.state import SEAT_NAMES
 from ...storage import has_savegame, load_game, restore_game_state
 
 
@@ -19,21 +20,36 @@ class LoadSaveScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
 
-        if not has_savegame():
+        try:
+            has_save = has_savegame()
+            savegame = load_game() if has_save else None
+        except OSError as exc:
+            with Center(), Vertical(id="load-box"):
+                yield Static("💾 断点续局", id="load-title")
+                yield Static("无法读取存档", id="load-error")
+                yield Static(str(exc), id="load-hint")
+                yield Button("← 返回", id="btn-back")
+            yield Footer()
+            return
+
+        if not has_save:
             with Center(), Vertical(id="load-box"):
                 yield Static("💾 断点续局", id="load-title")
                 yield Static("暂无存档", id="load-empty")
                 yield Static("退出未完成的对局时会自动保存", id="load-hint")
                 yield Button("← 返回", id="btn-back")
         else:
-            savegame = load_game()
             if savegame:
                 with Center(), Vertical(id="load-box"):
                     yield Static("💾 断点续局", id="load-title")
                     yield Static(f"存档时间：{savegame['saved_at'][:19]}")
-                    yield Static(f"级牌：{savegame['metadata']['level']}")
+                    metadata = savegame["metadata"]
+                    snapshot = savegame["current_state_snapshot"]
+                    yield Static(f"级牌：{metadata['level']} · 玩家：{SEAT_NAMES[metadata.get('player_seat', 0)]}")
+                    yield Static(f"当前行动：{SEAT_NAMES[snapshot['turn_index']]}")
+                    yield Static(f"AI 难度：{self._difficulty_text(metadata.get('ai_difficulties', []))}")
                     yield Static(f"已进行：{len(savegame['events'])} 步")
-                    yield Static(f"手牌剩余：{savegame['current_state_snapshot']['hand_sizes']}")
+                    yield Static(f"手牌剩余：{self._hand_sizes_text(snapshot['hand_sizes'])}")
                     yield Button("继续游戏", id="btn-continue")
                     yield Button("删除存档", id="btn-delete", variant="error")
                     yield Button("← 返回", id="btn-back")
@@ -81,3 +97,10 @@ class LoadSaveScreen(Screen):
 
     def action_back(self) -> None:
         self.app.pop_screen()
+
+    def _hand_sizes_text(self, sizes: list[int]) -> str:
+        return " / ".join(f"{SEAT_NAMES[i]} {size}" for i, size in enumerate(sizes))
+
+    def _difficulty_text(self, ai_difficulties: list[object]) -> str:
+        difficulty = next((d for d in ai_difficulties if d is not None), None)
+        return str(difficulty) if difficulty is not None else "-"

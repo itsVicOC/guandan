@@ -1,4 +1,4 @@
-"""牌桌屏（M1 核心，M2 接入 AI 包，M5 存储集成）。"""
+"""牌桌屏（M1 核心，M2 接入 AI 包，M5 存储集成，M6 TUI 优化）。"""
 from __future__ import annotations
 
 import random
@@ -6,7 +6,7 @@ import time
 from typing import List, Optional
 
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal, Vertical
+from textual.containers import Grid, Vertical
 from textual.screen import Screen
 from textual.widgets import Footer, Header, Static
 
@@ -71,8 +71,33 @@ class OpponentWidget(Static):
         self.update(text)
 
 
+class PlayerStatusWidget(Static):
+    """显示玩家自己的状态。"""
+
+    DEFAULT_CSS = """
+    PlayerStatusWidget {
+        width: 1fr;
+        height: 3;
+        content-align: center middle;
+        border: round $accent;
+    }
+    """
+
+    def update_state(self, seat_name: str, hand_size: int, is_turn: bool) -> None:
+        marker = " [bold yellow]←[/bold yellow]" if is_turn else ""
+        self.update(f"[bold][{seat_name}][/bold] [dim]你[/dim]\n{hand_size:2d} 张{marker}")
+
+
 class TableWidget(Static):
     """中央出牌区。"""
+
+    DEFAULT_CSS = """
+    TableWidget {
+        height: 9;
+        border: round $primary;
+        padding: 0 1;
+    }
+    """
 
     def __init__(self, **kwargs) -> None:
         super().__init__("（空）", **kwargs)
@@ -106,11 +131,14 @@ class TableWidget(Static):
         if not self._table_patterns and not self._passed:
             self.update("（空）")
             return
-        lines = []
-        # 出牌
-        for p, who in zip(self._table_patterns, self._players):
-            lines.append(f"  [bold]{SEAT_NAMES[who]}[/bold]: {self._pattern_str(p)}")
-        # 过牌（灰色显示）
+        lines = ["[bold]当前轮[/bold]"]
+        if self._table_patterns:
+            top = self._table_patterns[-1]
+            top_player = self._players[-1] if self._players else 0
+            lines.append(f"最大：{SEAT_NAMES[top_player]} · {self._pattern_str(top)}")
+            recent = list(zip(self._table_patterns, self._players))[-5:]
+            for p, who in recent:
+                lines.append(f"  {SEAT_NAMES[who]}: {self._pattern_str(p)}")
         for who in self._passed:
             lines.append(f"  [dim]{SEAT_NAMES[who]}: 过牌[/dim]")
         self.update("\n".join(lines))
@@ -124,6 +152,35 @@ class HandWidget(Static):
 
 class GameScreen(Screen):
     """牌桌屏。"""
+
+    DEFAULT_CSS = """
+    #table-layout {
+        height: auto;
+        grid-size: 3 3;
+        grid-columns: 1fr 2fr 1fr;
+        grid-rows: 3 9 3;
+        grid-gutter: 1 1;
+        padding: 0 1;
+    }
+    #opp-north {
+        column-span: 3;
+    }
+    #status-bar {
+        height: 3;
+        padding: 0 1;
+        border: round $secondary;
+    }
+    #my-hand {
+        min-height: 6;
+        padding: 0 1;
+        border: round $accent;
+    }
+    #action-log {
+        height: 3;
+        padding: 0 1;
+        color: $text-muted;
+    }
+    """
 
     BINDINGS = [
         ("left", "cursor_left", "←"),
@@ -169,6 +226,7 @@ class GameScreen(Screen):
         self._hand_cards: List[Card] = []
         self._hand_selected: set[Card] = set()
         self._hand_cursor = 0
+        self._last_action = "准备开始"
         # M5 存储：追踪对局元数据
         self._game_id = game_id or f"game_{int(time.time())}"
         self._start_time = time.time()
@@ -179,17 +237,17 @@ class GameScreen(Screen):
         ai_label = f"AI·{self._strategy.name}"
         yield Header()
         with Vertical():
-            # 顶部对手区：西 + 北，Grid 确保两者都可见
-            with Horizontal(id="top-opponents"):
-                yield OpponentWidget(2, "西", ai_label, id="opp-west")
+            yield Static("status", id="status-bar")
+            with Grid(id="table-layout"):
                 yield OpponentWidget(3, "北", ai_label, id="opp-north")
-            with Center():
+                yield OpponentWidget(2, "西", ai_label, id="opp-west")
                 yield TableWidget(id="table")
-            # 底部：南
-            with Horizontal(id="bottom-area"):
-                yield OpponentWidget(1, "南", ai_label, id="opp-south")
+                yield OpponentWidget(1, SEAT_NAMES[1], ai_label, id="opp-next")
+                yield Static("")
+                yield PlayerStatusWidget("", id="player-south")
+                yield Static("")
             yield Static("hand", id="my-hand")
-            yield Static("ready", id="status-bar")
+            yield Static("ready", id="action-log")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -208,13 +266,18 @@ class GameScreen(Screen):
 
     def _refresh_all(self) -> None:
         s = self._state()
-        for p, wid in [(1, "opp-south"), (2, "opp-west"), (3, "opp-north")]:
+        for p, wid in [(1, "opp-next"), (2, "opp-west"), (3, "opp-north")]:
             w = self.query_one(f"#{wid}", OpponentWidget)
             w.update_state(
                 hand_size=len(s.hands[p]),
                 finished=p in s.finish_order,
                 is_turn=s.turn_index == p,
             )
+        self.query_one("#player-south", PlayerStatusWidget).update_state(
+            SEAT_NAMES[self.human],
+            len(s.hands[self.human]),
+            s.turn_index == self.human,
+        )
         # 更新玩家手牌（在自己管理的状态 + 外部渲染）
         self._hand_cards = sort_cards(s.hands[self.human])
         if self._hand_cursor >= len(self._hand_cards):
@@ -238,6 +301,21 @@ class GameScreen(Screen):
             self.sub_title = f"轮到你（{turn_name}）· {hand_size} 张"
         else:
             self.sub_title = f"等待 {turn_name} 出牌中..."
+        self._render_status()
+        self.query_one("#action-log", Static).update(self._last_action)
+
+    def _render_status(self) -> None:
+        s = self._state()
+        wild = s.wild_card.rich if s.wild_card is not None else "无"
+        leader = SEAT_NAMES[s.leader] if s.leader is not None else "-"
+        finished = " > ".join(SEAT_NAMES[p] for p in s.finish_order) or "-"
+        levels = getattr(s, "team_levels_final", [s.level, s.level])
+        text = (
+            f"级牌 {s.level} · 逢人配 {wild} · Leader {leader} · "
+            f"当前 {SEAT_NAMES[s.turn_index]} · 难度 {self._strategy.name}\n"
+            f"队伍级数 东西:{levels[0]} 南北:{levels[1]} · 名次 {finished}"
+        )
+        self.query_one("#status-bar", Static).update(text)
 
     def _do_render_hand(self) -> None:
         if not self._hand_cards:
@@ -250,8 +328,12 @@ class GameScreen(Screen):
                 marker = "[bold yellow]▶ [/bold yellow]" if c not in self._hand_selected else "[bold yellow]★ [/bold yellow]"
             elif c in self._hand_selected:
                 marker = "[green]■ [/green]"
-            parts.append(f"{marker}{c.rich}")
-        self.query_one("#my-hand", Static).update("  ".join(parts))
+            card_text = c.rich
+            if self.state is not None and c == self.state.wild_card:
+                card_text = f"[reverse]{card_text}[/reverse]"
+            parts.append(f"{marker}{card_text}")
+        rows = ["  ".join(parts[i : i + 9]) for i in range(0, len(parts), 9)]
+        self.query_one("#my-hand", Static).update("\n".join(rows))
 
     def _last_player_of(self, p: Pattern) -> int:
         s = self._state()
@@ -310,20 +392,27 @@ class GameScreen(Screen):
         ]
         if not sel:
             self.sub_title = "未选牌"
+            self._last_action = "未选牌"
+            self._refresh_all()
             return
         from ...engine.rules.patterns import find_complete_pattern
 
         p = find_complete_pattern(sel, s.wild_card)
         if p is None:
             self.sub_title = "这组牌不是合法牌型"
+            self._last_action = "这组牌不是合法牌型"
+            self._refresh_all()
             return
         try:
             play_pattern(s, self.human, p)
+            self._last_action = f"你出牌：{p.type.value} · {' '.join(c.rich for c in p.cards)}"
             self._hand_selected.clear()
             self._refresh_all()
             self.set_timer(0.3, self._maybe_ai_turn)
         except IllegalPlayError as e:
             self.sub_title = f"非法：{e}"
+            self._last_action = f"非法：{e}"
+            self._refresh_all()
 
     def action_pass(self) -> None:
         s = self._state()
@@ -331,10 +420,13 @@ class GameScreen(Screen):
             return
         try:
             pass_turn(s, self.human)
+            self._last_action = "你选择过牌"
             self._refresh_all()
             self.set_timer(0.3, self._maybe_ai_turn)
         except IllegalPlayError as e:
             self.sub_title = f"非法：{e}"
+            self._last_action = f"非法：{e}"
+            self._refresh_all()
 
     def action_hint(self) -> None:
         s = self._state()
@@ -345,9 +437,12 @@ class GameScreen(Screen):
         p = hint_strategy.select_pattern(s, self.human)
         if p is None:
             self.sub_title = "（无提示：过牌）"
+            self._last_action = "提示：建议过牌"
         else:
             cards_str = " ".join(c.rich for c in p.cards)
             self.sub_title = f"💡 提示：{p.type.value} [{cards_str}]"
+            self._last_action = f"提示：{p.type.value} · {cards_str}"
+        self._refresh_all()
 
     def action_claim(self) -> None:
         from ...engine.state import claim
@@ -355,6 +450,8 @@ class GameScreen(Screen):
         s = self._state()
         claim(s, self.human, len(s.hands[self.human]))
         self.sub_title = f"📢 你报了 {len(s.hands[self.human])} 张"
+        self._last_action = f"你报牌：{len(s.hands[self.human])} 张"
+        self._refresh_all()
 
     def action_rules(self) -> None:
         from .rule import RuleScreen
@@ -396,12 +493,17 @@ class GameScreen(Screen):
                 and s.turn_index != self.human
                 and s.table
             ):
+                self._last_action = f"{SEAT_NAMES[s.turn_index]} 思考中..."
+                self._refresh_all()
+                player_before = s.turn_index
+                table_len_before = len(s.table)
                 play_or_pass(
                     s,
                     s.turn_index,
                     self._strategy,
                     self._ai_rng,
                 )
+                self._last_action = self._describe_ai_action(s, player_before, table_len_before)
                 self._refresh_all()
                 import time
                 time.sleep(0.05)
@@ -412,12 +514,17 @@ class GameScreen(Screen):
                 and not s.table
                 and s.turn_index != self.human
             ):
+                self._last_action = f"{SEAT_NAMES[s.turn_index]} 思考中..."
+                self._refresh_all()
+                player_before = s.turn_index
+                table_len_before = len(s.table)
                 play_or_pass(
                     s,
                     s.turn_index,
                     self._strategy,
                     self._ai_rng,
                 )
+                self._last_action = self._describe_ai_action(s, player_before, table_len_before)
                 self._refresh_all()
         except IllegalPlayError as e:
             self.sub_title = f"AI 错误：{e}"
@@ -425,6 +532,13 @@ class GameScreen(Screen):
         # 检查游戏是否刚结束
         if s.finished and not self._game_saved:
             self._save_game_result()
+
+    def _describe_ai_action(self, state: GameState, player: int, table_len_before: int) -> str:
+        if len(state.table) > table_len_before:
+            pattern = state.table[-1]
+            cards = " ".join(c.rich for c in pattern.cards)
+            return f"{SEAT_NAMES[player]} 出牌：{pattern.type.value} · {cards}"
+        return f"{SEAT_NAMES[player]} 过牌"
 
     def _save_game_result(self) -> None:
         """保存游戏结果（历史和统计）。"""
