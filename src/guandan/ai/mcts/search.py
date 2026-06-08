@@ -139,7 +139,12 @@ def _expand(node: MCTSNode, max_actions: int) -> MCTSNode:
     return child
 
 
-def _simulate(node: MCTSNode, root_player: int, rollout_strategy_level: int) -> float:
+def _simulate(
+    node: MCTSNode,
+    root_player: int,
+    rollout_strategy_level: int,
+    max_turns: int,
+) -> float:
     """Simulation: 从 node 开始快速玩到游戏结束（rollout）。
 
     使用快速策略（如档1）玩到结束，评估结果。
@@ -148,6 +153,7 @@ def _simulate(node: MCTSNode, root_player: int, rollout_strategy_level: int) -> 
         node: 起始节点
         root_player: 根玩家（用于评估结果）
         rollout_strategy_level: rollout 策略档位（默认1）
+        max_turns: 单次 rollout 最多模拟多少手
 
     Returns:
         从 root_player 视角的胜率（0.0 - 1.0）
@@ -158,7 +164,6 @@ def _simulate(node: MCTSNode, root_player: int, rollout_strategy_level: int) -> 
     rollout_strategy = make_strategy(rollout_strategy_level)
 
     # 用 rollout 策略玩到结束
-    max_turns = 200  # 防止死循环
     turn_count = 0
 
     while not sim_state.finished and turn_count < max_turns:
@@ -232,6 +237,7 @@ def mcts_search(
     ucb_c: float = 1.41,
     max_actions: int = 5,
     rollout_strategy: int = 1,
+    rollout_max_turns: int = 80,
 ) -> Optional[MCTSNode]:
     """MCTS 主循环。
 
@@ -241,6 +247,7 @@ def mcts_search(
         ucb_c: UCB1 探索常数
         max_actions: 每个节点考虑的最大候选动作数
         rollout_strategy: rollout 策略档位
+        rollout_max_turns: 单次 rollout 最多模拟多少手
 
     Returns:
         最佳子节点（访问次数最多）
@@ -256,7 +263,7 @@ def mcts_search(
             node = _expand(node, max_actions)
 
         # 3. Simulation
-        result = _simulate(node, root_player, rollout_strategy)
+        result = _simulate(node, root_player, rollout_strategy, rollout_max_turns)
 
         # 4. Backpropagation
         _backpropagate(node, result)

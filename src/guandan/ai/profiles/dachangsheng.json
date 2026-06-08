@@ -3,10 +3,12 @@
   "difficulty": 4,
   "description": "炸弹吝啬、控场节奏、配合意识、漂牌决策",
   "mcts": {
-    "iterations": 150,
+    "iterations": 40,
     "ucb_c": 1.41,
     "rollout_strategy": 2,
-    "top_actions": 5
+    "top_actions": 4,
+    "hand_threshold": 10,
+    "rollout_max_turns": 80
   },
   "style": {
     "bomb_threshold": 0.80,

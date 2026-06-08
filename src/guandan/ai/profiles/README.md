@@ -19,10 +19,12 @@
   "name": "戴长胜",
   "difficulty": 4,
   "mcts": {
-    "iterations": 150,
+    "iterations": 40,
     "ucb_c": 1.41,
     "rollout_strategy": 2,
-    "top_actions": 5
+    "top_actions": 4,
+    "hand_threshold": 10,
+    "rollout_max_turns": 80
   },
   "style": {
     "bomb_threshold": 0.8,
@@ -40,7 +42,7 @@
 - **M2 完成**：档 0/1/2 已实现（新手/进阶/高手）
 - **M3 完成**：档 3（职业，IS-MCTS）
 - **M4 完成**：档 4（戴长胜，风格化配置）
-- **M6 方向**：继续调优控场节奏、速度和终局策略
+- **M6 调优中**：已加入 MCTS 性能闸门，继续调优控场节奏、速度和终局策略
 
 ## 使用方式
 

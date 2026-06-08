@@ -20,6 +20,8 @@ M3 实现 IS-MCTS（Information Set Monte Carlo Tree Search）用于档 3 职业
 - ucb_c: UCB1 探索常数（默认 1.41）
 - max_depth: 最大搜索深度（默认 10）
 - rollout_strategy: Simulation 策略档位（默认 1）
+- rollout_max_turns: 单次 rollout 最大手数（默认 80）
+- hand_threshold: 手牌数不大于该值时启用 MCTS（默认 10）
 """
 from __future__ import annotations
 
@@ -41,4 +43,6 @@ MCTS_CONFIG = {
     "max_depth": 10,
     "rollout_strategy": 1,
     "top_actions": 5,
+    "rollout_max_turns": 80,
+    "hand_threshold": 10,
 }

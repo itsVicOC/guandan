@@ -18,6 +18,8 @@ from ..mcts import MCTS_CONFIG
 from ..mcts.determinize import determinize
 from ..mcts.node import MCTSNode
 from ..mcts.search import mcts_search
+from ..valuation import enumerate_candidate_plays
+from .advanced import AdvancedStrategy
 
 
 class ProfessionalStrategy:
@@ -33,6 +35,8 @@ class ProfessionalStrategy:
         max_actions: int = 5,
         rollout_strategy: int = 1,
         rng: Optional[random.Random] = None,
+        mcts_hand_threshold: int = 10,
+        rollout_max_turns: int = 80,
     ):
         """初始化职业策略。
 
@@ -42,12 +46,17 @@ class ProfessionalStrategy:
             max_actions: 每个节点考虑的最大候选动作数（默认 5）
             rollout_strategy: rollout 策略档位（默认 1）
             rng: 随机数生成器（测试时可 seed）
+            mcts_hand_threshold: 手牌数不大于该值时启用 MCTS，前中期用快速策略
+            rollout_max_turns: 单次 MCTS rollout 最多模拟多少手
         """
         self.iterations = iterations
         self.ucb_c = ucb_c
         self.max_actions = max_actions
         self.rollout_strategy = rollout_strategy
         self.rng = rng if rng is not None else random.Random()
+        self.mcts_hand_threshold = mcts_hand_threshold
+        self.rollout_max_turns = rollout_max_turns
+        self._fast_strategy = AdvancedStrategy()
 
     def select_pattern(
         self, state: GameState, player: int
@@ -66,6 +75,13 @@ class ProfessionalStrategy:
         Returns:
             最佳牌型（None 表示过牌）
         """
+        finish = self._finish_now(state, player)
+        if finish is not None:
+            return finish
+
+        if not self._should_use_mcts(state, player):
+            return self._fast_strategy.select_pattern(state, player)
+
         # 1. 确定化：生成其他玩家的可能手牌
         determinized_state = determinize(state, player, self.rng)
 
@@ -82,6 +98,7 @@ class ProfessionalStrategy:
             ucb_c=self.ucb_c,
             max_actions=self.max_actions,
             rollout_strategy=self.rollout_strategy,
+            rollout_max_turns=self.rollout_max_turns,
         )
 
         # 4. 返回最佳行动
@@ -89,3 +106,25 @@ class ProfessionalStrategy:
             return None
 
         return best_child.action
+
+    def _finish_now(self, state: GameState, player: int) -> Optional[Pattern]:
+        """如果有合法牌型能一次出完当前手牌，直接返回。"""
+        hand_size = state.hand_size(player)
+        if hand_size == 0:
+            return None
+        for candidate in enumerate_candidate_plays(
+            state, player, max_candidates=max(self.max_actions, 8)
+        ):
+            if len(candidate.cards) == hand_size:
+                return candidate
+        return None
+
+    def _should_use_mcts(self, state: GameState, player: int) -> bool:
+        """M6 性能闸门：只在中后期或关键局面启用 MCTS。"""
+        if state.hand_size(player) <= self.mcts_hand_threshold:
+            return True
+        opponent_min = min(
+            (state.hand_size(p) for p in range(4) if p != player and state.hand_size(p) > 0),
+            default=0,
+        )
+        return 0 < opponent_min <= self.mcts_hand_threshold

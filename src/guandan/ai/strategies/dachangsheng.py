@@ -53,6 +53,8 @@ class DaiChangshengStrategy(ProfessionalStrategy):
             max_actions=mcts_config.get("top_actions", 5),
             rollout_strategy=mcts_config.get("rollout_strategy", 2),
             rng=rng,
+            mcts_hand_threshold=mcts_config.get("hand_threshold", 10),
+            rollout_max_turns=mcts_config.get("rollout_max_turns", 80),
         )
 
     def select_pattern(

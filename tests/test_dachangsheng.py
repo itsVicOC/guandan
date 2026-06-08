@@ -117,7 +117,8 @@ class TestDaiChangshengStrategy:
 
         assert strategy.name == "戴长胜"
         assert strategy.difficulty == 4
-        assert strategy.iterations >= 100  # 应该比档3多
+        assert strategy.iterations > 0
+        assert strategy.mcts_hand_threshold > 0
 
     def test_strategy_uses_profile_iterations(self):
         """策略使用 profile 中的迭代次数。"""
@@ -125,6 +126,9 @@ class TestDaiChangshengStrategy:
         profile = load_profile("dachangsheng")
 
         assert strategy.iterations == profile["mcts"]["iterations"]
+        assert strategy.max_actions == profile["mcts"]["top_actions"]
+        assert strategy.mcts_hand_threshold == profile["mcts"]["hand_threshold"]
+        assert strategy.rollout_max_turns == profile["mcts"]["rollout_max_turns"]
 
 
 class TestStyleBehavior:

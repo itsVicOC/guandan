@@ -207,3 +207,33 @@ class TestProfessionalStrategy:
 
         assert strategy.name == "职业"
         assert strategy.difficulty == 3
+
+    def test_professional_uses_fast_strategy_before_endgame(self, monkeypatch):
+        """M6：前中期大手牌不跑 MCTS，避免单步过慢。"""
+        state = _make_test_state()
+        strategy = ProfessionalStrategy(iterations=10, rng=random.Random(42))
+
+        def fail_mcts(*args, **kwargs):
+            raise AssertionError("MCTS should not run before endgame")
+
+        monkeypatch.setattr("guandan.ai.strategies.professional.mcts_search", fail_mcts)
+
+        pattern = strategy.select_pattern(state, player=0)
+
+        assert pattern is None or pattern.cards
+
+    def test_professional_uses_mcts_in_endgame(self, monkeypatch):
+        """M6：手牌进入阈值后仍启用 MCTS。"""
+        state = _make_test_state()
+        state.hands[0] = state.hands[0][:10]
+        strategy = ProfessionalStrategy(iterations=1, rng=random.Random(42))
+        calls = {"count": 0}
+
+        def fake_mcts(*args, **kwargs):
+            calls["count"] += 1
+            return None
+
+        monkeypatch.setattr("guandan.ai.strategies.professional.mcts_search", fake_mcts)
+
+        assert strategy.select_pattern(state, player=0) is None
+        assert calls["count"] == 1
