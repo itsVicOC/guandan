@@ -17,6 +17,8 @@ import random
 from typing import Optional
 
 from ...engine.hand import Pattern, PatternType
+from ...engine.rules.drift import is_drift_pattern
+from ...engine.rules.patterns import detect_patterns
 from ...engine.state import GameState, is_teammate, partner_of
 from ..profiles import load_profile
 from .professional import ProfessionalStrategy
@@ -91,6 +93,15 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         if pattern is None:
             return None
 
+        pursue_drift = self._wants_drift()
+
+        drift_finish = self._find_drift_finish(state, player)
+        if drift_finish is not None and pursue_drift:
+            return drift_finish
+
+        if self._should_preserve_drift_bomb(state, player, pattern, pursue_drift):
+            return None
+
         # 风格 1：炸弹吝啬
         if self._is_bomb(pattern) and not self._should_use_bomb(state, player, pattern):
             # 改为过牌（让 MCTS 重新选择非炸弹）
@@ -102,9 +113,6 @@ class DaiChangshengStrategy(ProfessionalStrategy):
             and self.rng.random() < self.style["teammate_awareness"]
         ):
             return None
-
-        # 风格 3：漂牌决策（暂不实现，留待未来优化）
-        # TODO: 在手牌剩余少量时，规划5张+级牌炸弹的最后一手
 
         return pattern
 
@@ -199,3 +207,45 @@ class DaiChangshengStrategy(ProfessionalStrategy):
                 return is_teammate(ev.player, player)
 
         return False
+
+    def _wants_drift(self) -> bool:
+        """按 profile 的漂牌倾向决定是否追求漂牌。"""
+        return self.rng.random() < self.style.get("drift_bonus", 0.0)
+
+    def _find_drift_finish(self, state: GameState, player: int) -> Optional[Pattern]:
+        """如果整手牌可以作为最后一手漂牌炸弹打出，返回该牌型。"""
+        hand = state.hands[player]
+        if len(hand) < 5:
+            return None
+
+        candidates = [
+            pattern
+            for pattern in detect_patterns(hand, state.wild_card)
+            if len(pattern.cards) == len(hand)
+            and is_drift_pattern(pattern, state.level)
+            and (not state.table or pattern.can_be_played_on(state.table[-1]))
+        ]
+        if not candidates:
+            return None
+        return max(candidates, key=lambda p: (p.length, p.rank, p.wild_used))
+
+    def _should_preserve_drift_bomb(
+        self, state: GameState, player: int, pattern: Pattern, pursue_drift: bool
+    ) -> bool:
+        """非终局时尽量不提前拆掉 5 张以上级牌炸弹。"""
+        if not state.table:
+            return False
+        if not pursue_drift:
+            return False
+        if self._get_opponent_min_cards(state, player) in (1, 2, 3):
+            return False
+        if is_drift_pattern(pattern, state.level) and len(pattern.cards) == state.hand_size(player):
+            return False
+        if not self._has_drift_reserve(state, player):
+            return False
+        return any(card.rank == state.level for card in pattern.cards)
+
+    def _has_drift_reserve(self, state: GameState, player: int) -> bool:
+        """手里是否有可留作漂牌的 5 张以上级牌炸弹材料。"""
+        level_cards = [card for card in state.hands[player] if card.rank == state.level]
+        return len(level_cards) >= 5

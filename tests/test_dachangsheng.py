@@ -168,3 +168,50 @@ class TestStyleBehavior:
         # 对手是 player 1 和 3
         assert min_cards > 0
         assert min_cards <= 27  # 初始最多27张
+
+    def test_drift_finish_prefers_level_bomb(self):
+        """最后一手可漂牌时，优先选择 5 张以上级牌炸弹。"""
+        state = _make_test_state(level=5)
+        state.hands[0] = [
+            Card(5, Suit.HEARTS),
+            Card(5, Suit.HEARTS),
+            Card(5, Suit.DIAMONDS),
+            Card(5, Suit.SPADES),
+            Card(5, Suit.CLUBS),
+        ]
+        state.turn_index = 0
+        state.table = []
+
+        strategy = DaiChangshengStrategy(rng=random.Random(1))
+        strategy.style["drift_bonus"] = 1.0
+
+        fallback = Pattern(PatternType.SINGLE, 5, 1, (state.hands[0][0],), 0)
+        chosen = strategy._apply_style(state, 0, fallback)
+
+        assert chosen is not None
+        assert chosen.type == PatternType.BOMB
+        assert chosen.length == 5
+        assert all(card.rank == state.level for card in chosen.cards)
+
+    def test_preserve_drift_bomb_before_final_hand(self):
+        """非终局跟牌时，避免提前拆掉可漂的级牌炸弹材料。"""
+        state = _make_test_state(level=5)
+        state.hands[0] = [
+            Card(5, Suit.HEARTS),
+            Card(5, Suit.HEARTS),
+            Card(5, Suit.DIAMONDS),
+            Card(5, Suit.SPADES),
+            Card(5, Suit.CLUBS),
+            Card(9, Suit.CLUBS),
+        ]
+        state.hands[1] = [Card(3, Suit.CLUBS)] * 8
+        state.hands[3] = [Card(4, Suit.CLUBS)] * 8
+        state.turn_index = 0
+        state.table = [Pattern(PatternType.SINGLE, 4, 1, (Card(4, Suit.SPADES),), 0)]
+
+        strategy = DaiChangshengStrategy(rng=random.Random(1))
+        strategy.style["drift_bonus"] = 1.0
+
+        early_level_play = Pattern(PatternType.SINGLE, 5, 1, (state.hands[0][0],), 0)
+
+        assert strategy._apply_style(state, 0, early_level_play) is None
