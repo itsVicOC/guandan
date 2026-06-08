@@ -3,20 +3,17 @@ from __future__ import annotations
 
 import random
 
-from rich.markup import render
-
 from guandan.engine.card import (
-    Card,
     RANK_2,
     RANK_3,
     RANK_4,
     RANK_5,
     RANK_6,
     RANK_7,
-    RANK_8,
     RANK_A,
     RANK_BIG_JOKER,
     RANK_SMALL_JOKER,
+    Card,
     Suit,
     make_joker,
 )
@@ -29,8 +26,8 @@ class TestCard:
         c = Card(RANK_5, Suit.HEARTS)
         try:
             c.rank = 99  # type: ignore[misc]
-            assert False, "should be frozen"
-        except Exception:  # noqa: BLE001
+            raise AssertionError("should be frozen")
+        except Exception:
             pass
 
     def test_card_short(self):
@@ -66,8 +63,9 @@ class TestCard:
 
         错误：把 markup 包在 '[]' 里导致 rich 把 '♠' 当成 tag 名 → MarkupError。
         """
-        from rich.console import Console
         from io import StringIO
+
+        from rich.console import Console
         # 模拟 _pattern_str 的输出
         cards = [
             Card(RANK_4, Suit.SPADES),  # ♠
@@ -88,7 +86,7 @@ class TestCard:
     def test_card_invalid_rank(self):
         try:
             Card(99, Suit.HEARTS)
-            assert False, "should raise"
+            raise AssertionError("should raise")
         except ValueError:
             pass
 

@@ -165,7 +165,7 @@ def enumerate_candidate_plays(
                     p = find_complete_pattern(cards[:2], wild)
                     if p:
                         candidates.append(p)
-            if wild_count >= 1:
+            if wild is not None and wild_count >= 1:
                 for r in range(table_top.rank + 1, RANK_A + 1):
                     cards = by_rank.get(r, [])
                     if len(cards) >= 1 and r not in (RANK_SMALL_JOKER, RANK_BIG_JOKER):

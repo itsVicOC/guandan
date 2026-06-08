@@ -6,9 +6,9 @@ Pattern: 已识别的牌型，含 rank / cards / wild_used
 """
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Iterable, Sequence
 
 from .card import Card
 
@@ -70,7 +70,7 @@ class Pattern:
     def weight(self) -> int:
         return PATTERN_WEIGHT[self.type]
 
-    def can_be_played_on(self, other: "Pattern") -> bool:
+    def can_be_played_on(self, other: Pattern) -> bool:
         """判断本牌型是否能压 other。
 
         规则：
@@ -155,7 +155,7 @@ class Hand:
         del self.cards[:n]
         return taken
 
-    def copy(self) -> "Hand":
+    def copy(self) -> Hand:
         return Hand(list(self.cards))
 
     def to_tuple(self) -> tuple[Card, ...]:

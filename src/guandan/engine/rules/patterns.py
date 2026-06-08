@@ -16,10 +16,9 @@ API：
 """
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from ..card import (
-    Card,
     RANK_2,
     RANK_3,
     RANK_4,
@@ -34,11 +33,10 @@ from ..card import (
     RANK_J,
     RANK_K,
     RANK_Q,
-    RANK_SMALL_JOKER,
+    Card,
     Suit,
 )
-from ..hand import Hand, Pattern, PatternType
-
+from ..hand import Pattern, PatternType
 
 # ---- 内部工具 ----
 
@@ -293,7 +291,7 @@ def _try_triple_pair(
                                 type=PatternType.TRIPLE_PAIR,
                                 rank=x,
                                 length=1,
-                                cards=tuple(x_cards[:4] + [wild_card]),
+                                cards=tuple([*x_cards[:4], wild_card]),
                                 wild_used=1,
                             )
                         )
@@ -305,7 +303,7 @@ def _try_triple_pair(
                                 type=PatternType.TRIPLE_PAIR,
                                 rank=x,
                                 length=1,
-                                cards=tuple(x_cards[:3] + [y_cards[0], wild_card]),
+                                cards=tuple([*x_cards[:3], y_cards[0], wild_card]),
                                 wild_used=1,
                             )
                         )
@@ -315,7 +313,7 @@ def _try_triple_pair(
                                 type=PatternType.TRIPLE_PAIR,
                                 rank=x,
                                 length=1,
-                                cards=tuple(x_cards[:2] + [wild_card] + y_cards[:2]),
+                                cards=tuple([*x_cards[:2], wild_card, *y_cards[:2]]),
                                 wild_used=1,
                             )
                         )
@@ -332,7 +330,7 @@ def _try_triple_pair(
                                 type=PatternType.TRIPLE_PAIR,
                                 rank=x,
                                 length=1,
-                                cards=tuple(x_cards[:3] + [wild_card, wild_card]),
+                                cards=tuple([*x_cards[:3], wild_card, wild_card]),
                                 wild_used=2,
                             )
                         )
@@ -344,7 +342,11 @@ def _try_triple_pair(
                                 type=PatternType.TRIPLE_PAIR,
                                 rank=x,
                                 length=1,
-                                cards=tuple(x_cards[:3] + [y_cards[0], wild_card] if y_cards else x_cards[:3] + [wild_card, wild_card]),
+                                cards=tuple(
+                                    [*x_cards[:3], y_cards[0], wild_card]
+                                    if y_cards
+                                    else [*x_cards[:3], wild_card, wild_card]
+                                ),
                                 wild_used=2,
                             )
                         )
@@ -354,7 +356,7 @@ def _try_triple_pair(
                                 type=PatternType.TRIPLE_PAIR,
                                 rank=x,
                                 length=1,
-                                cards=tuple(x_cards[:2] + [y_cards[0], wild_card, wild_card]),
+                                cards=tuple([*x_cards[:2], y_cards[0], wild_card, wild_card]),
                                 wild_used=2,
                             )
                         )
@@ -364,7 +366,7 @@ def _try_triple_pair(
                                 type=PatternType.TRIPLE_PAIR,
                                 rank=x,
                                 length=1,
-                                cards=tuple([x_cards[0], wild_card, wild_card] + y_cards[:2]),
+                                cards=tuple([x_cards[0], wild_card, wild_card, *y_cards[:2]]),
                                 wild_used=2,
                             )
                         )
@@ -512,13 +514,9 @@ def _is_valid_straight_window(window: list[int]) -> bool:
         return False
     if RANK_2 in window:
         # wrap A2345 的情形
-        if window == [RANK_A, RANK_2, RANK_3, RANK_4, RANK_5]:
-            return True
-        return False
-    if RANK_A in window and window[-1] != RANK_A:
-        # A 出现在中间或开头但不是最大
-        return False
-    return True
+        return window == [RANK_A, RANK_2, RANK_3, RANK_4, RANK_5]
+    # A 只能出现在最大位置。
+    return not (RANK_A in window and window[-1] != RANK_A)
 
 
 # ---- 连对 ----
@@ -733,7 +731,7 @@ def _try_bomb(
                         type=PatternType.BOMB,
                         rank=rank,
                         length=k + 1,
-                        cards=tuple(cards[:k] + [wild_card]),
+                        cards=tuple([*cards[:k], wild_card]),
                         wild_used=1,
                     )
                 )
@@ -747,7 +745,7 @@ def _try_bomb(
                         type=PatternType.BOMB,
                         rank=rank,
                         length=k + 2,
-                        cards=tuple(cards[:k] + [wild_card, wild_card]),
+                        cards=tuple([*cards[:k], wild_card, wild_card]),
                         wild_used=2,
                     )
                 )
@@ -897,8 +895,6 @@ def find_pattern(
 ) -> Pattern | None:
     """找一种特定类型的合法牌型（用掉所有 cards）。"""
     for p in detect_patterns(cards, wild_card):
-        if p.type == target:
-            # 验证用掉所有 cards
-            if frozenset(p.cards) == frozenset(cards):
-                return p
+        if p.type == target and frozenset(p.cards) == frozenset(cards):
+            return p
     return None

@@ -6,8 +6,8 @@
 """
 from __future__ import annotations
 
-from .novice import NoviceStrategy
-from .intermediate import IntermediateStrategy
 from .advanced import AdvancedStrategy
+from .intermediate import IntermediateStrategy
+from .novice import NoviceStrategy
 
-__all__ = ["NoviceStrategy", "IntermediateStrategy", "AdvancedStrategy"]
+__all__ = ["AdvancedStrategy", "IntermediateStrategy", "NoviceStrategy"]

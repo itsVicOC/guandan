@@ -13,11 +13,8 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from ..card import (
-    Card,
     RANK_10,
-    RANK_BIG_JOKER,
-    RANK_SMALL_JOKER,
-    Suit,
+    Card,
 )
 
 
@@ -75,9 +72,7 @@ def resolve_tribute(
         )
 
     tribute = select_tribute_card(downstream_hand)
-    # 模拟从 downstream 移除 tribute
-    remaining_downstream = [c for c in downstream_hand if c != tribute]
-    remaining_upstream = list(upstream_hand) + [tribute]
+    remaining_upstream = [*list(upstream_hand), tribute]
 
     return_card = select_return_card(remaining_upstream)
 

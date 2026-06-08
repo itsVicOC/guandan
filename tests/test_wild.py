@@ -2,19 +2,13 @@
 from __future__ import annotations
 
 from guandan.engine.card import (
-    RANK_2,
     RANK_3,
     RANK_4,
     RANK_5,
     RANK_6,
     RANK_7,
-    RANK_8,
     RANK_9,
-    RANK_10,
     RANK_A,
-    RANK_J,
-    RANK_K,
-    RANK_Q,
     Card,
     Suit,
 )
@@ -67,9 +61,6 @@ class TestWildSingle:
 class TestWildBomb:
     def test_wild_bomb_3plus1(self):
         # 3 张 7 + 1 wild → 4 张炸弹
-        p = find_complete_pattern(
-            [c(RANK_7, "H"), c(RANK_7, "D"), c(RANK_7, "S"), WILD_5H], WILD_5H
-        )
         bombs = [x for x in detect_patterns(
             [c(RANK_7, "H"), c(RANK_7, "D"), c(RANK_7, "S"), WILD_5H], WILD_5H
         ) if x.type == PatternType.BOMB]

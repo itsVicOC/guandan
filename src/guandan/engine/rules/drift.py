@@ -23,7 +23,4 @@ def is_drift_pattern(pattern: Pattern, level: int) -> bool:
 
 def has_played_ace_this_game(history_cards_played: List[Card]) -> bool:
     """检查本局是否出过 A。"""
-    for c in history_cards_played:
-        if not c.is_joker and c.rank == 14:  # RANK_A
-            return True
-    return False
+    return any(not c.is_joker and c.rank == 14 for c in history_cards_played)  # RANK_A

@@ -14,7 +14,7 @@
 """
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 
 def compute_level_change(
@@ -22,7 +22,7 @@ def compute_level_change(
     second: int,
     third: int,
     last: int,
-    team_bomb_count: List[int] = None,
+    team_bomb_count: Optional[List[int]] = None,
 ) -> Tuple[int, int]:
     """计算两队的级数变化（delta）。
 
@@ -58,4 +58,3 @@ def compute_level_change(
         return (delta_head, delta_other)
     else:
         return (delta_other, delta_head)
-

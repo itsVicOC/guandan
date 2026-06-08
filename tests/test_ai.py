@@ -6,8 +6,8 @@ import random
 import pytest
 
 from guandan.ai import (
-    AINotImplementedError,
     DIFFICULTY_NAMES,
+    AINotImplementedError,
     make_strategy,
     play_or_pass,
 )
@@ -26,19 +26,13 @@ from guandan.engine.card import (
     RANK_6,
     RANK_7,
     RANK_8,
-    RANK_9,
-    RANK_10,
     RANK_A,
-    RANK_J,
     RANK_K,
-    RANK_Q,
     Card,
     Suit,
 )
 from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.state import (
-    SEAT_NAMES,
-    IllegalPlayError,
     make_initial_state,
     pass_turn,
     play_pattern,

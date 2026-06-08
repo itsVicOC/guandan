@@ -49,9 +49,9 @@ def load_profile() -> dict[str, Any]:
         return profile
 
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
-    except (json.JSONDecodeError, IOError):
+    except (OSError, json.JSONDecodeError):
         # 文件损坏，返回默认值
         return DEFAULT_PROFILE.copy()
 
@@ -105,8 +105,8 @@ def update_statistics(profile: dict[str, Any], player_rank: int, difficulty: int
 
 
 __all__ = [
+    "DEFAULT_PROFILE",
     "load_profile",
     "save_profile",
     "update_statistics",
-    "DEFAULT_PROFILE",
 ]

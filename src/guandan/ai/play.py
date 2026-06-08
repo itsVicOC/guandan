@@ -12,14 +12,14 @@ from ..engine.state import IllegalPlayError, pass_turn, play_pattern
 from .stochastic import should_pass
 
 if TYPE_CHECKING:
-    from .strategy import AIStrategy
     from ..engine.state import GameState
+    from .strategy import AIStrategy
 
 
 def play_or_pass(
-    state: "GameState",
+    state: GameState,
     player: int,
-    strategy: "AIStrategy",
+    strategy: AIStrategy,
     rng: random.Random,
 ) -> bool:
     """AI 玩家 player 行动：返回 True 出牌，False 过牌。

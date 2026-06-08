@@ -96,7 +96,7 @@ def load_history_list(limit: int = 20) -> list[dict[str, Any]]:
     result = []
     for file_path in files[:limit]:
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # 只保留元数据，不加载完整事件流（节省内存）
@@ -110,7 +110,7 @@ def load_history_list(limit: int = 20) -> list[dict[str, Any]]:
                     "file_path": str(file_path),
                 }
             )
-        except (json.JSONDecodeError, IOError, KeyError):
+        except (OSError, json.JSONDecodeError, KeyError):
             # 跳过损坏的文件
             continue
 
@@ -131,14 +131,14 @@ def load_history_detail(game_id: str) -> Optional[dict[str, Any]]:
     # 查找匹配的文件（文件名包含 game_id）
     for file_path in history_dir.glob(f"*_{game_id}.json"):
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # 反序列化事件流
             data["events"] = deserialize_events(data["events"])
 
             return data
-        except (json.JSONDecodeError, IOError, ValueError):
+        except (OSError, json.JSONDecodeError, ValueError):
             # 跳过损坏的文件
             continue
 
@@ -146,7 +146,7 @@ def load_history_detail(game_id: str) -> Optional[dict[str, Any]]:
 
 
 __all__ = [
-    "save_history",
-    "load_history_list",
     "load_history_detail",
+    "load_history_list",
+    "save_history",
 ]

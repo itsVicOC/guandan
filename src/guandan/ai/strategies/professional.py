@@ -28,10 +28,10 @@ class ProfessionalStrategy:
 
     def __init__(
         self,
-        iterations: int = MCTS_CONFIG["iterations"],
+        iterations: int = 200,
         ucb_c: float = MCTS_CONFIG["ucb_c"],
-        max_actions: int = MCTS_CONFIG["top_actions"],
-        rollout_strategy: int = MCTS_CONFIG["rollout_strategy"],
+        max_actions: int = 5,
+        rollout_strategy: int = 1,
         rng: Optional[random.Random] = None,
     ):
         """初始化职业策略。

@@ -14,11 +14,9 @@ from guandan.engine.card import (
     RANK_9,
     RANK_A,
     RANK_J,
-    RANK_K,
     Card,
     Suit,
 )
-from guandan.engine.events import Pass, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.state import (
     IllegalPlayError,

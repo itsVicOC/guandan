@@ -1,7 +1,6 @@
 """存储模块测试：序列化、Profile、Savegame、History。"""
 from __future__ import annotations
 
-import json
 import random
 import tempfile
 from pathlib import Path
@@ -13,7 +12,8 @@ from guandan.engine.card import Card, Suit
 from guandan.engine.deck import deal, make_deck, shuffle_deck
 from guandan.engine.events import GameOver, Pass, ShuffleDeal, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
-from guandan.engine.state import GameState
+from guandan.engine.rules.patterns import find_complete_pattern
+from guandan.engine.state import GameState, pass_turn, play_pattern
 from guandan.storage import (
     delete_savegame,
     deserialize_events,
@@ -22,6 +22,7 @@ from guandan.storage import (
     load_history_detail,
     load_history_list,
     load_profile,
+    restore_game_state,
     save_game,
     save_history,
     save_profile,
@@ -267,6 +268,41 @@ class TestSavegame:
                 assert loaded["metadata"]["seed"] == 42
                 assert isinstance(loaded["events"], list)
                 assert len(loaded["events"]) > 0
+                assert "state" in loaded
+
+    def test_restore_game_state_from_snapshot(self):
+        """从新存档快照恢复可继续游玩的 GameState。"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch("guandan.storage.savegame.get_savegame_path") as mock:
+                mock.return_value = Path(tmpdir) / "savegame.json"
+
+                state = _make_test_state()
+                shuffle_event = ShuffleDeal(
+                    level=state.level,
+                    wild_card=state.wild_card,
+                    hand_sizes=tuple(len(h) for h in state.hands),
+                    first_player=0,
+                    seed=42,
+                )
+                state.history.append(shuffle_event)
+
+                first_card = state.hands[0][0]
+                pattern = find_complete_pattern([first_card], state.wild_card)
+                assert pattern is not None
+                play_pattern(state, 0, pattern)
+                pass_turn(state, 1)
+
+                save_game(state, "test", 0, [None, 2, 2, 2], 42)
+                loaded = load_game()
+                restored = restore_game_state(loaded)
+
+                assert restored.level == state.level
+                assert restored.wild_card == state.wild_card
+                assert restored.hands == state.hands
+                assert restored.turn_index == state.turn_index
+                assert restored.table == state.table
+                assert restored.passed_players == state.passed_players
+                assert restored.history == state.history
 
     def test_load_game_no_savegame(self):
         """无存档时返回 None。"""

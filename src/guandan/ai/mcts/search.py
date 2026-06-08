@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import copy
 import math
-import random
 from typing import Optional
 
 from ...engine.hand import Pattern
@@ -220,10 +219,11 @@ def _backpropagate(node: MCTSNode, result: float) -> None:
         node: 起始节点
         result: 模拟结果（0.0 - 1.0）
     """
-    while node is not None:
-        node.visits += 1
-        node.wins += result
-        node = node.parent
+    current: Optional[MCTSNode] = node
+    while current is not None:
+        current.visits += 1
+        current.wins += result
+        current = current.parent
 
 
 def mcts_search(

@@ -8,8 +8,7 @@ from textual.containers import Center, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
-from ...engine.card import RANK_2, RANK_A
-
+from ...engine.card import RANK_2
 
 DIFFICULTIES = [
     ("新手", "随机贪心，记牌弱"),
@@ -39,16 +38,15 @@ class DifficultySelectScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
-        with Center():
-            with Vertical(id="diff-box"):
-                yield Static("选择 AI 难度", id="diff-title")
-                yield Static(f"（本局级牌 {self.previous_level}）", id="diff-sub")
-                for i, (name, desc) in enumerate(DIFFICULTIES, start=1):
-                    yield Button(
-                        f"{i}. {name}  —  {desc}",
-                        id=f"btn-diff-{i}",
-                    )
-                yield Button("← 返回", id="btn-back", variant="default")
+        with Center(), Vertical(id="diff-box"):
+            yield Static("选择 AI 难度", id="diff-title")
+            yield Static(f"（本局级牌 {self.previous_level}）", id="diff-sub")
+            for i, (name, desc) in enumerate(DIFFICULTIES, start=1):
+                yield Button(
+                    f"{i}. {name}  —  {desc}",
+                    id=f"btn-diff-{i}",
+                )
+            yield Button("← 返回", id="btn-back", variant="default")
         yield Footer()
 
     def on_mount(self) -> None:

@@ -32,8 +32,8 @@ class ErrorModal(ModalScreen):
     """
 
     BINDINGS = [
-        ("escape", "dismiss", "关闭"),
-        ("enter", "dismiss", "关闭"),
+        ("escape", "close", "关闭"),
+        ("enter", "close", "关闭"),
     ]
 
     def __init__(self, message: str, *, title: str = "提示") -> None:
@@ -42,15 +42,14 @@ class ErrorModal(ModalScreen):
         self._title = title
 
     def compose(self) -> ComposeResult:
-        with Center():
-            with Vertical(id="error-box"):
-                yield Static(self._title, id="error-title")
-                yield Static(self._message, id="error-body")
-                yield Button("OK", id="error-ok", variant="primary")
+        with Center(), Vertical(id="error-box"):
+            yield Static(self._title, id="error-title")
+            yield Static(self._message, id="error-body")
+            yield Button("OK", id="error-ok", variant="primary")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "error-ok":
             self.dismiss()
 
-    def action_dismiss(self) -> None:
+    def action_close(self) -> None:
         self.dismiss()

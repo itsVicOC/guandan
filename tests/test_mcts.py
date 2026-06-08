@@ -18,7 +18,6 @@ from guandan.ai.mcts.search import mcts_search, ucb1_score
 from guandan.ai.strategies.professional import ProfessionalStrategy
 from guandan.engine.deck import deal, make_deck, shuffle_deck
 from guandan.engine.state import GameState, play_pattern
-from guandan.engine.rules.patterns import find_complete_pattern
 
 
 def _make_test_state(level: int = 2, seed: int = 42) -> GameState:

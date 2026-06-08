@@ -32,7 +32,7 @@ def load_profile(name: str) -> Dict[str, Any]:
     if not profile_path.exists():
         raise FileNotFoundError(f"Profile not found: {name} (looked in {package_dir})")
 
-    with open(profile_path, "r", encoding="utf-8") as f:
+    with open(profile_path, encoding="utf-8") as f:
         profile = json.load(f)
 
     # 简单验证

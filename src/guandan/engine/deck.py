@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import random
-from typing import Sequence
+from collections.abc import Sequence
 
 from .card import (
-    Card,
     RANK_2,
     RANK_3,
     RANK_4,
@@ -21,6 +20,7 @@ from .card import (
     RANK_K,
     RANK_Q,
     RANK_SMALL_JOKER,
+    Card,
     Suit,
 )
 

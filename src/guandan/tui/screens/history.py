@@ -23,12 +23,11 @@ class HistoryScreen(Screen):
         history = load_history_list(limit=20)
 
         if not history:
-            with Center():
-                with Vertical(id="hist-box"):
-                    yield Static("📊 历史战绩", id="hist-title")
-                    yield Static("暂无对局记录", id="hist-empty")
-                    yield Static("完成一局后记录将显示在这里", id="hist-hint")
-                    yield Button("← 返回", id="btn-back")
+            with Center(), Vertical(id="hist-box"):
+                yield Static("📊 历史战绩", id="hist-title")
+                yield Static("暂无对局记录", id="hist-empty")
+                yield Static("完成一局后记录将显示在这里", id="hist-hint")
+                yield Button("← 返回", id="btn-back")
         else:
             with VerticalScroll(id="hist-scroll"):
                 yield Static("📊 历史战绩", id="hist-title")

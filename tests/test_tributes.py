@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 from guandan.engine.card import (
-    RANK_10,
     RANK_2,
     RANK_5,
     RANK_7,
+    RANK_10,
     RANK_A,
     RANK_BIG_JOKER,
     RANK_K,

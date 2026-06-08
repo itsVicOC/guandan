@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import Optional
 
 from ...engine.hand import Pattern
-from ...engine.state import GameState, is_teammate, partner_of
+from ...engine.state import GameState, is_teammate
+from ..greedy import select_min_winning
 from ..memory import PlayedTracker
 from ..valuation import enumerate_candidate_plays, estimate_pattern_cost
-from ..greedy import select_min_winning
 
 
 def _teammate_winning(state: GameState, player: int) -> bool:

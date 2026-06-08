@@ -12,16 +12,16 @@ from __future__ import annotations
 
 from .play import play_or_pass
 from .strategy import (
+    DIFFICULTY_NAMES,
     AINotImplementedError,
     AIStrategy,
-    DIFFICULTY_NAMES,
     make_strategy,
 )
 
 __all__ = [
-    "AIStrategy",
-    "AINotImplementedError",
     "DIFFICULTY_NAMES",
+    "AINotImplementedError",
+    "AIStrategy",
     "make_strategy",
     "play_or_pass",
 ]

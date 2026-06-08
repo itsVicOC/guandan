@@ -28,10 +28,10 @@ from .node import MCTSNode
 from .search import mcts_search
 
 __all__ = [
+    "MCTS_CONFIG",
     "MCTSNode",
     "determinize",
     "mcts_search",
-    "MCTS_CONFIG",
 ]
 
 # 默认配置

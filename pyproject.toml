@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guandan"
-version = "0.3.0"
+version = "0.6.1"
 description = "本地掼蛋游戏（终端 TUI），5 档 AI 含致敬戴长胜牌风"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -70,7 +70,17 @@ extend-exclude = [".venv", "build", "dist"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
-ignore = ["E501", "RUF002", "RUF003"]  # E501: line-length; RUF002/RUF003: 中文全角符号
+ignore = [
+    "E501",    # line-length
+    "RUF001",  # 中文文本
+    "RUF002",  # 中文文本
+    "RUF003",  # 中文文本
+    "RUF012",  # Textual BINDINGS
+    "SIM117",  # nested context managers are clearer in storage tests
+    "UP006",   # keep Python 3.9-compatible typing style
+    "UP035",   # keep Python 3.9-compatible typing imports
+    "UP045",   # PEP 604 requires Python 3.10+
+]
 
 [tool.mypy]
 python_version = "3.9"

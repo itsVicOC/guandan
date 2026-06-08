@@ -10,14 +10,12 @@ from guandan.engine.card import (
     RANK_8,
     RANK_A,
     RANK_BIG_JOKER,
-    RANK_K,
     RANK_SMALL_JOKER,
     Card,
     Suit,
 )
 from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.rules.comparator import (
-    bomb_strength,
     can_play,
     compare_bombs,
     compare_same_type,

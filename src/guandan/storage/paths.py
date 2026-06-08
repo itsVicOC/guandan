@@ -58,8 +58,8 @@ def get_history_dir() -> Path:
 
 
 __all__ = [
-    "get_storage_dir",
+    "get_history_dir",
     "get_profile_path",
     "get_savegame_path",
-    "get_history_dir",
+    "get_storage_dir",
 ]

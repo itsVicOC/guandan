@@ -6,19 +6,8 @@ from hypothesis import strategies as st
 
 from guandan.engine.card import (
     RANK_2,
-    RANK_3,
-    RANK_4,
-    RANK_5,
-    RANK_6,
-    RANK_7,
-    RANK_8,
-    RANK_9,
-    RANK_10,
     RANK_A,
     RANK_BIG_JOKER,
-    RANK_J,
-    RANK_K,
-    RANK_Q,
     RANK_SMALL_JOKER,
     Card,
     Suit,
@@ -30,7 +19,6 @@ from guandan.engine.rules.patterns import (
     find_complete_pattern,
     has_legal_pattern,
 )
-
 
 # 测试用 suit 列表
 SUITS_NORMAL = [Suit.HEARTS, Suit.DIAMONDS, Suit.SPADES, Suit.CLUBS]

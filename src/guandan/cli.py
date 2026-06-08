@@ -1,30 +1,22 @@
-"""命令行 CLI：跑通一局完整对局。
-
-v0.3.0 (M2)：
-- 1 名真人玩家 + 3 名电脑
-- AI 由 `guandan.ai` 提供（`--difficulty {0,1,2}` 选档）
-- 命令行提示出牌
-"""
+"""命令行 CLI：跑通一局完整对局。"""
 from __future__ import annotations
 
 import argparse
 import random
 import sys
-from typing import List, Optional
 
 from .ai import AINotImplementedError, make_strategy, play_or_pass
-from .engine.card import Card, RANK_2, RANK_A, Suit
-from .engine.hand import Hand, Pattern, PatternType, sort_cards
-from .engine.rules.patterns import detect_patterns, find_complete_pattern
+from .engine.card import RANK_2, RANK_A, Card
+from .engine.events import TurnPlayed
+from .engine.hand import Pattern, PatternType, sort_cards
+from .engine.rules.patterns import find_complete_pattern
 from .engine.state import (
     SEAT_NAMES,
     IllegalPlayError,
     make_initial_state,
     pass_turn,
     play_pattern,
-    team_of,
 )
-
 
 # ---- AI 策略（v0.3.0 M2：从 guandan.ai 注入） ----
 
@@ -47,7 +39,7 @@ def _pattern_short(p: Pattern) -> str:
     return f"{p.type.value}[{cards_str}]"
 
 
-def _format_hand(hand: List[Card]) -> str:
+def _format_hand(hand: list[Card]) -> str:
     """格式化为可读列表（含序号）。"""
     sorted_hand = sort_cards(hand)
     lines = []
@@ -57,10 +49,10 @@ def _format_hand(hand: List[Card]) -> str:
     return "\n".join(lines)
 
 
-_GLOBAL_WILD: Optional[Card] = None  # 渲染时引用
+_GLOBAL_WILD: Card | None = None  # 渲染时引用
 
 
-def _parse_selection(user_input: str, max_idx: int) -> List[int]:
+def _parse_selection(user_input: str, max_idx: int) -> list[int]:
     """解析用户输入的牌序号。"""
     user_input = user_input.strip()
     if not user_input:
@@ -68,7 +60,7 @@ def _parse_selection(user_input: str, max_idx: int) -> List[int]:
     if user_input.lower() in ("p", "pass", "过", "过牌"):
         return []
     parts = user_input.replace(",", " ").split()
-    indices: List[int] = []
+    indices: list[int] = []
     for p in parts:
         try:
             idx = int(p)
@@ -79,8 +71,8 @@ def _parse_selection(user_input: str, max_idx: int) -> List[int]:
     return sorted(set(indices))
 
 
-def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="掼蛋 CLI (v0.3.0 / M2)")
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="掼蛋 CLI (v0.6.1 / M5.1)")
     parser.add_argument("--level", type=int, default=2, help="本局级牌 (2-14, 14=A)")
     parser.add_argument("--first", type=int, default=0, help="首发起家 (0-3)")
     parser.add_argument("--seed", type=int, default=None, help="随机种子")
@@ -91,8 +83,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--difficulty",
         type=int,
         default=0,
-        choices=[0, 1, 2],
-        help="AI 难度档位 (0=新手 / 1=进阶 / 2=高手，M3/M4 后续支持 3/4)",
+        choices=[0, 1, 2, 3, 4],
+        help="AI 难度档位 (0=新手 / 1=进阶 / 2=高手 / 3=职业 / 4=戴长胜)",
     )
     args = parser.parse_args(argv)
 
@@ -107,7 +99,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 2
 
     print("=" * 60)
-    print(f"掼蛋 CLI (M2) · 级牌 = {args.level} · 首发起家 = {SEAT_NAMES[args.first]} · AI 档位 = {strategy.name}")
+    print(f"掼蛋 CLI (M5.1) · 级牌 = {args.level} · 首发起家 = {SEAT_NAMES[args.first]} · AI 档位 = {strategy.name}")
     print("=" * 60)
 
     state = make_initial_state(
@@ -119,7 +111,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     print(f"\n逢人配：{state.wild_card.short if state.wild_card else '（无）'}")
     print(f"真人玩家：{SEAT_NAMES[args.human]}")
-    print(f"初始手牌：")
+    print("初始手牌：")
     for p in range(4):
         marker = " ← 真人" if p == args.human else "  (AI)"
         print(f"  {SEAT_NAMES[p]}  {len(state.hands[p])} 张{marker}")
@@ -160,13 +152,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                     print("无效输入")
                     continue
                 cards = [sorted_hand[i] for i in indices]
-                p = find_complete_pattern(cards, state.wild_card)
-                if p is None:
+                pattern = find_complete_pattern(cards, state.wild_card)
+                if pattern is None:
                     print("这组牌不是合法牌型，请重选")
                     continue
                 try:
-                    play_pattern(state, cur, p)
-                    print(f"→ 你出：{_pattern_short(p)}")
+                    play_pattern(state, cur, pattern)
+                    print(f"→ 你出：{_pattern_short(pattern)}")
                 except IllegalPlayError as e:
                     print(f"非法：{e}")
                     continue
@@ -176,8 +168,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             played = _ai_play(state, cur, strategy, rng)
             if played:
                 last = state.history[-1]
-                p = last.pattern
-                print(f"  {ai_name} 出：{_pattern_short(p)}")
+                if isinstance(last, TurnPlayed):
+                    print(f"  {ai_name} 出：{_pattern_short(last.pattern)}")
             else:
                 print(f"  {ai_name} 过牌")
 
@@ -186,8 +178,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("本局结束！")
         if hasattr(state, "team_levels_final"):
             print(f"两队最终级牌：{[lvl for lvl in state.team_levels_final]}")
-            print(f"漂牌：{state.drift_flag}")
-            print(f"过 A：{state.guo_a}")
+            print(f"漂牌：{getattr(state, 'drift_flag', False)}")
+            print(f"过 A：{getattr(state, 'guo_a', False)}")
         for i, p in enumerate(state.finish_order):
             label = ["上游", "次游", "中游", "下游"][i] if i < 4 else f"第{i+1}名"
             print(f"  {label}：{SEAT_NAMES[p]}")

@@ -21,15 +21,14 @@ class MainMenuScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
-        with Center():
-            with Vertical(id="menu-box"):
-                yield Static("🀄 掼蛋 🀄", id="title")
-                yield Static("v0.2.0 · M1", id="subtitle")
-                yield Button("1. 开始新局", id="btn-new", variant="primary")
-                yield Button("2. 继续上次的牌局", id="btn-load")
-                yield Button("3. 历史战绩", id="btn-history")
-                yield Button("4. 规则说明", id="btn-rules")
-                yield Button("5. 退出", id="btn-quit")
+        with Center(), Vertical(id="menu-box"):
+            yield Static("🀄 掼蛋 🀄", id="title")
+            yield Static("v0.6.1 · M5.1", id="subtitle")
+            yield Button("1. 开始新局", id="btn-new", variant="primary")
+            yield Button("2. 继续上次的牌局", id="btn-load")
+            yield Button("3. 历史战绩", id="btn-history")
+            yield Button("4. 规则说明", id="btn-rules")
+            yield Button("5. 退出", id="btn-quit")
         yield Footer()
 
     def on_mount(self) -> None:

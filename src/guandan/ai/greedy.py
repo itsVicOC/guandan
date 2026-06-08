@@ -10,11 +10,11 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 from ..engine.card import (
-    Card,
     RANK_2,
     RANK_A,
     RANK_BIG_JOKER,
     RANK_SMALL_JOKER,
+    Card,
 )
 from ..engine.hand import Pattern, PatternType, sort_cards
 from ..engine.rules.patterns import find_complete_pattern
@@ -50,7 +50,7 @@ def _smallest_single_above(hand: List[Card], target: int, wild: Optional[Card]) 
 def _smallest_pair_above(hand: List[Card], by_rank: Dict[int, List[Card]], target: int, wild: Optional[Card], wild_count: int) -> Optional[Pattern]:
     """找最小对子 rank > target。"""
     for r in range(target + 1, RANK_A + 1):
-        if r == RANK_SMALL_JOKER or r == RANK_BIG_JOKER:
+        if r in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
             continue
         cards = by_rank.get(r, [])
         if len(cards) >= 2:
@@ -58,7 +58,7 @@ def _smallest_pair_above(hand: List[Card], by_rank: Dict[int, List[Card]], targe
             if p:
                 return p
     # 用 wild 凑对
-    if wild_count >= 1:
+    if wild is not None and wild_count >= 1:
         for r in range(target + 1, RANK_A + 1):
             cards = by_rank.get(r, [])
             if len(cards) >= 1 and r not in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
@@ -71,18 +71,18 @@ def _smallest_pair_above(hand: List[Card], by_rank: Dict[int, List[Card]], targe
 def _smallest_triple_above(hand: List[Card], by_rank: Dict[int, List[Card]], target: int, wild: Optional[Card], wild_count: int) -> Optional[Pattern]:
     """找最小三张 rank > target。"""
     for r in range(target + 1, RANK_A + 1):
-        if r == RANK_SMALL_JOKER or r == RANK_BIG_JOKER:
+        if r in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
             continue
         cards = by_rank.get(r, [])
         if len(cards) >= 3:
             p = find_complete_pattern(cards[:3], wild)
             if p:
                 return p
-    if wild_count >= 1:
+    if wild is not None and wild_count >= 1:
         for r in range(target + 1, RANK_A + 1):
             cards = by_rank.get(r, [])
             if len(cards) >= 2 and r not in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
-                p = find_complete_pattern(cards[:2] + [wild], wild)
+                p = find_complete_pattern([*cards[:2], wild], wild)
                 if p and p.type == PatternType.TRIPLE:
                     return p
     return None

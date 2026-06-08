@@ -22,31 +22,26 @@ from .profile import (
     save_profile,
     update_statistics,
 )
-from .savegame import delete_savegame, has_savegame, load_game, save_game
+from .savegame import delete_savegame, has_savegame, load_game, restore_game_state, save_game
 from .serialization import deserialize_events, serialize_events
 
 __all__ = [
-    # Paths
-    "get_storage_dir",
+    "DEFAULT_PROFILE",
+    "delete_savegame",
+    "deserialize_events",
+    "get_history_dir",
     "get_profile_path",
     "get_savegame_path",
-    "get_history_dir",
-    # Profile
-    "load_profile",
-    "save_profile",
-    "update_statistics",
-    "DEFAULT_PROFILE",
-    # Savegame
-    "save_game",
-    "load_game",
-    "delete_savegame",
+    "get_storage_dir",
     "has_savegame",
-    # History
-    "save_history",
-    "load_history_list",
+    "load_game",
     "load_history_detail",
-    # Serialization
+    "load_history_list",
+    "load_profile",
+    "restore_game_state",
+    "save_game",
+    "save_history",
+    "save_profile",
     "serialize_events",
-    "deserialize_events",
+    "update_statistics",
 ]
-

@@ -56,8 +56,8 @@ def dict_to_event(d: dict[str, Any]) -> Event:
 
     try:
         event_class = getattr(events, event_type)
-    except AttributeError:
-        raise ValueError(f"Unknown event type: {event_type}")
+    except AttributeError as exc:
+        raise ValueError(f"Unknown event type: {event_type}") from exc
 
     # 递归转换嵌套对象
     if event_type == "TurnPlayed":
@@ -120,8 +120,11 @@ def _dict_to_pattern(d: dict[str, Any]) -> Pattern:
         # 直接是 Enum 对象（dataclasses.asdict 不会转换 Enum）
         pattern_type_enum = pattern_type
     elif isinstance(pattern_type, str):
-        # 字符串形式
-        pattern_type_enum = PatternType[pattern_type]
+        # 字符串形式：兼容 Enum 名称（SINGLE）和 value（single）
+        try:
+            pattern_type_enum = PatternType[pattern_type]
+        except KeyError:
+            pattern_type_enum = PatternType(pattern_type)
     else:
         raise ValueError(f"Unknown pattern type format: {pattern_type}")
 
@@ -130,11 +133,13 @@ def _dict_to_pattern(d: dict[str, Any]) -> Pattern:
         type=pattern_type_enum,
         rank=d["rank"],
         length=d["length"],
+        wild_used=d.get("wild_used", 0),
+        suit=d.get("suit"),
     )
 
 
 __all__ = [
-    "serialize_events",
     "deserialize_events",
     "dict_to_event",
+    "serialize_events",
 ]

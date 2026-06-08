@@ -6,7 +6,6 @@ from textual.containers import Center, Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
-
 RULES_TEXT = """\
 【基础】
 • 4 人 2 副牌 108 张
@@ -19,7 +18,7 @@ RULES_TEXT = """\
 • 顺子（5+ 张连续；A 可作最大 10-J-Q-K-A 或最小 A-2-3-4-5）
 • 连对（3+ 对连续对子）
 • 钢板 / 三顺（2+ 组连续三张）
-• 4-7 张同点 = 炸弹
+• 4-8 张同点 = 炸弹
 • 5+ 张同花色顺子 = 同花顺
 • 大王×2 + 小王×2 = 四王（最大，全游戏无敌）
 
@@ -49,7 +48,7 @@ RULES_TEXT = """\
 • 头游 + 二游（同队）= +3 级
 • 头游 + 三游（同队）= +2 级
 • 头游 + 末游（同队）= +1 级
-• 加上本局头游方出的炸弹数（每多 1 个 +1）
+• 炸弹不直接增加升级数
 • 输方不降级
 
 【过 A】
@@ -91,12 +90,11 @@ class RuleScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
-        with Center():
-            with Vertical(id="rule-box"):
-                yield Static("📜 掼蛋规则", id="rule-title")
-                with VerticalScroll(id="rule-scroll"):
-                    yield Static(RULES_TEXT)
-                yield Button("← 返回", id="btn-back")
+        with Center(), Vertical(id="rule-box"):
+            yield Static("📜 掼蛋规则", id="rule-title")
+            with VerticalScroll(id="rule-scroll"):
+                yield Static(RULES_TEXT)
+            yield Button("← 返回", id="btn-back")
         yield Footer()
 
     def on_mount(self) -> None:

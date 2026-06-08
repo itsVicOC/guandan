@@ -15,9 +15,8 @@ import copy
 import random
 from typing import List
 
-from ...engine.card import Card, RANK_2, RANK_A, RANK_BIG_JOKER, RANK_SMALL_JOKER, Suit
+from ...engine.card import RANK_2, RANK_A, RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
 from ...engine.state import GameState
-from ..memory import PlayedTracker
 
 
 def _get_all_cards_in_game() -> List[Card]:
@@ -61,22 +60,8 @@ def determinize(state: GameState, player: int, rng: random.Random) -> GameState:
     # 1. 获取所有牌
     all_cards = _get_all_cards_in_game()
 
-    # 2. 统计已出牌
-    played_tracker = PlayedTracker.from_history(state)
-
-    # 3. 构建未出牌池：所有牌 - 已出牌
-    unplayed_cards = []
-    for card in all_cards:
-        played_count = played_tracker.played_by_rank.get(card.rank, 0)
-        # 计算这张牌在所有牌中的总数
-        all_count = sum(1 for c in all_cards if c.rank == card.rank and c.suit == card.suit)
-        if played_count > 0:
-            # 已出了一些，需要判断还剩几张
-            # 简化：统计 all_cards 中未被标记为已出的牌
-            pass
-
-    # 重新实现：统计每个 (rank, suit) 组合的剩余数量
-    played_cards_list = []
+    # 2. 统计已出牌，并从完整牌池中逐张移除。
+    played_cards_list: List[Card] = []
     for ev in state.history:
         from ...engine.events import TurnPlayed
         if isinstance(ev, TurnPlayed):

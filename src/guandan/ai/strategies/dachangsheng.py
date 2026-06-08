@@ -92,16 +92,16 @@ class DaiChangshengStrategy(ProfessionalStrategy):
             return None
 
         # 风格 1：炸弹吝啬
-        if self._is_bomb(pattern):
-            if not self._should_use_bomb(state, player, pattern):
-                # 改为过牌（让 MCTS 重新选择非炸弹）
-                return None
+        if self._is_bomb(pattern) and not self._should_use_bomb(state, player, pattern):
+            # 改为过牌（让 MCTS 重新选择非炸弹）
+            return None
 
         # 风格 2：配合意识（队友协作）
-        if self._should_let_teammate_play(state, player):
-            # 高概率过牌让队友走
-            if self.rng.random() < self.style["teammate_awareness"]:
-                return None
+        if (
+            self._should_let_teammate_play(state, player)
+            and self.rng.random() < self.style["teammate_awareness"]
+        ):
+            return None
 
         # 风格 3：漂牌决策（暂不实现，留待未来优化）
         # TODO: 在手牌剩余少量时，规划5张+级牌炸弹的最后一手
@@ -140,10 +140,7 @@ class DaiChangshengStrategy(ProfessionalStrategy):
 
         # 根据 bomb_threshold 决定
         # 计算"紧迫度"：对手最少手牌数的倒数
-        if opponent_min_cards > 0:
-            urgency = 1.0 / opponent_min_cards
-        else:
-            urgency = 0.0
+        urgency = 1.0 / opponent_min_cards if opponent_min_cards > 0 else 0.0
 
         # threshold 越高，越不愿意用炸弹
         return urgency > self.style["bomb_threshold"]
@@ -165,12 +162,11 @@ class DaiChangshengStrategy(ProfessionalStrategy):
             return False
 
         # 队友手牌少且正在领先（是当前出牌者），让队友收这一轮
-        if state.hand_size(partner) <= 5:
-            # 检查队友是否在控场
-            if state.table and self._partner_is_leading(state, player):
-                return True
-
-        return False
+        return (
+            state.hand_size(partner) <= 5
+            and bool(state.table)
+            and self._partner_is_leading(state, player)
+        )
 
     def _teammate_is_first(self, state: GameState, player: int) -> bool:
         """判断队友是否已经头游。"""

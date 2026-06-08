@@ -17,8 +17,8 @@ from guandan.engine.card import (
     RANK_K,
     RANK_Q,
     RANK_SMALL_JOKER,
-    Suit,
     Card,
+    Suit,
 )
 from guandan.engine.hand import PatternType
 from guandan.engine.rules.patterns import (
@@ -166,7 +166,6 @@ class TestBomb:
         assert any(p.type == PatternType.BOMB and p.length == 4 and p.rank == RANK_5 for p in ps)
 
     def test_bomb_5(self):
-        ps = detect_patterns(cards("5H", "5D", "5S", "5C", "5H"))  # 同 rank 最多 4 张
         # 实际游戏中同 rank 最多 4 张，所以 5 张炸弹需要不同 rank... 不，实际游戏中 4-7 张炸弹都是同 rank
         # 2 副牌同 rank 最多 4 张
         # 所以 5 张炸弹 = 2 副牌中 4 张同 rank + 1 wild

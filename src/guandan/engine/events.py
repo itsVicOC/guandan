@@ -17,12 +17,11 @@
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Optional, Union
 
 from .card import Card
 from .hand import Pattern
-
 
 # ---- 事件类型 ----
 

@@ -24,16 +24,14 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from .card import (
-    Card,
     RANK_2,
     RANK_A,
-    RANK_BIG_JOKER,
-    RANK_SMALL_JOKER,
+    Card,
     Suit,
 )
 from .deck import deal, make_deck, shuffle_deck
 from .events import Event, ShuffleDeal
-from .hand import Hand, Pattern
+from .hand import Pattern
 
 
 # 队伍：0=东-西（player 0 & 2），1=南-北（player 1 & 3）
@@ -321,12 +319,13 @@ def _end_trick_or_jiefeng(state: GameState) -> None:
                 if new_leader == last_leader:
                     return  # 全部出完（不该发生）
     else:
+        if last_leader is None:
+            return
         new_leader = last_leader
 
     state.leader = new_leader
     state.next_trick_starter = new_leader
-    if new_leader is not None:
-        state.turn_index = new_leader
+    state.turn_index = new_leader
 
 
 def _finish_game(state: GameState) -> None:
@@ -348,8 +347,7 @@ def _finish_game(state: GameState) -> None:
     head = state.finish_order[0]
     second = state.finish_order[1]
     third = state.finish_order[2]
-    last = [p for p in range(4) if p not in state.finish_order][0]
-    full_order = [head, second, third, last]
+    last = next(p for p in range(4) if p not in state.finish_order)
 
     # 升级：按头游方的两个名次组合
     from .rules.scoring import compute_level_change
@@ -430,8 +428,8 @@ def _finish_game(state: GameState) -> None:
         )
     state.history.append(
         GameOver(
-            finish_order=tuple(full_order),
-            team_levels=tuple(new_levels),
+            finish_order=(head, second, third, last),
+            team_levels=(new_levels[0], new_levels[1]),
             drift=drift,
             guo_a=guo_a,
         )
@@ -484,7 +482,7 @@ def make_initial_state(
         ShuffleDeal(
             level=level,
             wild_card=wild_card,
-            hand_sizes=tuple(len(h) for h in hands),
+            hand_sizes=(len(hands[0]), len(hands[1]), len(hands[2]), len(hands[3])),
             first_player=first_player,
             seed=seed if seed is not None else 0,
         )
@@ -502,5 +500,5 @@ def remove_cards_from_hand(hand: list[Card], cards_to_remove: list[Card]) -> Non
     for c in cards_to_remove:
         try:
             hand.remove(c)
-        except ValueError:
-            raise ValueError(f"card {c} not in hand")
+        except ValueError as exc:
+            raise ValueError(f"card {c} not in hand") from exc
