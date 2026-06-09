@@ -62,34 +62,31 @@ class TestPlayPattern:
         play_pattern(state, 0, p)
         assert state.table == [p]
         assert state.hand_size(0) == 26
-        assert state.turn_index == 1
+        assert state.turn_index == 3
 
     def test_press(self):
         state = make_initial_state(level=2, first_player=0, seed=42)
-        c1 = state.hands[0][0]
-        c2 = state.hands[1][0]
-        if c1.rank < c2.rank:
-            p1 = single_pattern(c1)
-            p2 = single_pattern(c2)
-        else:
-            p1 = single_pattern(c2)
-            p2 = single_pattern(c1)
-        play_pattern(state, 0, p1)
-        play_pattern(state, 1, p2)
-        assert state.table[-1] == p2
+        state.wild_card = None
+        state.hands[0] = [c(RANK_2, "H"), c(RANK_6, "H")]
+        state.hands[3] = [c(RANK_3, "H"), c(RANK_7, "H")]
+        p0 = single_pattern(c(RANK_2, "H"))
+        p3 = single_pattern(c(RANK_3, "H"))
+        play_pattern(state, 0, p0)
+        play_pattern(state, 3, p3)
+        assert state.table[-1] == p3
         assert state.turn_index == 2
 
     def test_cannot_press_smaller(self):
         state = make_initial_state(level=2, first_player=0, seed=42)
         p0_hand = state.hands[0]
-        p1_hand = state.hands[1]
+        p1_hand = state.hands[3]
         c_big = max(p0_hand, key=lambda c: (c.rank, c.is_joker))
         c_small = min(p1_hand, key=lambda c: (c.rank, not c.is_joker))
         p_big = single_pattern(c_big)
         p_small = single_pattern(c_small)
         play_pattern(state, 0, p_big)
         with pytest.raises(IllegalPlayError):
-            play_pattern(state, 1, p_small)
+            play_pattern(state, 3, p_small)
 
     def test_cannot_play_out_of_turn(self):
         state = make_initial_state(level=2, first_player=0, seed=42)
@@ -109,9 +106,9 @@ class TestPassTurn:
         state = make_initial_state(level=2, first_player=0, seed=42)
         c = state.hands[0][0]
         play_pattern(state, 0, single_pattern(c))
-        pass_turn(state, 1)
-        pass_turn(state, 2)
         pass_turn(state, 3)
+        pass_turn(state, 2)
+        pass_turn(state, 1)
         # 第 3 次 pass 后，trick 应结束，leader 继续
         assert state.table == []
         assert state.turn_index == 0
@@ -127,9 +124,9 @@ class TestPassTurn:
         state.hands[3] = [c(RANK_J, "H"), c(RANK_A, "H")]
 
         play_pattern(state, 0, single_pattern(c(RANK_2, "H")))
-        pass_turn(state, 1)
-        pass_turn(state, 2)
         play_pattern(state, 3, single_pattern(c(RANK_J, "H")))
+        pass_turn(state, 2)
+        pass_turn(state, 1)
         pass_turn(state, 0)
 
         assert state.table == []
@@ -147,9 +144,9 @@ class TestPassTurn:
         state.hands[3] = [c(RANK_J, "H"), c(RANK_A, "H")]
 
         play_pattern(state, 0, single_pattern(c(RANK_2, "H")))
-        pass_turn(state, 1)
-        pass_turn(state, 2)
         play_pattern(state, 3, single_pattern(c(RANK_J, "H")))
+        pass_turn(state, 2)
+        pass_turn(state, 1)
 
         assert state.table == []
         assert state.passed_players == set()
@@ -171,11 +168,11 @@ class TestJiefeng_Document:
         assert 0 in state.finish_order
         # leader 仍是 0（trick 还没结束）
         assert state.leader == 0
-        # turn 推进到 1
-        assert state.turn_index == 1
-        # 现在 player 1 压牌
-        p1_card = state.hands[1][0]
-        play_pattern(state, 1, single_pattern(p1_card))
+        # turn 按逆时针推进到 3
+        assert state.turn_index == 3
+        # 现在 player 3 压牌
+        p1_card = state.hands[3][0]
+        play_pattern(state, 3, single_pattern(p1_card))
         # 接风未触发，leader 仍为 0（trick 中）
         assert state.leader == 0
         # 轮到 2
@@ -184,19 +181,19 @@ class TestJiefeng_Document:
         assert 0 in state.finish_order
 
     def test_finisher_then_all_pass_triggers_jiefeng(self):
-        """玩家 A 出完最后一手后，3 个非 leader 全过 → 触发接风，对家领出。"""
+        """玩家 A 出完最后一手后，其他可行动玩家全过 → 触发接风，对家领出。"""
         state = make_initial_state(level=2, first_player=0, seed=42)
         state.hands[0] = [c(RANK_5)]
         state.turn_index = 0
         play_pattern(state, 0, single_pattern(c(RANK_5)))
-        # player 0 已出完；leader 仍是 0；turn 推进到 1
+        # player 0 已出完；leader 仍是 0；turn 逆时针推进到 3
         assert 0 in state.finish_order
         assert state.leader == 0
-        assert state.turn_index == 1
-        # 1, 2, 3 都过
-        pass_turn(state, 1)
-        pass_turn(state, 2)
+        assert state.turn_index == 3
+        # 3, 2, 1 都过
         pass_turn(state, 3)
+        pass_turn(state, 2)
+        pass_turn(state, 1)
         # 触发接风：leader 切到对家 (0+2)%4 = 2
         assert state.leader == 2
         assert state.turn_index == 2
@@ -341,14 +338,15 @@ class TestPassedLockout:
         state.hands[3] = [c(RANK_4, "H"), c(RANK_J, "H")]
 
         play_pattern(state, 0, single_pattern(c(RANK_2, "H")))  # 0 出
-        pass_turn(state, 1)  # 1 过
-        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # 2 出
         pass_turn(state, 3)  # 3 过
+        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # 2 出
+        pass_turn(state, 1)  # 1 过
         play_pattern(state, 0, single_pattern(c(RANK_6, "H")))  # 0 再出
-        # 1 已过 → 即便手牌更大也不能出
-        assert 1 in state.passed_players
+        # 3 已过 → 即便手牌更大也不能出
+        assert 3 in state.passed_players
+        state.turn_index = 3
         with pytest.raises(IllegalPlayError):
-            play_pattern(state, 1, single_pattern(c(RANK_7, "H")))
+            play_pattern(state, 3, single_pattern(c(RANK_J, "H")))
 
     def test_passed_players_set_persists_across_leader_replay(self):
         """0 在 trick 中再出牌时，passed_players 不应被清空。"""
@@ -360,10 +358,10 @@ class TestPassedLockout:
         state.hands[3] = [c(RANK_4, "H"), c(RANK_J, "H")]
 
         play_pattern(state, 0, single_pattern(c(RANK_2, "H")))
-        pass_turn(state, 1)  # passed = {1}
-        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # passed 应仍 = {1}
-        assert state.passed_players == {1}
-        pass_turn(state, 3)  # passed = {1, 3}
+        pass_turn(state, 3)  # passed = {3}
+        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # passed 应仍 = {3}
+        assert state.passed_players == {3}
+        pass_turn(state, 1)  # passed = {1, 3}
         play_pattern(state, 0, single_pattern(c(RANK_6, "H")))  # passed 应仍 = {1, 3}
         assert state.passed_players == {1, 3}
 
@@ -376,30 +374,30 @@ class TestPassedLockout:
         state.hands[2] = [c(RANK_3, "H"), c(RANK_8, "H")]
         state.hands[3] = [c(RANK_4, "H"), c(RANK_J, "H")]
 
-        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))  # turn=1
-        pass_turn(state, 1)  # turn=2
-        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # turn=3
-        pass_turn(state, 3)  # turn 应跳过 1, 跳到 0
+        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))  # turn=3
+        pass_turn(state, 3)  # turn=2
+        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # turn=1
+        pass_turn(state, 1)  # turn 应跳过 3, 跳到 0
         assert state.turn_index == 0
-        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))  # turn 应跳过 1, 跳到 2
+        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))  # turn 应跳过 3, 跳到 2
         assert state.turn_index == 2
 
     def test_passed_players_cleared_on_new_trick(self):
-        """3 个非 leader 全过 → trick 结束，passed_players 清空，1 可在新 trick 再行动。"""
+        """其他可行动玩家全过 → trick 结束，passed_players 清空，3 可在新 trick 再行动。"""
         state = make_initial_state(level=RANK_5, first_player=0, seed=42)
         state.wild_card = None
         state.hands[0] = [c(RANK_2, "H"), c(RANK_6, "H")]
         state.hands[1] = [c(RANK_7, "H")]
         state.hands[2] = [c(RANK_3, "H")]
-        state.hands[3] = [c(RANK_4, "H")]
+        state.hands[3] = [c(RANK_J, "H")]
 
         play_pattern(state, 0, single_pattern(c(RANK_2, "H")))
-        pass_turn(state, 1)
+        pass_turn(state, 3)
         pass_turn(state, 2)
-        pass_turn(state, 3)  # 1, 2, 3 都过 → trick ends
+        pass_turn(state, 1)  # 3, 2, 1 都过 → trick ends
         assert state.table == []
         assert state.passed_players == set()
-        # 0 重新领出 → 1 重新能动
+        # 0 重新领出 → 3 重新能动
         play_pattern(state, 0, single_pattern(c(RANK_6, "H")))
-        play_pattern(state, 1, single_pattern(c(RANK_7, "H")))  # 不抛异常
-        assert state.table[-1].rank == RANK_7
+        play_pattern(state, 3, single_pattern(c(RANK_J, "H")))  # 不抛异常
+        assert state.table[-1].rank == RANK_J

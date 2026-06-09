@@ -290,7 +290,7 @@ class TestSavegame:
                 pattern = find_complete_pattern([first_card], state.wild_card)
                 assert pattern is not None
                 play_pattern(state, 0, pattern)
-                pass_turn(state, 1)
+                pass_turn(state, 3)
 
                 save_game(state, "test", 0, [None, 2, 2, 2], 42)
                 loaded = load_game()

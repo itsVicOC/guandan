@@ -56,6 +56,11 @@ def is_teammate(a: int, b: int) -> bool:
 SEAT_NAMES = ["东", "南", "西", "北"]
 
 
+def next_seat_counterclockwise(player: int) -> int:
+    """逆时针下一家：东 -> 北 -> 西 -> 南 -> 东。"""
+    return (player - 1) % 4
+
+
 @dataclass
 class TributeState:
     """进贡/还贡阶段状态。"""
@@ -243,10 +248,10 @@ def claim(state: GameState, player: int, count: int) -> None:
 
 def _next_player(state: GameState, current: int) -> int:
     """下一个玩家（按逆时针），跳过已出完手牌的玩家。"""
-    nxt = (current + 1) % 4
+    nxt = next_seat_counterclockwise(current)
     visited = 0
     while nxt in state.finish_order:
-        nxt = (nxt + 1) % 4
+        nxt = next_seat_counterclockwise(nxt)
         visited += 1
         if visited >= 4:
             # 全部出完（理论上不该走到这里，因为 3rd 出完时会结束游戏）
@@ -260,14 +265,14 @@ def _next_active_player(state: GameState, current: int) -> int:
     区别于 `_next_player`：后者只跳过 finish_order，本函数同时跳过
     `passed_players`（spec 规则 3：已过牌玩家本圈不能再被轮询）。
     """
-    nxt = (current + 1) % 4
+    nxt = next_seat_counterclockwise(current)
     visited = 0
     while nxt in state.finish_order or nxt in state.passed_players:
-        nxt = (nxt + 1) % 4
+        nxt = next_seat_counterclockwise(nxt)
         visited += 1
         if visited >= 4:
             # 全部跳过：理论上不该走到这里，因为 pass_turn 之前已
-            # 检查过 "是否所有非 leader 都过了"
+            # 检查过"是否所有非当前最大牌玩家都过了"
             return current
     return nxt
 
@@ -329,9 +334,9 @@ def _end_trick_or_jiefeng(state: GameState) -> None:
             new_leader = partner
         else:
             # 对家也出完了（如头游+二游同队），找下一个 active 玩家
-            new_leader = (last_leader + 1) % 4
+            new_leader = next_seat_counterclockwise(last_leader)
             while new_leader in state.finish_order:
-                new_leader = (new_leader + 1) % 4
+                new_leader = next_seat_counterclockwise(new_leader)
                 if new_leader == last_leader:
                     return  # 全部出完（不该发生）
     else:

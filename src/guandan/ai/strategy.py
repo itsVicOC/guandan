@@ -29,7 +29,7 @@ class AIStrategy(Protocol):
         """为 player 选一个牌型。
 
         返回 None 表示"无可压之牌 / 不愿出牌"——调用方应据此过牌（且必须是合法过牌
-        的时机——非 leader 且 table 非空）。
+        的时机：不是新一轮领出且 table 非空）。
         """
         ...
 

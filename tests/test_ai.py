@@ -389,7 +389,7 @@ class TestShouldPass:
 class TestStrategyDifferentiation:
     def test_advanced_passes_when_teammate_winning(self) -> None:
         """Advanced：队友已领先 → 主动过牌（None）。"""
-        # 流程：0 出 A（leader）→ 1, 2 跳过 → 3 出炸弹压 A → turn 回 0
+        # 流程：0 出 A（leader）→ 3 出炸弹压 A。
         # 然后手动让 turn=1，桌顶是 3 的炸弹
         state = make_initial_state(level=5, first_player=0, seed=42)
         state.wild_card = None
@@ -403,13 +403,9 @@ class TestStrategyDifferentiation:
         ]
         # 0 出 A
         play_pattern(state, 0, sp(RANK_A, "H"))
-        # 1, 2 跳过
-        pass_turn(state, 1)
-        pass_turn(state, 2)
         # 3 出 8 炸弹（压 A）
         bomb = Pattern(PatternType.BOMB, RANK_8, 4, tuple(state.hands[3][:4]), 0)
         play_pattern(state, 3, bomb)
-        # 现在 turn = 0（0 之后 1,2,3 都行动过；3 是桌顶出牌者）
         # 手动把 turn 设回 1（模拟回到 1 的视角）
         state.turn_index = 1
         # 1 的对家是 3，3 在桌顶（炸弹）→ 协作分触发
@@ -473,7 +469,7 @@ class TestPlayOrPass:
         result = play_or_pass(state, 0, make_strategy(0), rng)
         assert result is True
         assert len(state.history) == 2  # ShuffleDeal + TurnPlayed
-        assert state.turn_index == 1
+        assert state.turn_index == 3
 
     def test_no_pattern_with_no_table_uses_leader_fallback(self) -> None:
         """leader + select_pattern 返回 None → 兜底出最小单张。"""
@@ -489,7 +485,7 @@ class TestPlayOrPass:
     def test_advanced_passes_when_teammate_winning(self) -> None:
         """Advanced 协作分：队友在桌顶 → play_or_pass 返回 False。
 
-        流程：0 出 A → 1 pass → 2 pass → 3 出炸弹压 A → turn 回 0。
+        流程：0 出 A → 3 出炸弹压 A。
         手动把 turn 设为 1（1 的对家是 3，3 在桌顶）→ Advanced 应过牌。
         """
         state = make_initial_state(level=5, first_player=0, seed=42)
@@ -503,8 +499,6 @@ class TestPlayOrPass:
             c(RANK_5, "D"),
         ]
         play_pattern(state, 0, sp(RANK_A, "H"))
-        pass_turn(state, 1)
-        pass_turn(state, 2)
         bomb = Pattern(PatternType.BOMB, RANK_8, 4, tuple(state.hands[3][:4]), 0)
         play_pattern(state, 3, bomb)
         # 手动让 turn=1，模拟"轮回到 1"
@@ -527,10 +521,10 @@ class TestPlayOrPass:
             c(RANK_8, "C"),
             c(RANK_5, "D"),
         ]
-        play_pattern(s, 0, sp(RANK_A, "H"))  # turn → 1
-        pass_turn(s, 1)  # turn → 2
+        play_pattern(s, 0, sp(RANK_A, "H"))  # turn -> 3
+        pass_turn(s, 3)  # turn -> 2
         bomb = Pattern(PatternType.BOMB, RANK_8, 4, tuple(s.hands[2][:4]), 0)
-        play_pattern(s, 2, bomb)  # turn → 3；2 是 0 的对家
+        play_pattern(s, 2, bomb)  # turn -> 1；2 是 0 的对家
         # 2 是 0 的对家，在桌顶
         assert _teammate_winning(s, 0) is True
         # 1 的对家是 3，3 没出

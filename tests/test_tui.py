@@ -87,9 +87,9 @@ def test_locked_passes_remain_visible_after_later_play() -> None:
             leader=0,
         )
         play_pattern(state, 0, _single(Card(RANK_2, Suit.HEARTS)))
-        pass_turn(state, 1)
+        pass_turn(state, 3)
         pass_turn(state, 2)
-        play_pattern(state, 3, _single(Card(RANK_J, Suit.HEARTS)))
+        play_pattern(state, 1, _single(Card(RANK_7, Suit.HEARTS)))
 
         app = GuandanApp()
         async with app.run_test() as pilot:
@@ -97,10 +97,10 @@ def test_locked_passes_remain_visible_after_later_play() -> None:
             app.push_screen(screen)
             await pilot.pause()
 
-            assert screen._locked_passed_players() == [1, 2]
+            assert screen._locked_passed_players() == [3, 2]
             table = screen.query_one("#table")
             table_text = _plain(table.content)
-            assert "南: 过牌" in table_text
+            assert "北: 过牌" in table_text
             assert "西: 过牌" in table_text
 
     asyncio.run(run())

@@ -1,7 +1,20 @@
 """engine 新公开 API 单元测试。"""
 from __future__ import annotations
 
-from guandan.engine.state import is_teammate, partner_of, team_of
+from guandan.engine.state import (
+    is_teammate,
+    next_seat_counterclockwise,
+    partner_of,
+    team_of,
+)
+
+
+def test_next_seat_counterclockwise() -> None:
+    # 逆时针出牌：东 -> 北 -> 西 -> 南 -> 东
+    assert next_seat_counterclockwise(0) == 3
+    assert next_seat_counterclockwise(3) == 2
+    assert next_seat_counterclockwise(2) == 1
+    assert next_seat_counterclockwise(1) == 0
 
 
 def test_partner_of_seating_convention() -> None:
