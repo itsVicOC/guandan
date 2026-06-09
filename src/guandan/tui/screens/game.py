@@ -162,7 +162,7 @@ class GameScreen(Screen):
         grid-gutter: 1 1;
         padding: 0 1;
     }
-    #opp-north {
+    #opp-opposite {
         column-span: 3;
     }
     #status-bar {
@@ -235,14 +235,15 @@ class GameScreen(Screen):
 
     def compose(self) -> ComposeResult:
         ai_label = f"AI·{self._strategy.name}"
+        seats = self._visual_seats()
         yield Header()
         with Vertical():
             yield Static("status", id="status-bar")
             with Grid(id="table-layout"):
-                yield OpponentWidget(3, "北", ai_label, id="opp-north")
-                yield OpponentWidget(2, "西", ai_label, id="opp-west")
+                yield OpponentWidget(seats["opposite"], SEAT_NAMES[seats["opposite"]], ai_label, id="opp-opposite")
+                yield OpponentWidget(seats["left"], SEAT_NAMES[seats["left"]], ai_label, id="opp-left")
                 yield TableWidget(id="table")
-                yield OpponentWidget(1, SEAT_NAMES[1], ai_label, id="opp-next")
+                yield OpponentWidget(seats["right"], SEAT_NAMES[seats["right"]], ai_label, id="opp-right")
                 yield Static("")
                 yield PlayerStatusWidget("", id="player-south")
                 yield Static("")
@@ -264,9 +265,22 @@ class GameScreen(Screen):
         assert self.state is not None
         return self.state
 
+    def _visual_seats(self) -> dict[str, int]:
+        """返回以当前玩家为底部视角的左右和对面座位。"""
+        return {
+            "left": (self.human + 1) % 4,
+            "opposite": (self.human + 2) % 4,
+            "right": (self.human - 1) % 4,
+        }
+
     def _refresh_all(self) -> None:
         s = self._state()
-        for p, wid in [(1, "opp-next"), (2, "opp-west"), (3, "opp-north")]:
+        seats = self._visual_seats()
+        for p, wid in [
+            (seats["left"], "opp-left"),
+            (seats["opposite"], "opp-opposite"),
+            (seats["right"], "opp-right"),
+        ]:
             w = self.query_one(f"#{wid}", OpponentWidget)
             w.update_state(
                 hand_size=len(s.hands[p]),
