@@ -9,6 +9,7 @@ from guandan.engine.card import (
     RANK_6,
     RANK_7,
     RANK_8,
+    RANK_9,
     RANK_A,
     RANK_BIG_JOKER,
     RANK_SMALL_JOKER,
@@ -57,6 +58,20 @@ def four_jokers():
     )
 
 
+def straight(rank, length=5):
+    return Pattern(PatternType.STRAIGHT, rank, length, (c(RANK_3),) * length, 0)
+
+
+def straight_flush(rank, length=5):
+    return Pattern(
+        PatternType.STRAIGHT_FLUSH,
+        rank,
+        length,
+        tuple(c(RANK_3, "H") for _ in range(length)),
+        0,
+    )
+
+
 class TestCanPlay:
     def test_first_play_any(self):
         # against=None 时任何牌型都允许
@@ -94,6 +109,11 @@ class TestCanPlay:
         assert can_play(four_jokers(), bomb(RANK_A, 4))
         assert can_play(four_jokers(), bomb(RANK_A, 8))
 
+    def test_straight_flush_only_beats_same_length_bomb(self):
+        assert can_play(straight_flush(RANK_9, 5), bomb(RANK_A, 5))
+        assert not can_play(straight_flush(RANK_9, 5), bomb(RANK_3, 6))
+        assert not can_play(straight_flush(RANK_9, 5), bomb(RANK_3, 4))
+
     def test_no_one_presses_four_jokers(self):
         assert not can_play(bomb(RANK_A, 8), four_jokers())
         assert not can_play(bomb(RANK_A, 4), four_jokers())
@@ -105,6 +125,12 @@ class TestCompareSameType:
         p2 = Pattern(PatternType.STRAIGHT, RANK_7, 5, (c(RANK_3),) * 5, 0)
         assert compare_same_type(p1, p2) == 1
         assert compare_same_type(p2, p1) == -1
+
+    def test_level_card_does_not_boost_sequence_rank(self):
+        low_wrap = straight(RANK_5)
+        high_ace = straight(RANK_A)
+        assert compare_same_type(low_wrap, high_ace, level=RANK_5) == -1
+        assert not can_play(low_wrap, high_ace, level=RANK_5)
 
 
 class TestCompareBombs:
@@ -119,12 +145,9 @@ class TestCompareBombs:
         assert compare_bombs(bomb(RANK_7, 4), bomb(RANK_5, 5)) == -1
 
     def test_straight_flush_vs_4bomb(self):
-        # 同花顺 > 4 张普通炸弹（同张数）
-        sf = Pattern(PatternType.STRAIGHT_FLUSH, RANK_5, 5,
-                     (c(RANK_3, "H"), c(RANK_4, "H"), c(RANK_5, "H"),
-                      c(RANK_6, "H"), c(RANK_7, "H")), 0)
+        sf = straight_flush(RANK_5, 5)
         b4 = bomb(RANK_A, 4)
-        assert compare_bombs(sf, b4) == 1
+        assert compare_bombs(sf, b4) == 0
 
     def test_four_jokers_max(self):
         # 四王 > 同花顺 > 炸弹

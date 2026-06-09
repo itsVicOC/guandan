@@ -24,16 +24,8 @@ from ..card import (
     RANK_3,
     RANK_4,
     RANK_5,
-    RANK_6,
-    RANK_7,
-    RANK_8,
-    RANK_9,
-    RANK_10,
     RANK_A,
     RANK_BIG_JOKER,
-    RANK_J,
-    RANK_K,
-    RANK_Q,
     RANK_SMALL_JOKER,
     Card,
     Suit,
@@ -260,166 +252,78 @@ def _try_triple_pair(
     """
     patterns: list[Pattern] = []
     by_rank: dict[int, list[Card]] = {}
+    joker_pairs: list[tuple[int, list[Card], int]] = []
     for c in normal:
-        if not _is_normal(c):
-            continue
-        by_rank.setdefault(c.rank, []).append(c)
+        if _is_normal(c):
+            by_rank.setdefault(c.rank, []).append(c)
 
-    ranks = sorted(by_rank.keys())
-    # 枚举三元组 rank X 和对子 rank Y（X 可以等于 Y 表示同点三带对，但掼蛋规则要求 X≠Y）
-    # 简化：先按无 wild 处理
-    for x in ranks:
-        x_cards = by_rank[x]
-        for y in ranks:
-            if x == y:
-                # 同 rank 至少 3 + 2 = 5 张才有意义，且至少分出 3+2
-                if len(x_cards) >= 5:
-                    patterns.append(
-                        Pattern(
-                            type=PatternType.TRIPLE_PAIR,
-                            rank=x,
-                            length=1,
-                            cards=tuple(x_cards[:5]),
-                            wild_used=0,
-                        )
+    big_jokers = [c for c in normal if c.is_big_joker]
+    small_jokers = [c for c in normal if c.is_small_joker]
+    if len(big_jokers) >= 2:
+        joker_pairs.append((RANK_BIG_JOKER, big_jokers[:2], 0))
+    if len(small_jokers) >= 2:
+        joker_pairs.append((RANK_SMALL_JOKER, small_jokers[:2], 0))
+
+    triple_candidates: list[tuple[int, list[Card], int]] = []
+    for rank, cards in by_rank.items():
+        max_normal = min(3, len(cards))
+        for normal_used in range(max_normal, 0, -1):
+            needed_wild = 3 - normal_used
+            if needed_wild == 0 or (
+                needed_wild <= wild_count and wild_card is not None
+            ):
+                triple_candidates.append(
+                    (
+                        rank,
+                        [
+                            *cards[:normal_used],
+                            *([wild_card] * needed_wild if wild_card else []),
+                        ],
+                        needed_wild,
                     )
-            else:
-                y_cards = by_rank[y]
-                if len(x_cards) >= 3 and len(y_cards) >= 2:
-                    patterns.append(
-                        Pattern(
-                            type=PatternType.TRIPLE_PAIR,
-                            rank=x,
-                            length=1,
-                            cards=tuple(x_cards[:3] + y_cards[:2]),
-                            wild_used=0,
-                        )
+                )
+
+    pair_candidates: list[tuple[int, list[Card], int]] = [*joker_pairs]
+    for rank, cards in by_rank.items():
+        max_normal = min(2, len(cards))
+        for normal_used in range(max_normal, 0, -1):
+            needed_wild = 2 - normal_used
+            if needed_wild == 0 or (
+                needed_wild <= wild_count and wild_card is not None
+            ):
+                pair_candidates.append(
+                    (
+                        rank,
+                        [
+                            *cards[:normal_used],
+                            *([wild_card] * needed_wild if wild_card else []),
+                        ],
+                        needed_wild,
                     )
-
-    # 1 wild
-    if wild_count >= 1 and wild_card is not None:
-        for x in ranks:
-            x_cards = by_rank[x]
-            for y in ranks:
-                if x == y:
-                    if len(x_cards) >= 4:
-                        # 4 张同点 + 1 wild = 三 + 对
-                        patterns.append(
-                            Pattern(
-                                type=PatternType.TRIPLE_PAIR,
-                                rank=x,
-                                length=1,
-                                cards=tuple([*x_cards[:4], wild_card]),
-                                wild_used=1,
-                            )
-                        )
-                else:
-                    y_cards = by_rank[y]
-                    if len(x_cards) >= 3 and len(y_cards) >= 1:
-                        patterns.append(
-                            Pattern(
-                                type=PatternType.TRIPLE_PAIR,
-                                rank=x,
-                                length=1,
-                                cards=tuple([*x_cards[:3], y_cards[0], wild_card]),
-                                wild_used=1,
-                            )
-                        )
-                    if len(x_cards) >= 2 and len(y_cards) >= 2:
-                        patterns.append(
-                            Pattern(
-                                type=PatternType.TRIPLE_PAIR,
-                                rank=x,
-                                length=1,
-                                cards=tuple([*x_cards[:2], wild_card, *y_cards[:2]]),
-                                wild_used=1,
-                            )
-                        )
-
-    # 2 wilds
+                )
     if wild_count >= 2 and wild_card is not None:
-        for x in ranks:
-            x_cards = by_rank[x]
-            for y in ranks:
-                if x == y:
-                    if len(x_cards) >= 3:
-                        patterns.append(
-                            Pattern(
-                                type=PatternType.TRIPLE_PAIR,
-                                rank=x,
-                                length=1,
-                                cards=tuple([*x_cards[:3], wild_card, wild_card]),
-                                wild_used=2,
-                            )
-                        )
-                else:
-                    y_cards = by_rank[y]
-                    if len(x_cards) >= 3:
-                        patterns.append(
-                            Pattern(
-                                type=PatternType.TRIPLE_PAIR,
-                                rank=x,
-                                length=1,
-                                cards=tuple(
-                                    [*x_cards[:3], y_cards[0], wild_card]
-                                    if y_cards
-                                    else [*x_cards[:3], wild_card, wild_card]
-                                ),
-                                wild_used=2,
-                            )
-                        )
-                    if len(x_cards) >= 2 and len(y_cards) >= 1:
-                        patterns.append(
-                            Pattern(
-                                type=PatternType.TRIPLE_PAIR,
-                                rank=x,
-                                length=1,
-                                cards=tuple([*x_cards[:2], y_cards[0], wild_card, wild_card]),
-                                wild_used=2,
-                            )
-                        )
-                    if len(x_cards) >= 1 and len(y_cards) >= 2:
-                        patterns.append(
-                            Pattern(
-                                type=PatternType.TRIPLE_PAIR,
-                                rank=x,
-                                length=1,
-                                cards=tuple([x_cards[0], wild_card, wild_card, *y_cards[:2]]),
-                                wild_used=2,
-                            )
-                        )
+        pair_candidates.append((wild_card.rank, [wild_card, wild_card], 2))
 
-    # 3 wilds: 1 普通 + 2 wild 作三张 + (1 普通 + 1 wild) 作对 = 5 张；或 3 wild 作三 + 2 wild 作对
-    if wild_count >= 3 and wild_card is not None:
-        for x in ranks:
-            x_cards = by_rank[x]
-            if len(x_cards) >= 1:
-                # 1 普通 + 2 wild 作三，2 wild 作对
-                if wild_count >= 5:
-                    patterns.append(
-                        Pattern(
-                            type=PatternType.TRIPLE_PAIR,
-                            rank=x,
-                            length=1,
-                            cards=(x_cards[0], wild_card, wild_card, wild_card, wild_card),
-                            wild_used=4,
-                        )
-                    )
-                # 1 普通 + 2 wild 作三，1 普通 + 1 wild 作对
-                for y in ranks:
-                    if y == x:
-                        continue
-                    y_cards = by_rank[y]
-                    if len(y_cards) >= 1:
-                        patterns.append(
-                            Pattern(
-                                type=PatternType.TRIPLE_PAIR,
-                                rank=x,
-                                length=1,
-                                cards=(x_cards[0], wild_card, wild_card, y_cards[0], wild_card),
-                                wild_used=3,
-                            )
-                        )
+    available = Counter(normal)
+    if wild_card is not None:
+        available[wild_card] = wild_count
+    for triple_rank, triple_cards, triple_wild in triple_candidates:
+        for pair_rank, pair_cards, pair_wild in pair_candidates:
+            if triple_rank == pair_rank:
+                continue
+            used = [*triple_cards, *pair_cards]
+            used_counts = Counter(used)
+            if any(used_counts[c] > available[c] for c in used_counts):
+                continue
+            patterns.append(
+                Pattern(
+                    type=PatternType.TRIPLE_PAIR,
+                    rank=triple_rank,
+                    length=1,
+                    cards=tuple(used),
+                    wild_used=triple_wild + pair_wild,
+                )
+            )
 
     return patterns
 
@@ -554,96 +458,37 @@ def _try_pair_sequence(
             continue
         by_rank.setdefault(c.rank, []).append(c)
 
-    # 至少 3 对连续 rank
-    pairs_available = {r: cards for r, cards in by_rank.items() if len(cards) >= 2}
-    if not pairs_available and wild_count < 2:
-        return []
-
     patterns: list[Pattern] = []
-    # 枚举连续 rank 段（不含 2）
-    available_ranks = sorted(r for r in pairs_available if r != RANK_2)
-    # 找连续段
-    runs: list[list[int]] = []
-    if available_ranks:
-        cur = [available_ranks[0]]
-        for r in available_ranks[1:]:
-            if r == cur[-1] + 1:
-                cur.append(r)
-            else:
-                runs.append(cur)
-                cur = [r]
-        runs.append(cur)
 
-    # 每段枚举 ≥3 长的窗口
-    for run in runs:
-        for i in range(len(run)):
-            for j in range(i + 2, len(run)):
-                window = run[i : j + 1]
-                if RANK_2 in window:
-                    continue
-                if RANK_A in window and window[-1] != RANK_A:
-                    continue
-                used_cards = []
-                for r in window:
-                    used_cards.extend(pairs_available[r][:2])
-                patterns.append(
-                    Pattern(
-                        type=PatternType.PAIR_SEQUENCE,
-                        rank=window[-1],
-                        length=len(window),
-                        cards=tuple(used_cards),
-                        wild_used=0,
-                    )
+    ranks = list(range(RANK_3, RANK_A + 1))
+    for start_idx in range(len(ranks)):
+        for end_idx in range(start_idx + 2, len(ranks)):
+            window = ranks[start_idx : end_idx + 1]
+            used_cards: list[Card] = []
+            wild_needed = 0
+            valid = True
+            for rank in window:
+                cards = by_rank.get(rank, [])
+                normal_used = min(2, len(cards))
+                used_cards.extend(cards[:normal_used])
+                missing = 2 - normal_used
+                if missing:
+                    if wild_card is None or wild_needed + missing > wild_count:
+                        valid = False
+                        break
+                    used_cards.extend([wild_card] * missing)
+                    wild_needed += missing
+            if not valid:
+                continue
+            patterns.append(
+                Pattern(
+                    type=PatternType.PAIR_SEQUENCE,
+                    rank=window[-1],
+                    length=len(window),
+                    cards=tuple(used_cards),
+                    wild_used=wild_needed,
                 )
-
-    # 1 wild: 用 1 wild 顶替 1 对
-    if wild_count >= 1 and wild_card is not None:
-        for run in runs:
-            for i in range(len(run)):
-                for j in range(i + 1, len(run)):
-                    window = run[i : j + 1]  # length >= 3 (i+2 <= j+1 即 j >= i+1)
-                    if len(window) < 2:
-                        continue
-                    # 实际需要 window 个对子，wild 顶替 1 个，剩下需要至少 2 张普通
-                    # 但我们这里只枚举：window 中 1 个 rank 只有 1 张，1 个 rank 有 2 张
-                    # 简化：找所有"含 1 张"rank 配 wild
-                    single_ranks = [r for r in window if r in by_rank and len(by_rank[r]) == 1]
-                    if not single_ranks:
-                        continue
-                    used_cards = []
-                    for r in window:
-                        if r in pairs_available:
-                            used_cards.extend(pairs_available[r][:2])
-                        elif r in single_ranks:
-                            used_cards.append(by_rank[r][0])
-                            used_cards.append(wild_card)
-                    if len(used_cards) == len(window) * 2:
-                        patterns.append(
-                            Pattern(
-                                type=PatternType.PAIR_SEQUENCE,
-                                rank=window[-1],
-                                length=len(window),
-                                cards=tuple(used_cards),
-                                wild_used=1,
-                            )
-                        )
-
-    # 2 wild: 顶替 2 对
-    if wild_count >= 2 and wild_card is not None:
-        # 简化：先支持无普通对 + 2 wild 起手 + 1 对
-        for r in [RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_9, RANK_10, RANK_J, RANK_Q, RANK_K]:
-            if r in pairs_available:
-                used = [pairs_available[r][0], pairs_available[r][1], wild_card, wild_card, wild_card, wild_card]
-                patterns.append(
-                    Pattern(
-                        type=PatternType.PAIR_SEQUENCE,
-                        rank=RANK_3,
-                        length=3,
-                        cards=tuple(used),
-                        wild_used=2,
-                    )
-                )
-                break
+            )
 
     return patterns
 
@@ -664,46 +509,37 @@ def _try_triple_sequence(
             continue
         by_rank.setdefault(c.rank, []).append(c)
 
-    triples_available = {r: cards for r, cards in by_rank.items() if len(cards) >= 3}
-    if not triples_available and wild_count < 3:
-        return []
-
     patterns: list[Pattern] = []
 
-    # 枚举连续 rank 段（不含 2、不含 A 作为最大）
-    available_ranks = sorted(r for r in triples_available if r != RANK_2)
-    runs: list[list[int]] = []
-    if available_ranks:
-        cur = [available_ranks[0]]
-        for r in available_ranks[1:]:
-            if r == cur[-1] + 1:
-                cur.append(r)
-            else:
-                runs.append(cur)
-                cur = [r]
-        runs.append(cur)
-
-    # 枚举 ≥2 长的窗口
-    for run in runs:
-        for i in range(len(run)):
-            for j in range(i + 1, len(run)):
-                window = run[i : j + 1]
-                if RANK_2 in window:
-                    continue
-                if RANK_A in window and window[-1] != RANK_A:
-                    continue
-                used_cards = []
-                for r in window:
-                    used_cards.extend(triples_available[r][:3])
-                patterns.append(
-                    Pattern(
-                        type=PatternType.TRIPLE_SEQUENCE,
-                        rank=window[-1],
-                        length=len(window),
-                        cards=tuple(used_cards),
-                        wild_used=0,
-                    )
+    ranks = list(range(RANK_3, RANK_A + 1))
+    for start_idx in range(len(ranks)):
+        for end_idx in range(start_idx + 1, len(ranks)):
+            window = ranks[start_idx : end_idx + 1]
+            used_cards: list[Card] = []
+            wild_needed = 0
+            valid = True
+            for rank in window:
+                cards = by_rank.get(rank, [])
+                normal_used = min(3, len(cards))
+                used_cards.extend(cards[:normal_used])
+                missing = 3 - normal_used
+                if missing:
+                    if wild_card is None or wild_needed + missing > wild_count:
+                        valid = False
+                        break
+                    used_cards.extend([wild_card] * missing)
+                    wild_needed += missing
+            if not valid:
+                continue
+            patterns.append(
+                Pattern(
+                    type=PatternType.TRIPLE_SEQUENCE,
+                    rank=window[-1],
+                    length=len(window),
+                    cards=tuple(used_cards),
+                    wild_used=wild_needed,
                 )
+            )
 
     return patterns
 
@@ -729,7 +565,7 @@ def _try_bomb(
     # 0 wild
     for rank, cards in by_rank.items():
         if len(cards) >= 4:
-            for n in range(4, len(cards) + 1):
+            for n in range(4, min(8, len(cards)) + 1):
                 patterns.append(
                     Pattern(
                         type=PatternType.BOMB,
@@ -743,7 +579,7 @@ def _try_bomb(
     # 1 wild：k 张普通 + 1 wild（k ≥ 3）
     if wild_count >= 1 and wild_card is not None:
         for rank, cards in by_rank.items():
-            for k in range(3, len(cards) + 1):
+            for k in range(3, min(7, len(cards)) + 1):
                 patterns.append(
                     Pattern(
                         type=PatternType.BOMB,
@@ -757,7 +593,7 @@ def _try_bomb(
     # 2 wilds
     if wild_count >= 2 and wild_card is not None:
         for rank, cards in by_rank.items():
-            for k in range(2, len(cards) + 1):
+            for k in range(2, min(6, len(cards)) + 1):
                 patterns.append(
                     Pattern(
                         type=PatternType.BOMB,
@@ -771,7 +607,7 @@ def _try_bomb(
     # 3 wilds
     if wild_count >= 3 and wild_card is not None:
         for rank, cards in by_rank.items():
-            for k in range(1, len(cards) + 1):
+            for k in range(1, min(5, len(cards)) + 1):
                 patterns.append(
                     Pattern(
                         type=PatternType.BOMB,
@@ -795,7 +631,7 @@ def _try_bomb(
             )
         )
         # 5+ 张 wild 凑炸弹
-        for n in range(5, wild_count + 1):
+        for n in range(5, min(8, wild_count) + 1):
             patterns.append(
                 Pattern(
                     type=PatternType.BOMB,
@@ -897,10 +733,10 @@ def find_complete_pattern(
 ) -> Pattern | None:
     """找一个用掉所有 cards 的合法 Pattern。"""
     input_counts = Counter(cards)
-    for p in detect_patterns(cards, wild_card):
-        if Counter(p.cards) == input_counts:
-            return p
-    return None
+    candidates = [
+        p for p in detect_patterns(cards, wild_card) if Counter(p.cards) == input_counts
+    ]
+    return max(candidates, key=_pattern_selection_key, default=None)
 
 
 def has_legal_pattern(cards: Sequence[Card], wild_card: Card | None = None) -> bool:
@@ -917,3 +753,20 @@ def find_pattern(
         if p.type == target and Counter(p.cards) == input_counts:
             return p
     return None
+
+
+def _pattern_selection_key(p: Pattern) -> tuple[int, int, int, int]:
+    """同一组牌有多种解释时，优先选择规则强度更高的牌型。"""
+    strength = {
+        PatternType.SINGLE: 0,
+        PatternType.PAIR: 1,
+        PatternType.TRIPLE: 2,
+        PatternType.TRIPLE_PAIR: 3,
+        PatternType.STRAIGHT: 4,
+        PatternType.PAIR_SEQUENCE: 5,
+        PatternType.TRIPLE_SEQUENCE: 6,
+        PatternType.BOMB: 7,
+        PatternType.STRAIGHT_FLUSH: 8,
+        PatternType.FOUR_JOKERS: 9,
+    }[p.type]
+    return (strength, p.length, p.rank, -p.wild_used)

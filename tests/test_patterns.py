@@ -118,6 +118,16 @@ class TestTriplePair:
         # 不能是 3 张 7 + 2 张 5（rank 应是 triple 的 rank）
         assert not any(p.rank == RANK_7 for p in tp)
 
+    def test_triple_pair_rejects_same_rank_full_house(self):
+        ps = detect_patterns(cards("5H", "5D", "5S", "5C", "5H"))
+        assert not any(p.type == PatternType.TRIPLE_PAIR for p in ps)
+
+    def test_triple_pair_allows_joker_pair_kicker(self):
+        p = find_complete_pattern(cards("8H", "8D", "8S", "BJ", "BJ"))
+        assert p is not None
+        assert p.type == PatternType.TRIPLE_PAIR
+        assert p.rank == RANK_8
+
 
 class TestStraight:
     def test_straight_simple(self):
@@ -167,12 +177,36 @@ class TestPairSequence:
         ps = detect_patterns(cards("3H", "3D", "4H", "4D"))
         assert not any(p.type == PatternType.PAIR_SEQUENCE for p in ps)
 
+    def test_pair_sequence_uses_wild_for_missing_pair_card(self):
+        wild = c(RANK_5, "H")
+        p = find_complete_pattern(
+            [*cards("3H", "3D", "4H", "4D", "5D"), wild],
+            wild,
+        )
+        assert p is not None
+        assert p.type == PatternType.PAIR_SEQUENCE
+        assert p.length == 3
+        assert p.rank == RANK_5
+        assert p.wild_used == 1
+
 
 class TestTripleSequence:
     def test_triple_sequence_2(self):
         # 333 444
         ps = detect_patterns(cards("3H", "3D", "3S", "4H", "4D", "4S"))
         assert any(p.type == PatternType.TRIPLE_SEQUENCE and p.length == 2 and p.rank == RANK_4 for p in ps)
+
+    def test_triple_sequence_uses_wild_for_missing_card(self):
+        wild = c(RANK_5, "H")
+        p = find_complete_pattern(
+            [*cards("3H", "3D", "3S", "4H", "4D"), wild],
+            wild,
+        )
+        assert p is not None
+        assert p.type == PatternType.TRIPLE_SEQUENCE
+        assert p.length == 2
+        assert p.rank == RANK_4
+        assert p.wild_used == 1
 
 
 class TestBomb:
@@ -190,11 +224,31 @@ class TestBomb:
         ps = detect_patterns(cards("BJ", "BJ", "SJ", "SJ"))
         assert any(p.type == PatternType.FOUR_JOKERS for p in ps)
 
+    def test_five_same_rank_prefers_bomb_not_triple_pair(self):
+        p = find_complete_pattern(cards("9H", "9D", "9S", "9C", "9H"))
+        assert p is not None
+        assert p.type == PatternType.BOMB
+        assert p.length == 5
+
+    def test_bomb_does_not_exceed_eight_cards(self):
+        wild = c(RANK_5, "H")
+        ten_cards = [
+            *cards("7H", "7H", "7D", "7D", "7S", "7S", "7C", "7C"),
+            wild,
+            wild,
+        ]
+        assert find_complete_pattern(ten_cards, wild) is None
+
 
 class TestStraightFlush:
     def test_straight_flush(self):
         ps = detect_patterns(cards("3H", "4H", "5H", "6H", "7H"))
         assert any(p.type == PatternType.STRAIGHT_FLUSH for p in ps)
+
+    def test_complete_straight_flush_prefers_straight_flush(self):
+        p = find_complete_pattern(cards("3H", "4H", "5H", "6H", "7H"))
+        assert p is not None
+        assert p.type == PatternType.STRAIGHT_FLUSH
 
     def test_not_straight_flush_mixed_suits(self):
         ps = detect_patterns(cards("3H", "4D", "5H", "6H", "7H"))

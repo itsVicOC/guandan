@@ -47,6 +47,14 @@ PATTERN_WEIGHT: dict[PatternType, int] = {
 }
 
 
+SEQUENCE_PATTERN_TYPES = {
+    PatternType.STRAIGHT,
+    PatternType.PAIR_SEQUENCE,
+    PatternType.TRIPLE_SEQUENCE,
+    PatternType.STRAIGHT_FLUSH,
+}
+
+
 def effective_rank(rank: int, level: int | None = None) -> int:
     """用于比较的有效点数：级牌是最大的非王牌。"""
     if rank in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
@@ -54,6 +62,13 @@ def effective_rank(rank: int, level: int | None = None) -> int:
     if level is not None and rank == level:
         return RANK_A + 1
     return rank
+
+
+def comparison_rank(pattern: Pattern, level: int | None = None) -> int:
+    """用于牌型比较的点数；顺子类不套用级牌特殊强度。"""
+    if pattern.type in SEQUENCE_PATTERN_TYPES:
+        return pattern.rank
+    return effective_rank(pattern.rank, level)
 
 
 @dataclass(frozen=True)
@@ -96,12 +111,15 @@ class Pattern:
         if self.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):
             if other.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):
                 if self.type != other.type:
-                    # 同花顺 > 普通炸弹（同张数）
-                    return self.type == PatternType.STRAIGHT_FLUSH
+                    # 同花顺只压同张数普通炸弹
+                    return (
+                        self.type == PatternType.STRAIGHT_FLUSH
+                        and self.length == other.length
+                    )
                 # 同 type: 先 length 再 rank
                 if self.length != other.length:
                     return self.length > other.length
-                return effective_rank(self.rank, level) > effective_rank(other.rank, level)
+                return comparison_rank(self, level) > comparison_rank(other, level)
             # 炸弹压任何非炸弹
             return True
         if other.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):
@@ -112,7 +130,7 @@ class Pattern:
         if self.length != other.length:
             # 同类型但长度不同（如顺子 5 张 vs 6 张）——掼蛋里同类型必须同长度
             return False
-        return effective_rank(self.rank, level) > effective_rank(other.rank, level)
+        return comparison_rank(self, level) > comparison_rank(other, level)
 
     def __repr__(self) -> str:
         cards_str = " ".join(c.short for c in self.cards)
