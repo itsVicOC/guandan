@@ -186,10 +186,17 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
         if len(state.finish_order) == 3:
             _finish_game(state)
             return
+        if _all_active_non_top_passed(state):
+            _end_trick_or_jiefeng(state)
+            return
         # 1st / 2nd finisher：不立即触发接风，要等其他 3 人是否压牌
         # 让 turn 继续推进，下家可以选择压牌或过牌
         # 用 _next_active_player 跳过已过牌的玩家
         state.turn_index = _next_active_player(state, player)
+        return
+
+    if _all_active_non_top_passed(state):
+        _end_trick_or_jiefeng(state)
         return
 
     # 推进到下一个"未过牌且未出完"的玩家
@@ -215,10 +222,8 @@ def pass_turn(state: GameState, player: int) -> None:
     # 记录该玩家本轮已过牌（spec 规则 3：本圈不能再出）
     state.passed_players.add(player)
 
-    # 检查本轮是否结束：所有"能行动的非 leader 玩家"都过了
-    if len(state.passed_players & _active_non_leader_set(state)) >= _active_non_leader_count(
-        state
-    ):
+    # 检查本轮是否结束：所有"能行动且不是当前最大牌玩家"的人都过了
+    if _all_active_non_top_passed(state):
         _end_trick_or_jiefeng(state)
         return
 
@@ -267,41 +272,52 @@ def _next_active_player(state: GameState, current: int) -> int:
     return nxt
 
 
-def _active_non_leader_count(state: GameState) -> int:
-    """当前轮中"能行动的非 leader 玩家"数量（未出完手牌）。
+def _current_top_player(state: GameState) -> Optional[int]:
+    """当前桌面最大牌所属玩家；table 为空时返回本轮先手。"""
+    if not state.table:
+        return state.leader
 
-    用于判断本轮是否结束：当 `passed_players` 覆盖所有这些玩家时，
-    触发 `_end_trick_or_jiefeng`。
-    例如：
-    - 4 人都未出完：非 leader = 3
-    - leader 出完、1 个非 leader 也出完：非 leader = 2
-    - leader 出完、2 个非 leader 也出完：非 leader = 1
-    """
-    leader = state.leader
-    n = 0
-    for p in range(4):
-        if p != leader and p not in state.finish_order:
-            n += 1
-    return n
+    from .events import TurnPlayed
+
+    top = state.table[-1]
+    for ev in reversed(state.history):
+        if isinstance(ev, TurnPlayed) and ev.pattern == top:
+            return ev.player
+    return state.leader
 
 
-def _active_non_leader_set(state: GameState) -> set[int]:
-    """当前轮中"能行动的非 leader 玩家"集合（未出完手牌）。"""
-    leader = state.leader
-    return {p for p in range(4) if p != leader and p not in state.finish_order}
+def _active_non_top_count(state: GameState) -> int:
+    """当前轮中需要回应最大牌的玩家数量（未出完且不是当前最大牌玩家）。"""
+    top_player = _current_top_player(state)
+    return sum(
+        1 for p in range(4) if p != top_player and p not in state.finish_order
+    )
+
+
+def _active_non_top_set(state: GameState) -> set[int]:
+    """当前轮中需要回应最大牌的玩家集合（未出完且不是当前最大牌玩家）。"""
+    top_player = _current_top_player(state)
+    return {p for p in range(4) if p != top_player and p not in state.finish_order}
+
+
+def _all_active_non_top_passed(state: GameState) -> bool:
+    """是否所有仍需回应最大牌的玩家都已过牌。"""
+    return len(state.passed_players & _active_non_top_set(state)) >= _active_non_top_count(
+        state
+    )
 
 
 def _end_trick_or_jiefeng(state: GameState) -> None:
-    """所有"能行动的非 leader 玩家"都过牌后调用。
+    """所有"能行动的非当前最大牌玩家"都过牌后调用。
 
     规则（按文档）：
-    - 若当前 leader 已出完手牌 → 触发接风：
-      - 新的 leader = leader 的对家（如果对家未出完手牌）
+    - 若当前最大牌玩家已出完手牌 → 触发接风：
+      - 新的 leader = 该玩家的对家（如果对家未出完手牌）
       - 如果对家也已出完（如头游+二游同队的极端情况）→ 找下一个未出完的玩家
-    - 若当前 leader 还在玩 → 正常开新轮，leader 继续
+    - 若当前最大牌玩家还在玩 → 正常开新轮，由其继续领出
     - 清空 table、重置 passed_players
     """
-    last_leader = state.leader
+    last_leader = _current_top_player(state)
     state.table = []
     state.passed_players.clear()
     state.trick_number += 1

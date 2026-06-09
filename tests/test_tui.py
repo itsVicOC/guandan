@@ -5,14 +5,29 @@ import asyncio
 
 from rich.text import Text
 
-from guandan.engine.card import RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
-from guandan.engine.state import GameState
+from guandan.engine.card import (
+    RANK_2,
+    RANK_6,
+    RANK_7,
+    RANK_8,
+    RANK_BIG_JOKER,
+    RANK_J,
+    RANK_SMALL_JOKER,
+    Card,
+    Suit,
+)
+from guandan.engine.hand import Pattern, PatternType
+from guandan.engine.state import GameState, pass_turn, play_pattern
 from guandan.tui.app import GuandanApp
 from guandan.tui.screens.game import GameScreen, _tui_card
 
 
 def _plain(markup: str) -> str:
     return Text.from_markup(markup).plain
+
+
+def _single(card: Card) -> Pattern:
+    return Pattern(PatternType.SINGLE, card.rank, 1, (card,), 0)
 
 
 def test_tui_card_uses_chinese_suit_labels() -> None:
@@ -52,6 +67,41 @@ def test_duplicate_cards_are_selected_by_position() -> None:
             await pilot.pause()
 
             assert screen._hand_selected_indices == {1}
+
+    asyncio.run(run())
+
+
+def test_locked_passes_remain_visible_after_later_play() -> None:
+    """Earlier passes in the same trick must remain visible after a later press."""
+    async def run() -> None:
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[
+                [Card(RANK_2, Suit.HEARTS), Card(RANK_6, Suit.HEARTS)],
+                [Card(RANK_7, Suit.HEARTS)],
+                [Card(RANK_8, Suit.HEARTS)],
+                [Card(RANK_J, Suit.HEARTS)],
+            ],
+            turn_index=0,
+            leader=0,
+        )
+        play_pattern(state, 0, _single(Card(RANK_2, Suit.HEARTS)))
+        pass_turn(state, 1)
+        pass_turn(state, 2)
+        play_pattern(state, 3, _single(Card(RANK_J, Suit.HEARTS)))
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            assert screen._locked_passed_players() == [1, 2]
+            table = screen.query_one("#table")
+            table_text = _plain(table.content)
+            assert "南: 过牌" in table_text
+            assert "西: 过牌" in table_text
 
     asyncio.run(run())
 

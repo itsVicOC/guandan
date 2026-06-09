@@ -117,6 +117,45 @@ class TestPassTurn:
         assert state.turn_index == 0
         assert state.leader == 0
 
+    def test_current_top_player_leads_after_all_others_pass(self):
+        """后手压牌后，下一轮应由当前最大牌玩家领出，而不是原始先手。"""
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
+        state.wild_card = None
+        state.hands[0] = [c(RANK_2, "H"), c(RANK_6, "H")]
+        state.hands[1] = [c(RANK_7, "H")]
+        state.hands[2] = [c(RANK_8, "H")]
+        state.hands[3] = [c(RANK_J, "H"), c(RANK_A, "H")]
+
+        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))
+        pass_turn(state, 1)
+        pass_turn(state, 2)
+        play_pattern(state, 3, single_pattern(c(RANK_J, "H")))
+        pass_turn(state, 0)
+
+        assert state.table == []
+        assert state.passed_players == set()
+        assert state.turn_index == 3
+        assert state.leader == 3
+
+    def test_trick_ends_immediately_when_press_leaves_no_responder(self):
+        """压牌后若其他可行动玩家已全过，本轮应立即结束。"""
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
+        state.wild_card = None
+        state.hands[0] = [c(RANK_2, "H")]
+        state.hands[1] = [c(RANK_7, "H")]
+        state.hands[2] = [c(RANK_8, "H")]
+        state.hands[3] = [c(RANK_J, "H"), c(RANK_A, "H")]
+
+        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))
+        pass_turn(state, 1)
+        pass_turn(state, 2)
+        play_pattern(state, 3, single_pattern(c(RANK_J, "H")))
+
+        assert state.table == []
+        assert state.passed_players == set()
+        assert state.turn_index == 3
+        assert state.leader == 3
+
 
 class TestJiefeng_Document:
     """按文档规则：接风只发生在"出完手牌 + 无人压牌"的双重条件下。"""

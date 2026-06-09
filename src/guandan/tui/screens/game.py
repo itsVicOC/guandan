@@ -352,8 +352,8 @@ class GameScreen(Screen):
         }
         self._do_render_hand()
         tbl = self.query_one("#table", TableWidget)
-        # 提取本轮已过牌的玩家（自上次 TurnPlayed 之后的 Pass 事件）
-        passed_players = self._passed_in_current_trick()
+        # 提取本轮已过牌且仍被锁定的玩家
+        passed_players = self._locked_passed_players()
         tbl.update_table(
             s.table,
             [self._last_player_of(p) for p in s.table],
@@ -376,10 +376,11 @@ class GameScreen(Screen):
         s = self._state()
         wild = _tui_card(s.wild_card, wild=True) if s.wild_card is not None else "无"
         leader = SEAT_NAMES[s.leader] if s.leader is not None else "-"
+        top_player = SEAT_NAMES[self._last_player_of(s.table[-1])] if s.table else "-"
         finished = " > ".join(SEAT_NAMES[p] for p in s.finish_order) or "-"
         levels = getattr(s, "team_levels_final", [s.level, s.level])
         text = (
-            f"级牌 {s.level} · 逢人配 {wild} · Leader {leader} · "
+            f"级牌 {s.level} · 逢人配 {wild} · 先手 {leader} · 最大 {top_player} · "
             f"当前 {SEAT_NAMES[s.turn_index]} · 难度 {self._strategy.name}\n"
             f"队伍级数 东西:{levels[0]} 南北:{levels[1]} · 名次 {finished}"
         )
@@ -405,20 +406,22 @@ class GameScreen(Screen):
                 return ev.player
         return 0
 
-    def _passed_in_current_trick(self) -> List[int]:
-        """提取本轮（自上次 TurnPlayed 之后）已过牌的玩家，按过牌顺序。"""
-        from ...engine.events import Pass, TurnPlayed
+    def _locked_passed_players(self) -> List[int]:
+        """提取本轮仍被锁定的过牌玩家，按过牌发生顺序。"""
+        from ...engine.events import Pass
+
         s = self._state()
-        # 找到最后一次 TurnPlayed 的索引
-        last_turn_idx = -1
-        for i, ev in enumerate(s.history):
-            if isinstance(ev, TurnPlayed):
-                last_turn_idx = i
-        # 在 last_turn_idx 之后的 Pass 事件
         passed = []
-        for ev in s.history[last_turn_idx + 1:]:
-            if isinstance(ev, Pass):
+        for ev in s.history:
+            if (
+                isinstance(ev, Pass)
+                and ev.player in s.passed_players
+                and ev.player not in passed
+            ):
                 passed.append(ev.player)
+        for player in s.passed_players:
+            if player not in passed:
+                passed.append(player)
         return passed
 
     def action_cursor_left(self) -> None:
@@ -547,6 +550,7 @@ class GameScreen(Screen):
             if not self._game_saved:
                 self._save_game_result()
             return
+        ai_actions: list[str] = []
         try:
             # 阶段 1：trick 进行中（table 有牌），让 AIs 压
             while (
@@ -564,7 +568,10 @@ class GameScreen(Screen):
                     self._strategy,
                     self._ai_rng,
                 )
-                self._last_action = self._describe_ai_action(s, player_before, table_len_before)
+                self._last_action = self._describe_ai_action(
+                    s, player_before, table_len_before
+                )
+                ai_actions.append(self._last_action)
                 self._refresh_all()
                 import time
                 time.sleep(0.05)
@@ -585,10 +592,15 @@ class GameScreen(Screen):
                     self._strategy,
                     self._ai_rng,
                 )
-                self._last_action = self._describe_ai_action(s, player_before, table_len_before)
+                self._last_action = self._describe_ai_action(
+                    s, player_before, table_len_before
+                )
+                ai_actions.append(self._last_action)
                 self._refresh_all()
         except IllegalPlayError as e:
             self.sub_title = f"AI 错误：{e}"
+        if ai_actions:
+            self._last_action = "；".join(ai_actions[-4:])
         self._refresh_all()
         # 检查游戏是否刚结束
         if s.finished and not self._game_saved:
