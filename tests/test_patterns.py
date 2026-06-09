@@ -230,14 +230,27 @@ class TestBomb:
         assert p.type == PatternType.BOMB
         assert p.length == 5
 
-    def test_bomb_does_not_exceed_eight_cards(self):
+    def test_bomb_allows_ten_cards_with_two_wilds(self):
         wild = c(RANK_5, "H")
         ten_cards = [
             *cards("7H", "7H", "7D", "7D", "7S", "7S", "7C", "7C"),
             wild,
             wild,
         ]
-        assert find_complete_pattern(ten_cards, wild) is None
+        p = find_complete_pattern(ten_cards, wild)
+        assert p is not None
+        assert p.type == PatternType.BOMB
+        assert p.length == 10
+
+    def test_bomb_does_not_exceed_ten_cards(self):
+        wild = c(RANK_5, "H")
+        eleven_cards = [
+            *cards("7H", "7H", "7D", "7D", "7S", "7S", "7C", "7C"),
+            wild,
+            wild,
+            wild,
+        ]
+        assert find_complete_pattern(eleven_cards, wild) is None
 
 
 class TestStraightFlush:

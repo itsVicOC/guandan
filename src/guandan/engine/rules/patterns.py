@@ -565,7 +565,7 @@ def _try_bomb(
     # 0 wild
     for rank, cards in by_rank.items():
         if len(cards) >= 4:
-            for n in range(4, min(8, len(cards)) + 1):
+            for n in range(4, min(10, len(cards)) + 1):
                 patterns.append(
                     Pattern(
                         type=PatternType.BOMB,
@@ -579,7 +579,7 @@ def _try_bomb(
     # 1 wild：k 张普通 + 1 wild（k ≥ 3）
     if wild_count >= 1 and wild_card is not None:
         for rank, cards in by_rank.items():
-            for k in range(3, min(7, len(cards)) + 1):
+            for k in range(3, min(9, len(cards)) + 1):
                 patterns.append(
                     Pattern(
                         type=PatternType.BOMB,
@@ -593,7 +593,7 @@ def _try_bomb(
     # 2 wilds
     if wild_count >= 2 and wild_card is not None:
         for rank, cards in by_rank.items():
-            for k in range(2, min(6, len(cards)) + 1):
+            for k in range(2, min(8, len(cards)) + 1):
                 patterns.append(
                     Pattern(
                         type=PatternType.BOMB,
@@ -607,7 +607,7 @@ def _try_bomb(
     # 3 wilds
     if wild_count >= 3 and wild_card is not None:
         for rank, cards in by_rank.items():
-            for k in range(1, min(5, len(cards)) + 1):
+            for k in range(1, min(7, len(cards)) + 1):
                 patterns.append(
                     Pattern(
                         type=PatternType.BOMB,
@@ -631,7 +631,7 @@ def _try_bomb(
             )
         )
         # 5+ 张 wild 凑炸弹
-        for n in range(5, min(8, wild_count) + 1):
+        for n in range(5, min(10, wild_count) + 1):
             patterns.append(
                 Pattern(
                     type=PatternType.BOMB,

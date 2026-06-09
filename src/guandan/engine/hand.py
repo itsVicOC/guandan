@@ -111,10 +111,12 @@ class Pattern:
         if self.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):
             if other.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):
                 if self.type != other.type:
-                    # 同花顺只压同张数普通炸弹
+                    # 同花顺可压 4 张炸弹，或同为 5 张的普通炸弹。
                     return (
                         self.type == PatternType.STRAIGHT_FLUSH
-                        and self.length == other.length
+                        and other.type == PatternType.BOMB
+                        and other.length <= self.length
+                        and other.length < 6
                     )
                 # 同 type: 先 length 再 rank
                 if self.length != other.length:
