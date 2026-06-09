@@ -11,7 +11,7 @@ from textual.screen import Screen
 from textual.widgets import Footer, Header, Static
 
 from ...ai import AINotImplementedError, make_strategy, play_or_pass
-from ...engine.card import Card
+from ...engine.card import Card, Suit
 from ...engine.events import TurnPlayed
 from ...engine.hand import Pattern, PatternType, sort_cards
 from ...engine.state import (
@@ -71,6 +71,53 @@ class OpponentWidget(Static):
         self.update(text)
 
 
+def _tui_card(card: Card, *, selected: bool = False, cursor: bool = False, wild: bool = False) -> str:
+    """终端专用牌面：固定宽度、避免黑白前景色依赖。"""
+    if card.is_big_joker:
+        body = "BJ"
+        style = "bold yellow"
+    elif card.is_small_joker:
+        body = "SJ"
+        style = "bold yellow"
+    else:
+        suit_text = {
+            Suit.HEARTS: "♥",
+            Suit.DIAMONDS: "♦",
+            Suit.SPADES: "♠",
+            Suit.CLUBS: "♣",
+        }[card.suit]
+        body = f"{suit_text}{_rank_label(card)}"
+        style = {
+            Suit.HEARTS: "bold red",
+            Suit.DIAMONDS: "bold magenta",
+            Suit.SPADES: "bold bright_white",
+            Suit.CLUBS: "bold cyan",
+        }[card.suit]
+
+    label = f"{body:<3}"
+    label = f"{label}W" if wild else f"{label} "
+
+    if selected:
+        return f"[black on yellow]{{{label}}}[/]"
+    if cursor:
+        return f"[black on bright_white]>{label}<[/]"
+    if wild:
+        return f"[black on green][{label}][/]"
+    return f"[{style}][{label}][/]"
+
+
+def _rank_label(card: Card) -> str:
+    if card.rank == 14:
+        return "A"
+    if card.rank == 13:
+        return "K"
+    if card.rank == 12:
+        return "Q"
+    if card.rank == 11:
+        return "J"
+    return str(card.rank)
+
+
 class PlayerStatusWidget(Static):
     """显示玩家自己的状态。"""
 
@@ -121,10 +168,10 @@ class TableWidget(Static):
 
     def _pattern_str(self, p: Pattern) -> str:
         if p.type == PatternType.SINGLE:
-            return p.cards[0].rich
+            return _tui_card(p.cards[0])
         if p.type == PatternType.PAIR:
-            return f"对{p.cards[0].rich}"
-        cards_str = " ".join(c.rich for c in p.cards)
+            return f"对{_tui_card(p.cards[0])}"
+        cards_str = " ".join(_tui_card(c) for c in p.cards)
         return f"{p.type.value}  {cards_str}"
 
     def _do_render(self) -> None:
@@ -320,7 +367,7 @@ class GameScreen(Screen):
 
     def _render_status(self) -> None:
         s = self._state()
-        wild = s.wild_card.rich if s.wild_card is not None else "无"
+        wild = _tui_card(s.wild_card, wild=True) if s.wild_card is not None else "无"
         leader = SEAT_NAMES[s.leader] if s.leader is not None else "-"
         finished = " > ".join(SEAT_NAMES[p] for p in s.finish_order) or "-"
         levels = getattr(s, "team_levels_final", [s.level, s.level])
@@ -337,15 +384,10 @@ class GameScreen(Screen):
             return
         parts = []
         for i, c in enumerate(self._hand_cards):
-            marker = "  "
-            if i == self._hand_cursor:
-                marker = "[bold yellow]▶ [/bold yellow]" if c not in self._hand_selected else "[bold yellow]★ [/bold yellow]"
-            elif c in self._hand_selected:
-                marker = "[green]■ [/green]"
-            card_text = c.rich
-            if self.state is not None and c == self.state.wild_card:
-                card_text = f"[reverse]{card_text}[/reverse]"
-            parts.append(f"{marker}{card_text}")
+            selected = c in self._hand_selected
+            cursor = i == self._hand_cursor
+            wild = self.state is not None and c == self.state.wild_card
+            parts.append(_tui_card(c, selected=selected, cursor=cursor, wild=wild))
         rows = ["  ".join(parts[i : i + 9]) for i in range(0, len(parts), 9)]
         self.query_one("#my-hand", Static).update("\n".join(rows))
 
@@ -419,7 +461,7 @@ class GameScreen(Screen):
             return
         try:
             play_pattern(s, self.human, p)
-            self._last_action = f"你出牌：{p.type.value} · {' '.join(c.rich for c in p.cards)}"
+            self._last_action = f"你出牌：{p.type.value} · {' '.join(_tui_card(c) for c in p.cards)}"
             self._hand_selected.clear()
             self._refresh_all()
             self.set_timer(0.3, self._maybe_ai_turn)
@@ -453,7 +495,7 @@ class GameScreen(Screen):
             self.sub_title = "（无提示：过牌）"
             self._last_action = "提示：建议过牌"
         else:
-            cards_str = " ".join(c.rich for c in p.cards)
+            cards_str = " ".join(_tui_card(c) for c in p.cards)
             self.sub_title = f"💡 提示：{p.type.value} [{cards_str}]"
             self._last_action = f"提示：{p.type.value} · {cards_str}"
         self._refresh_all()
@@ -550,7 +592,7 @@ class GameScreen(Screen):
     def _describe_ai_action(self, state: GameState, player: int, table_len_before: int) -> str:
         if len(state.table) > table_len_before:
             pattern = state.table[-1]
-            cards = " ".join(c.rich for c in pattern.cards)
+            cards = " ".join(_tui_card(c) for c in pattern.cards)
             return f"{SEAT_NAMES[player]} 出牌：{pattern.type.value} · {cards}"
         return f"{SEAT_NAMES[player]} 过牌"
 
