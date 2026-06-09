@@ -271,7 +271,7 @@ class GameScreen(Screen):
         self._ai_rng = random.Random()
         # 交互状态（不放在 widget 上以避免 textual 命名冲突）
         self._hand_cards: List[Card] = []
-        self._hand_selected: set[Card] = set()
+        self._hand_selected_indices: set[int] = set()
         self._hand_cursor = 0
         self._last_action = "准备开始"
         # M5 存储：追踪对局元数据
@@ -343,6 +343,9 @@ class GameScreen(Screen):
         self._hand_cards = sort_cards(s.hands[self.human])
         if self._hand_cursor >= len(self._hand_cards):
             self._hand_cursor = max(0, len(self._hand_cards) - 1)
+        self._hand_selected_indices = {
+            i for i in self._hand_selected_indices if i < len(self._hand_cards)
+        }
         self._do_render_hand()
         tbl = self.query_one("#table", TableWidget)
         # 提取本轮已过牌的玩家（自上次 TurnPlayed 之后的 Pass 事件）
@@ -384,7 +387,7 @@ class GameScreen(Screen):
             return
         parts = []
         for i, c in enumerate(self._hand_cards):
-            selected = c in self._hand_selected
+            selected = i in self._hand_selected_indices
             cursor = i == self._hand_cursor
             wild = self.state is not None and c == self.state.wild_card
             parts.append(_tui_card(c, selected=selected, cursor=cursor, wild=wild))
@@ -429,11 +432,10 @@ class GameScreen(Screen):
     def action_toggle_select(self) -> None:
         if not self._hand_cards:
             return
-        c = self._hand_cards[self._hand_cursor]
-        if c in self._hand_selected:
-            self._hand_selected.discard(c)
+        if self._hand_cursor in self._hand_selected_indices:
+            self._hand_selected_indices.discard(self._hand_cursor)
         else:
-            self._hand_selected.add(c)
+            self._hand_selected_indices.add(self._hand_cursor)
         self._do_render_hand()
 
     def action_play(self) -> None:
@@ -442,9 +444,8 @@ class GameScreen(Screen):
             return
         sel = [
             self._hand_cards[i]
-            for i in sorted(
-                i for i, c in enumerate(self._hand_cards) if c in self._hand_selected
-            )
+            for i in sorted(self._hand_selected_indices)
+            if i < len(self._hand_cards)
         ]
         if not sel:
             self.sub_title = "未选牌"
@@ -462,7 +463,7 @@ class GameScreen(Screen):
         try:
             play_pattern(s, self.human, p)
             self._last_action = f"你出牌：{p.type.value} · {' '.join(_tui_card(c) for c in p.cards)}"
-            self._hand_selected.clear()
+            self._hand_selected_indices.clear()
             self._refresh_all()
             self.set_timer(0.3, self._maybe_ai_turn)
         except IllegalPlayError as e:
