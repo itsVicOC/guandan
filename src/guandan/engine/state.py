@@ -20,6 +20,7 @@ State 组成：
 from __future__ import annotations
 
 import random
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -137,8 +138,9 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
 
     # 验证 pattern 的牌都在手牌中
     hand = state.hands[player]
-    for c in pattern.cards:
-        if c not in hand:
+    hand_counts = Counter(hand)
+    for c, needed in Counter(pattern.cards).items():
+        if hand_counts[c] < needed:
             raise IllegalPlayError(f"card {c} not in hand")
 
     # 验证可压当前 table[-1]（若有）

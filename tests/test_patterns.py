@@ -23,6 +23,7 @@ from guandan.engine.card import (
 from guandan.engine.hand import PatternType
 from guandan.engine.rules.patterns import (
     detect_patterns,
+    find_complete_pattern,
     find_pattern,
     is_legal,
 )
@@ -78,6 +79,20 @@ class TestPair:
         pairs = [p for p in ps if p.type == PatternType.PAIR]
         assert len(pairs) >= 1
         assert all(p.rank == RANK_5 for p in pairs)
+
+    def test_two_big_jokers_are_pair(self):
+        p = find_complete_pattern(cards("BJ", "BJ"))
+        assert p is not None
+        assert p.type == PatternType.PAIR
+        assert p.rank == RANK_BIG_JOKER
+        assert len(p.cards) == 2
+
+    def test_two_small_jokers_are_pair(self):
+        p = find_complete_pattern(cards("SJ", "SJ"))
+        assert p is not None
+        assert p.type == PatternType.PAIR
+        assert p.rank == RANK_SMALL_JOKER
+        assert len(p.cards) == 2
 
 
 class TestTriple:

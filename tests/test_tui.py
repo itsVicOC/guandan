@@ -149,3 +149,80 @@ def test_jokers_remain_visible_after_cursor_moves() -> None:
             assert "小王" in _plain(hand.content)
 
     asyncio.run(run())
+
+
+def test_two_big_jokers_selected_in_tui_play_as_pair() -> None:
+    """Duplicate jokers must be played together as a pair, not collapsed to one."""
+    async def run() -> None:
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[
+                [
+                    Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+                    Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+                    Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+                ],
+                [],
+                [],
+                [],
+            ],
+            turn_index=0,
+            leader=0,
+        )
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            screen.action_toggle_select()
+            screen.action_cursor_right()
+            screen.action_toggle_select()
+            screen.action_play()
+
+            assert len(state.hands[0]) == 1
+            assert state.table[-1].type == PatternType.PAIR
+            assert state.table[-1].rank == RANK_BIG_JOKER
+            assert len(state.table[-1].cards) == 2
+
+    asyncio.run(run())
+
+
+def test_four_jokers_selected_in_tui_play_as_four_joker_bomb() -> None:
+    async def run() -> None:
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[
+                [
+                    Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+                    Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+                    Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+                    Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+                ],
+                [],
+                [],
+                [],
+            ],
+            turn_index=0,
+            leader=0,
+        )
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            for _ in range(4):
+                screen.action_toggle_select()
+                screen.action_cursor_right()
+            screen.action_play()
+
+            assert len(state.hands[0]) == 0
+            assert state.table[-1].type == PatternType.FOUR_JOKERS
+            assert len(state.table[-1].cards) == 4
+
+    asyncio.run(run())

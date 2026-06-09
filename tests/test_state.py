@@ -13,6 +13,7 @@ from guandan.engine.card import (
     RANK_8,
     RANK_9,
     RANK_A,
+    RANK_BIG_JOKER,
     RANK_J,
     Card,
     Suit,
@@ -114,6 +115,26 @@ class TestPlayPattern:
         play_pattern(state, 0, single_pattern(c(RANK_2, "D")))
 
         assert state.table[-1].rank == RANK_2
+
+    def test_duplicate_card_count_must_exist_in_hand(self):
+        big_joker = Card(RANK_BIG_JOKER, Suit.BIG_JOKER)
+        state = GameState(
+            level=RANK_2,
+            wild_card=None,
+            hands=[[big_joker], [], [], []],
+            turn_index=0,
+            leader=0,
+        )
+        malformed = Pattern(
+            PatternType.PAIR,
+            RANK_BIG_JOKER,
+            1,
+            (big_joker, big_joker),
+            0,
+        )
+
+        with pytest.raises(IllegalPlayError):
+            play_pattern(state, 0, malformed)
 
 
 class TestPassTurn:

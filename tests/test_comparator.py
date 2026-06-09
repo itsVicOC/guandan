@@ -38,6 +38,10 @@ def pair(rank):
     return Pattern(PatternType.PAIR, rank, 1, (c(rank, "H"), c(rank, "D")), 0)
 
 
+def joker_pair(rank, suit):
+    return Pattern(PatternType.PAIR, rank, 1, (c(rank, suit), c(rank, suit)), 0)
+
+
 def bomb(rank, length=4):
     cards = tuple(c(rank, s) for s in "HDSC"[:length])
     return Pattern(PatternType.BOMB, rank, length, cards, 0)
@@ -71,6 +75,13 @@ class TestCanPlay:
     def test_type_mismatch(self):
         # 单张不能压对子
         assert not can_play(single(RANK_A), pair(RANK_5))
+
+    def test_joker_pair_press(self):
+        big_pair = joker_pair(RANK_BIG_JOKER, "BJ")
+        small_pair = joker_pair(RANK_SMALL_JOKER, "SJ")
+        assert can_play(small_pair, pair(RANK_A))
+        assert can_play(big_pair, small_pair)
+        assert not can_play(pair(RANK_A), small_pair)
 
     def test_bomb_press_single(self):
         assert can_play(bomb(RANK_5), single(RANK_A))

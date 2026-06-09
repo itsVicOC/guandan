@@ -16,6 +16,7 @@ API：
 """
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Sequence
 
 from ..card import (
@@ -33,6 +34,7 @@ from ..card import (
     RANK_J,
     RANK_K,
     RANK_Q,
+    RANK_SMALL_JOKER,
     Card,
     Suit,
 )
@@ -112,6 +114,22 @@ def _try_pair(
     - 2 张 wild 顶替（都作 wild）→ 2 wild（其实只 1 张 wild 时 wild_used=1，第二张本身就是 wild）
     """
     patterns: list[Pattern] = []
+    jokers_by_rank: dict[int, list[Card]] = {
+        RANK_BIG_JOKER: [c for c in normal if c.is_big_joker],
+        RANK_SMALL_JOKER: [c for c in normal if c.is_small_joker],
+    }
+    for rank, cards in jokers_by_rank.items():
+        if len(cards) >= 2:
+            patterns.append(
+                Pattern(
+                    type=PatternType.PAIR,
+                    rank=rank,
+                    length=1,
+                    cards=tuple(cards[:2]),
+                    wild_used=0,
+                )
+            )
+
     by_rank: dict[int, list[Card]] = {}
     for c in normal:
         if not _is_normal(c):
@@ -877,10 +895,10 @@ def is_legal(cards: Sequence[Card], wild_card: Card | None = None) -> bool:
 def find_complete_pattern(
     cards: Sequence[Card], wild_card: Card | None = None
 ) -> Pattern | None:
-    """找一个用掉所有 cards 的合法 Pattern（cards 集合必须等于某 Pattern 的 cards）。"""
-    input_set = frozenset(cards)
+    """找一个用掉所有 cards 的合法 Pattern。"""
+    input_counts = Counter(cards)
     for p in detect_patterns(cards, wild_card):
-        if frozenset(p.cards) == input_set:
+        if Counter(p.cards) == input_counts:
             return p
     return None
 
@@ -894,7 +912,8 @@ def find_pattern(
     cards: Sequence[Card], target: PatternType, wild_card: Card | None = None
 ) -> Pattern | None:
     """找一种特定类型的合法牌型（用掉所有 cards）。"""
+    input_counts = Counter(cards)
     for p in detect_patterns(cards, wild_card):
-        if p.type == target and frozenset(p.cards) == frozenset(cards):
+        if p.type == target and Counter(p.cards) == input_counts:
             return p
     return None
