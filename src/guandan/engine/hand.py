@@ -10,7 +10,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 
-from .card import Card
+from .card import RANK_A, RANK_BIG_JOKER, RANK_SMALL_JOKER, Card
 
 
 class PatternType(str, Enum):
@@ -47,6 +47,15 @@ PATTERN_WEIGHT: dict[PatternType, int] = {
 }
 
 
+def effective_rank(rank: int, level: int | None = None) -> int:
+    """用于比较的有效点数：级牌是最大的非王牌。"""
+    if rank in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
+        return rank
+    if level is not None and rank == level:
+        return RANK_A + 1
+    return rank
+
+
 @dataclass(frozen=True)
 class Pattern:
     """已识别的合法牌型。
@@ -70,7 +79,7 @@ class Pattern:
     def weight(self) -> int:
         return PATTERN_WEIGHT[self.type]
 
-    def can_be_played_on(self, other: Pattern) -> bool:
+    def can_be_played_on(self, other: Pattern, *, level: int | None = None) -> bool:
         """判断本牌型是否能压 other。
 
         规则：
@@ -92,7 +101,7 @@ class Pattern:
                 # 同 type: 先 length 再 rank
                 if self.length != other.length:
                     return self.length > other.length
-                return self.rank > other.rank
+                return effective_rank(self.rank, level) > effective_rank(other.rank, level)
             # 炸弹压任何非炸弹
             return True
         if other.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):
@@ -103,7 +112,7 @@ class Pattern:
         if self.length != other.length:
             # 同类型但长度不同（如顺子 5 张 vs 6 张）——掼蛋里同类型必须同长度
             return False
-        return self.rank > other.rank
+        return effective_rank(self.rank, level) > effective_rank(other.rank, level)
 
     def __repr__(self) -> str:
         cards_str = " ".join(c.short for c in self.cards)

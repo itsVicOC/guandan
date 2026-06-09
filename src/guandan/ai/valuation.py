@@ -18,7 +18,7 @@ from ..engine.card import (
     RANK_BIG_JOKER,
     RANK_SMALL_JOKER,
 )
-from ..engine.hand import Pattern, PatternType
+from ..engine.hand import Pattern, PatternType, effective_rank
 from ..engine.rules.patterns import find_complete_pattern
 from ..engine.state import GameState
 
@@ -126,6 +126,7 @@ def enumerate_candidate_plays(
     from .greedy import (
         _count_wild,
         _group_by_rank,
+        _normal_ranks_above,
         _smallest_bomb,
     )
 
@@ -152,12 +153,14 @@ def enumerate_candidate_plays(
             for c in hand:
                 if c == wild:
                     continue
-                if c.rank > table_top.rank:
+                if effective_rank(c.rank, state.level) > effective_rank(
+                    table_top.rank, state.level
+                ):
                     p = find_complete_pattern([c], wild)
                     if p and p.type == PatternType.SINGLE:
                         candidates.append(p)
         elif table_top.type == PatternType.PAIR:
-            for r in range(table_top.rank + 1, RANK_A + 1):
+            for r in _normal_ranks_above(table_top.rank, state.level):
                 if r in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
                     continue
                 cards = by_rank.get(r, [])
@@ -166,14 +169,14 @@ def enumerate_candidate_plays(
                     if p:
                         candidates.append(p)
             if wild is not None and wild_count >= 1:
-                for r in range(table_top.rank + 1, RANK_A + 1):
+                for r in _normal_ranks_above(table_top.rank, state.level):
                     cards = by_rank.get(r, [])
                     if len(cards) >= 1 and r not in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
                         p = find_complete_pattern([cards[0], wild], wild)
                         if p and p.type == PatternType.PAIR:
                             candidates.append(p)
         elif table_top.type == PatternType.TRIPLE:
-            for r in range(table_top.rank + 1, RANK_A + 1):
+            for r in _normal_ranks_above(table_top.rank, state.level):
                 if r in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
                     continue
                 cards = by_rank.get(r, [])
@@ -183,7 +186,7 @@ def enumerate_candidate_plays(
                         candidates.append(p)
 
         # 炸弹独立候选
-        bomb = _smallest_bomb(hand, by_rank, table_top, wild, wild_count)
+        bomb = _smallest_bomb(hand, by_rank, table_top, wild, wild_count, state.level)
         if bomb:
             candidates.append(bomb)
 

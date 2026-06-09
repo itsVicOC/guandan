@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from guandan.engine.card import (
+    RANK_2,
     RANK_3,
     RANK_4,
     RANK_5,
@@ -62,6 +63,10 @@ class TestCanPlay:
         assert can_play(single(RANK_7), single(RANK_5))
         assert not can_play(single(RANK_5), single(RANK_7))
         assert not can_play(single(RANK_5), single(RANK_5))
+
+    def test_level_card_press_single(self):
+        assert can_play(single(RANK_2), single(RANK_8), level=RANK_2)
+        assert not can_play(single(RANK_A), single(RANK_2), level=RANK_2)
 
     def test_type_mismatch(self):
         # 单张不能压对子

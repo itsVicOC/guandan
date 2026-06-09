@@ -16,7 +16,7 @@ from ..engine.card import (
     RANK_SMALL_JOKER,
     Card,
 )
-from ..engine.hand import Pattern, PatternType, sort_cards
+from ..engine.hand import Pattern, PatternType, effective_rank, sort_cards
 from ..engine.rules.patterns import find_complete_pattern
 from ..engine.state import GameState
 
@@ -34,12 +34,28 @@ def _count_wild(hand: List[Card], wild: Optional[Card]) -> int:
     return sum(1 for c in hand if c == wild)
 
 
-def _smallest_single_above(hand: List[Card], target: int, wild: Optional[Card]) -> Optional[Pattern]:
+def _normal_ranks_above(target: int, level: int) -> list[int]:
+    target_strength = effective_rank(target, level)
+    ranks = range(RANK_2, RANK_A + 1)
+    return sorted(
+        (r for r in ranks if effective_rank(r, level) > target_strength),
+        key=lambda r: effective_rank(r, level),
+    )
+
+
+def _single_cards_by_strength(hand: List[Card], level: int) -> list[Card]:
+    return sorted(hand, key=lambda c: (effective_rank(c.rank, level), c.suit))
+
+
+def _smallest_single_above(
+    hand: List[Card], target: int, wild: Optional[Card], level: int
+) -> Optional[Pattern]:
     """找最小单张 rank > target。wild 不参与单张（避免浪费万能牌）。"""
-    for c in reversed(sort_cards(hand)):
-        if c.rank <= target:
-            return None
+    target_strength = effective_rank(target, level)
+    for c in _single_cards_by_strength(hand, level):
         if c == wild:
+            continue
+        if effective_rank(c.rank, level) <= target_strength:
             continue
         p = find_complete_pattern([c], wild)
         if p and p.type == PatternType.SINGLE:
@@ -47,9 +63,16 @@ def _smallest_single_above(hand: List[Card], target: int, wild: Optional[Card]) 
     return None
 
 
-def _smallest_pair_above(hand: List[Card], by_rank: Dict[int, List[Card]], target: int, wild: Optional[Card], wild_count: int) -> Optional[Pattern]:
+def _smallest_pair_above(
+    hand: List[Card],
+    by_rank: Dict[int, List[Card]],
+    target: int,
+    wild: Optional[Card],
+    wild_count: int,
+    level: int,
+) -> Optional[Pattern]:
     """找最小对子 rank > target。"""
-    for r in range(target + 1, RANK_A + 1):
+    for r in _normal_ranks_above(target, level):
         if r in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
             continue
         cards = by_rank.get(r, [])
@@ -59,7 +82,7 @@ def _smallest_pair_above(hand: List[Card], by_rank: Dict[int, List[Card]], targe
                 return p
     # 用 wild 凑对
     if wild is not None and wild_count >= 1:
-        for r in range(target + 1, RANK_A + 1):
+        for r in _normal_ranks_above(target, level):
             cards = by_rank.get(r, [])
             if len(cards) >= 1 and r not in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
                 p = find_complete_pattern([cards[0], wild], wild)
@@ -68,9 +91,16 @@ def _smallest_pair_above(hand: List[Card], by_rank: Dict[int, List[Card]], targe
     return None
 
 
-def _smallest_triple_above(hand: List[Card], by_rank: Dict[int, List[Card]], target: int, wild: Optional[Card], wild_count: int) -> Optional[Pattern]:
+def _smallest_triple_above(
+    hand: List[Card],
+    by_rank: Dict[int, List[Card]],
+    target: int,
+    wild: Optional[Card],
+    wild_count: int,
+    level: int,
+) -> Optional[Pattern]:
     """找最小三张 rank > target。"""
-    for r in range(target + 1, RANK_A + 1):
+    for r in _normal_ranks_above(target, level):
         if r in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
             continue
         cards = by_rank.get(r, [])
@@ -79,7 +109,7 @@ def _smallest_triple_above(hand: List[Card], by_rank: Dict[int, List[Card]], tar
             if p:
                 return p
     if wild is not None and wild_count >= 1:
-        for r in range(target + 1, RANK_A + 1):
+        for r in _normal_ranks_above(target, level):
             cards = by_rank.get(r, [])
             if len(cards) >= 2 and r not in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
                 p = find_complete_pattern([*cards[:2], wild], wild)
@@ -88,24 +118,31 @@ def _smallest_triple_above(hand: List[Card], by_rank: Dict[int, List[Card]], tar
     return None
 
 
-def _smallest_bomb(hand: List[Card], by_rank: Dict[int, List[Card]], table_top: Pattern, wild: Optional[Card], wild_count: int) -> Optional[Pattern]:
+def _smallest_bomb(
+    hand: List[Card],
+    by_rank: Dict[int, List[Card]],
+    table_top: Pattern,
+    wild: Optional[Card],
+    wild_count: int,
+    level: int,
+) -> Optional[Pattern]:
     """找能压桌顶的最小炸弹（BOMB / STRAIGHT_FLUSH / FOUR_JOKERS）。"""
     # 普通 4+ 张炸弹（按 rank 从小到大，找到第一个可压的）
-    for r in range(RANK_2, RANK_A + 1):
+    for r in sorted(range(RANK_2, RANK_A + 1), key=lambda x: effective_rank(x, level)):
         cards = by_rank.get(r, [])
         if len(cards) >= 4:
             length = min(len(cards), 8)
             p = find_complete_pattern(cards[:length], wild)
-            if p and p.type == PatternType.BOMB and p.can_be_played_on(table_top):
+            if p and p.type == PatternType.BOMB and p.can_be_played_on(table_top, level=level):
                 return p
     # wild 凑炸弹
     if wild is not None and wild_count >= 1:
-        for r in range(RANK_2, RANK_A + 1):
+        for r in sorted(range(RANK_2, RANK_A + 1), key=lambda x: effective_rank(x, level)):
             cards = by_rank.get(r, [])
             need = 4 - wild_count
             if 0 < need <= len(cards) and r not in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
                 p = find_complete_pattern(cards[:need] + [wild] * wild_count, wild)
-                if p and p.type == PatternType.BOMB and p.can_be_played_on(table_top):
+                if p and p.type == PatternType.BOMB and p.can_be_played_on(table_top, level=level):
                     return p
     # 四王
     jokers = [c for c in hand if c.is_joker]
@@ -158,17 +195,21 @@ def select_min_winning(state: GameState, player: int) -> Optional[Pattern]:
     wild_count = _count_wild(hand, wild)
 
     if table_top.type == PatternType.SINGLE:
-        p = _smallest_single_above(hand, table_top.rank, wild)
+        p = _smallest_single_above(hand, table_top.rank, wild, state.level)
         if p:
             return p
     elif table_top.type == PatternType.PAIR:
-        p = _smallest_pair_above(hand, by_rank, table_top.rank, wild, wild_count)
+        p = _smallest_pair_above(
+            hand, by_rank, table_top.rank, wild, wild_count, state.level
+        )
         if p:
             return p
     elif table_top.type == PatternType.TRIPLE:
-        p = _smallest_triple_above(hand, by_rank, table_top.rank, wild, wild_count)
+        p = _smallest_triple_above(
+            hand, by_rank, table_top.rank, wild, wild_count, state.level
+        )
         if p:
             return p
     # 其他牌型（顺子/连对/钢板/三带二）：贪心暂不处理 → 直接找炸弹
 
-    return _smallest_bomb(hand, by_rank, table_top, wild, wild_count)
+    return _smallest_bomb(hand, by_rank, table_top, wild, wild_count, state.level)

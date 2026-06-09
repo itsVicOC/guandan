@@ -6,7 +6,7 @@ import asyncio
 from rich.text import Text
 
 from guandan.engine.card import (
-    RANK_2,
+    RANK_4,
     RANK_6,
     RANK_7,
     RANK_8,
@@ -78,7 +78,7 @@ def test_locked_passes_remain_visible_after_later_play() -> None:
             level=2,
             wild_card=None,
             hands=[
-                [Card(RANK_2, Suit.HEARTS), Card(RANK_6, Suit.HEARTS)],
+                [Card(RANK_4, Suit.HEARTS), Card(RANK_6, Suit.HEARTS)],
                 [Card(RANK_7, Suit.HEARTS)],
                 [Card(RANK_8, Suit.HEARTS)],
                 [Card(RANK_J, Suit.HEARTS)],
@@ -86,7 +86,7 @@ def test_locked_passes_remain_visible_after_later_play() -> None:
             turn_index=0,
             leader=0,
         )
-        play_pattern(state, 0, _single(Card(RANK_2, Suit.HEARTS)))
+        play_pattern(state, 0, _single(Card(RANK_4, Suit.HEARTS)))
         pass_turn(state, 3)
         pass_turn(state, 2)
         play_pattern(state, 1, _single(Card(RANK_7, Suit.HEARTS)))

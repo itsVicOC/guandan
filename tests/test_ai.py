@@ -100,7 +100,7 @@ class TestFactory:
 class TestGreedy:
     def test_leader_returns_smallest_non_wild_single(self) -> None:
         """leader 模式：手牌里有 2/A/5/wild 5♥，出 2（最小非 wild）。"""
-        state = make_initial_state(level=5, first_player=0, seed=42)
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
         # 把 player 0 的手牌替换为受控手牌
         state.hands[0] = [
             c(RANK_2, "S"),
@@ -117,7 +117,7 @@ class TestGreedy:
 
     def test_follower_no_table_top_returns_leader_move(self) -> None:
         """table 空 → 等价 leader，行为一致。"""
-        state = make_initial_state(level=5, first_player=0, seed=42)
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
         state.hands[0] = [c(RANK_2, "S"), c(RANK_5, "D"), c(RANK_A, "C")]
         assert not state.table
         p = select_min_winning(state, 0)
@@ -126,7 +126,7 @@ class TestGreedy:
 
     def test_returns_none_when_cannot_beat(self) -> None:
         """桌顶是大牌、手里只有小牌、无炸弹 → None。"""
-        state = make_initial_state(level=5, first_player=0, seed=42)
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
         # 先让 AI 0 出 A
         state.table = [sp(RANK_A, "H")]
         state.turn_index = 1
@@ -135,9 +135,21 @@ class TestGreedy:
         p = select_min_winning(state, 1)
         assert p is None
 
+    def test_level_card_can_press_higher_natural_single(self) -> None:
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = c(RANK_2, "H")
+        state.table = [sp(RANK_8, "H")]
+        state.hands[1] = [c(RANK_2, "D")]
+
+        p = select_min_winning(state, 1)
+
+        assert p is not None
+        assert p.type == PatternType.SINGLE
+        assert p.rank == RANK_2
+
     def test_finds_minimum_pair_above(self) -> None:
         """桌顶是 SINGLE 5 → 玩家可用 PAIR 6 压（任何非炸弹同型或更大牌型都能压）。"""
-        state = make_initial_state(level=5, first_player=0, seed=42)
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
         state.wild_card = None
         state.table = [sp(RANK_5, "H")]  # 桌顶是 5（普通单张）
         # player 1 手牌：6,6,7,7,A
@@ -252,7 +264,7 @@ class TestValuation:
 class TestEnumerateCandidates:
     def test_returns_sorted_by_cost(self) -> None:
         """候选按 cost 升序。"""
-        state = make_initial_state(level=5, first_player=0, seed=42)
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
         state.wild_card = None
         state.table = [sp(RANK_5, "H")]
         state.hands[1] = [
@@ -266,6 +278,16 @@ class TestEnumerateCandidates:
         assert len(candidates) > 0
         costs = [estimate_pattern_cost(state, 1, p) for p in candidates]
         assert costs == sorted(costs)
+
+    def test_includes_level_card_press_candidate(self) -> None:
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = c(RANK_2, "H")
+        state.table = [sp(RANK_8, "H")]
+        state.hands[1] = [c(RANK_2, "D"), c(RANK_4, "S")]
+
+        candidates = enumerate_candidate_plays(state, 1)
+
+        assert any(p.type == PatternType.SINGLE and p.rank == RANK_2 for p in candidates)
 
     def test_leader_returns_all_singles(self) -> None:
         """leader 模式：候选 = 手牌中所有非 wild 单张。"""
@@ -425,7 +447,7 @@ class TestStrategyDifferentiation:
         # 用 7,7,7 (TRIPLE) vs 6,6 (PAIR) 比较
         # 实际估值：TRIPLE weight=2 > PAIR weight=1，所以 PAIR 优先
         # 这个测试可能太微妙。简化：比较两个候选的成本排序
-        state = make_initial_state(level=5, first_player=0, seed=42)
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
         state.wild_card = None
         state.table = [sp(RANK_5, "H")]
         state.hands[1] = [

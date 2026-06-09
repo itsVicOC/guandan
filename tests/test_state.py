@@ -19,6 +19,7 @@ from guandan.engine.card import (
 )
 from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.state import (
+    GameState,
     IllegalPlayError,
     make_initial_state,
     pass_turn,
@@ -67,10 +68,10 @@ class TestPlayPattern:
     def test_press(self):
         state = make_initial_state(level=2, first_player=0, seed=42)
         state.wild_card = None
-        state.hands[0] = [c(RANK_2, "H"), c(RANK_6, "H")]
-        state.hands[3] = [c(RANK_3, "H"), c(RANK_7, "H")]
-        p0 = single_pattern(c(RANK_2, "H"))
-        p3 = single_pattern(c(RANK_3, "H"))
+        state.hands[0] = [c(RANK_3, "H"), c(RANK_6, "H")]
+        state.hands[3] = [c(RANK_4, "H"), c(RANK_7, "H")]
+        p0 = single_pattern(c(RANK_3, "H"))
+        p3 = single_pattern(c(RANK_4, "H"))
         play_pattern(state, 0, p0)
         play_pattern(state, 3, p3)
         assert state.table[-1] == p3
@@ -94,6 +95,25 @@ class TestPlayPattern:
         p = single_pattern(c)
         with pytest.raises(IllegalPlayError):
             play_pattern(state, 2, p)
+
+    def test_level_card_single_can_press_higher_natural_rank(self):
+        state = GameState(
+            level=RANK_2,
+            wild_card=c(RANK_2, "H"),
+            hands=[
+                [c(RANK_2, "D")],
+                [],
+                [],
+                [],
+            ],
+            turn_index=0,
+            table=[single_pattern(c(RANK_8, "S"))],
+            leader=3,
+        )
+
+        play_pattern(state, 0, single_pattern(c(RANK_2, "D")))
+
+        assert state.table[-1].rank == RANK_2
 
 
 class TestPassTurn:

@@ -6,20 +6,24 @@ from __future__ import annotations
 
 from typing import Optional
 
-from ..hand import Pattern, PatternType
+from ..hand import Pattern, PatternType, effective_rank
 
 
-def can_play(play: Pattern, against: Optional[Pattern]) -> bool:
+def can_play(
+    play: Pattern, against: Optional[Pattern], *, level: int | None = None
+) -> bool:
     """判断 play 能否压 against。
 
     against=None 表示 play 是新一轮先手，任何合法牌型都允许。
     """
     if against is None:
         return True
-    return play.can_be_played_on(against)
+    return play.can_be_played_on(against, level=level)
 
 
-def compare_same_type(p1: Pattern, p2: Pattern) -> int:
+def compare_same_type(
+    p1: Pattern, p2: Pattern, *, level: int | None = None
+) -> int:
     """同类型牌型比大小。返回 1 (p1 大), -1 (p2 大), 0 (相等)。
 
     不要求 p1 和 p2 同类型——同类型才有意义。
@@ -28,9 +32,11 @@ def compare_same_type(p1: Pattern, p2: Pattern) -> int:
         raise ValueError(f"patterns must be same type: {p1.type} vs {p2.type}")
     if p1.length != p2.length:
         raise ValueError(f"patterns must be same length: {p1.length} vs {p2.length}")
-    if p1.rank > p2.rank:
+    r1 = effective_rank(p1.rank, level)
+    r2 = effective_rank(p2.rank, level)
+    if r1 > r2:
         return 1
-    if p1.rank < p2.rank:
+    if r1 < r2:
         return -1
     return 0
 
@@ -40,7 +46,7 @@ def is_bomb_type(t: PatternType) -> bool:
     return t in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH, PatternType.FOUR_JOKERS)
 
 
-def bomb_strength(p: Pattern) -> tuple[int, int, int]:
+def bomb_strength(p: Pattern, *, level: int | None = None) -> tuple[int, int, int]:
     """炸弹的"强度"三元组，用于跨类型比较。
 
     返回 (category, length, rank)：
@@ -50,19 +56,20 @@ def bomb_strength(p: Pattern) -> tuple[int, int, int]:
 
     同 category 比 length，再比 rank。
     """
+    rank = effective_rank(p.rank, level)
     if p.type == PatternType.BOMB:
-        return (0, p.length, p.rank)
+        return (0, p.length, rank)
     if p.type == PatternType.STRAIGHT_FLUSH:
-        return (1, p.length, p.rank)
+        return (1, p.length, rank)
     if p.type == PatternType.FOUR_JOKERS:
-        return (2, p.length, p.rank)
+        return (2, p.length, rank)
     raise ValueError(f"not a bomb: {p.type}")
 
 
-def compare_bombs(p1: Pattern, p2: Pattern) -> int:
+def compare_bombs(p1: Pattern, p2: Pattern, *, level: int | None = None) -> int:
     """两个炸弹比大小。返回 1 (p1 大), -1 (p2 大), 0 (相等)。"""
-    s1 = bomb_strength(p1)
-    s2 = bomb_strength(p2)
+    s1 = bomb_strength(p1, level=level)
+    s2 = bomb_strength(p2, level=level)
     if s1 > s2:
         return 1
     if s1 < s2:

@@ -142,7 +142,7 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
             raise IllegalPlayError(f"card {c} not in hand")
 
     # 验证可压当前 table[-1]（若有）
-    if state.table and pattern.can_be_played_on(state.table[-1]) is False:
+    if state.table and pattern.can_be_played_on(state.table[-1], level=state.level) is False:
         raise IllegalPlayError(
             f"pattern {pattern} cannot beat {state.table[-1]}"
         )

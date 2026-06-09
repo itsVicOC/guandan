@@ -225,7 +225,10 @@ class DaiChangshengStrategy(ProfessionalStrategy):
             for pattern in detect_patterns(hand, state.wild_card)
             if len(pattern.cards) == len(hand)
             and is_drift_pattern(pattern, state.level)
-            and (not state.table or pattern.can_be_played_on(state.table[-1]))
+            and (
+                not state.table
+                or pattern.can_be_played_on(state.table[-1], level=state.level)
+            )
         ]
         if not candidates:
             return None
