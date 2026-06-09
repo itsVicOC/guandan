@@ -5,6 +5,7 @@ import random
 import time
 from typing import List, Optional
 
+from rich.markup import escape
 from textual.app import ComposeResult
 from textual.containers import Grid, Vertical
 from textual.screen import Screen
@@ -72,19 +73,19 @@ class OpponentWidget(Static):
 
 
 def _tui_card(card: Card, *, selected: bool = False, cursor: bool = False, wild: bool = False) -> str:
-    """终端专用牌面：固定宽度、避免黑白前景色依赖。"""
+    """终端专用牌面：用中文花色降低对终端配色的依赖。"""
     if card.is_big_joker:
-        body = "BJ"
+        body = "大王"
         style = "bold yellow"
     elif card.is_small_joker:
-        body = "SJ"
+        body = "小王"
         style = "bold yellow"
     else:
         suit_text = {
-            Suit.HEARTS: "♥",
-            Suit.DIAMONDS: "♦",
-            Suit.SPADES: "♠",
-            Suit.CLUBS: "♣",
+            Suit.HEARTS: "红",
+            Suit.DIAMONDS: "方",
+            Suit.SPADES: "黑",
+            Suit.CLUBS: "梅",
         }[card.suit]
         body = f"{suit_text}{_rank_label(card)}"
         style = {
@@ -94,16 +95,19 @@ def _tui_card(card: Card, *, selected: bool = False, cursor: bool = False, wild:
             Suit.CLUBS: "bold cyan",
         }[card.suit]
 
-    label = f"{body:<3}"
-    label = f"{label}W" if wild else f"{label} "
+    label = f"{body}配" if wild else body
 
     if selected:
-        return f"[black on yellow]{{{label}}}[/]"
+        return _styled_card("black on yellow", f"{{{label}}}")
     if cursor:
-        return f"[black on bright_white]>{label}<[/]"
+        return _styled_card("white on blue", f">{label}<")
     if wild:
-        return f"[black on green][{label}][/]"
-    return f"[{style}][{label}][/]"
+        return _styled_card("black on green", f"[{label}]")
+    return _styled_card(style, f"[{label}]")
+
+
+def _styled_card(style: str, text: str) -> str:
+    return f"[{style}]{escape(text)}[/]"
 
 
 def _rank_label(card: Card) -> str:
