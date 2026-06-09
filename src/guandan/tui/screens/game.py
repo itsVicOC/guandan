@@ -39,9 +39,12 @@ class OpponentWidget(Static):
     DEFAULT_CSS = """
     OpponentWidget {
         width: 1fr;
-        height: 3;
+        height: 4;
         content-align: center middle;
-        border: round $primary;
+        border: round #60765f;
+        background: #111815;
+        color: #eee8d9;
+        padding: 0 1;
     }
     """
 
@@ -66,9 +69,13 @@ class OpponentWidget(Static):
         self._do_render()
 
     def _do_render(self) -> None:
-        marker = " [bold yellow]←[/bold yellow]" if self._is_turn else ""
-        done = "（已出完）" if self._finished else f"{self._hand_size:2d} 张"
-        text = f"[bold][{self._seat_name}][/bold] [dim]{self._ai_label}[/dim]\n{done}{marker}"
+        marker = " [bold #ffd978]行动中[/bold #ffd978]" if self._is_turn else ""
+        done = "[green]已出完[/green]" if self._finished else f"{self._hand_size:2d} 张"
+        text = (
+            f"[bold #ffd978]{self._seat_name}家[/bold #ffd978] "
+            f"[dim]{self._ai_label}[/dim]{marker}\n"
+            f"{done}"
+        )
         self.update(text)
 
 
@@ -128,15 +135,21 @@ class PlayerStatusWidget(Static):
     DEFAULT_CSS = """
     PlayerStatusWidget {
         width: 1fr;
-        height: 3;
+        height: 4;
         content-align: center middle;
-        border: round $accent;
+        border: round #d6b35a;
+        background: #18211d;
+        color: #eee8d9;
+        padding: 0 1;
     }
     """
 
     def update_state(self, seat_name: str, hand_size: int, is_turn: bool) -> None:
-        marker = " [bold yellow]←[/bold yellow]" if is_turn else ""
-        self.update(f"[bold][{seat_name}][/bold] [dim]你[/dim]\n{hand_size:2d} 张{marker}")
+        marker = " [bold #ffd978]行动中[/bold #ffd978]" if is_turn else ""
+        self.update(
+            f"[bold #ffd978]{seat_name}家[/bold #ffd978] [dim]你[/dim]{marker}\n"
+            f"{hand_size:2d} 张"
+        )
 
 
 class TableWidget(Static):
@@ -144,9 +157,11 @@ class TableWidget(Static):
 
     DEFAULT_CSS = """
     TableWidget {
-        height: 9;
-        border: round $primary;
-        padding: 0 1;
+        height: 12;
+        border: round #d6b35a;
+        padding: 1 2;
+        background: #121a17;
+        color: #eee8d9;
     }
     """
 
@@ -180,16 +195,19 @@ class TableWidget(Static):
 
     def _do_render(self) -> None:
         if not self._table_patterns and not self._passed:
-            self.update("（空）")
+            self.update("[bold #d6b35a]当前轮[/bold #d6b35a]\n\n[dim]桌面空，等待先手出牌[/dim]")
             return
-        lines = ["[bold]当前轮[/bold]"]
+        lines = ["[bold #d6b35a]当前轮[/bold #d6b35a]"]
         if self._table_patterns:
             top = self._table_patterns[-1]
             top_player = self._players[-1] if self._players else 0
-            lines.append(f"最大：{SEAT_NAMES[top_player]} · {self._pattern_str(top)}")
+            lines.append(
+                f"[bold]最大[/bold] {SEAT_NAMES[top_player]}家 · {self._pattern_str(top)}"
+            )
             recent = list(zip(self._table_patterns, self._players))[-5:]
+            lines.append("")
             for p, who in recent:
-                lines.append(f"  {SEAT_NAMES[who]}: {self._pattern_str(p)}")
+                lines.append(f"  [#9fb7a6]{SEAT_NAMES[who]}:[/#9fb7a6] {self._pattern_str(p)}")
         for who in self._passed:
             lines.append(f"  [dim]{SEAT_NAMES[who]}: 过牌[/dim]")
         self.update("\n".join(lines))
@@ -205,31 +223,49 @@ class GameScreen(Screen):
     """牌桌屏。"""
 
     DEFAULT_CSS = """
+    GameScreen {
+        background: #101512;
+        color: #eee8d9;
+    }
+
+    #game-shell {
+        width: 100%;
+        height: 1fr;
+        padding: 0 1;
+        background: #101512;
+    }
+
     #table-layout {
         height: auto;
         grid-size: 3 3;
         grid-columns: 1fr 2fr 1fr;
-        grid-rows: 3 9 3;
+        grid-rows: 4 12 4;
         grid-gutter: 1 1;
-        padding: 0 1;
+        padding: 1 0;
     }
     #opp-opposite {
         column-span: 3;
     }
     #status-bar {
-        height: 3;
-        padding: 0 1;
-        border: round $secondary;
+        height: 4;
+        padding: 0 2;
+        border: round #60765f;
+        background: #18211d;
+        color: #cdd7c8;
     }
     #my-hand {
-        min-height: 6;
-        padding: 0 1;
-        border: round $accent;
+        min-height: 8;
+        padding: 1 2;
+        border: round #d6b35a;
+        background: #111815;
+        color: #eee8d9;
     }
     #action-log {
-        height: 3;
-        padding: 0 1;
-        color: $text-muted;
+        height: 4;
+        padding: 0 2;
+        border: tall #344237;
+        background: #121a17;
+        color: #9fb7a6;
     }
     """
 
@@ -288,7 +324,7 @@ class GameScreen(Screen):
         ai_label = f"AI·{self._strategy.name}"
         seats = self._visual_seats()
         yield Header()
-        with Vertical():
+        with Vertical(id="game-shell"):
             yield Static("status", id="status-bar")
             with Grid(id="table-layout"):
                 yield OpponentWidget(seats["opposite"], SEAT_NAMES[seats["opposite"]], ai_label, id="opp-opposite")
@@ -380,9 +416,11 @@ class GameScreen(Screen):
         finished = " > ".join(SEAT_NAMES[p] for p in s.finish_order) or "-"
         levels = getattr(s, "team_levels_final", [s.level, s.level])
         text = (
-            f"级牌 {s.level} · 逢人配 {wild} · 先手 {leader} · 最大 {top_player} · "
-            f"当前 {SEAT_NAMES[s.turn_index]} · 难度 {self._strategy.name}\n"
-            f"队伍级数 东西:{levels[0]} 南北:{levels[1]} · 名次 {finished}"
+            f"[bold #ffd978]级牌[/bold #ffd978] {s.level}   "
+            f"[bold #ffd978]逢人配[/bold #ffd978] {wild}   "
+            f"[bold #ffd978]当前[/bold #ffd978] {SEAT_NAMES[s.turn_index]}家   "
+            f"[bold #ffd978]AI[/bold #ffd978] {self._strategy.name}\n"
+            f"先手 {leader}家 · 最大 {top_player}家 · 队伍级数 东西:{levels[0]} 南北:{levels[1]} · 名次 {finished}"
         )
         self.query_one("#status-bar", Static).update(text)
 
@@ -397,7 +435,8 @@ class GameScreen(Screen):
             wild = self.state is not None and c == self.state.wild_card
             parts.append(_tui_card(c, selected=selected, cursor=cursor, wild=wild))
         rows = ["  ".join(parts[i : i + 9]) for i in range(0, len(parts), 9)]
-        self.query_one("#my-hand", Static).update("\n".join(rows))
+        header = "[bold #d6b35a]你的手牌[/bold #d6b35a]  [dim]空格选牌 · 回车出牌 · P 过牌 · T 提示[/dim]"
+        self.query_one("#my-hand", Static).update(f"{header}\n" + "\n".join(rows))
 
     def _last_player_of(self, p: Pattern) -> int:
         s = self._state()
