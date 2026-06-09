@@ -57,7 +57,8 @@ def play_or_pass(
         # leader 模式 → 必须出
         play_pattern(state, player, p)
         return True
-    if should_pass(state, player, p, rng=rng):
+    pass_multiplier = getattr(strategy, "pass_probability_multiplier", 1.0)
+    if should_pass(state, player, p, rng=rng, multiplier=pass_multiplier):
         pass_turn(state, player)
         return False
     play_pattern(state, player, p)

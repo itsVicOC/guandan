@@ -44,6 +44,7 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         # 加载 profile
         self.profile = load_profile(profile_name)
         self.style = self.profile["style"]
+        self.pass_probability_multiplier = self.style.get("pass_probability_multiplier", 1.0)
 
         # 初始化 MCTS（用 profile 的参数）
         mcts_config = self.profile["mcts"]

@@ -25,7 +25,7 @@ def _teammate_winning(state: GameState, player: int) -> bool:
     from ...engine.events import TurnPlayed
 
     for ev in reversed(state.history):
-        if isinstance(ev, TurnPlayed) and ev.pattern is last_turn:
+        if isinstance(ev, TurnPlayed) and ev.pattern == last_turn:
             return is_teammate(ev.player, player)
     return False
 

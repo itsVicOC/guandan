@@ -31,10 +31,10 @@ def _get_all_cards_in_game() -> List[Card]:
 
     # 王牌：各2张
     cards.extend([
-        Card(RANK_SMALL_JOKER, Suit.SPADES),
-        Card(RANK_SMALL_JOKER, Suit.SPADES),
-        Card(RANK_BIG_JOKER, Suit.SPADES),
-        Card(RANK_BIG_JOKER, Suit.SPADES),
+        Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+        Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+        Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+        Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
     ])
 
     return cards

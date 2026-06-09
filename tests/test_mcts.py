@@ -12,11 +12,13 @@ import random
 
 import pytest
 
-from guandan.ai.mcts.determinize import determinize
+from guandan.ai.mcts.determinize import _get_all_cards_in_game, determinize
 from guandan.ai.mcts.node import MCTSNode
 from guandan.ai.mcts.search import mcts_search, ucb1_score
 from guandan.ai.strategies.professional import ProfessionalStrategy
+from guandan.engine.card import RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
 from guandan.engine.deck import deal, make_deck, shuffle_deck
+from guandan.engine.hand import PatternType
 from guandan.engine.state import GameState, play_pattern
 
 
@@ -46,6 +48,15 @@ def _make_test_state(level: int = 2, seed: int = 42) -> GameState:
 
 class TestDeterminize:
     """测试确定化逻辑。"""
+
+    def test_all_cards_uses_real_joker_suits(self):
+        """确定化牌池中的大小王必须保留 joker suit。"""
+        cards = _get_all_cards_in_game()
+        jokers = [card for card in cards if card.is_joker]
+
+        assert len(jokers) == 4
+        assert sum(1 for card in jokers if card.rank == RANK_SMALL_JOKER) == 2
+        assert sum(1 for card in jokers if card.rank == RANK_BIG_JOKER) == 2
 
     def test_determinize_preserves_hand_sizes(self):
         """确定化后每家手牌数守恒。"""
@@ -208,6 +219,26 @@ class TestProfessionalStrategy:
         assert strategy.name == "职业"
         assert strategy.difficulty == 3
 
+    def test_professional_finishes_with_complete_straight(self):
+        """职业档应能识别顺子一手出完，不被候选 Top-N 漏掉。"""
+        state = _make_test_state()
+        state.wild_card = None
+        state.table = []
+        state.hands[0] = [
+            Card(3, Suit.HEARTS),
+            Card(4, Suit.DIAMONDS),
+            Card(5, Suit.SPADES),
+            Card(6, Suit.CLUBS),
+            Card(7, Suit.HEARTS),
+        ]
+        strategy = ProfessionalStrategy(iterations=1, rng=random.Random(42))
+
+        pattern = strategy.select_pattern(state, player=0)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.STRAIGHT
+        assert len(pattern.cards) == 5
+
     def test_professional_uses_fast_strategy_before_endgame(self, monkeypatch):
         """M6：前中期大手牌不跑 MCTS，避免单步过慢。"""
         state = _make_test_state()
@@ -225,7 +256,18 @@ class TestProfessionalStrategy:
     def test_professional_uses_mcts_in_endgame(self, monkeypatch):
         """M6：手牌进入阈值后仍启用 MCTS。"""
         state = _make_test_state()
-        state.hands[0] = state.hands[0][:10]
+        state.hands[0] = [
+            Card(3, Suit.HEARTS),
+            Card(3, Suit.DIAMONDS),
+            Card(4, Suit.HEARTS),
+            Card(5, Suit.DIAMONDS),
+            Card(7, Suit.SPADES),
+            Card(9, Suit.CLUBS),
+            Card(11, Suit.HEARTS),
+            Card(12, Suit.DIAMONDS),
+            Card(13, Suit.SPADES),
+            Card(14, Suit.CLUBS),
+        ]
         strategy = ProfessionalStrategy(iterations=1, rng=random.Random(42))
         calls = {"count": 0}
 

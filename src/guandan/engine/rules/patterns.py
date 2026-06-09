@@ -709,11 +709,18 @@ def detect_patterns(cards: Sequence[Card], wild_card: Card | None = None) -> lis
     for s in (Suit.HEARTS, Suit.DIAMONDS, Suit.SPADES, Suit.CLUBS):
         patterns.extend(_try_straight(normal, wild_count, wild_card, suit_filter=int(s)))
 
-    # 去重（同样的 (type, rank, length, wild_used) 算同一牌型）
+    # 去重：同样解释且实际用牌相同才算同一牌型。
+    # 三带二等牌型可能同 rank 但带牌不同，AI 估值需要保留这些选择。
     seen = set()
     unique: list[Pattern] = []
     for p in patterns:
-        key = (p.type, p.rank, p.length, p.wild_used, p.suit)
+        card_key = tuple(
+            sorted(
+                (card.rank, int(card.suit), count)
+                for card, count in Counter(p.cards).items()
+            )
+        )
+        key = (p.type, p.rank, p.length, p.wild_used, p.suit, card_key)
         if key not in seen:
             seen.add(key)
             unique.append(p)

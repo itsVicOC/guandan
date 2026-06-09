@@ -102,11 +102,11 @@ class Pattern:
         - 四王 压所有
         - 同类型之间比 rank（必要时比 length）
         """
+        if other.type == PatternType.FOUR_JOKERS:
+            return False
         # 四王最大
         if self.type == PatternType.FOUR_JOKERS:
             return True
-        if other.type == PatternType.FOUR_JOKERS:
-            return False
         # 炸弹类
         if self.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):
             if other.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):

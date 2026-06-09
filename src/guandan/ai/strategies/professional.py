@@ -13,12 +13,12 @@ import random
 from typing import Optional
 
 from ...engine.hand import Pattern
+from ...engine.rules.patterns import find_complete_pattern
 from ...engine.state import GameState
 from ..mcts import MCTS_CONFIG
 from ..mcts.determinize import determinize
 from ..mcts.node import MCTSNode
 from ..mcts.search import mcts_search
-from ..valuation import enumerate_candidate_plays
 from .advanced import AdvancedStrategy
 
 
@@ -109,15 +109,15 @@ class ProfessionalStrategy:
 
     def _finish_now(self, state: GameState, player: int) -> Optional[Pattern]:
         """如果有合法牌型能一次出完当前手牌，直接返回。"""
-        hand_size = state.hand_size(player)
-        if hand_size == 0:
+        hand = state.hands[player]
+        if not hand:
             return None
-        for candidate in enumerate_candidate_plays(
-            state, player, max_candidates=max(self.max_actions, 8)
-        ):
-            if len(candidate.cards) == hand_size:
-                return candidate
-        return None
+        candidate = find_complete_pattern(hand, state.wild_card)
+        if candidate is None:
+            return None
+        if state.table and not candidate.can_be_played_on(state.table[-1], level=state.level):
+            return None
+        return candidate
 
     def _should_use_mcts(self, state: GameState, player: int) -> bool:
         """M6 性能闸门：只在中后期或关键局面启用 MCTS。"""

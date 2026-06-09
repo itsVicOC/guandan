@@ -26,6 +26,7 @@ from guandan.engine.card import (
     RANK_6,
     RANK_7,
     RANK_8,
+    RANK_9,
     RANK_A,
     RANK_K,
     Card,
@@ -116,13 +117,13 @@ class TestGreedy:
         assert p.cards[0] == c(RANK_2, "S")
 
     def test_follower_no_table_top_returns_leader_move(self) -> None:
-        """table 空 → 等价 leader，行为一致。"""
+        """table 空 → 等价 leader，并保护非 wild 级牌。"""
         state = make_initial_state(level=RANK_2, first_player=0, seed=42)
         state.hands[0] = [c(RANK_2, "S"), c(RANK_5, "D"), c(RANK_A, "C")]
         assert not state.table
         p = select_min_winning(state, 0)
         assert p is not None
-        assert p.rank == RANK_2
+        assert p.rank == RANK_5
 
     def test_returns_none_when_cannot_beat(self) -> None:
         """桌顶是大牌、手里只有小牌、无炸弹 → None。"""
@@ -185,6 +186,80 @@ class TestGreedy:
         assert p is not None
         assert p.type == PatternType.BOMB
         assert p.rank == RANK_7
+
+    def test_same_length_straight_can_beat_table_straight(self) -> None:
+        """AI 应能用同长度更大顺子压牌，而不是只会炸或过。"""
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        table_cards = (
+            c(RANK_3, "H"),
+            c(RANK_4, "D"),
+            c(RANK_5, "S"),
+            c(RANK_6, "C"),
+            c(RANK_7, "H"),
+        )
+        state.table = [Pattern(PatternType.STRAIGHT, RANK_7, 5, table_cards, 0)]
+        state.hands[1] = [
+            c(RANK_4, "H"),
+            c(RANK_5, "D"),
+            c(RANK_6, "S"),
+            c(RANK_7, "C"),
+            c(RANK_8, "H"),
+        ]
+
+        p = select_min_winning(state, 1)
+
+        assert p is not None
+        assert p.type == PatternType.STRAIGHT
+        assert p.length == 5
+        assert p.rank == RANK_8
+
+    def test_same_type_triple_pair_can_beat_table_triple_pair(self) -> None:
+        """AI 应能用更大的三带二压牌。"""
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        table_cards = (
+            c(RANK_5, "H"),
+            c(RANK_5, "D"),
+            c(RANK_5, "S"),
+            c(RANK_6, "H"),
+            c(RANK_6, "D"),
+        )
+        state.table = [Pattern(PatternType.TRIPLE_PAIR, RANK_5, 1, table_cards, 0)]
+        state.hands[1] = [
+            c(RANK_7, "H"),
+            c(RANK_7, "D"),
+            c(RANK_7, "S"),
+            c(RANK_8, "H"),
+            c(RANK_8, "D"),
+        ]
+
+        p = select_min_winning(state, 1)
+
+        assert p is not None
+        assert p.type == PatternType.TRIPLE_PAIR
+        assert p.rank == RANK_7
+
+    def test_ten_card_bomb_can_beat_nine_card_bomb(self) -> None:
+        """炸弹候选应支持 10 张（8 张同点 + 2 张逢人配）。"""
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
+        wild = c(RANK_5, "H")
+        state.wild_card = wild
+        state.table = [
+            Pattern(PatternType.BOMB, RANK_A, 9, tuple(c(RANK_A, "H") for _ in range(9)), 0)
+        ]
+        state.hands[1] = [
+            *[c(RANK_7, suit) for suit in ("H", "H", "D", "D", "S", "S", "C", "C")],
+            wild,
+            wild,
+        ]
+
+        p = select_min_winning(state, 1)
+
+        assert p is not None
+        assert p.type == PatternType.BOMB
+        assert p.rank == RANK_7
+        assert p.length == 10
 
 
 # ---------- Valuation: estimate_pattern_cost ----------
@@ -301,6 +376,39 @@ class TestEnumerateCandidates:
         for p in candidates:
             assert p.type == PatternType.SINGLE
 
+    def test_includes_same_type_straight_response(self) -> None:
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
+        state.wild_card = None
+        state.table = [
+            Pattern(
+                PatternType.STRAIGHT,
+                RANK_7,
+                5,
+                (
+                    c(RANK_3, "H"),
+                    c(RANK_4, "D"),
+                    c(RANK_5, "S"),
+                    c(RANK_6, "C"),
+                    c(RANK_7, "H"),
+                ),
+                0,
+            )
+        ]
+        state.hands[1] = [
+            c(RANK_4, "H"),
+            c(RANK_5, "D"),
+            c(RANK_6, "S"),
+            c(RANK_7, "C"),
+            c(RANK_8, "H"),
+        ]
+
+        candidates = enumerate_candidate_plays(state, 1)
+
+        assert any(
+            p.type == PatternType.STRAIGHT and p.length == 5 and p.rank == RANK_8
+            for p in candidates
+        )
+
 
 # ---------- Memory: PlayedTracker ----------
 
@@ -404,6 +512,25 @@ class TestShouldPass:
         d2 = should_pass(state, 1, sp(RANK_8, "D"), rng=rng2)
         assert d1 == d2
 
+    def test_multiplier_adjusts_pass_probability(self) -> None:
+        """策略倍率可以实际改变概率过牌结果。"""
+
+        class FixedRandom(random.Random):
+            def random(self) -> float:
+                return 0.75
+
+        state = make_initial_state(level=5, first_player=0, seed=42)
+        state.wild_card = None
+        state.table = [sp(RANK_A, "H")]
+        state.hands[1] = [c(RANK_8, "D"), c(RANK_9, "D")]
+
+        assert should_pass(
+            state, 1, sp(RANK_8, "D"), rng=FixedRandom(), multiplier=1.0
+        ) is False
+        assert should_pass(
+            state, 1, sp(RANK_8, "D"), rng=FixedRandom(), multiplier=1.2
+        ) is True
+
 
 # ---------- Strategies: distinct behavior ----------
 
@@ -422,6 +549,13 @@ class TestStrategyDifferentiation:
             c(RANK_8, "S"),
             c(RANK_8, "C"),
             c(RANK_5, "D"),
+        ]
+        state.hands[1] = [
+            c(RANK_9, "H"),
+            c(RANK_9, "D"),
+            c(RANK_9, "S"),
+            c(RANK_9, "C"),
+            c(RANK_5, "S"),
         ]
         # 0 出 A
         play_pattern(state, 0, sp(RANK_A, "H"))
@@ -466,6 +600,21 @@ class TestStrategyDifferentiation:
         adv = AdvancedStrategy()
         assert adv.difficulty == 2
         assert adv.name == "高手"
+
+    def test_teammate_winning_uses_value_equality(self) -> None:
+        """深拷贝/存档恢复后，桌顶牌型对象不同但值相等，协作仍应生效。"""
+        import copy
+
+        from guandan.ai.strategies.advanced import _teammate_winning
+
+        state = make_initial_state(level=5, first_player=0, seed=42)
+        state.wild_card = None
+        state.hands[2] = [c(RANK_A, "H"), c(RANK_2, "D")]
+        state.turn_index = 2
+        play_pattern(state, 2, sp(RANK_A, "H"))
+        state.table[-1] = copy.deepcopy(state.table[-1])
+
+        assert _teammate_winning(state, 0) is True
 
     def test_intermediate_difficulty_attributes(self) -> None:
         inter = IntermediateStrategy()

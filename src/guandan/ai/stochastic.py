@@ -8,8 +8,38 @@ import random
 from typing import Optional
 
 from ..engine.card import RANK_A
-from ..engine.hand import Pattern
-from ..engine.state import GameState
+from ..engine.hand import Pattern, PatternType
+from ..engine.state import GameState, is_teammate
+
+
+def _is_bomb(pattern: Pattern) -> bool:
+    return pattern.type in (
+        PatternType.BOMB,
+        PatternType.STRAIGHT_FLUSH,
+        PatternType.FOUR_JOKERS,
+    )
+
+
+def _table_top_player(state: GameState) -> Optional[int]:
+    if not state.table:
+        return None
+
+    from ..engine.events import TurnPlayed
+
+    top = state.table[-1]
+    for ev in reversed(state.history):
+        if isinstance(ev, TurnPlayed) and ev.pattern == top:
+            return ev.player
+    return None
+
+
+def _opponent_min_cards(state: GameState, player: int) -> int:
+    sizes = [
+        state.hand_size(p)
+        for p in range(4)
+        if not is_teammate(p, player) and state.hand_size(p) > 0
+    ]
+    return min(sizes, default=0)
 
 
 def should_pass(
@@ -20,6 +50,7 @@ def should_pass(
     rng: random.Random,
     base: float = 0.10,
     scale: float = 0.60,
+    multiplier: float = 1.0,
 ) -> bool:
     """给一个能压的牌型，按"出牌越大越舍不得"原则概率过牌。
 
@@ -31,6 +62,8 @@ def should_pass(
     table_top = state.table[-1] if state.table else None
     if table_top is None:
         return False  # leader 必须出
+    if len(pattern.cards) == state.hand_size(player):
+        return False  # 能一手走完就不随机过牌
 
     rank = table_top.rank
     # 桌顶是王 → 当作 A 顶
@@ -38,4 +71,28 @@ def should_pass(
         rank = RANK_A
 
     p = base + (rank - 2) / (RANK_A - 2) * scale
+
+    # 队友正在领牌时更愿意让队友收轮；对手快出完时更愿意出手拦截。
+    top_player = _table_top_player(state)
+    if top_player is not None and is_teammate(top_player, player):
+        p += 0.20
+
+    opponent_min = _opponent_min_cards(state, player)
+    if 0 < opponent_min <= 2:
+        p *= 0.25
+    elif 0 < opponent_min <= 5:
+        p *= 0.60
+
+    # 炸弹类响应更昂贵，默认更谨慎；非炸弹结构牌略微鼓励打出去整理手牌。
+    if _is_bomb(pattern):
+        p += 0.20
+    elif pattern.type in (
+        PatternType.STRAIGHT,
+        PatternType.PAIR_SEQUENCE,
+        PatternType.TRIPLE_SEQUENCE,
+        PatternType.TRIPLE_PAIR,
+    ):
+        p -= 0.05
+
+    p = max(0.0, min(0.95, p * multiplier))
     return rng.random() < p

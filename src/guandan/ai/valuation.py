@@ -13,14 +13,11 @@ from __future__ import annotations
 from collections import Counter
 from typing import List, Optional
 
-from ..engine.card import (
-    RANK_A,
-    RANK_BIG_JOKER,
-    RANK_SMALL_JOKER,
-)
-from ..engine.hand import Pattern, PatternType, effective_rank
-from ..engine.rules.patterns import find_complete_pattern
+from ..engine.card import RANK_A, Card
+from ..engine.hand import Pattern, PatternType
+from ..engine.rules.patterns import detect_patterns
 from ..engine.state import GameState
+from .candidates import enumerate_legal_patterns
 
 
 def _hand_breakdown(cards: list) -> dict:
@@ -39,6 +36,26 @@ def _count_wild_in_pattern(p: Pattern, wild: Optional[object]) -> int:
     if wild is None:
         return 0
     return sum(1 for c in p.cards if c == wild)
+
+
+_STRUCTURE_TYPES = {
+    PatternType.STRAIGHT,
+    PatternType.PAIR_SEQUENCE,
+    PatternType.TRIPLE_SEQUENCE,
+    PatternType.TRIPLE_PAIR,
+}
+
+
+def _best_structure_score(cards: list, wild: Optional[Card]) -> float:
+    """估算手牌中顺子/连对/钢板/三带二的保留价值。"""
+    best = 0.0
+    for p in detect_patterns(cards, wild):
+        if p.type not in _STRUCTURE_TYPES:
+            continue
+        score = float(len(p.cards) + p.weight) - p.wild_used * 0.5
+        if score > best:
+            best = score
+    return best
 
 
 def estimate_pattern_cost(
@@ -100,12 +117,27 @@ def estimate_pattern_cost(
         elif pattern.type == PatternType.FOUR_JOKERS:
             bomb_premium += 6.0
 
-    # ---- 6. 收牌奖励：出完手牌 → 估值大幅降低 ----
+    # ---- 6. 保留顺子/连对/钢板等结构 ----
+    structure_penalty = 0.0
+    if pattern.type not in _STRUCTURE_TYPES and not _is_bomb(pattern.type):
+        before_structure = _best_structure_score(hand, wild)
+        after_structure = _best_structure_score(rem_cards, wild)
+        structure_penalty = max(0.0, before_structure - after_structure) * 0.8
+
+    # ---- 7. 收牌奖励：出完手牌 → 估值大幅降低 ----
     finish_bonus = 0.0
     if len(rem_cards) == 0:
         finish_bonus = -20.0
 
-    return base + breakup + wild_penalty + high_penalty + bomb_premium + finish_bonus
+    return (
+        base
+        + breakup
+        + wild_penalty
+        + high_penalty
+        + bomb_premium
+        + structure_penalty
+        + finish_bonus
+    )
 
 
 def enumerate_candidate_plays(
@@ -119,84 +151,13 @@ def enumerate_candidate_plays(
     M2 策略层用：在多个"能压"的牌型里选估值最低的。
 
     实现：
-    1. 枚举手牌里能压的所有同型牌型 + 最小炸弹
+    1. 用规则引擎枚举当前所有合法候选
     2. 按 `estimate_pattern_cost` 排序
     3. 截断到 `max_candidates`
     """
-    from .greedy import (
-        _count_wild,
-        _group_by_rank,
-        _normal_ranks_above,
-        _smallest_bomb,
-    )
-
     hand = state.hands[player]
     if not hand:
         return []
-    wild = state.wild_card
-    table_top = state.table[-1] if state.table else None
-    by_rank = _group_by_rank(hand)
-    wild_count = _count_wild(hand, wild)
-
-    candidates: List[Pattern] = []
-
-    if table_top is None:
-        # leader 模式：所有非 wild 单张都是候选
-        for c in hand:
-            if c == wild:
-                continue
-            p = find_complete_pattern([c], wild)
-            if p and p.type == PatternType.SINGLE:
-                candidates.append(p)
-    else:
-        if table_top.type == PatternType.SINGLE:
-            for c in hand:
-                if c == wild:
-                    continue
-                if effective_rank(c.rank, state.level) > effective_rank(
-                    table_top.rank, state.level
-                ):
-                    p = find_complete_pattern([c], wild)
-                    if p and p.type == PatternType.SINGLE:
-                        candidates.append(p)
-        elif table_top.type == PatternType.PAIR:
-            for r in _normal_ranks_above(table_top.rank, state.level):
-                if r in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
-                    continue
-                cards = by_rank.get(r, [])
-                if len(cards) >= 2:
-                    p = find_complete_pattern(cards[:2], wild)
-                    if p:
-                        candidates.append(p)
-            if wild is not None and wild_count >= 1:
-                for r in _normal_ranks_above(table_top.rank, state.level):
-                    cards = by_rank.get(r, [])
-                    if len(cards) >= 1 and r not in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
-                        p = find_complete_pattern([cards[0], wild], wild)
-                        if p and p.type == PatternType.PAIR:
-                            candidates.append(p)
-        elif table_top.type == PatternType.TRIPLE:
-            for r in _normal_ranks_above(table_top.rank, state.level):
-                if r in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
-                    continue
-                cards = by_rank.get(r, [])
-                if len(cards) >= 3:
-                    p = find_complete_pattern(cards[:3], wild)
-                    if p:
-                        candidates.append(p)
-
-        # 炸弹独立候选
-        bomb = _smallest_bomb(hand, by_rank, table_top, wild, wild_count, state.level)
-        if bomb:
-            candidates.append(bomb)
-
-    # 去重
-    seen: set = set()
-    unique: List[Pattern] = []
-    for p in candidates:
-        key = (p.type, p.rank, p.length, p.wild_used, p.suit)
-        if key not in seen:
-            seen.add(key)
-            unique.append(p)
-    unique.sort(key=lambda p: estimate_pattern_cost(state, player, p))
-    return unique[:max_candidates]
+    candidates = enumerate_legal_patterns(state, player)
+    candidates.sort(key=lambda p: estimate_pattern_cost(state, player, p))
+    return candidates[:max_candidates]

@@ -129,6 +129,7 @@ class TestDaiChangshengStrategy:
         assert strategy.max_actions == profile["mcts"]["top_actions"]
         assert strategy.mcts_hand_threshold == profile["mcts"]["hand_threshold"]
         assert strategy.rollout_max_turns == profile["mcts"]["rollout_max_turns"]
+        assert strategy.pass_probability_multiplier == profile["style"]["pass_probability_multiplier"]
 
 
 class TestStyleBehavior:

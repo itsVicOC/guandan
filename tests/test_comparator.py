@@ -117,6 +117,7 @@ class TestCanPlay:
     def test_no_one_presses_four_jokers(self):
         assert not can_play(bomb(RANK_A, 8), four_jokers())
         assert not can_play(bomb(RANK_A, 4), four_jokers())
+        assert not can_play(four_jokers(), four_jokers())
 
 
 class TestCompareSameType:
