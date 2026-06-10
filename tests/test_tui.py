@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import random
 
 from rich.text import Text
 
@@ -102,6 +103,39 @@ def test_locked_passes_remain_visible_after_later_play() -> None:
             table_text = _plain(table.content)
             assert "北: 过牌" in table_text
             assert "西: 过牌" in table_text
+
+    asyncio.run(run())
+
+
+def test_ai_leader_continues_until_human_turn() -> None:
+    """AI 新一轮领出后，应继续推进后续 AI，直到轮到真人。"""
+
+    async def run() -> None:
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[
+                [Card(9, Suit.HEARTS)],
+                [Card(5, Suit.SPADES)],
+                [Card(4, Suit.DIAMONDS)],
+                [Card(3, Suit.CLUBS), Card(10, Suit.CLUBS)],
+            ],
+            turn_index=3,
+            leader=3,
+        )
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            screen._ai_rng = random.Random(0)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            screen._maybe_ai_turn()
+
+            assert state.turn_index == 0
+            assert len(state.table) >= 3
+            assert [screen._last_player_of(p) for p in state.table[-3:]] == [3, 2, 1]
 
     asyncio.run(run())
 

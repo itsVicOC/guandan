@@ -13,7 +13,7 @@ from textual.widgets import Footer, Header, Static
 
 from ...ai import AINotImplementedError, make_strategy, play_or_pass
 from ...engine.card import Card, Suit
-from ...engine.events import TurnPlayed
+from ...engine.events import Pass, TurnPlayed
 from ...engine.hand import Pattern, PatternType, sort_cards
 from ...engine.state import (
     SEAT_NAMES,
@@ -447,8 +447,6 @@ class GameScreen(Screen):
 
     def _locked_passed_players(self) -> List[int]:
         """提取本轮仍被锁定的过牌玩家，按过牌发生顺序。"""
-        from ...engine.events import Pass
-
         s = self._state()
         passed = []
         for ev in s.history:
@@ -590,17 +588,17 @@ class GameScreen(Screen):
                 self._save_game_result()
             return
         ai_actions: list[str] = []
+        ai_action_limit = 12
         try:
-            # 阶段 1：trick 进行中（table 有牌），让 AIs 压
             while (
                 not s.finished
                 and s.turn_index != self.human
-                and s.table
+                and len(ai_actions) < ai_action_limit
             ):
                 self._last_action = f"{SEAT_NAMES[s.turn_index]} 思考中..."
                 self._refresh_all()
                 player_before = s.turn_index
-                table_len_before = len(s.table)
+                history_len_before = len(s.history)
                 play_or_pass(
                     s,
                     s.turn_index,
@@ -608,48 +606,34 @@ class GameScreen(Screen):
                     self._ai_rng,
                 )
                 self._last_action = self._describe_ai_action(
-                    s, player_before, table_len_before
+                    s, player_before, history_len_before
                 )
                 ai_actions.append(self._last_action)
                 self._refresh_all()
                 import time
                 time.sleep(0.05)
-            # 阶段 2：trick 刚结束（table 空），新 leader 是 AI → 让它出 1 张
-            # 出 1 张后**退出**，让人类决定是否"过"（不能继续循环让所有 AI 出完）
-            if (
-                not s.finished
-                and not s.table
-                and s.turn_index != self.human
-            ):
-                self._last_action = f"{SEAT_NAMES[s.turn_index]} 思考中..."
-                self._refresh_all()
-                player_before = s.turn_index
-                table_len_before = len(s.table)
-                play_or_pass(
-                    s,
-                    s.turn_index,
-                    self._strategy,
-                    self._ai_rng,
-                )
-                self._last_action = self._describe_ai_action(
-                    s, player_before, table_len_before
-                )
-                ai_actions.append(self._last_action)
-                self._refresh_all()
         except IllegalPlayError as e:
             self.sub_title = f"AI 错误：{e}"
         if ai_actions:
             self._last_action = "；".join(ai_actions[-4:])
         self._refresh_all()
+        if (
+            not s.finished
+            and s.turn_index != self.human
+            and len(ai_actions) >= ai_action_limit
+        ):
+            self.set_timer(0.1, self._maybe_ai_turn)
         # 检查游戏是否刚结束
         if s.finished and not self._game_saved:
             self._save_game_result()
 
-    def _describe_ai_action(self, state: GameState, player: int, table_len_before: int) -> str:
-        if len(state.table) > table_len_before:
-            pattern = state.table[-1]
-            cards = " ".join(_tui_card(c) for c in pattern.cards)
-            return f"{SEAT_NAMES[player]} 出牌：{pattern.type.value} · {cards}"
+    def _describe_ai_action(self, state: GameState, player: int, history_len_before: int) -> str:
+        for ev in reversed(state.history[history_len_before:]):
+            if isinstance(ev, TurnPlayed) and ev.player == player:
+                cards = " ".join(_tui_card(c) for c in ev.pattern.cards)
+                return f"{SEAT_NAMES[player]} 出牌：{ev.pattern.type.value} · {cards}"
+            if isinstance(ev, Pass) and ev.player == player:
+                return f"{SEAT_NAMES[player]} 过牌"
         return f"{SEAT_NAMES[player]} 过牌"
 
     def _save_game_result(self) -> None:
