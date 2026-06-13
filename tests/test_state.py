@@ -23,6 +23,7 @@ from guandan.engine.state import (
     GameState,
     IllegalPlayError,
     make_initial_state,
+    next_seat_counterclockwise,
     pass_turn,
     play_pattern,
 )
@@ -65,6 +66,23 @@ class TestPlayPattern:
         assert state.table == [p]
         assert state.hand_size(0) == 26
         assert state.turn_index == 3
+
+    def test_leader_play_advances_counterclockwise_from_every_seat(self):
+        for leader in range(4):
+            lead_card = c(RANK_3, "H")
+            hands = [[c(RANK_8, "S")] for _ in range(4)]
+            hands[leader] = [lead_card, c(RANK_A, "C")]
+            state = GameState(
+                level=RANK_2,
+                wild_card=None,
+                hands=hands,
+                turn_index=leader,
+                leader=leader,
+            )
+
+            play_pattern(state, leader, single_pattern(lead_card))
+
+            assert state.turn_index == next_seat_counterclockwise(leader)
 
     def test_press(self):
         state = make_initial_state(level=2, first_player=0, seed=42)
@@ -174,6 +192,29 @@ class TestPassTurn:
         assert state.passed_players == set()
         assert state.turn_index == 3
         assert state.leader == 3
+
+    def test_new_leader_keeps_counterclockwise_order_after_winning_trick(self):
+        """AI/后手拿到牌权再领出时，仍按逆时针推进。"""
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.hands[0] = [c(RANK_3, "H"), c(RANK_4, "H")]
+        state.hands[1] = [c(RANK_5, "H")]
+        state.hands[2] = [c(RANK_8, "H"), c(RANK_9, "H")]
+        state.hands[3] = [c(RANK_6, "H")]
+
+        play_pattern(state, 0, single_pattern(c(RANK_3, "H")))
+        pass_turn(state, 3)
+        play_pattern(state, 2, single_pattern(c(RANK_8, "H")))
+        pass_turn(state, 1)
+        pass_turn(state, 0)
+
+        assert state.table == []
+        assert state.leader == 2
+        assert state.turn_index == 2
+
+        play_pattern(state, 2, single_pattern(c(RANK_9, "H")))
+
+        assert state.turn_index == 1
 
     def test_trick_ends_immediately_when_press_leaves_no_responder(self):
         """压牌后若其他可行动玩家已全过，本轮应立即结束。"""

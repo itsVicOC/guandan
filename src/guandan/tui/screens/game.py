@@ -389,10 +389,11 @@ class GameScreen(Screen):
         self._do_render_hand()
         tbl = self.query_one("#table", TableWidget)
         # 提取本轮已过牌且仍被锁定的玩家
+        table_players = self._current_table_players()
         passed_players = self._locked_passed_players()
         tbl.update_table(
             s.table,
-            [self._last_player_of(p) for p in s.table],
+            table_players,
             passed=passed_players,
         )
         # 状态信息写入 screen title
@@ -412,7 +413,8 @@ class GameScreen(Screen):
         s = self._state()
         wild = _tui_card(s.wild_card, wild=True) if s.wild_card is not None else "无"
         leader = SEAT_NAMES[s.leader] if s.leader is not None else "-"
-        top_player = SEAT_NAMES[self._last_player_of(s.table[-1])] if s.table else "-"
+        table_players = self._current_table_players()
+        top_player = SEAT_NAMES[table_players[-1]] if s.table and table_players else "-"
         finished = " > ".join(SEAT_NAMES[p] for p in s.finish_order) or "-"
         levels = getattr(s, "team_levels_final", [s.level, s.level])
         text = (
@@ -440,16 +442,50 @@ class GameScreen(Screen):
 
     def _last_player_of(self, p: Pattern) -> int:
         s = self._state()
-        for ev in reversed(s.history):
+        for ev in reversed(self._current_trick_actions()):
             if isinstance(ev, TurnPlayed) and ev.pattern == p:
                 return ev.player
+        for history_ev in reversed(s.history):
+            if isinstance(history_ev, TurnPlayed) and history_ev.pattern == p:
+                return history_ev.player
         return 0
+
+    def _current_table_players(self) -> List[int]:
+        """返回当前桌面每手牌对应的玩家，顺序与 `state.table` 一致。"""
+        s = self._state()
+        players = [
+            ev.player
+            for ev in self._current_trick_actions()
+            if isinstance(ev, TurnPlayed)
+        ]
+        if len(players) == len(s.table):
+            return players
+        return [self._last_player_of(p) for p in s.table]
+
+    def _current_trick_actions(self) -> List[TurnPlayed | Pass]:
+        """从事件历史尾部提取当前 trick 的出牌/过牌事件。"""
+        s = self._state()
+        if not s.table:
+            return []
+        table_idx = len(s.table) - 1
+        actions_reversed: List[TurnPlayed | Pass] = []
+        for ev in reversed(s.history):
+            if isinstance(ev, Pass):
+                if ev.player in s.passed_players:
+                    actions_reversed.append(ev)
+                continue
+            if isinstance(ev, TurnPlayed) and table_idx >= 0 and ev.pattern == s.table[table_idx]:
+                actions_reversed.append(ev)
+                table_idx -= 1
+                if table_idx < 0:
+                    break
+        return list(reversed(actions_reversed))
 
     def _locked_passed_players(self) -> List[int]:
         """提取本轮仍被锁定的过牌玩家，按过牌发生顺序。"""
         s = self._state()
         passed = []
-        for ev in s.history:
+        for ev in self._current_trick_actions():
             if (
                 isinstance(ev, Pass)
                 and ev.player in s.passed_players

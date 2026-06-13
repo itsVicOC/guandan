@@ -17,8 +17,9 @@ from guandan.engine.card import (
     Card,
     Suit,
 )
+from guandan.engine.events import Pass, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
-from guandan.engine.state import GameState, pass_turn, play_pattern
+from guandan.engine.state import GameState, next_seat_counterclockwise, pass_turn, play_pattern
 from guandan.tui.app import GuandanApp
 from guandan.tui.screens.game import GameScreen, _tui_card
 
@@ -136,6 +137,91 @@ def test_ai_leader_continues_until_human_turn() -> None:
             assert state.turn_index == 0
             assert len(state.table) >= 3
             assert [screen._last_player_of(p) for p in state.table[-3:]] == [3, 2, 1]
+
+    asyncio.run(run())
+
+
+def test_ai_turn_loop_uses_counterclockwise_order_for_every_human_seat() -> None:
+    """任意真人座位下，AI 新 leader 都应按逆时针行动到真人。"""
+
+    async def run_case(human: int) -> None:
+        leader = next_seat_counterclockwise(human)
+        second = next_seat_counterclockwise(leader)
+        third = next_seat_counterclockwise(second)
+        hands = [[] for _ in range(4)]
+        hands[human] = [Card(9, Suit.HEARTS)]
+        hands[leader] = [Card(3, Suit.CLUBS), Card(10, Suit.CLUBS)]
+        hands[second] = [Card(4, Suit.DIAMONDS)]
+        hands[third] = [Card(5, Suit.SPADES)]
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=hands,
+            turn_index=leader,
+            leader=leader,
+        )
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, human=human, existing_state=state)
+            screen._ai_rng = random.Random(0)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            screen._maybe_ai_turn()
+
+            played_players = [
+                ev.player for ev in state.history if isinstance(ev, TurnPlayed)
+            ]
+            assert state.turn_index == human
+            assert played_players[-3:] == [leader, second, third]
+
+    async def run() -> None:
+        for human in range(4):
+            await run_case(human)
+
+    asyncio.run(run())
+
+
+def test_tui_current_pass_order_ignores_previous_tricks() -> None:
+    """当前轮过牌显示不能被旧轮次同玩家过牌顺序污染。"""
+
+    async def run() -> None:
+        first = _single(Card(RANK_4, Suit.HEARTS))
+        press = _single(Card(RANK_7, Suit.HEARTS))
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[
+                [Card(RANK_6, Suit.HEARTS)],
+                [],
+                [],
+                [],
+            ],
+            turn_index=0,
+            table=[first, press],
+            passed_players={2, 3},
+            leader=0,
+            history=[
+                Pass(player=2, hand_remaining=3),
+                Pass(player=3, hand_remaining=3),
+                TurnPlayed(player=0, pattern=first, hand_remaining=1),
+                Pass(player=3, hand_remaining=1),
+                Pass(player=2, hand_remaining=1),
+                TurnPlayed(player=1, pattern=press, hand_remaining=0),
+            ],
+        )
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            assert screen._locked_passed_players() == [3, 2]
+            table = screen.query_one("#table")
+            lines = _plain(table.content).splitlines()
+            assert lines.index("  北: 过牌") < lines.index("  西: 过牌")
 
     asyncio.run(run())
 
