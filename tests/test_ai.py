@@ -17,6 +17,7 @@ from guandan.ai.stochastic import should_pass
 from guandan.ai.strategies.advanced import AdvancedStrategy
 from guandan.ai.strategies.intermediate import IntermediateStrategy
 from guandan.ai.strategies.novice import NoviceStrategy
+from guandan.ai.strategies.professional import ProfessionalStrategy
 from guandan.ai.valuation import enumerate_candidate_plays, estimate_pattern_cost
 from guandan.engine.card import (
     RANK_2,
@@ -700,6 +701,27 @@ class TestPlayOrPass:
         assert _teammate_winning(s, 0) is True
         # 1 的对家是 3，3 没出
         assert _teammate_winning(s, 1) is False
+
+    def test_professional_decision_is_not_randomly_overridden(self) -> None:
+        """职业档策略选出可压牌后，不再被统一概率过牌二次覆盖。"""
+
+        class AlwaysPassRandom(random.Random):
+            def random(self) -> float:
+                return 0.0
+
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
+        state.wild_card = None
+        state.table = [sp(RANK_8, "H")]
+        state.hands[1] = [c(RANK_9, "D"), c(RANK_3, "D")]
+        state.turn_index = 1
+        state.leader = 0
+        strategy = ProfessionalStrategy(mcts_hand_threshold=0)
+
+        result = play_or_pass(state, 1, strategy, AlwaysPassRandom())
+
+        assert result is True
+        assert state.table[-1].rank == RANK_9
+        assert state.turn_index == 0
 
 
 # ---------- Hint strategy fix to 档 1 ----------

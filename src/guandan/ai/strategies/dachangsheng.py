@@ -20,6 +20,7 @@ from ...engine.hand import Pattern, PatternType
 from ...engine.rules.drift import is_drift_pattern
 from ...engine.rules.patterns import detect_patterns
 from ...engine.state import GameState, is_teammate, partner_of
+from ...engine.trick import current_top_player
 from ..profiles import load_profile
 from .professional import ProfessionalStrategy
 
@@ -201,15 +202,8 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         """判断队友是否正在控场（是桌面上最后一个出牌的玩家）。"""
         if not state.table:
             return False
-
-        # 从 history 找最后一个 TurnPlayed 事件
-        from ...engine.events import TurnPlayed
-
-        for ev in reversed(state.history):
-            if isinstance(ev, TurnPlayed):
-                return is_teammate(ev.player, player)
-
-        return False
+        top_player = current_top_player(state)
+        return top_player is not None and is_teammate(top_player, player)
 
     def _wants_drift(self) -> bool:
         """按 profile 的漂牌倾向决定是否追求漂牌。"""

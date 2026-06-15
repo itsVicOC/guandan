@@ -14,7 +14,7 @@ import pytest
 
 from guandan.ai.mcts.determinize import _get_all_cards_in_game, determinize
 from guandan.ai.mcts.node import MCTSNode
-from guandan.ai.mcts.search import mcts_search, ucb1_score
+from guandan.ai.mcts.search import _evaluate_result, mcts_search, ucb1_score
 from guandan.ai.strategies.professional import ProfessionalStrategy
 from guandan.engine.card import RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
 from guandan.engine.deck import deal, make_deck, shuffle_deck
@@ -178,6 +178,37 @@ class TestMCTSSearch:
 
         # 根节点应该被访问了 iterations 次
         assert root.visits == iterations
+
+
+class TestMCTSEvaluation:
+    """测试 rollout 结果评分。"""
+
+    def test_finished_double_up_scores_best_for_root_team(self):
+        state = _make_test_state()
+        state.finished = True
+        state.finish_order = [0, 2, 1]
+
+        assert _evaluate_result(state, root_player=0) == pytest.approx(1.0)
+        assert _evaluate_result(state, root_player=1) == pytest.approx(0.0)
+
+    def test_finished_head_and_last_is_only_small_edge(self):
+        state = _make_test_state()
+        state.finished = True
+        state.finish_order = [0, 1, 3]
+
+        assert _evaluate_result(state, root_player=0) == pytest.approx(0.766666, rel=1e-4)
+        assert _evaluate_result(state, root_player=1) == pytest.approx(0.233333, rel=1e-4)
+
+    def test_unfinished_rollout_uses_hand_sizes(self):
+        state = _make_test_state()
+        state.hands = [
+            [Card(3, Suit.HEARTS)],
+            [Card(4, Suit.HEARTS)] * 8,
+            [Card(5, Suit.HEARTS)],
+            [Card(6, Suit.HEARTS)] * 8,
+        ]
+
+        assert _evaluate_result(state, root_player=0) > 0.5
 
 
 class TestProfessionalStrategy:

@@ -13,6 +13,7 @@ import math
 from typing import Optional
 
 from ...engine.hand import Pattern
+from ...engine.rules.scoring import compute_level_change
 from ...engine.state import (
     GameState,
     IllegalPlayError,
@@ -192,10 +193,7 @@ def _simulate(
 def _evaluate_result(state: GameState, root_player: int) -> float:
     """评估终局结果（从 root_player 视角）。
 
-    返回值：
-    - 1.0: 队友头游
-    - 0.0: 对方头游
-    - 0.5: 未完成（超时）
+    完整终局按升级收益评分；未完成 rollout 用已出完名次和剩余手牌做保守启发。
 
     Args:
         state: 终局状态
@@ -205,16 +203,50 @@ def _evaluate_result(state: GameState, root_player: int) -> float:
         胜率（0.0 - 1.0）
     """
     if not state.finish_order:
-        return 0.5  # 未完成，返回中性值
+        return _evaluate_unfinished(state, root_player)
 
-    first_player = state.finish_order[0]
+    if state.finished:
+        full_order = list(state.finish_order)
+        full_order.extend(player for player in range(4) if player not in full_order)
+        head, second, third, last = full_order[:4]
+        deltas = compute_level_change(
+            head, second, third, last, state.team_bomb_count
+        )
+        my_team = root_player % 2
+        opponent_team = 1 - my_team
+        score = 0.5 + (deltas[my_team] - deltas[opponent_team]) / 6.0
+        if is_teammate(head, root_player):
+            score += 0.10
+        else:
+            score -= 0.10
+        return max(0.0, min(1.0, score))
 
-    if is_teammate(first_player, root_player):
-        # 我方头游
-        return 1.0
-    else:
-        # 对方头游
-        return 0.0
+    return _evaluate_unfinished(state, root_player)
+
+
+def _evaluate_unfinished(state: GameState, root_player: int) -> float:
+    """rollout 未完成时的启发式局面分。"""
+    score = 0.5
+    for rank, player in enumerate(state.finish_order, start=1):
+        if is_teammate(player, root_player):
+            score += {1: 0.22, 2: 0.12, 3: 0.05}.get(rank, 0.0)
+        else:
+            score -= {1: 0.22, 2: 0.12, 3: 0.05}.get(rank, 0.0)
+
+    my_cards = sum(
+        state.hand_size(player)
+        for player in range(4)
+        if is_teammate(player, root_player) and player not in state.finish_order
+    )
+    opponent_cards = sum(
+        state.hand_size(player)
+        for player in range(4)
+        if not is_teammate(player, root_player) and player not in state.finish_order
+    )
+    if my_cards + opponent_cards:
+        score += (opponent_cards - my_cards) / (my_cards + opponent_cards) * 0.15
+
+    return max(0.0, min(1.0, score))
 
 
 def _backpropagate(node: MCTSNode, result: float) -> None:

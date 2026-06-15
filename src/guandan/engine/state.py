@@ -281,16 +281,9 @@ def _next_active_player(state: GameState, current: int) -> int:
 
 def _current_top_player(state: GameState) -> Optional[int]:
     """当前桌面最大牌所属玩家；table 为空时返回本轮先手。"""
-    if not state.table:
-        return state.leader
+    from .trick import current_top_player
 
-    from .events import TurnPlayed
-
-    top = state.table[-1]
-    for ev in reversed(state.history):
-        if isinstance(ev, TurnPlayed) and ev.pattern == top:
-            return ev.player
-    return state.leader
+    return current_top_player(state)
 
 
 def _active_non_top_count(state: GameState) -> int:

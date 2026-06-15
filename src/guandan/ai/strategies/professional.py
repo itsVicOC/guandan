@@ -27,6 +27,7 @@ class ProfessionalStrategy:
 
     name = "职业"
     difficulty = 3
+    uses_stochastic_pass = False
 
     def __init__(
         self,

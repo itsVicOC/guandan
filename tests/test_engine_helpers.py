@@ -1,11 +1,21 @@
 """engine 新公开 API 单元测试。"""
 from __future__ import annotations
 
+from guandan.engine.card import Card, Suit
+from guandan.engine.events import Pass, TurnPlayed
+from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.state import (
+    GameState,
     is_teammate,
     next_seat_counterclockwise,
     partner_of,
     team_of,
+)
+from guandan.engine.trick import (
+    current_table_players,
+    current_top_player,
+    current_trick_actions,
+    locked_passed_players,
 )
 
 
@@ -61,3 +71,51 @@ def test_team_of_consistency() -> None:
     for a in range(4):
         for b in range(4):
             assert is_teammate(a, b) == (team_of(a) == team_of(b))
+
+
+def _single(rank: int, suit: Suit = Suit.HEARTS) -> Pattern:
+    card = Card(rank, suit)
+    return Pattern(PatternType.SINGLE, rank, 1, (card,), 0)
+
+
+def test_current_trick_actions_ignore_old_passes() -> None:
+    first = _single(4)
+    press = _single(7)
+    state = GameState(
+        level=2,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=0,
+        table=[first, press],
+        passed_players={2, 3},
+        leader=0,
+        history=[
+            Pass(player=2, hand_remaining=3),
+            Pass(player=3, hand_remaining=3),
+            TurnPlayed(player=0, pattern=first, hand_remaining=1),
+            Pass(player=3, hand_remaining=1),
+            Pass(player=2, hand_remaining=1),
+            TurnPlayed(player=1, pattern=press, hand_remaining=0),
+        ],
+    )
+
+    actions = current_trick_actions(state)
+
+    assert actions == state.history[2:]
+    assert current_table_players(state) == [0, 1]
+    assert current_top_player(state) == 1
+    assert locked_passed_players(state) == [3, 2]
+
+
+def test_current_top_player_returns_leader_when_table_empty() -> None:
+    state = GameState(
+        level=2,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=2,
+        leader=2,
+    )
+
+    assert current_trick_actions(state) == []
+    assert current_table_players(state) == []
+    assert current_top_player(state) == 2

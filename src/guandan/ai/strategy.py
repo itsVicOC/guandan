@@ -22,6 +22,7 @@ class AIStrategy(Protocol):
 
     name: str
     difficulty: int
+    uses_stochastic_pass: bool
 
     def select_pattern(
         self, state: GameState, player: int

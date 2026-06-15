@@ -11,6 +11,7 @@ class NoviceStrategy:
 
     name = "新手"
     difficulty = 0
+    uses_stochastic_pass = True
 
     def select_pattern(
         self, state: GameState, player: int

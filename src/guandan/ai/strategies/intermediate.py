@@ -15,6 +15,7 @@ class IntermediateStrategy:
 
     name = "进阶"
     difficulty = 1
+    uses_stochastic_pass = True
 
     def select_pattern(
         self, state: GameState, player: int

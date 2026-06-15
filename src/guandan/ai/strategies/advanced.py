@@ -10,6 +10,7 @@ from typing import Optional
 
 from ...engine.hand import Pattern
 from ...engine.state import GameState, is_teammate
+from ...engine.trick import current_top_player
 from ..greedy import select_min_winning
 from ..memory import PlayedTracker
 from ..valuation import enumerate_candidate_plays, estimate_pattern_cost
@@ -17,17 +18,10 @@ from ..valuation import enumerate_candidate_plays, estimate_pattern_cost
 
 def _teammate_winning(state: GameState, player: int) -> bool:
     """队友是否正在"领牌"（是本轮最后一个出牌的玩家）。"""
-    # 队友领牌 = 队友是 table 上最后一个出牌的玩家
     if not state.table:
         return False
-    last_turn = state.table[-1]
-    # 从 history 找 last_turn 的出牌者
-    from ...engine.events import TurnPlayed
-
-    for ev in reversed(state.history):
-        if isinstance(ev, TurnPlayed) and ev.pattern == last_turn:
-            return is_teammate(ev.player, player)
-    return False
+    top_player = current_top_player(state)
+    return top_player is not None and is_teammate(top_player, player)
 
 
 def _key_count_exhausted(state: GameState, player: int, candidate: Pattern) -> bool:
@@ -50,6 +44,7 @@ class AdvancedStrategy:
 
     name = "高手"
     difficulty = 2
+    uses_stochastic_pass = True
 
     def select_pattern(
         self, state: GameState, player: int

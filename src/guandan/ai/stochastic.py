@@ -10,6 +10,7 @@ from typing import Optional
 from ..engine.card import RANK_A
 from ..engine.hand import Pattern, PatternType
 from ..engine.state import GameState, is_teammate
+from ..engine.trick import current_top_player
 
 
 def _is_bomb(pattern: Pattern) -> bool:
@@ -18,19 +19,6 @@ def _is_bomb(pattern: Pattern) -> bool:
         PatternType.STRAIGHT_FLUSH,
         PatternType.FOUR_JOKERS,
     )
-
-
-def _table_top_player(state: GameState) -> Optional[int]:
-    if not state.table:
-        return None
-
-    from ..engine.events import TurnPlayed
-
-    top = state.table[-1]
-    for ev in reversed(state.history):
-        if isinstance(ev, TurnPlayed) and ev.pattern == top:
-            return ev.player
-    return None
 
 
 def _opponent_min_cards(state: GameState, player: int) -> int:
@@ -73,7 +61,7 @@ def should_pass(
     p = base + (rank - 2) / (RANK_A - 2) * scale
 
     # 队友正在领牌时更愿意让队友收轮；对手快出完时更愿意出手拦截。
-    top_player = _table_top_player(state)
+    top_player = current_top_player(state)
     if top_player is not None and is_teammate(top_player, player):
         p += 0.20
 
