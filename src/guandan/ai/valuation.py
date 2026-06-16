@@ -16,7 +16,7 @@ from typing import List, Optional
 from ..engine.card import RANK_A, Card
 from ..engine.hand import Pattern, PatternType, effective_rank
 from ..engine.rules.patterns import detect_patterns
-from ..engine.state import GameState
+from ..engine.state import GameState, is_teammate
 from .candidates import enumerate_legal_patterns
 
 
@@ -56,6 +56,15 @@ def _best_structure_score(cards: list, wild: Optional[Card]) -> float:
         if score > best:
             best = score
     return best
+
+
+def _opponent_min_cards(state: GameState, player: int) -> int:
+    sizes = [
+        state.hand_size(p)
+        for p in range(4)
+        if not is_teammate(p, player) and state.hand_size(p) > 0
+    ]
+    return min(sizes, default=0)
 
 
 def estimate_pattern_cost(
@@ -136,6 +145,15 @@ def estimate_pattern_cost(
     if not state.table and pattern.type in _STRUCTURE_TYPES and not _is_bomb(pattern.type):
         lead_shedding_bonus = -min(8.0, len(pattern.cards) * 1.3)
 
+    # ---- 9. 对手报单时避免用单张领牌 ----
+    single_lead_pressure = 0.0
+    if (
+        not state.table
+        and pattern.type == PatternType.SINGLE
+        and _opponent_min_cards(state, player) == 1
+    ):
+        single_lead_pressure = 6.0
+
     return (
         base
         + breakup
@@ -145,6 +163,7 @@ def estimate_pattern_cost(
         + structure_penalty
         + finish_bonus
         + lead_shedding_bonus
+        + single_lead_pressure
     )
 
 

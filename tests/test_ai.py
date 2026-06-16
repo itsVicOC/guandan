@@ -426,6 +426,24 @@ class TestEnumerateCandidates:
         assert candidates[0].type == PatternType.SINGLE
         assert candidates[0].rank == RANK_9
 
+    def test_leader_avoids_single_when_opponent_has_one_card(self) -> None:
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.table = []
+        state.hands[0] = [
+            c(RANK_3, "H"),
+            c(RANK_7, "D"),
+            c(RANK_7, "S"),
+            c(RANK_K, "C"),
+        ]
+        state.hands[1] = [c(RANK_4, "H")]
+        state.hands[3] = [c(RANK_5, "H"), c(RANK_6, "H")]
+
+        candidates = enumerate_candidate_plays(state, 0)
+
+        assert candidates[0].type == PatternType.PAIR
+        assert candidates[0].rank == RANK_7
+
     def test_leader_returns_all_singles(self) -> None:
         """leader 模式：候选 = 手牌中所有非 wild 单张。"""
         state = make_initial_state(level=5, first_player=0, seed=42)
@@ -733,6 +751,25 @@ class TestStrategyDifferentiation:
 
         assert pattern is not None
         assert pattern.type == PatternType.STRAIGHT
+        assert pattern.rank == RANK_7
+
+    def test_intermediate_leads_pair_when_opponent_has_one_card(self) -> None:
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.table = []
+        state.hands[0] = [
+            c(RANK_3, "H"),
+            c(RANK_7, "D"),
+            c(RANK_7, "S"),
+            c(RANK_K, "C"),
+        ]
+        state.hands[1] = [c(RANK_4, "H")]
+        state.hands[3] = [c(RANK_5, "H"), c(RANK_6, "H")]
+
+        pattern = IntermediateStrategy().select_pattern(state, 0)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.PAIR
         assert pattern.rank == RANK_7
 
     def test_advanced_difficulty_attributes(self) -> None:
