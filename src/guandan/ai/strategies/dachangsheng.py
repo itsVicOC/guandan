@@ -142,6 +142,10 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         Returns:
             True 表示应该用炸弹，False 表示保留
         """
+        # 能直接出完时，终局收益高于炸弹保留价值。
+        if len(bomb_pattern.cards) == state.hand_size(player):
+            return True
+
         # 如果队友已经头游，无需再出炸弹
         if self._teammate_is_first(state, player):
             return False

@@ -131,6 +131,27 @@ class TestDaiChangshengStrategy:
         assert strategy.rollout_max_turns == profile["mcts"]["rollout_max_turns"]
         assert strategy.pass_probability_multiplier == profile["style"]["pass_probability_multiplier"]
 
+    def test_finish_bomb_not_blocked_when_teammate_already_first(self):
+        """队友已头游时，能直接出完的炸弹仍应执行。"""
+        state = _make_test_state(level=2)
+        state.wild_card = None
+        state.finish_order = [2]
+        state.turn_index = 0
+        state.table = []
+        state.hands[0] = [
+            Card(9, Suit.SPADES),
+            Card(9, Suit.HEARTS),
+            Card(9, Suit.CLUBS),
+            Card(9, Suit.DIAMONDS),
+        ]
+        strategy = DaiChangshengStrategy(rng=random.Random(42))
+
+        pattern = strategy.select_pattern(state, player=0)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.BOMB
+        assert pattern.length == 4
+
 
 class TestStyleBehavior:
     """测试风格化行为。"""
