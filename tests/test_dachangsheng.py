@@ -228,6 +228,32 @@ class TestStyleBehavior:
 
         assert strategy._should_let_teammate_play(state, player=0) is False
 
+    def test_urgent_bomb_not_blocked_by_teammate_awareness(self):
+        """对手短手牌时，必须用炸弹不应再被配合意识改成过牌。"""
+        state = _make_test_state()
+        state.wild_card = None
+        state.turn_index = 0
+        state.leader = 2
+        state.table = [Pattern(PatternType.SINGLE, 8, 1, (Card(8, Suit.HEARTS),), 0)]
+        state.hands[0] = [
+            Card(9, Suit.SPADES),
+            Card(9, Suit.HEARTS),
+            Card(9, Suit.CLUBS),
+            Card(9, Suit.DIAMONDS),
+            Card(4, Suit.SPADES),
+        ]
+        state.hands[1] = [Card(3, Suit.CLUBS), Card(4, Suit.CLUBS)]
+        state.hands[2] = [Card(5, Suit.CLUBS), Card(6, Suit.CLUBS)]
+        state.hands[3] = [Card(7, Suit.CLUBS), Card(10, Suit.CLUBS)]
+        bomb = Pattern(PatternType.BOMB, 9, 4, tuple(state.hands[0][:4]), 0)
+        strategy = DaiChangshengStrategy(rng=random.Random(42))
+        strategy.style["drift_bonus"] = 0.0
+        strategy.style["teammate_awareness"] = 1.0
+
+        chosen = strategy._apply_style(state, player=0, pattern=bomb)
+
+        assert chosen == bomb
+
     def test_drift_finish_prefers_level_bomb(self):
         """最后一手可漂牌时，优先选择 5 张以上级牌炸弹。"""
         state = _make_test_state(level=5)

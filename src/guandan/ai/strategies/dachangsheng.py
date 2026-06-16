@@ -111,9 +111,8 @@ class DaiChangshengStrategy(ProfessionalStrategy):
             return None
 
         # 风格 1：炸弹吝啬
-        if self._is_bomb(pattern) and not self._should_use_bomb(state, player, pattern):
-            # 改为过牌（让 MCTS 重新选择非炸弹）
-            return None
+        if self._is_bomb(pattern):
+            return pattern if self._should_use_bomb(state, player, pattern) else None
 
         # 风格 2：配合意识（队友协作）
         if (
