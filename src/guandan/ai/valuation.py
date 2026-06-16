@@ -45,6 +45,16 @@ _STRUCTURE_TYPES = {
     PatternType.TRIPLE_PAIR,
 }
 
+_CardKey = tuple[tuple[int, int, int], ...]
+_StructureCache = dict[_CardKey, float]
+
+
+def _cards_key(cards: list[Card]) -> _CardKey:
+    counts = Counter(cards)
+    return tuple(
+        sorted((card.rank, int(card.suit), count) for card, count in counts.items())
+    )
+
 
 def _best_structure_score(cards: list, wild: Optional[Card]) -> float:
     """估算手牌中顺子/连对/钢板/三带二的保留价值。"""
@@ -56,6 +66,19 @@ def _best_structure_score(cards: list, wild: Optional[Card]) -> float:
         if score > best:
             best = score
     return best
+
+
+def _cached_structure_score(
+    cards: list[Card],
+    wild: Optional[Card],
+    cache: Optional[_StructureCache],
+) -> float:
+    if cache is None:
+        return _best_structure_score(cards, wild)
+    key = _cards_key(cards)
+    if key not in cache:
+        cache[key] = _best_structure_score(cards, wild)
+    return cache[key]
 
 
 def _opponent_min_cards(state: GameState, player: int) -> int:
@@ -76,6 +99,18 @@ def estimate_pattern_cost(
 
     越小越划算。档 1+ 在多个候选牌型中选 `cost` 最小者。
     """
+    return _estimate_pattern_cost(state, player, pattern)
+
+
+def _estimate_pattern_cost(
+    state: GameState,
+    player: int,
+    pattern: Pattern,
+    *,
+    before_structure: Optional[float] = None,
+    structure_cache: Optional[_StructureCache] = None,
+    opponent_min_cards: Optional[int] = None,
+) -> float:
     hand = state.hands[player]
     wild = state.wild_card
 
@@ -131,9 +166,13 @@ def estimate_pattern_cost(
     # ---- 6. 保留顺子/连对/钢板等结构 ----
     structure_penalty = 0.0
     if pattern.type not in _STRUCTURE_TYPES and not _is_bomb(pattern.type):
-        before_structure = _best_structure_score(hand, wild)
-        after_structure = _best_structure_score(rem_cards, wild)
-        structure_penalty = max(0.0, before_structure - after_structure) * 0.8
+        before_score = (
+            _cached_structure_score(hand, wild, structure_cache)
+            if before_structure is None
+            else before_structure
+        )
+        after_structure = _cached_structure_score(rem_cards, wild, structure_cache)
+        structure_penalty = max(0.0, before_score - after_structure) * 0.8
 
     # ---- 7. 收牌奖励：出完手牌 → 估值大幅降低 ----
     finish_bonus = 0.0
@@ -150,7 +189,12 @@ def estimate_pattern_cost(
     if (
         not state.table
         and pattern.type == PatternType.SINGLE
-        and _opponent_min_cards(state, player) == 1
+        and (
+            opponent_min_cards
+            if opponent_min_cards is not None
+            else _opponent_min_cards(state, player)
+        )
+        == 1
     ):
         single_lead_pressure = 6.0
 
@@ -186,5 +230,17 @@ def enumerate_candidate_plays(
     if not hand:
         return []
     candidates = enumerate_legal_patterns(state, player)
-    candidates.sort(key=lambda p: estimate_pattern_cost(state, player, p))
+    structure_cache: _StructureCache = {}
+    before_structure = _cached_structure_score(hand, state.wild_card, structure_cache)
+    opponent_min_cards = _opponent_min_cards(state, player) if not state.table else 0
+    candidates.sort(
+        key=lambda p: _estimate_pattern_cost(
+            state,
+            player,
+            p,
+            before_structure=before_structure,
+            structure_cache=structure_cache,
+            opponent_min_cards=opponent_min_cards,
+        )
+    )
     return candidates[:max_candidates]
