@@ -21,6 +21,12 @@ from ..mcts.node import MCTSNode
 from ..mcts.search import mcts_search
 from .advanced import AdvancedStrategy
 
+DEFAULT_ITERATIONS = int(MCTS_CONFIG["iterations"])
+DEFAULT_MAX_ACTIONS = int(MCTS_CONFIG["top_actions"])
+DEFAULT_ROLLOUT_STRATEGY = int(MCTS_CONFIG["rollout_strategy"])
+DEFAULT_HAND_THRESHOLD = int(MCTS_CONFIG["hand_threshold"])
+DEFAULT_ROLLOUT_MAX_TURNS = int(MCTS_CONFIG["rollout_max_turns"])
+
 
 class ProfessionalStrategy:
     """职业 AI：IS-MCTS 搜索。"""
@@ -31,18 +37,18 @@ class ProfessionalStrategy:
 
     def __init__(
         self,
-        iterations: int = 200,
+        iterations: int = DEFAULT_ITERATIONS,
         ucb_c: float = MCTS_CONFIG["ucb_c"],
-        max_actions: int = 5,
-        rollout_strategy: int = 1,
+        max_actions: int = DEFAULT_MAX_ACTIONS,
+        rollout_strategy: int = DEFAULT_ROLLOUT_STRATEGY,
         rng: Optional[random.Random] = None,
-        mcts_hand_threshold: int = 10,
-        rollout_max_turns: int = 80,
+        mcts_hand_threshold: int = DEFAULT_HAND_THRESHOLD,
+        rollout_max_turns: int = DEFAULT_ROLLOUT_MAX_TURNS,
     ):
         """初始化职业策略。
 
         Args:
-            iterations: MCTS 迭代次数（默认 200）
+            iterations: MCTS 迭代次数
             ucb_c: UCB1 探索常数（默认 1.41）
             max_actions: 每个节点考虑的最大候选动作数（默认 5）
             rollout_strategy: rollout 策略档位（默认 1）

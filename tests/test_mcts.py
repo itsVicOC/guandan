@@ -12,13 +12,19 @@ import random
 
 import pytest
 
+from guandan.ai.mcts import MCTS_CONFIG
 from guandan.ai.mcts.determinize import _get_all_cards_in_game, determinize
 from guandan.ai.mcts.node import MCTSNode
-from guandan.ai.mcts.search import _evaluate_result, mcts_search, ucb1_score
+from guandan.ai.mcts.search import (
+    _evaluate_result,
+    _rollout_select_pattern,
+    mcts_search,
+    ucb1_score,
+)
 from guandan.ai.strategies.professional import ProfessionalStrategy
 from guandan.engine.card import RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
 from guandan.engine.deck import deal, make_deck, shuffle_deck
-from guandan.engine.hand import PatternType
+from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.state import GameState, play_pattern
 
 
@@ -211,6 +217,35 @@ class TestMCTSEvaluation:
         assert _evaluate_result(state, root_player=0) > 0.5
 
 
+class TestMCTSRolloutPolicy:
+    """测试 MCTS rollout 的轻量策略。"""
+
+    def test_rollout_uses_smallest_legal_pattern_without_full_strategy(self):
+        state = _make_test_state()
+        state.wild_card = None
+        state.table = [Pattern(PatternType.SINGLE, 8, 1, (Card(8, Suit.HEARTS),), 0)]
+        state.hands[1] = [Card(9, Suit.HEARTS), Card(14, Suit.HEARTS)]
+
+        pattern = _rollout_select_pattern(state, 1, rollout_strategy_level=1)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.SINGLE
+        assert pattern.rank == 9
+
+    def test_rollout_level_two_passes_when_teammate_leads(self):
+        top = Pattern(PatternType.SINGLE, 8, 1, (Card(8, Suit.HEARTS),), 0)
+        state = _make_test_state()
+        state.table = [top]
+        state.turn_index = 0
+        state.hands[0] = [Card(9, Suit.HEARTS)]
+
+        from guandan.engine.events import TurnPlayed
+
+        state.history.append(TurnPlayed(player=2, pattern=top, hand_remaining=1))
+
+        assert _rollout_select_pattern(state, 0, rollout_strategy_level=2) is None
+
+
 class TestProfessionalStrategy:
     """测试职业策略集成。"""
 
@@ -249,6 +284,16 @@ class TestProfessionalStrategy:
 
         assert strategy.name == "职业"
         assert strategy.difficulty == 3
+
+    def test_professional_default_parameters_follow_mcts_config(self):
+        """职业策略默认参数应跟 MCTS_CONFIG 保持一致，避免配置失效。"""
+        strategy = ProfessionalStrategy()
+
+        assert strategy.iterations == MCTS_CONFIG["iterations"]
+        assert strategy.max_actions == MCTS_CONFIG["top_actions"]
+        assert strategy.rollout_strategy == MCTS_CONFIG["rollout_strategy"]
+        assert strategy.mcts_hand_threshold == MCTS_CONFIG["hand_threshold"]
+        assert strategy.rollout_max_turns == MCTS_CONFIG["rollout_max_turns"]
 
     def test_professional_finishes_with_complete_straight(self):
         """职业档应能识别顺子一手出完，不被候选 Top-N 漏掉。"""

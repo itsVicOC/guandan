@@ -21,7 +21,8 @@ from ...engine.state import (
     pass_turn,
     play_pattern,
 )
-from ..strategy import make_strategy
+from ...engine.trick import current_top_player
+from ..candidates import smallest_legal_pattern
 from ..valuation import enumerate_candidate_plays
 from .node import MCTSNode
 
@@ -161,15 +162,16 @@ def _simulate(
     """
     sim_state = copy.deepcopy(node.state)
 
-    # 创建 rollout 策略
-    rollout_strategy = make_strategy(rollout_strategy_level)
-
     # 用 rollout 策略玩到结束
     turn_count = 0
 
     while not sim_state.finished and turn_count < max_turns:
         player = sim_state.current_player()
-        pattern = rollout_strategy.select_pattern(sim_state, player)
+        pattern = _rollout_select_pattern(
+            sim_state,
+            player,
+            rollout_strategy_level=rollout_strategy_level,
+        )
 
         try:
             if pattern is None:
@@ -188,6 +190,25 @@ def _simulate(
 
     # 评估结果
     return _evaluate_result(sim_state, root_player)
+
+
+def _rollout_select_pattern(
+    state: GameState,
+    player: int,
+    *,
+    rollout_strategy_level: int,
+) -> Optional[Pattern]:
+    """MCTS rollout 的轻量出牌策略。
+
+    Rollout 会在搜索中被调用很多次，这里使用最小合法牌型近似完整 AI 策略，
+    避免每一步都运行昂贵的手牌结构估值。档 2+ 保留一个关键协作行为：
+    队友正在桌顶时选择过牌。
+    """
+    if rollout_strategy_level >= 2 and state.table:
+        top_player = current_top_player(state)
+        if top_player is not None and is_teammate(top_player, player):
+            return None
+    return smallest_legal_pattern(state, player)
 
 
 def _evaluate_result(state: GameState, root_player: int) -> float:

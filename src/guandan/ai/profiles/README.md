@@ -24,7 +24,7 @@
     "rollout_strategy": 2,
     "top_actions": 4,
     "hand_threshold": 10,
-    "rollout_max_turns": 80
+    "rollout_max_turns": 40
   },
   "style": {
     "bomb_threshold": 0.8,
