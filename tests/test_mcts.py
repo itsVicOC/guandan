@@ -17,6 +17,7 @@ from guandan.ai.mcts.determinize import _get_all_cards_in_game, determinize
 from guandan.ai.mcts.node import MCTSNode
 from guandan.ai.mcts.search import (
     _evaluate_result,
+    _get_legal_actions,
     _rollout_select_pattern,
     mcts_search,
     ucb1_score,
@@ -184,6 +185,24 @@ class TestMCTSSearch:
 
         # 根节点应该被访问了 iterations 次
         assert root.visits == iterations
+
+    def test_legal_actions_keep_finish_beyond_top_n(self):
+        """MCTS 剪枝不能漏掉可一手出完的终局动作。"""
+        state = _make_test_state()
+        state.wild_card = None
+        state.table = [Pattern(PatternType.SINGLE, 8, 1, (Card(8, Suit.HEARTS),), 0)]
+        state.hands[0] = [
+            Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+            Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+            Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+            Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+        ]
+
+        actions = _get_legal_actions(state, player=0, max_actions=1)
+
+        assert actions[-1] is not None
+        assert actions[-1].type == PatternType.FOUR_JOKERS
+        assert len(actions[-1].cards) == len(state.hands[0])
 
 
 class TestMCTSEvaluation:

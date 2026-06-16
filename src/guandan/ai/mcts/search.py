@@ -82,17 +82,19 @@ def _get_legal_actions(
     Returns:
         合法动作列表（None 表示过牌）
     """
+    # 如果不是 leader，可以过牌
     actions: list[Optional[Pattern]] = []
+    if state.table:
+        actions.append(None)
 
     # 获取候选出牌
     candidates = enumerate_candidate_plays(state, player, max_candidates=max_actions)
+    actions.extend(candidates[:max_actions])
 
-    if candidates:
-        actions.extend(candidates[:max_actions])
-
-    # 如果不是 leader，可以过牌
-    if state.table:
-        actions.append(None)
+    finish = _legal_finish_pattern(state, player)
+    if finish is not None and finish not in actions:
+        # _expand 从列表尾部 pop；终局动作放在末尾可在低迭代搜索中优先展开。
+        actions.append(finish)
 
     return actions
 
@@ -205,7 +207,7 @@ def _rollout_select_pattern(
     避免每一步都运行昂贵的手牌结构估值。档 2+ 保留一个关键协作行为：
     队友正在桌顶时选择过牌。
     """
-    finish = _rollout_finish_pattern(state, player)
+    finish = _legal_finish_pattern(state, player, max_cards=10)
     if finish is not None:
         return finish
 
@@ -216,9 +218,16 @@ def _rollout_select_pattern(
     return _smallest_rollout_pattern(state, player)
 
 
-def _rollout_finish_pattern(state: GameState, player: int) -> Optional[Pattern]:
+def _legal_finish_pattern(
+    state: GameState,
+    player: int,
+    *,
+    max_cards: Optional[int] = None,
+) -> Optional[Pattern]:
     hand = state.hands[player]
-    if not hand or len(hand) > 10:
+    if not hand:
+        return None
+    if max_cards is not None and len(hand) > max_cards:
         return None
     finish = find_complete_pattern(hand, state.wild_card)
     if finish is None:
