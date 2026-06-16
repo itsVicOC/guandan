@@ -104,6 +104,13 @@ ruff check src tests && mypy src && pytest
 
 # AI 对战基准
 python -m guandan.ai.benchmark --games 20 --difficulties 0,1,2,3 --json
+
+# 对比两次 AI 基准结果
+python -m guandan.ai.benchmark --compare baseline.json current.json --json
+
+# 带回归门禁的 AI 基准对比
+python -m guandan.ai.benchmark --compare baseline.json current.json \
+  --fail-completion-drop 0.05 --fail-duration-increase 2.0 --fail-turn-increase 20
 ```
 
 ## 许可

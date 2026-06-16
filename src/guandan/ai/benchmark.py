@@ -10,6 +10,7 @@ import json
 import random
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Optional, Sequence
 
 from ..engine.state import make_initial_state, team_of
@@ -73,6 +74,141 @@ class BenchmarkSummary:
             "average_bombs": list(self.average_bombs),
             "results": [result.to_dict() for result in self.results],
         }
+
+
+@dataclass(frozen=True)
+class BenchmarkComparison:
+    """两份 benchmark JSON 的差异摘要。"""
+
+    baseline_games: int
+    current_games: int
+    completion_rate_delta: float
+    team0_win_rate_delta: float
+    team1_win_rate_delta: float
+    average_turns_delta: float
+    average_duration_delta: float
+    average_bombs_delta: tuple[float, float]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "baseline_games": self.baseline_games,
+            "current_games": self.current_games,
+            "completion_rate_delta": self.completion_rate_delta,
+            "team0_win_rate_delta": self.team0_win_rate_delta,
+            "team1_win_rate_delta": self.team1_win_rate_delta,
+            "average_turns_delta": self.average_turns_delta,
+            "average_duration_delta": self.average_duration_delta,
+            "average_bombs_delta": list(self.average_bombs_delta),
+        }
+
+
+@dataclass(frozen=True)
+class BenchmarkGateResult:
+    """benchmark 对比门禁结果。"""
+
+    comparison: BenchmarkComparison
+    passed: bool
+    failures: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = self.comparison.to_dict()
+        payload["passed"] = self.passed
+        payload["failures"] = list(self.failures)
+        return payload
+
+
+def _as_float(value: Any, default: float = 0.0) -> float:
+    if value is None:
+        return default
+    return float(value)
+
+
+def _average_duration(payload: dict[str, Any]) -> float:
+    results = payload.get("results", [])
+    if not results:
+        return 0.0
+    return sum(_as_float(result.get("duration_seconds")) for result in results) / len(results)
+
+
+def _team_win_rate(payload: dict[str, Any], team: int) -> float:
+    games = int(payload.get("games", 0))
+    if games <= 0:
+        return 0.0
+    team_wins = payload.get("team_wins", [0, 0])
+    return _as_float(team_wins[team]) / games
+
+
+def compare_benchmark_payloads(
+    baseline: dict[str, Any],
+    current: dict[str, Any],
+) -> BenchmarkComparison:
+    """比较两份 `BenchmarkSummary.to_dict()` payload。"""
+    baseline_bombs = baseline.get("average_bombs", [0.0, 0.0])
+    current_bombs = current.get("average_bombs", [0.0, 0.0])
+    return BenchmarkComparison(
+        baseline_games=int(baseline.get("games", 0)),
+        current_games=int(current.get("games", 0)),
+        completion_rate_delta=_as_float(current.get("completion_rate"))
+        - _as_float(baseline.get("completion_rate")),
+        team0_win_rate_delta=_team_win_rate(current, 0) - _team_win_rate(baseline, 0),
+        team1_win_rate_delta=_team_win_rate(current, 1) - _team_win_rate(baseline, 1),
+        average_turns_delta=_as_float(current.get("average_turns"))
+        - _as_float(baseline.get("average_turns")),
+        average_duration_delta=_average_duration(current) - _average_duration(baseline),
+        average_bombs_delta=(
+            _as_float(current_bombs[0]) - _as_float(baseline_bombs[0]),
+            _as_float(current_bombs[1]) - _as_float(baseline_bombs[1]),
+        ),
+    )
+
+
+def load_benchmark_payload(path: str | Path) -> dict[str, Any]:
+    """读取 benchmark JSON payload。"""
+    with Path(path).open(encoding="utf-8") as fp:
+        payload = json.load(fp)
+    if not isinstance(payload, dict):
+        raise ValueError("benchmark payload must be a JSON object")
+    return payload
+
+
+def evaluate_benchmark_gate(
+    comparison: BenchmarkComparison,
+    *,
+    max_completion_drop: Optional[float] = None,
+    max_duration_increase: Optional[float] = None,
+    max_turn_increase: Optional[float] = None,
+) -> BenchmarkGateResult:
+    """按阈值判断 benchmark 对比是否通过。"""
+    failures: list[str] = []
+    if (
+        max_completion_drop is not None
+        and comparison.completion_rate_delta < -max_completion_drop
+    ):
+        failures.append(
+            "completion_rate_drop "
+            f"{-comparison.completion_rate_delta:.3f} > {max_completion_drop:.3f}"
+        )
+    if (
+        max_duration_increase is not None
+        and comparison.average_duration_delta > max_duration_increase
+    ):
+        failures.append(
+            "average_duration_increase "
+            f"{comparison.average_duration_delta:.3f} > {max_duration_increase:.3f}"
+        )
+    if (
+        max_turn_increase is not None
+        and comparison.average_turns_delta > max_turn_increase
+    ):
+        failures.append(
+            "average_turns_increase "
+            f"{comparison.average_turns_delta:.3f} > {max_turn_increase:.3f}"
+        )
+    return BenchmarkGateResult(
+        comparison=comparison,
+        passed=not failures,
+        failures=tuple(failures),
+    )
 
 
 def _normalize_difficulties(difficulties: Sequence[int] | int) -> tuple[int, int, int, int]:
@@ -189,6 +325,12 @@ def _format_difficulties(values: Sequence[int]) -> str:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Run AI-only Guandan benchmark games.")
+    parser.add_argument(
+        "--compare",
+        nargs=2,
+        metavar=("BASELINE_JSON", "CURRENT_JSON"),
+        help="compare two benchmark JSON files and exit",
+    )
     parser.add_argument("--games", type=int, default=10, help="number of games to run")
     parser.add_argument("--seed-start", type=int, default=100, help="first random seed")
     parser.add_argument("--level", type=int, default=2, help="starting level rank")
@@ -204,7 +346,41 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         action="store_true",
         help="print machine-readable JSON instead of text summary",
     )
+    parser.add_argument(
+        "--fail-completion-drop",
+        type=float,
+        default=None,
+        help="with --compare, fail if completion rate drops by more than this value",
+    )
+    parser.add_argument(
+        "--fail-duration-increase",
+        type=float,
+        default=None,
+        help="with --compare, fail if average duration increases by more than seconds",
+    )
+    parser.add_argument(
+        "--fail-turn-increase",
+        type=float,
+        default=None,
+        help="with --compare, fail if average turns increase by more than this value",
+    )
     args = parser.parse_args(argv)
+
+    if args.compare:
+        baseline = load_benchmark_payload(args.compare[0])
+        current = load_benchmark_payload(args.compare[1])
+        comparison = compare_benchmark_payloads(baseline, current)
+        gate = evaluate_benchmark_gate(
+            comparison,
+            max_completion_drop=args.fail_completion_drop,
+            max_duration_increase=args.fail_duration_increase,
+            max_turn_increase=args.fail_turn_increase,
+        )
+        if args.json:
+            print(json.dumps(gate.to_dict(), ensure_ascii=False, sort_keys=True))
+        else:
+            _print_comparison(gate)
+        return 0 if gate.passed else 1
 
     summary = run_benchmark(
         games=args.games,
@@ -236,6 +412,31 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             f"drift={result.drift} time={result.duration_seconds:.3f}s"
         )
     return 0
+
+
+def _print_comparison(gate: BenchmarkGateResult) -> None:
+    comparison = gate.comparison
+    print(
+        "AI benchmark comparison "
+        f"baseline_games={comparison.baseline_games} current_games={comparison.current_games}"
+    )
+    print(
+        f"completion_delta={comparison.completion_rate_delta:+.1%} "
+        f"team0_win_delta={comparison.team0_win_rate_delta:+.1%} "
+        f"team1_win_delta={comparison.team1_win_rate_delta:+.1%}"
+    )
+    print(
+        f"avg_turns_delta={comparison.average_turns_delta:+.1f} "
+        f"avg_duration_delta={comparison.average_duration_delta:+.3f}s "
+        f"avg_bombs_delta=EW:{comparison.average_bombs_delta[0]:+.2f} "
+        f"SN:{comparison.average_bombs_delta[1]:+.2f}"
+    )
+    if gate.passed:
+        print("gate=pass")
+    else:
+        print("gate=fail")
+        for failure in gate.failures:
+            print(f"failure={failure}")
 
 
 if __name__ == "__main__":

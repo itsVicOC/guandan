@@ -7,13 +7,15 @@
 #### AI 策略
 - 新增 `guandan.ai.benchmark` 对战基准工具，可按座位混合难度跑 AI-only 对局并输出完成率、胜队、平均回合、炸弹数与最终升级。
 - AI benchmark 支持 `--json` 机器可读输出，便于保存调参结果并做后续胜率/耗时回归比较。
+- AI benchmark 支持 `--compare baseline.json current.json`，可输出完成率、胜率、平均回合、耗时和炸弹数变化。
+- AI benchmark 对比新增回归门禁参数，可在完成率明显下降、平均耗时或平均回合数上升超阈值时返回失败码。
 - 抽取 `engine.trick` 当前牌墩 helper，统一状态机、AI、TUI 对当前桌面出牌者、最大牌玩家和锁定过牌玩家的判断。
 - 职业 / 戴长胜策略不再被统一概率过牌二次覆盖，策略选出的高价值压牌会直接执行，过牌决策回归策略内部。
 - MCTS rollout 结果评分从“只看头游队伍”升级为结合名次升级收益、头游归属和未完成局面手牌压力的连续评分。
 - MCTS rollout 改为轻量贪心模拟，并将默认 rollout 上限调为 40 手，降低职业档在 TUI/benchmark 中的响应时间。
 
 #### 测试
-- 新增 AI benchmark 测试、当前 trick helper 回归测试、职业档随机过牌覆盖测试和 MCTS 评分测试。
+- 新增 AI benchmark / benchmark 对比与门禁测试、当前 trick helper 回归测试、职业档随机过牌覆盖测试和 MCTS 评分测试。
 - `ruff check src tests` 通过。
 - `mypy src` 通过。
 - `pytest`：246 个测试全过。
