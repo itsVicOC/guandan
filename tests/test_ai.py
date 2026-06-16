@@ -389,6 +389,43 @@ class TestEnumerateCandidates:
         assert candidates[0].type == PatternType.SINGLE
         assert candidates[0].rank == RANK_9
 
+    def test_leader_prefers_natural_straight_to_plain_single(self) -> None:
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.table = []
+        state.hands[0] = [
+            c(RANK_3, "H"),
+            c(RANK_4, "D"),
+            c(RANK_5, "S"),
+            c(RANK_6, "C"),
+            c(RANK_7, "H"),
+            c(RANK_9, "D"),
+        ]
+
+        candidates = enumerate_candidate_plays(state, 0)
+
+        assert candidates[0].type == PatternType.STRAIGHT
+        assert candidates[0].rank == RANK_7
+
+    def test_leader_does_not_spend_wild_for_shedding_bonus(self) -> None:
+        wild = c(RANK_5, "H")
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
+        state.wild_card = wild
+        state.table = []
+        state.hands[0] = [
+            c(RANK_3, "H"),
+            c(RANK_4, "D"),
+            wild,
+            c(RANK_6, "C"),
+            c(RANK_7, "H"),
+            c(RANK_9, "D"),
+        ]
+
+        candidates = enumerate_candidate_plays(state, 0)
+
+        assert candidates[0].type == PatternType.SINGLE
+        assert candidates[0].rank == RANK_9
+
     def test_leader_returns_all_singles(self) -> None:
         """leader 模式：候选 = 手牌中所有非 wild 单张。"""
         state = make_initial_state(level=5, first_player=0, seed=42)
@@ -643,6 +680,25 @@ class TestStrategyDifferentiation:
         # 第一候选 = cost 最小
         costs = [estimate_pattern_cost(state, 1, p) for p in candidates]
         assert costs[0] == min(costs)
+
+    def test_intermediate_leads_with_natural_straight(self) -> None:
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.table = []
+        state.hands[0] = [
+            c(RANK_3, "H"),
+            c(RANK_4, "D"),
+            c(RANK_5, "S"),
+            c(RANK_6, "C"),
+            c(RANK_7, "H"),
+            c(RANK_9, "D"),
+        ]
+
+        pattern = IntermediateStrategy().select_pattern(state, 0)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.STRAIGHT
+        assert pattern.rank == RANK_7
 
     def test_advanced_difficulty_attributes(self) -> None:
         adv = AdvancedStrategy()

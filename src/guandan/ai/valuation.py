@@ -131,6 +131,11 @@ def estimate_pattern_cost(
     if len(rem_cards) == 0:
         finish_bonus = -20.0
 
+    # ---- 8. 领牌整理：自然结构牌能显著减少手牌轮次 ----
+    lead_shedding_bonus = 0.0
+    if not state.table and pattern.type in _STRUCTURE_TYPES and not _is_bomb(pattern.type):
+        lead_shedding_bonus = -min(8.0, len(pattern.cards) * 1.3)
+
     return (
         base
         + breakup
@@ -139,6 +144,7 @@ def estimate_pattern_cost(
         + bomb_premium
         + structure_penalty
         + finish_bonus
+        + lead_shedding_bonus
     )
 
 
