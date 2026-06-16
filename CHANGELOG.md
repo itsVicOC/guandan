@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.0-beta.3] - 2026-06-16
+
 ### M7 AI 调优收口
 
 #### AI 策略
@@ -37,6 +39,10 @@
 - `mypy src` 通过。
 - `pytest`：282 个测试全过。
 - M7 收口 benchmark：`python -m guandan.ai.benchmark --games 20 --difficulties 0,1,2,3 --seed-start 800 --max-turns 2000 --json`，20/20 完成，完成率 1.0，平均 91.15 回合，平均炸弹数 `[0.3, 0.4]`。
+
+#### 发布
+- 项目状态更新为 `v0.7.0-beta.3 / 公测版`。
+- Python 包版本更新为 `0.7.0b3`。
 
 ## [0.7.0-beta.2] - 2026-06-13
 
