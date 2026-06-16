@@ -13,12 +13,13 @@
 - 职业 / 戴长胜策略不再被统一概率过牌二次覆盖，策略选出的高价值压牌会直接执行，过牌决策回归策略内部。
 - MCTS rollout 结果评分从“只看头游队伍”升级为结合名次升级收益、头游归属和未完成局面手牌压力的连续评分。
 - MCTS rollout 改为轻量贪心模拟，并将默认 rollout 上限调为 40 手，降低职业档在 TUI/benchmark 中的响应时间。
+- 职业档默认 MCTS 预算调整为 60 次迭代、top-4 动作，并限制 rollout 只在 10 张以内做完整手牌识别，减少长等待。
 
 #### 测试
 - 新增 AI benchmark / benchmark 对比与门禁测试、当前 trick helper 回归测试、职业档随机过牌覆盖测试和 MCTS 评分测试。
 - `ruff check src tests` 通过。
 - `mypy src` 通过。
-- `pytest`：246 个测试全过。
+- `pytest`：259 个测试全过。
 
 ## [0.7.0-beta.2] - 2026-06-13
 

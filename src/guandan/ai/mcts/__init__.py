@@ -16,10 +16,11 @@ M3 实现 IS-MCTS（Information Set Monte Carlo Tree Search）用于档 3 职业
 6. Backpropagation: 回传结果更新胜率
 
 参数配置：
-- iterations: MCTS 迭代次数（默认 200）
+- iterations: MCTS 迭代次数（默认 60）
 - ucb_c: UCB1 探索常数（默认 1.41）
 - max_depth: 最大搜索深度（默认 10）
 - rollout_strategy: Simulation 策略档位（默认 1）
+- top_actions: 每个节点考虑的候选动作数（默认 4）
 - rollout_max_turns: 单次 rollout 最大手数（默认 40）
 - hand_threshold: 手牌数不大于该值时启用 MCTS（默认 10）
 """
@@ -40,11 +41,11 @@ __all__ = [
 
 # 默认配置
 MCTS_CONFIG: Dict[str, int | float] = {
-    "iterations": 100,  # 降低迭代次数以提升速度（从 200 降到 100）
+    "iterations": 60,  # 职业档默认预算：兼顾搜索质量与 TUI 响应
     "ucb_c": 1.41,
     "max_depth": 10,
     "rollout_strategy": 1,
-    "top_actions": 5,
+    "top_actions": 4,
     "rollout_max_turns": 40,
     "hand_threshold": 10,
 }

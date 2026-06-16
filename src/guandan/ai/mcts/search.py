@@ -12,7 +12,9 @@ import copy
 import math
 from typing import Optional
 
-from ...engine.hand import Pattern
+from ...engine.card import Card
+from ...engine.hand import Pattern, PatternType, comparison_rank
+from ...engine.rules.patterns import find_complete_pattern
 from ...engine.rules.scoring import compute_level_change
 from ...engine.state import (
     GameState,
@@ -22,7 +24,6 @@ from ...engine.state import (
     play_pattern,
 )
 from ...engine.trick import current_top_player
-from ..candidates import smallest_legal_pattern
 from ..valuation import enumerate_candidate_plays
 from .node import MCTSNode
 
@@ -208,7 +209,206 @@ def _rollout_select_pattern(
         top_player = current_top_player(state)
         if top_player is not None and is_teammate(top_player, player):
             return None
-    return smallest_legal_pattern(state, player)
+    return _smallest_rollout_pattern(state, player)
+
+
+def _smallest_rollout_pattern(state: GameState, player: int) -> Optional[Pattern]:
+    """rollout 专用快速候选：只枚举低成本基础牌型，必要时找炸弹。"""
+    hand = state.hands[player]
+    if not hand:
+        return None
+    if len(hand) <= 10:
+        finish = find_complete_pattern(hand, state.wild_card)
+        if finish is not None and (
+            not state.table or finish.can_be_played_on(state.table[-1], level=state.level)
+        ):
+            return finish
+
+    table_top = state.table[-1] if state.table else None
+    if table_top is None:
+        return _smallest_basic_pattern(hand, state.wild_card, state.level)
+
+    same_type = [
+        pattern
+        for pattern in _basic_patterns(hand, state.wild_card)
+        if pattern.type == table_top.type
+        and pattern.length == table_top.length
+        and pattern.can_be_played_on(table_top, level=state.level)
+    ]
+    if same_type:
+        return min(same_type, key=lambda p: _rollout_pattern_key(p, state.level))
+
+    bombs = [
+        pattern
+        for pattern in _fast_bomb_patterns(hand, state.wild_card)
+        if pattern.can_be_played_on(table_top, level=state.level)
+    ]
+    if bombs:
+        return min(bombs, key=lambda p: _rollout_pattern_key(p, state.level))
+    return None
+
+
+def _smallest_basic_pattern(
+    hand: list[Card],
+    wild_card: Optional[Card],
+    level: int,
+) -> Optional[Pattern]:
+    basics = _basic_patterns(hand, wild_card)
+    if basics:
+        return min(basics, key=lambda p: _rollout_pattern_key(p, level))
+    bombs = _fast_bomb_patterns(hand, wild_card)
+    return min(bombs, key=lambda p: _rollout_pattern_key(p, level), default=None)
+
+
+def _rollout_pattern_key(pattern: Pattern, level: int) -> tuple[int, int, int, int]:
+    return (
+        pattern.weight,
+        pattern.length,
+        comparison_rank(pattern, level),
+        pattern.wild_used,
+    )
+
+
+def _basic_patterns(hand: list[Card], wild_card: Optional[Card]) -> list[Pattern]:
+    """快速生成单张/对子/三张，供 rollout 近似使用。"""
+    wild_cards = _wild_cards_in(hand, wild_card)
+    wild_count = len(wild_cards)
+    normal = [card for card in hand if wild_card is None or card != wild_card]
+    by_rank: dict[int, list[Card]] = {}
+    for card in normal:
+        by_rank.setdefault(card.rank, []).append(card)
+
+    patterns: list[Pattern] = [
+        Pattern(type=PatternType.SINGLE, rank=card.rank, length=1, cards=(card,))
+        for card in normal
+    ]
+    if wild_count >= 1 and wild_card is not None:
+        patterns.append(
+            Pattern(
+                type=PatternType.SINGLE,
+                rank=wild_card.rank,
+                length=1,
+                cards=(wild_cards[0],),
+                wild_used=1,
+            )
+        )
+
+    for rank, cards in by_rank.items():
+        if len(cards) >= 2:
+            patterns.append(
+                Pattern(type=PatternType.PAIR, rank=rank, length=1, cards=tuple(cards[:2]))
+            )
+        if len(cards) >= 3 and not cards[0].is_joker:
+            patterns.append(
+                Pattern(type=PatternType.TRIPLE, rank=rank, length=1, cards=tuple(cards[:3]))
+            )
+        if wild_count >= 1 and wild_card is not None and not cards[0].is_joker:
+            if len(cards) >= 1:
+                patterns.append(
+                    Pattern(
+                        type=PatternType.PAIR,
+                        rank=rank,
+                        length=1,
+                        cards=(cards[0], wild_cards[0]),
+                        wild_used=1,
+                    )
+                )
+            if len(cards) >= 2:
+                patterns.append(
+                    Pattern(
+                        type=PatternType.TRIPLE,
+                        rank=rank,
+                        length=1,
+                        cards=(cards[0], cards[1], wild_cards[0]),
+                        wild_used=1,
+                    )
+                )
+        if (
+            wild_count >= 2
+            and wild_card is not None
+            and len(cards) >= 1
+            and not cards[0].is_joker
+        ):
+            patterns.append(
+                Pattern(
+                    type=PatternType.TRIPLE,
+                    rank=rank,
+                    length=1,
+                    cards=(cards[0], wild_cards[0], wild_cards[1]),
+                    wild_used=2,
+                )
+            )
+
+    if wild_count >= 2 and wild_card is not None:
+        patterns.append(
+            Pattern(
+                type=PatternType.PAIR,
+                rank=wild_card.rank,
+                length=1,
+                cards=(wild_cards[0], wild_cards[1]),
+                wild_used=2,
+            )
+        )
+    if wild_count >= 3 and wild_card is not None:
+        patterns.append(
+            Pattern(
+                type=PatternType.TRIPLE,
+                rank=wild_card.rank,
+                length=1,
+                cards=(wild_cards[0], wild_cards[1], wild_cards[2]),
+                wild_used=3,
+            )
+        )
+    return patterns
+
+
+def _fast_bomb_patterns(hand: list[Card], wild_card: Optional[Card]) -> list[Pattern]:
+    """快速生成普通炸弹和四王炸，供 rollout 兜底使用。"""
+    wild_cards_available = _wild_cards_in(hand, wild_card)
+    wild_count = len(wild_cards_available)
+    normal = [card for card in hand if wild_card is None or card != wild_card]
+    by_rank: dict[int, list[Card]] = {}
+    for card in normal:
+        if not card.is_joker:
+            by_rank.setdefault(card.rank, []).append(card)
+    patterns: list[Pattern] = []
+
+    big_jokers = [card for card in normal if card.is_big_joker]
+    small_jokers = [card for card in normal if card.is_small_joker]
+    if len(big_jokers) >= 2 and len(small_jokers) >= 2:
+        patterns.append(
+            Pattern(
+                type=PatternType.FOUR_JOKERS,
+                rank=max(card.rank for card in [*big_jokers[:2], *small_jokers[:2]]),
+                length=4,
+                cards=tuple([*big_jokers[:2], *small_jokers[:2]]),
+            )
+        )
+
+    for rank, same_rank in by_rank.items():
+        for natural_count in range(min(len(same_rank), 10), 0, -1):
+            needed_wild = max(0, 4 - natural_count)
+            total = natural_count + needed_wild
+            if total < 4 or total > 10 or needed_wild > wild_count:
+                continue
+            wild_cards = wild_cards_available[:needed_wild]
+            patterns.append(
+                Pattern(
+                    type=PatternType.BOMB,
+                    rank=rank,
+                    length=total,
+                    cards=tuple([*same_rank[:natural_count], *wild_cards]),
+                    wild_used=needed_wild,
+                )
+            )
+            break
+    return patterns
+
+
+def _wild_cards_in(hand: list[Card], wild_card: Optional[Card]) -> list[Card]:
+    if wild_card is None:
+        return []
+    return [card for card in hand if card == wild_card]
 
 
 def _evaluate_result(state: GameState, root_player: int) -> float:

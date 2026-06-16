@@ -245,6 +245,35 @@ class TestMCTSRolloutPolicy:
 
         assert _rollout_select_pattern(state, 0, rollout_strategy_level=2) is None
 
+    def test_rollout_does_not_reuse_single_wild_card(self):
+        """rollout 快速枚举不能把 1 张逢人配当作 2 张牌使用。"""
+        wild = Card(5, Suit.HEARTS)
+        top = Pattern(PatternType.PAIR, 8, 1, (Card(8, Suit.HEARTS), Card(8, Suit.DIAMONDS)))
+        state = _make_test_state(level=5)
+        state.wild_card = wild
+        state.table = [top]
+        state.hands[1] = [Card(9, Suit.HEARTS), wild]
+
+        pattern = _rollout_select_pattern(state, 1, rollout_strategy_level=1)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.PAIR
+        assert pattern.rank == 9
+        assert pattern.cards.count(wild) == 1
+
+    def test_rollout_sorts_single_cards_by_level_strength(self):
+        """级牌单张应按实际强度排序，避免 rollout 先浪费级牌。"""
+        state = _make_test_state(level=2)
+        state.wild_card = Card(2, Suit.HEARTS)
+        state.table = []
+        state.hands[0] = [Card(2, Suit.SPADES), Card(9, Suit.CLUBS)]
+
+        pattern = _rollout_select_pattern(state, 0, rollout_strategy_level=1)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.SINGLE
+        assert pattern.rank == 9
+
 
 class TestProfessionalStrategy:
     """测试职业策略集成。"""
