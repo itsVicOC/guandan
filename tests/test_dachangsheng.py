@@ -152,6 +152,27 @@ class TestDaiChangshengStrategy:
         assert pattern.type == PatternType.BOMB
         assert pattern.length == 4
 
+    def test_finish_card_not_blocked_by_teammate_awareness(self):
+        """队友领先时，能直接出完的响应不应被配合意识改成过牌。"""
+        state = _make_test_state(level=2)
+        state.wild_card = None
+        state.turn_index = 0
+        state.leader = 2
+        state.table = [Pattern(PatternType.SINGLE, 8, 1, (Card(8, Suit.HEARTS),), 0)]
+        state.hands[0] = [Card(9, Suit.SPADES)]
+        state.hands[1] = [Card(3, Suit.CLUBS), Card(4, Suit.CLUBS)]
+        state.hands[2] = [Card(5, Suit.CLUBS), Card(6, Suit.CLUBS)]
+        state.hands[3] = [Card(7, Suit.CLUBS), Card(10, Suit.CLUBS)]
+        strategy = DaiChangshengStrategy(rng=random.Random(42))
+        strategy.style["drift_bonus"] = 0.0
+        strategy.style["teammate_awareness"] = 1.0
+
+        pattern = strategy.select_pattern(state, player=0)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.SINGLE
+        assert pattern.rank == 9
+
 
 class TestStyleBehavior:
     """测试风格化行为。"""

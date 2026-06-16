@@ -104,6 +104,9 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         if drift_finish is not None and pursue_drift:
             return drift_finish
 
+        if len(pattern.cards) == state.hand_size(player):
+            return pattern
+
         if self._should_preserve_drift_bomb(state, player, pattern, pursue_drift):
             return None
 
