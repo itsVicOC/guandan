@@ -30,6 +30,10 @@ def _opponent_min_cards(state: GameState, player: int) -> int:
     return min(sizes, default=0)
 
 
+def _opponent_about_to_go_out(state: GameState, player: int) -> bool:
+    return _opponent_min_cards(state, player) == 1
+
+
 def should_pass(
     state: GameState,
     player: int,
@@ -64,6 +68,8 @@ def should_pass(
     top_player = current_top_player(state)
     if top_player is not None and is_teammate(top_player, player):
         p += 0.20
+    elif _opponent_about_to_go_out(state, player):
+        return False
 
     opponent_min = _opponent_min_cards(state, player)
     if 0 < opponent_min <= 2:

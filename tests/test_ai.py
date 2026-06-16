@@ -585,6 +585,23 @@ class TestShouldPass:
             scale=0.6,
         ) is True
 
+    def test_never_randomly_passes_when_opponent_has_one_card(self) -> None:
+        """任一对手只剩 1 张时，有合法响应就必须拦截。"""
+
+        class AlwaysPassRandom(random.Random):
+            def random(self) -> float:
+                return 0.0
+
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.table = [sp(RANK_9, "H")]
+        state.hands[0] = [c(RANK_3, "D")]
+        state.hands[1] = [c(RANK_A, "D"), c(RANK_4, "D")]
+        state.hands[2] = [c(RANK_5, "D")]
+        state.hands[3] = [c(RANK_6, "D"), c(RANK_7, "D")]
+
+        assert should_pass(state, 1, sp(RANK_A, "D"), rng=AlwaysPassRandom()) is False
+
     def test_deterministic_with_seed(self) -> None:
         """同样的 rng → 同样的决策。"""
         state = make_initial_state(level=5, first_player=0, seed=42)
@@ -825,6 +842,28 @@ class TestPlayOrPass:
         assert result is True
         assert state.table[-1].rank == RANK_9
         assert state.turn_index == 0
+
+    def test_intermediate_blocks_one_card_opponent_without_random_pass(self) -> None:
+        """对手只剩 1 张时，进阶 AI 有牌可压就不随机过牌。"""
+
+        class AlwaysPassRandom(random.Random):
+            def random(self) -> float:
+                return 0.0
+
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.turn_index = 1
+        state.leader = 0
+        state.table = [sp(RANK_9, "H")]
+        state.hands[0] = [c(RANK_3, "D")]
+        state.hands[1] = [c(RANK_A, "D"), c(RANK_4, "D")]
+        state.hands[2] = [c(RANK_5, "D")]
+        state.hands[3] = [c(RANK_6, "D"), c(RANK_7, "D")]
+
+        result = play_or_pass(state, 1, make_strategy(1), AlwaysPassRandom())
+
+        assert result is True
+        assert state.table[-1].rank == RANK_A
 
 
 # ---------- Hint strategy fix to 档 1 ----------
