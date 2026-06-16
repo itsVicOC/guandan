@@ -772,6 +772,32 @@ class TestStrategyDifferentiation:
         assert pattern.type == PatternType.PAIR
         assert pattern.rank == RANK_7
 
+    def test_advanced_builds_played_tracker_once_per_decision(self, monkeypatch) -> None:
+        """高手策略一次决策只应扫描一次历史，避免按候选重复记牌。"""
+        original = PlayedTracker.from_history
+        calls = {"count": 0}
+
+        def counted_from_history(cls, state):
+            calls["count"] += 1
+            return original(state)
+
+        monkeypatch.setattr(PlayedTracker, "from_history", classmethod(counted_from_history))
+
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.table = [sp(RANK_5, "H")]
+        state.hands[1] = [
+            c(RANK_6, "H"),
+            c(RANK_6, "D"),
+            c(RANK_6, "S"),
+            c(RANK_A, "C"),
+        ]
+
+        pattern = AdvancedStrategy().select_pattern(state, 1)
+
+        assert pattern is not None
+        assert calls["count"] == 1
+
     def test_advanced_difficulty_attributes(self) -> None:
         adv = AdvancedStrategy()
         assert adv.difficulty == 2

@@ -25,10 +25,14 @@ def _teammate_winning(state: GameState, player: int) -> bool:
     return top_player is not None and is_teammate(top_player, player)
 
 
-def _key_count_exhausted(state: GameState, player: int, candidate: Pattern) -> bool:
+def _key_count_exhausted(
+    state: GameState,
+    player: int,
+    candidate: Pattern,
+    tracker: PlayedTracker,
+) -> bool:
     """出完这张牌后，关键 rank 在其他 3 家手里是否绝张。"""
     hand = state.hands[player]
-    tracker = PlayedTracker.from_history(state)
     # 关注 candidate 里所有 rank
     for c in candidate.cards:
         others = tracker.in_someone_hand(c.rank, hand)
@@ -83,9 +87,10 @@ class AdvancedStrategy:
         # 记牌加成：如果 candidate 出完后某 rank 绝张（自己+其他家都没了），
         # 估值大幅降低（鼓励出 → 防止对方绝张反过来压）
         scored: list[tuple[float, Pattern]] = []
+        tracker = PlayedTracker.from_history(state)
         for c in candidates:
             cost = estimate_pattern_cost(state, player, c)
-            if _key_count_exhausted(state, player, c):
+            if _key_count_exhausted(state, player, c, tracker):
                 cost -= 10.0
             scored.append((cost, c))
         scored.sort(key=lambda t: t[0])
