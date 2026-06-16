@@ -14,7 +14,8 @@ from typing import Optional
 
 from ...engine.hand import Pattern
 from ...engine.rules.patterns import find_complete_pattern
-from ...engine.state import GameState, is_teammate
+from ...engine.state import GameState
+from ..context import opponent_min_cards
 from ..mcts import MCTS_CONFIG
 from ..mcts.determinize import determinize
 from ..mcts.node import MCTSNode
@@ -130,12 +131,5 @@ class ProfessionalStrategy:
         """M6 性能闸门：只在中后期或关键局面启用 MCTS。"""
         if state.hand_size(player) <= self.mcts_hand_threshold:
             return True
-        opponent_min = min(
-            (
-                state.hand_size(p)
-                for p in range(4)
-                if not is_teammate(p, player) and state.hand_size(p) > 0
-            ),
-            default=0,
-        )
+        opponent_min = opponent_min_cards(state, player)
         return 0 < opponent_min <= self.mcts_hand_threshold

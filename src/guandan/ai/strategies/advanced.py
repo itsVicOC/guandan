@@ -11,6 +11,7 @@ from typing import Optional
 from ...engine.hand import Pattern, PatternType
 from ...engine.state import GameState, is_teammate
 from ...engine.trick import current_top_player
+from ..context import opponent_has_one_card
 from ..greedy import select_min_winning
 from ..memory import PlayedTracker
 from ..valuation import enumerate_candidate_plays, estimate_pattern_cost
@@ -39,20 +40,13 @@ def _key_count_exhausted(state: GameState, player: int, candidate: Pattern) -> b
     return False
 
 
-def _opponent_has_one_card(state: GameState, player: int) -> bool:
-    return any(
-        not is_teammate(p, player) and state.hand_size(p) == 1
-        for p in range(4)
-    )
-
-
 def _cover_teammate_against_one_card_opponent(
     state: GameState, player: int
 ) -> Optional[Pattern]:
     """队友单张领先但对手报单时，尝试用同型单牌抬高桌顶。"""
     if not state.table or state.table[-1].type != PatternType.SINGLE:
         return None
-    if not _opponent_has_one_card(state, player):
+    if not opponent_has_one_card(state, player):
         return None
     candidates = [
         pattern

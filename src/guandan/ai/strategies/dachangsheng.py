@@ -21,6 +21,7 @@ from ...engine.rules.drift import is_drift_pattern
 from ...engine.rules.patterns import detect_patterns
 from ...engine.state import GameState, is_teammate, partner_of
 from ...engine.trick import current_top_player
+from ..context import opponent_min_cards
 from ..profiles import load_profile
 from .professional import ProfessionalStrategy
 
@@ -193,14 +194,7 @@ class DaiChangshengStrategy(ProfessionalStrategy):
 
     def _get_opponent_min_cards(self, state: GameState, player: int) -> int:
         """获取对手最少手牌数。"""
-        opponent_cards = [
-            state.hand_size(p)
-            for p in range(4)
-            if not is_teammate(p, player) and state.hand_size(p) > 0
-        ]
-        if not opponent_cards:
-            return 0
-        return min(opponent_cards)
+        return opponent_min_cards(state, player)
 
     def _partner_is_leading(self, state: GameState, player: int) -> bool:
         """判断队友是否正在控场（是桌面上最后一个出牌的玩家）。"""

@@ -11,6 +11,7 @@ from ..engine.card import RANK_A
 from ..engine.hand import Pattern, PatternType, comparison_rank
 from ..engine.state import GameState, is_teammate
 from ..engine.trick import current_top_player
+from .context import opponent_has_one_card, opponent_min_cards
 
 
 def _is_bomb(pattern: Pattern) -> bool:
@@ -19,19 +20,6 @@ def _is_bomb(pattern: Pattern) -> bool:
         PatternType.STRAIGHT_FLUSH,
         PatternType.FOUR_JOKERS,
     )
-
-
-def _opponent_min_cards(state: GameState, player: int) -> int:
-    sizes = [
-        state.hand_size(p)
-        for p in range(4)
-        if not is_teammate(p, player) and state.hand_size(p) > 0
-    ]
-    return min(sizes, default=0)
-
-
-def _opponent_about_to_go_out(state: GameState, player: int) -> bool:
-    return _opponent_min_cards(state, player) == 1
 
 
 def should_pass(
@@ -66,12 +54,12 @@ def should_pass(
 
     # 队友正在领牌时更愿意让队友收轮；对手快出完时更愿意出手拦截。
     top_player = current_top_player(state)
-    if _opponent_about_to_go_out(state, player):
+    if opponent_has_one_card(state, player):
         return False
     if top_player is not None and is_teammate(top_player, player):
         p += 0.20
 
-    opponent_min = _opponent_min_cards(state, player)
+    opponent_min = opponent_min_cards(state, player)
     if 0 < opponent_min <= 2:
         p *= 0.25
     elif 0 < opponent_min <= 5:

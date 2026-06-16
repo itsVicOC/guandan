@@ -16,8 +16,9 @@ from typing import List, Optional
 from ..engine.card import RANK_A, Card
 from ..engine.hand import Pattern, PatternType, effective_rank
 from ..engine.rules.patterns import detect_patterns
-from ..engine.state import GameState, is_teammate
+from ..engine.state import GameState
 from .candidates import enumerate_legal_patterns
+from .context import opponent_min_cards as context_opponent_min_cards
 
 
 def _hand_breakdown(cards: list) -> dict:
@@ -79,15 +80,6 @@ def _cached_structure_score(
     if key not in cache:
         cache[key] = _best_structure_score(cards, wild)
     return cache[key]
-
-
-def _opponent_min_cards(state: GameState, player: int) -> int:
-    sizes = [
-        state.hand_size(p)
-        for p in range(4)
-        if not is_teammate(p, player) and state.hand_size(p) > 0
-    ]
-    return min(sizes, default=0)
 
 
 def estimate_pattern_cost(
@@ -192,7 +184,7 @@ def _estimate_pattern_cost(
         and (
             opponent_min_cards
             if opponent_min_cards is not None
-            else _opponent_min_cards(state, player)
+            else context_opponent_min_cards(state, player)
         )
         == 1
     ):
@@ -232,7 +224,7 @@ def enumerate_candidate_plays(
     candidates = enumerate_legal_patterns(state, player)
     structure_cache: _StructureCache = {}
     before_structure = _cached_structure_score(hand, state.wild_card, structure_cache)
-    opponent_min_cards = _opponent_min_cards(state, player) if not state.table else 0
+    min_opponent_cards = context_opponent_min_cards(state, player) if not state.table else 0
     candidates.sort(
         key=lambda p: _estimate_pattern_cost(
             state,
@@ -240,7 +232,7 @@ def enumerate_candidate_plays(
             p,
             before_structure=before_structure,
             structure_cache=structure_cache,
-            opponent_min_cards=opponent_min_cards,
+            opponent_min_cards=min_opponent_cards,
         )
     )
     return candidates[:max_candidates]
