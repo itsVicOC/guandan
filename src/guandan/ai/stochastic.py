@@ -8,7 +8,7 @@ import random
 from typing import Optional
 
 from ..engine.card import RANK_A
-from ..engine.hand import Pattern, PatternType
+from ..engine.hand import Pattern, PatternType, comparison_rank
 from ..engine.state import GameState, is_teammate
 from ..engine.trick import current_top_player
 
@@ -53,7 +53,7 @@ def should_pass(
     if len(pattern.cards) == state.hand_size(player):
         return False  # 能一手走完就不随机过牌
 
-    rank = table_top.rank
+    rank = comparison_rank(table_top, state.level)
     # 桌顶是王 → 当作 A 顶
     if rank > RANK_A:
         rank = RANK_A

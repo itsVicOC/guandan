@@ -14,7 +14,7 @@ from collections import Counter
 from typing import List, Optional
 
 from ..engine.card import RANK_A, Card
-from ..engine.hand import Pattern, PatternType
+from ..engine.hand import Pattern, PatternType, effective_rank
 from ..engine.rules.patterns import detect_patterns
 from ..engine.state import GameState
 from .candidates import enumerate_legal_patterns
@@ -96,13 +96,15 @@ def estimate_pattern_cost(
     wild_used = _count_wild_in_pattern(pattern, wild)
     wild_penalty = wild_used * 8.0
 
-    # ---- 4. 拆王 / 拆级牌的小加成 ----
+    # ---- 4. 拆王 / 拆级牌 / 拆高牌的小加成 ----
     high_penalty = 0.0
     for c in pattern.cards:
         if c.is_big_joker:
             high_penalty += 4.0
         elif c.is_small_joker:
             high_penalty += 3.0
+        elif c != wild and effective_rank(c.rank, state.level) > RANK_A:
+            high_penalty += 2.5
         elif c.rank == RANK_A:
             high_penalty += 1.5
         elif c.rank == 13:  # K

@@ -30,6 +30,7 @@ from guandan.engine.card import (
     RANK_9,
     RANK_A,
     RANK_K,
+    RANK_SMALL_JOKER,
     Card,
     Suit,
 )
@@ -333,6 +334,18 @@ class TestValuation:
         c_single = estimate_pattern_cost(state, 0, single)
         assert c_bomb > c_single
 
+    def test_non_wild_level_card_is_protected_as_high_card(self) -> None:
+        """非红桃级牌也应按最大非王牌保护，避免 AI 领牌随手打掉。"""
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = c(RANK_2, "H")
+        state.table = []
+        state.hands[0] = [c(RANK_2, "S"), c(RANK_9, "D")]
+
+        level_cost = estimate_pattern_cost(state, 0, sp(RANK_2, "S"))
+        nine_cost = estimate_pattern_cost(state, 0, sp(RANK_9, "D"))
+
+        assert level_cost > nine_cost
+
 
 # ---------- Valuation: enumerate_candidate_plays ----------
 
@@ -364,6 +377,17 @@ class TestEnumerateCandidates:
         candidates = enumerate_candidate_plays(state, 1)
 
         assert any(p.type == PatternType.SINGLE and p.rank == RANK_2 for p in candidates)
+
+    def test_leader_prefers_plain_single_before_level_card(self) -> None:
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = c(RANK_2, "H")
+        state.table = []
+        state.hands[0] = [c(RANK_2, "S"), c(RANK_9, "D")]
+
+        candidates = enumerate_candidate_plays(state, 0)
+
+        assert candidates[0].type == PatternType.SINGLE
+        assert candidates[0].rank == RANK_9
 
     def test_leader_returns_all_singles(self) -> None:
         """leader 模式：候选 = 手牌中所有非 wild 单张。"""
@@ -483,7 +507,7 @@ class TestShouldPass:
 
     def test_high_table_top_more_likely_to_pass(self) -> None:
         """桌顶 rank 越大 → 越倾向过牌。"""
-        state = make_initial_state(level=5, first_player=0, seed=42)
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
         state.wild_card = None
         # 多次抽样，看桌顶 = A 时过牌率 > 桌顶 = 5 时
         n = 1000
@@ -500,6 +524,29 @@ class TestShouldPass:
             if should_pass(state, 1, sp(RANK_8, "D"), rng=rng, base=0.1, scale=0.6):
                 passes_high += 1
         assert passes_high > passes_low
+
+    def test_level_table_top_uses_effective_strength(self) -> None:
+        """桌顶为级牌时，概率过牌应按最大非王牌强度计算。"""
+
+        class FixedRandom(random.Random):
+            def random(self) -> float:
+                return 0.50
+
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = c(RANK_2, "H")
+        state.table = [sp(RANK_2, "S")]
+        small_joker = Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER)
+        pattern = Pattern(PatternType.SINGLE, RANK_SMALL_JOKER, 1, (small_joker,), 0)
+        state.hands[1] = [small_joker, c(RANK_9, "D")]
+
+        assert should_pass(
+            state,
+            1,
+            pattern,
+            rng=FixedRandom(),
+            base=0.1,
+            scale=0.6,
+        ) is True
 
     def test_deterministic_with_seed(self) -> None:
         """同样的 rng → 同样的决策。"""
@@ -737,8 +784,7 @@ class TestHintStrategyFixed:
         state.hands[0] = [c(RANK_5, "D"), c(RANK_8, "H"), c(RANK_A, "S")]
         strat = make_strategy(1)
         p = strat.select_pattern(state, 0)
-        # 进阶策略：有候选的话返回最优；若有可压 → 返回 SINGLE 5
-        # leader 模式：出最小单张
+        # 进阶策略会保护非红桃级牌 5，leader 模式优先出普通小牌。
         assert p is not None
         assert p.type == PatternType.SINGLE
-        assert p.rank == RANK_5
+        assert p.rank == RANK_8
