@@ -101,6 +101,9 @@ mypy src
 
 # 全套 CI 检查
 ruff check src tests && mypy src && pytest
+
+# AI 对战基准
+python -m guandan.ai.benchmark --games 20 --difficulties 0,1,2,3 --json
 ```
 
 ## 许可

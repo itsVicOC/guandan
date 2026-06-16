@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import random
 import time
 from dataclasses import dataclass
@@ -32,6 +33,22 @@ class MatchResult:
     drift: bool
     duration_seconds: float
 
+    def to_dict(self) -> dict[str, Any]:
+        """转换为稳定的 JSON 友好结构。"""
+        return {
+            "seed": self.seed,
+            "level": self.level,
+            "difficulties": list(self.difficulties),
+            "turns": self.turns,
+            "finished": self.finished,
+            "finish_order": list(self.finish_order),
+            "winner_team": self.winner_team,
+            "final_levels": list(self.final_levels) if self.final_levels else None,
+            "team_bomb_count": list(self.team_bomb_count),
+            "drift": self.drift,
+            "duration_seconds": round(self.duration_seconds, 6),
+        }
+
 
 @dataclass(frozen=True)
 class BenchmarkSummary:
@@ -44,6 +61,18 @@ class BenchmarkSummary:
     team_wins: tuple[int, int]
     average_bombs: tuple[float, float]
     results: tuple[MatchResult, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        """转换为稳定的 JSON 友好结构。"""
+        return {
+            "games": self.games,
+            "finished": self.finished,
+            "completion_rate": self.completion_rate,
+            "average_turns": self.average_turns,
+            "team_wins": list(self.team_wins),
+            "average_bombs": list(self.average_bombs),
+            "results": [result.to_dict() for result in self.results],
+        }
 
 
 def _normalize_difficulties(difficulties: Sequence[int] | int) -> tuple[int, int, int, int]:
@@ -170,6 +199,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         help="one difficulty for all seats, or four comma-separated seat difficulties",
     )
     parser.add_argument("--max-turns", type=int, default=2000, help="turn cap per game")
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="print machine-readable JSON instead of text summary",
+    )
     args = parser.parse_args(argv)
 
     summary = run_benchmark(
@@ -179,6 +213,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         difficulties=args.difficulties,
         max_turns=args.max_turns,
     )
+
+    if args.json:
+        print(json.dumps(summary.to_dict(), ensure_ascii=False, sort_keys=True))
+        return 0
 
     print(
         "AI benchmark "
