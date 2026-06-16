@@ -14,7 +14,7 @@ from typing import Optional
 
 from ...engine.hand import Pattern
 from ...engine.rules.patterns import find_complete_pattern
-from ...engine.state import GameState
+from ...engine.state import GameState, is_teammate
 from ..mcts import MCTS_CONFIG
 from ..mcts.determinize import determinize
 from ..mcts.node import MCTSNode
@@ -131,7 +131,11 @@ class ProfessionalStrategy:
         if state.hand_size(player) <= self.mcts_hand_threshold:
             return True
         opponent_min = min(
-            (state.hand_size(p) for p in range(4) if p != player and state.hand_size(p) > 0),
+            (
+                state.hand_size(p)
+                for p in range(4)
+                if not is_teammate(p, player) and state.hand_size(p) > 0
+            ),
             default=0,
         )
         return 0 < opponent_min <= self.mcts_hand_threshold

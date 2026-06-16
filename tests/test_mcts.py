@@ -384,3 +384,59 @@ class TestProfessionalStrategy:
 
         assert strategy.select_pattern(state, player=0) is None
         assert calls["count"] == 1
+
+    def test_professional_mcts_gate_ignores_short_partner(self):
+        """只有队友短手牌时不应误触发 MCTS，避免前中期额外等待。"""
+        state = _make_test_state()
+        state.hands[0] = [
+            Card(3, Suit.HEARTS),
+            Card(3, Suit.DIAMONDS),
+            Card(4, Suit.HEARTS),
+            Card(6, Suit.DIAMONDS),
+            Card(9, Suit.SPADES),
+            Card(13, Suit.CLUBS),
+        ]
+        state.hands[1] = [
+            Card(4, Suit.DIAMONDS),
+            Card(5, Suit.DIAMONDS),
+            Card(6, Suit.SPADES),
+            Card(7, Suit.CLUBS),
+        ]
+        state.hands[2] = [Card(5, Suit.CLUBS)]
+        state.hands[3] = [
+            Card(8, Suit.DIAMONDS),
+            Card(9, Suit.DIAMONDS),
+            Card(10, Suit.SPADES),
+            Card(11, Suit.CLUBS),
+        ]
+        strategy = ProfessionalStrategy(mcts_hand_threshold=3)
+
+        assert strategy._should_use_mcts(state, player=0) is False
+
+    def test_professional_mcts_gate_uses_short_opponents(self):
+        """对手短手牌仍是关键局面，应触发 MCTS。"""
+        state = _make_test_state()
+        state.hands[0] = [
+            Card(3, Suit.HEARTS),
+            Card(3, Suit.DIAMONDS),
+            Card(4, Suit.HEARTS),
+            Card(6, Suit.DIAMONDS),
+            Card(9, Suit.SPADES),
+            Card(13, Suit.CLUBS),
+        ]
+        state.hands[1] = [Card(4, Suit.DIAMONDS)]
+        state.hands[2] = [
+            Card(5, Suit.CLUBS),
+            Card(6, Suit.CLUBS),
+            Card(7, Suit.CLUBS),
+            Card(8, Suit.CLUBS),
+        ]
+        state.hands[3] = [
+            Card(8, Suit.DIAMONDS),
+            Card(9, Suit.DIAMONDS),
+            Card(10, Suit.SPADES),
+            Card(11, Suit.CLUBS),
+        ]
+        strategy = ProfessionalStrategy(mcts_hand_threshold=3)
+
+        assert strategy._should_use_mcts(state, player=0) is True
