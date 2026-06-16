@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Optional
 
 from ...engine.hand import Pattern, PatternType
+from ...engine.rules.patterns import find_complete_pattern
 from ...engine.state import GameState, is_teammate
 from ...engine.trick import current_top_player
 from ..context import opponent_has_one_card
@@ -62,6 +63,18 @@ def _cover_teammate_against_one_card_opponent(
     return min(candidates, key=lambda p: estimate_pattern_cost(state, player, p))
 
 
+def _finish_now(state: GameState, player: int) -> Optional[Pattern]:
+    hand = state.hands[player]
+    if not hand:
+        return None
+    candidate = find_complete_pattern(hand, state.wild_card)
+    if candidate is None:
+        return None
+    if state.table and not candidate.can_be_played_on(state.table[-1], level=state.level):
+        return None
+    return candidate
+
+
 class AdvancedStrategy:
     """高手 AI：协作分 + 记牌 + 估值。"""
 
@@ -72,6 +85,10 @@ class AdvancedStrategy:
     def select_pattern(
         self, state: GameState, player: int
     ) -> Optional[Pattern]:
+        finish = _finish_now(state, player)
+        if finish is not None:
+            return finish
+
         # 协作：队友已领先 → 让队友收这一轮
         if _teammate_winning(state, player):
             cover = _cover_teammate_against_one_card_opponent(state, player)

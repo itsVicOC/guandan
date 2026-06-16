@@ -205,6 +205,10 @@ def _rollout_select_pattern(
     避免每一步都运行昂贵的手牌结构估值。档 2+ 保留一个关键协作行为：
     队友正在桌顶时选择过牌。
     """
+    finish = _rollout_finish_pattern(state, player)
+    if finish is not None:
+        return finish
+
     if rollout_strategy_level >= 2 and state.table:
         top_player = current_top_player(state)
         if top_player is not None and is_teammate(top_player, player):
@@ -212,17 +216,23 @@ def _rollout_select_pattern(
     return _smallest_rollout_pattern(state, player)
 
 
+def _rollout_finish_pattern(state: GameState, player: int) -> Optional[Pattern]:
+    hand = state.hands[player]
+    if not hand or len(hand) > 10:
+        return None
+    finish = find_complete_pattern(hand, state.wild_card)
+    if finish is None:
+        return None
+    if state.table and not finish.can_be_played_on(state.table[-1], level=state.level):
+        return None
+    return finish
+
+
 def _smallest_rollout_pattern(state: GameState, player: int) -> Optional[Pattern]:
     """rollout 专用快速候选：只枚举低成本基础牌型，必要时找炸弹。"""
     hand = state.hands[player]
     if not hand:
         return None
-    if len(hand) <= 10:
-        finish = find_complete_pattern(hand, state.wild_card)
-        if finish is not None and (
-            not state.table or finish.can_be_played_on(state.table[-1], level=state.level)
-        ):
-            return finish
 
     table_top = state.table[-1] if state.table else None
     if table_top is None:

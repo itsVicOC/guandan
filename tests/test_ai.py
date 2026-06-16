@@ -709,6 +709,24 @@ class TestStrategyDifferentiation:
         assert pattern.type == PatternType.SINGLE
         assert pattern.rank == RANK_A
 
+    def test_advanced_finishes_before_teammate_cooperation(self) -> None:
+        """高手 AI 能出完时，不应被队友领先协作分改成过牌。"""
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.turn_index = 0
+        state.leader = 2
+        state.table = [sp(RANK_8, "H")]
+        state.hands[0] = [c(RANK_9, "S")]
+        state.hands[1] = [c(RANK_3, "D"), c(RANK_4, "D")]
+        state.hands[2] = [c(RANK_5, "D"), c(RANK_6, "D")]
+        state.hands[3] = [c(RANK_7, "D"), c(RANK_K, "D")]
+
+        pattern = AdvancedStrategy().select_pattern(state, 0)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.SINGLE
+        assert pattern.rank == RANK_9
+
     def test_intermediate_valuation_differs_from_greedy(self) -> None:
         """Intermediate 的 cost-based 选牌 ≠ 纯贪心。"""
         # 构造手牌：3 张 6（可压 5），1 张 K

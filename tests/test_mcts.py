@@ -237,13 +237,30 @@ class TestMCTSRolloutPolicy:
         state = _make_test_state()
         state.table = [top]
         state.turn_index = 0
-        state.hands[0] = [Card(9, Suit.HEARTS)]
+        state.hands[0] = [Card(9, Suit.HEARTS), Card(14, Suit.HEARTS)]
 
         from guandan.engine.events import TurnPlayed
 
         state.history.append(TurnPlayed(player=2, pattern=top, hand_remaining=1))
 
         assert _rollout_select_pattern(state, 0, rollout_strategy_level=2) is None
+
+    def test_rollout_level_two_finishes_before_teammate_pass(self):
+        top = Pattern(PatternType.SINGLE, 8, 1, (Card(8, Suit.HEARTS),), 0)
+        state = _make_test_state()
+        state.table = [top]
+        state.turn_index = 0
+        state.hands[0] = [Card(9, Suit.HEARTS)]
+
+        from guandan.engine.events import TurnPlayed
+
+        state.history.append(TurnPlayed(player=2, pattern=top, hand_remaining=1))
+
+        pattern = _rollout_select_pattern(state, 0, rollout_strategy_level=2)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.SINGLE
+        assert pattern.rank == 9
 
     def test_rollout_does_not_reuse_single_wild_card(self):
         """rollout 快速枚举不能把 1 张逢人配当作 2 张牌使用。"""
