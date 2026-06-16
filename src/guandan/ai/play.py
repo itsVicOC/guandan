@@ -7,6 +7,7 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
+from ..engine.hand import effective_rank
 from ..engine.rules.patterns import find_complete_pattern
 from ..engine.state import IllegalPlayError, pass_turn, play_pattern
 from .stochastic import should_pass
@@ -46,12 +47,13 @@ def play_or_pass(
             if hand:
                 fallback_card = min(
                     (c for c in hand if c != state.wild_card),
-                    key=lambda c: c.rank,
+                    key=lambda c: (effective_rank(c.rank, state.level), c.rank),
                     default=hand[0],
                 )
                 fallback = find_complete_pattern([fallback_card], state.wild_card)
                 if fallback is not None:
                     play_pattern(state, player, fallback)
+                    return True
         return False
     if not state.table:
         # leader 模式 → 必须出

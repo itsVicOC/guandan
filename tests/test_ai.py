@@ -807,6 +807,14 @@ class TestStrategyDifferentiation:
 
 
 class TestPlayOrPass:
+    class AlwaysNoneStrategy:
+        name = "空策略"
+        difficulty = 99
+        uses_stochastic_pass = True
+
+        def select_pattern(self, state, player):
+            return None
+
     def test_leader_always_plays(self) -> None:
         """leader 模式：play_or_pass 一定返回 True（出牌）。"""
         state = make_initial_state(level=5, first_player=0, seed=42)
@@ -822,12 +830,24 @@ class TestPlayOrPass:
         """leader + select_pattern 返回 None → 兜底出最小单张。"""
         state = make_initial_state(level=5, first_player=0, seed=42)
         state.wild_card = None
-        state.hands[0] = [c(RANK_5, "H")]  # 5H 是 wild
-        # 新手 不会 返回 None on leader (greedy leader returns smallest non-wild)
-        # 但若手牌全 wild，select_pattern 会返回 wild 单张
+        state.hands[0] = [c(RANK_5, "H")]
         rng = random.Random(0)
-        result = play_or_pass(state, 0, make_strategy(0), rng)
-        assert result is True  # 不管怎样出牌了
+        result = play_or_pass(state, 0, self.AlwaysNoneStrategy(), rng)
+
+        assert result is True
+        assert state.table[-1].rank == RANK_5
+
+    def test_leader_fallback_protects_level_card(self) -> None:
+        """leader 兜底选牌也应按级牌强度保护非红桃级牌。"""
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = c(RANK_2, "H")
+        state.hands[0] = [c(RANK_2, "S"), c(RANK_9, "D")]
+        rng = random.Random(0)
+
+        result = play_or_pass(state, 0, self.AlwaysNoneStrategy(), rng)
+
+        assert result is True
+        assert state.table[-1].rank == RANK_9
 
     def test_advanced_passes_when_teammate_winning(self) -> None:
         """Advanced 协作分：队友在桌顶 → play_or_pass 返回 False。
