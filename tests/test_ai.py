@@ -495,13 +495,12 @@ class TestEnumerateCandidates:
 
 class TestPlayedTracker:
     def test_initial_state_all_remaining(self) -> None:
-        """新发的牌 → 各种 rank 都有 remaining=4。"""
+        """新发的牌 → 普通点数各 8 张未出。"""
         state = make_initial_state(level=5, first_player=0, seed=42)
         tracker = PlayedTracker.from_history(state)
         for r in range(2, 15):
-            # 我手牌里有的 rank 不会全是 remaining=4
-            # 但 remaining >= 2 (我手牌至少 1 张) - 0
-            assert tracker.remaining(r) >= 0
+            assert tracker.remaining(r) == 8
+        assert tracker.remaining(RANK_SMALL_JOKER) == 2
 
     def test_remaining_decreases_after_play(self) -> None:
         """打出一张后 remaining 减 1。"""
@@ -518,10 +517,9 @@ class TestPlayedTracker:
         state = make_initial_state(level=5, first_player=0, seed=42)
         state.wild_card = None
         state.hands[0] = [c(RANK_5, "H"), c(RANK_5, "D")]  # 2 张 5
-        state.hands[1] = [c(RANK_5, "S"), c(RANK_5, "C")]  # 2 张 5 → 全部 4 张打完
         tracker = PlayedTracker.from_history(state)
-        # 5 总数 4 张，2 张在 0 手里 → 其他家有 2 张
-        assert tracker.in_someone_hand(RANK_5, state.hands[0]) == 2
+        # 5 总数 8 张，2 张在 0 手里 → 其他家最多还有 6 张
+        assert tracker.in_someone_hand(RANK_5, state.hands[0]) == 6
 
     def test_bomb_count_tracked(self) -> None:
         """炸弹出过后 bomb_count 增 1。"""

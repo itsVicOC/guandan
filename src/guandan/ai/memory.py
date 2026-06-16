@@ -16,6 +16,9 @@ from ..engine.card import (
 from ..engine.events import Pass, TurnPlayed
 from ..engine.state import GameState
 
+NORMAL_RANK_TOTAL = 8
+JOKER_RANK_TOTAL = 2
+
 
 class PlayedTracker:
     """已经出过的牌（按 rank 统计）。"""
@@ -50,9 +53,9 @@ class PlayedTracker:
     def remaining(self, rank: int) -> int:
         """某种 rank 还剩几张（未出）= 总数 - 已出。"""
         if rank in (RANK_SMALL_JOKER, RANK_BIG_JOKER):
-            total = 2
+            total = JOKER_RANK_TOTAL
         elif NORMAL_MIN <= rank <= NORMAL_MAX:
-            total = 4  # 2 副牌，每种 rank 4 张
+            total = NORMAL_RANK_TOTAL
         else:
             return 0
         return max(0, total - self.played_by_rank.get(rank, 0))
