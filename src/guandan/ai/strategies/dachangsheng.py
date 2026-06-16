@@ -173,6 +173,10 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         if state.hand_size(partner) == 0:
             return False
 
+        # 对手报单时优先护航，不用风格化让牌覆盖拦截。
+        if self._get_opponent_min_cards(state, player) == 1:
+            return False
+
         # 队友手牌少且正在领先（是当前出牌者），让队友收这一轮
         return (
             state.hand_size(partner) <= 5

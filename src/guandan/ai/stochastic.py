@@ -66,10 +66,10 @@ def should_pass(
 
     # 队友正在领牌时更愿意让队友收轮；对手快出完时更愿意出手拦截。
     top_player = current_top_player(state)
+    if _opponent_about_to_go_out(state, player):
+        return False
     if top_player is not None and is_teammate(top_player, player):
         p += 0.20
-    elif _opponent_about_to_go_out(state, player):
-        return False
 
     opponent_min = _opponent_min_cards(state, player)
     if 0 < opponent_min <= 2:

@@ -174,6 +174,18 @@ class TestStyleBehavior:
         assert min_cards > 0
         assert min_cards <= 27  # 初始最多27张
 
+    def test_does_not_let_teammate_play_when_opponent_has_one_card(self):
+        """对手报单时，戴长胜风格不应继续让牌覆盖拦截。"""
+        state = _make_test_state()
+        strategy = DaiChangshengStrategy()
+        state.table = [Pattern(PatternType.SINGLE, 9, 1, (Card(9, Suit.HEARTS),), 0)]
+        state.hands[0] = [Card(14, Suit.DIAMONDS), Card(4, Suit.CLUBS)]
+        state.hands[1] = [Card(3, Suit.CLUBS)]
+        state.hands[2] = [Card(5, Suit.CLUBS), Card(6, Suit.CLUBS)]
+        state.hands[3] = [Card(7, Suit.CLUBS), Card(8, Suit.CLUBS)]
+
+        assert strategy._should_let_teammate_play(state, player=0) is False
+
     def test_drift_finish_prefers_level_bomb(self):
         """最后一手可漂牌时，优先选择 5 张以上级牌炸弹。"""
         state = _make_test_state(level=5)

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from ...engine.hand import Pattern
+from ...engine.hand import Pattern, PatternType
 from ...engine.state import GameState, is_teammate
 from ...engine.trick import current_top_player
 from ..greedy import select_min_winning
@@ -39,6 +39,31 @@ def _key_count_exhausted(state: GameState, player: int, candidate: Pattern) -> b
     return False
 
 
+def _opponent_has_one_card(state: GameState, player: int) -> bool:
+    return any(
+        not is_teammate(p, player) and state.hand_size(p) == 1
+        for p in range(4)
+    )
+
+
+def _cover_teammate_against_one_card_opponent(
+    state: GameState, player: int
+) -> Optional[Pattern]:
+    """队友单张领先但对手报单时，尝试用同型单牌抬高桌顶。"""
+    if not state.table or state.table[-1].type != PatternType.SINGLE:
+        return None
+    if not _opponent_has_one_card(state, player):
+        return None
+    candidates = [
+        pattern
+        for pattern in enumerate_candidate_plays(state, player, max_candidates=16)
+        if pattern.type == PatternType.SINGLE and pattern.length == 1
+    ]
+    if not candidates:
+        return None
+    return min(candidates, key=lambda p: estimate_pattern_cost(state, player, p))
+
+
 class AdvancedStrategy:
     """高手 AI：协作分 + 记牌 + 估值。"""
 
@@ -51,6 +76,9 @@ class AdvancedStrategy:
     ) -> Optional[Pattern]:
         # 协作：队友已领先 → 让队友收这一轮
         if _teammate_winning(state, player):
+            cover = _cover_teammate_against_one_card_opponent(state, player)
+            if cover is not None:
+                return cover
             return None
 
         # 估值候选
