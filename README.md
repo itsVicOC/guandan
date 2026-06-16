@@ -1,6 +1,6 @@
 # 掼蛋（Guandan）— 本地 TUI 单机版
 
-> 状态：**v0.7.0-beta.2 / 公测版**（规则口径、AI 候选策略、TUI 视觉与稳定性持续收口）
+> 状态：**v0.7.0-beta.2 / 公测版**（M7 AI 对战基准与策略调优已收口，TUI 与发布前体验继续优化）
 > 规则：与全国锦标赛通用口径一致
 > AI：5 档（新手 / 进阶 / 高手 / 职业（IS-MCTS）/ **戴长胜（风格化）**）
 > 持久化：Profile / Savegame / History / 断点续局恢复已实现
@@ -11,7 +11,7 @@
 - 🤖 5 档 AI 难度，规则驱动候选出牌，最高档致敬戴长胜牌风（IS-MCTS + 炸弹吝啬 + 配合意识 + 漂牌决策）
 - 🔁 历史战绩 / 自动保存 / 断点续局恢复
 - 💻 终端 TUI（`textual`），首页 / 难度页 / 牌局页已统一深色牌桌风格，macOS / Linux 主流终端兼容
-- 🧪 公测版已完成规则回归、AI 候选策略、TUI 主流程与断点续局的自动化验证
+- 🧪 公测版已完成规则回归、AI 候选策略、AI 对战基准、TUI 主流程与断点续局的自动化验证
 
 ## 安装
 
@@ -86,7 +86,7 @@ guandan/
 - [x] **M6.2** AI 候选策略与 TUI 视觉收口（v0.6.6）
 - [x] **M6.3** 公测版稳定性收口（v0.7.0-beta.1）：AI 连续行牌、防卡死回归、文档与版本号统一
 - [x] **M6.4** 公测版回合顺序修复（v0.7.0-beta.2）：当前轮显示隔离、AI 牌权逆时针回归测试
-- [~] **M7** AI 对战基准与策略调优：benchmark、牌墩公共 helper、高阶过牌控制、MCTS 评分升级
+- [x] **M7** AI 对战基准与策略调优：benchmark、牌墩公共 helper、高阶过牌控制、MCTS 评分升级与残局策略收口
 - [~] v1.0 发布前调优：更强残局策略、更多 TUI 细节、文档/回放体验完善
 
 ## 开发
@@ -112,6 +112,12 @@ python -m guandan.ai.benchmark --compare baseline.json current.json --json
 python -m guandan.ai.benchmark --compare baseline.json current.json \
   --fail-completion-drop 0.05 --fail-duration-increase 2.0 --fail-turn-increase 20
 ```
+
+### 当前 M7 基准
+
+- 命令：`python -m guandan.ai.benchmark --games 20 --difficulties 0,1,2,3 --seed-start 800 --max-turns 2000 --json`
+- 结果：20/20 完成，完成率 1.0，平均 91.15 回合，平均炸弹数 `[0.3, 0.4]`。
+- 胜场：`[2, 18]`；这是混合难度座位基准，1/3 号位难度整体高于 0/2 号位，不作为公平胜率结论。
 
 ## 许可
 

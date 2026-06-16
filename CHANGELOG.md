@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-### M7 AI 调优起步
+### M7 AI 调优收口
 
 #### AI 策略
 - 新增 `guandan.ai.benchmark` 对战基准工具，可按座位混合难度跑 AI-only 对局并输出完成率、胜队、平均回合、炸弹数与最终升级。
@@ -35,7 +35,8 @@
 - 新增 AI benchmark / benchmark 对比与门禁测试、当前 trick helper 回归测试、职业档随机过牌覆盖测试和 MCTS 评分测试。
 - `ruff check src tests` 通过。
 - `mypy src` 通过。
-- `pytest`：276 个测试全过。
+- `pytest`：282 个测试全过。
+- M7 收口 benchmark：`python -m guandan.ai.benchmark --games 20 --difficulties 0,1,2,3 --seed-start 800 --max-turns 2000 --json`，20/20 完成，完成率 1.0，平均 91.15 回合，平均炸弹数 `[0.3, 0.4]`。
 
 ## [0.7.0-beta.2] - 2026-06-13
 
