@@ -7,9 +7,9 @@ from typing import List, Optional
 
 from rich.markup import escape
 from textual.app import ComposeResult
-from textual.containers import Grid, Vertical
+from textual.containers import Grid, Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Footer, Header, Static
+from textual.widgets import Button, Footer, Header, Static
 
 from ...ai import AINotImplementedError, make_strategy, play_or_pass
 from ...engine.card import Card, Suit
@@ -86,37 +86,34 @@ class OpponentWidget(Static):
 
 
 def _tui_card(card: Card, *, selected: bool = False, cursor: bool = False, wild: bool = False) -> str:
-    """终端专用牌面：用中文花色降低对终端配色的依赖。"""
+    """终端专用牌面：用中文花色、符号和固定底色降低对终端配色的依赖。"""
     if card.is_big_joker:
         body = "大王"
-        style = "bold yellow"
+        style = "bold #101010 on #ffd84d"
     elif card.is_small_joker:
         body = "小王"
-        style = "bold yellow"
+        style = "bold #101010 on #ffd84d"
     else:
-        suit_text = {
-            Suit.HEARTS: "红",
-            Suit.DIAMONDS: "方",
-            Suit.SPADES: "黑",
-            Suit.CLUBS: "梅",
+        suit_meta = {
+            Suit.HEARTS: ("红", "♥", "bold #fff4f4 on #7a1f1f"),
+            Suit.DIAMONDS: ("方", "♦", "bold #fff4ff on #733078"),
+            Suit.SPADES: ("黑", "♠", "bold #101010 on #e5e5e5"),
+            Suit.CLUBS: ("梅", "♣", "bold #10201c on #65d4bf"),
         }[card.suit]
-        body = f"{suit_text}{_rank_label(card)}"
-        style = {
-            Suit.HEARTS: "bold red",
-            Suit.DIAMONDS: "bold magenta",
-            Suit.SPADES: "bold bright_white",
-            Suit.CLUBS: "bold cyan",
-        }[card.suit]
+        suit_text, suit_symbol, style = suit_meta
+        body = f"{suit_text}{_rank_label(card)}{suit_symbol}"
 
     label = f"{body}配" if wild else body
 
+    if selected and cursor:
+        return _styled_card("bold #101010 on #ffd84d", f"▶{label}✓")
     if selected:
-        return _styled_card("black on yellow", f"{{{label}}}")
+        return _styled_card("bold #101010 on #ffd84d", f"✓{label}✓")
     if cursor:
-        return _styled_card("white on blue", f">{label}<")
+        return _styled_card("bold #ffffff on #2457d6", f"▶{label}◀")
     if wild:
-        return _styled_card("black on green", f"[{label}]")
-    return _styled_card(style, f"[{label}]")
+        return _styled_card("bold #101010 on #75d575", f"★{label}")
+    return _styled_card(style, f" {label} ")
 
 
 def _styled_card(style: str, text: str) -> str:
@@ -260,11 +257,24 @@ class GameScreen(Screen):
         color: #cdd7c8;
     }
     #my-hand {
-        min-height: 8;
+        min-height: 10;
         padding: 1 2;
         border: round #d6b35a;
-        background: #111815;
+        background: #0d1412;
         color: #eee8d9;
+    }
+    #round-actions {
+        height: 3;
+        align: center middle;
+        padding: 0 2;
+        background: #101512;
+    }
+    #btn-next-game {
+        width: 24;
+        margin-right: 2;
+    }
+    #btn-game-back {
+        width: 18;
     }
     #action-log {
         height: 4;
@@ -285,6 +295,7 @@ class GameScreen(Screen):
         ("p", "pass", "过牌"),
         ("t", "hint", "提示"),
         ("b", "claim", "报牌"),
+        ("n", "next_game", "下一局"),
         ("?", "rules", "规则"),
         ("escape", "back", "返回"),
     ]
@@ -341,6 +352,9 @@ class GameScreen(Screen):
                 yield PlayerStatusWidget("", id="player-south")
                 yield Static("")
             yield Static("hand", id="my-hand")
+            with Horizontal(id="round-actions"):
+                yield Button("N  下一局", id="btn-next-game", variant="success", disabled=True)
+                yield Button("返回大厅", id="btn-game-back", variant="default")
             yield Static("ready", id="action-log")
         yield Footer()
 
@@ -406,13 +420,15 @@ class GameScreen(Screen):
         turn_name = SEAT_NAMES[s.turn_index]
         if s.finished:
             order_str = " > ".join(SEAT_NAMES[p] for p in s.finish_order)
-            self.sub_title = f"本局结束！名次：{order_str}"
+            next_level = self._next_round_level(s)
+            self.sub_title = f"本局结束！名次：{order_str} · 下一局级牌 {next_level} · 按 N 继续"
         elif s.turn_index == self.human:
             hand_size = len(s.hands[self.human])
             self.sub_title = f"轮到你（{turn_name}）· {hand_size} 张"
         else:
             self.sub_title = f"等待 {turn_name} 出牌中..."
         self._render_status()
+        self._refresh_round_actions()
         self.query_one("#action-log", Static).update(self._last_action)
 
     def _render_status(self) -> None:
@@ -430,11 +446,15 @@ class GameScreen(Screen):
             f"[bold #ffd978]AI[/bold #ffd978] {self._strategy.name}\n"
             f"先手 {leader}家 · 最大 {top_player}家 · 队伍级数 东西:{levels[0]} 南北:{levels[1]} · 名次 {finished}"
         )
+        if s.finished:
+            text += f" · 下一局级牌 {self._next_round_level(s)}"
         self.query_one("#status-bar", Static).update(text)
 
     def _do_render_hand(self) -> None:
         if not self._hand_cards:
-            self.query_one("#my-hand", Static).update("（无牌）")
+            self.query_one("#my-hand", Static).update(
+                "[bold #d6b35a]你的手牌[/bold #d6b35a]\n[dim]本局已结束，点击“下一局”继续。[/dim]"
+            )
             return
         parts = []
         for i, c in enumerate(self._hand_cards):
@@ -442,9 +462,31 @@ class GameScreen(Screen):
             cursor = i == self._hand_cursor
             wild = self.state is not None and c == self.state.wild_card
             parts.append(_tui_card(c, selected=selected, cursor=cursor, wild=wild))
-        rows = ["  ".join(parts[i : i + 9]) for i in range(0, len(parts), 9)]
-        header = "[bold #d6b35a]你的手牌[/bold #d6b35a]  [dim]空格选牌 · 回车出牌 · P 过牌 · T 提示[/dim]"
+        rows = ["  ".join(parts[i : i + 7]) for i in range(0, len(parts), 7)]
+        selected_count = len(self._hand_selected_indices)
+        cursor_pos = self._hand_cursor + 1 if self._hand_cards else 0
+        header = (
+            "[bold #d6b35a]你的手牌[/bold #d6b35a]  "
+            f"[#cdd7c8]光标 {cursor_pos}/{len(self._hand_cards)} · 已选 {selected_count} 张[/#cdd7c8]\n"
+            "[dim]红♥ / 方♦ / 黑♠ / 梅♣ · ▶光标 · ✓选中 · ★逢人配 · 空格选牌 · 回车出牌[/dim]"
+        )
         self.query_one("#my-hand", Static).update(f"{header}\n" + "\n".join(rows))
+
+    def _refresh_round_actions(self) -> None:
+        s = self._state()
+        next_button = self.query_one("#btn-next-game", Button)
+        next_button.disabled = not s.finished
+        if s.finished:
+            next_button.label = f"N  下一局 · 级牌 {self._next_round_level(s)}"
+        else:
+            next_button.label = "N  下一局"
+
+    def _next_round_level(self, state: GameState) -> int:
+        levels = getattr(state, "team_levels_final", None)
+        if levels is None or not state.finish_order:
+            return state.level
+        head_team = state.finish_order[0] % 2
+        return int(levels[head_team])
 
     def _last_player_of(self, p: Pattern) -> int:
         return last_player_of_pattern(self._state(), p, default=0) or 0
@@ -554,6 +596,32 @@ class GameScreen(Screen):
         self._last_action = f"你报牌：{len(s.hands[self.human])} 张"
         self._refresh_all()
 
+    def action_next_game(self) -> None:
+        s = self._state()
+        if not s.finished:
+            self._last_action = "本局尚未结束，不能开始下一局"
+            self._refresh_all()
+            return
+        if not self._game_saved:
+            self._save_game_result()
+
+        next_level = self._next_round_level(s)
+        self.level = next_level
+        self._seed = random.randint(1, 10000)
+        self._game_id = f"game_{int(time.time())}"
+        self._start_time = time.time()
+        self._game_saved = False
+        self._hand_selected_indices.clear()
+        self._hand_cursor = 0
+        self.state = make_initial_state(
+            level=next_level,
+            first_player=self.human,
+            seed=self._seed,
+        )
+        self._last_action = f"新一局开始：级牌 {next_level}"
+        self._refresh_all()
+        self.set_timer(0.3, self._maybe_ai_turn)
+
     def action_rules(self) -> None:
         from .rule import RuleScreen
 
@@ -561,6 +629,8 @@ class GameScreen(Screen):
 
     def action_back(self) -> None:
         s = self._state()
+        if s.finished and not self._game_saved:
+            self._save_game_result()
         # M5: 退出时保存存档（如果游戏未完成）
         if not s.finished and not self._game_saved:
             try:
@@ -578,6 +648,14 @@ class GameScreen(Screen):
                 # 保存失败不影响退出
                 pass
         self.app.pop_screen()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-next-game":
+            self.action_next_game()
+            event.stop()
+        elif event.button.id == "btn-game-back":
+            self.action_back()
+            event.stop()
 
     def _maybe_ai_turn(self) -> None:
         s = self._state()
@@ -663,7 +741,7 @@ class GameScreen(Screen):
             )
 
             # 更新统计
-            player_rank = s.finish_order.index(self.human) + 1
+            player_rank = s.finish_order.index(self.human) + 1 if self.human in s.finish_order else 4
             profile = load_profile()
             update_statistics(profile, player_rank=player_rank, difficulty=self.difficulty)
             save_profile(profile)

@@ -5,6 +5,7 @@ import asyncio
 import random
 
 from rich.text import Text
+from textual.widgets import Button
 
 from guandan.engine.card import (
     RANK_4,
@@ -39,6 +40,16 @@ def test_tui_card_uses_chinese_suit_labels() -> None:
     assert "梅K" in _plain(_tui_card(Card(13, Suit.CLUBS)))
     assert "大王" in _plain(_tui_card(Card(RANK_BIG_JOKER, Suit.BIG_JOKER)))
     assert "小王" in _plain(_tui_card(Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER)))
+
+
+def test_tui_card_marks_cursor_selection_and_wild() -> None:
+    card = Card(5, Suit.HEARTS)
+
+    assert "▶" in _plain(_tui_card(card, cursor=True))
+    assert "✓" in _plain(_tui_card(card, selected=True))
+    assert "配" in _plain(_tui_card(card, wild=True))
+    assert "▶" in _plain(_tui_card(card, selected=True, cursor=True))
+    assert "✓" in _plain(_tui_card(card, selected=True, cursor=True))
 
 
 def test_duplicate_cards_are_selected_by_position() -> None:
@@ -344,5 +355,44 @@ def test_four_jokers_selected_in_tui_play_as_four_joker_bomb() -> None:
             assert len(state.hands[0]) == 0
             assert state.table[-1].type == PatternType.FOUR_JOKERS
             assert len(state.table[-1].cards) == 4
+
+    asyncio.run(run())
+
+
+def test_finished_game_can_start_next_round_from_head_team_level() -> None:
+    """下一局应以头游所在队伍的最终级牌重新发牌。"""
+    async def run() -> None:
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[[], [], [], []],
+            turn_index=0,
+            leader=0,
+            finish_order=[1, 3, 0],
+            finished=True,
+        )
+        state.team_levels_final = [2, 5]  # type: ignore[attr-defined]
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state, human=0)
+            screen._game_saved = True
+            app.push_screen(screen)
+            await pilot.pause()
+
+            next_button = screen.query_one("#btn-next-game", Button)
+            assert next_button.disabled is False
+            assert "级牌 5" in str(next_button.label)
+
+            screen.action_next_game()
+            await pilot.pause()
+
+            assert screen.state is not state
+            assert screen.state is not None
+            assert screen.state.level == 5
+            assert screen.state.finished is False
+            assert len(screen.state.hands[0]) == 27
+            assert screen._game_saved is False
+            assert "新一局开始" in screen._last_action
 
     asyncio.run(run())

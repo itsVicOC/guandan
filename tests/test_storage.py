@@ -185,46 +185,55 @@ class TestProfile:
 
     def test_update_statistics_win(self):
         """更新统计（获胜）。"""
-        profile = load_profile()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch("guandan.storage.profile.get_profile_path") as mock:
+                mock.return_value = Path(tmpdir) / "profile.json"
+                profile = load_profile()
 
-        # 玩家上游（rank 1）
-        update_statistics(profile, player_rank=1, difficulty=2)
+                # 玩家上游（rank 1）
+                update_statistics(profile, player_rank=1, difficulty=2)
 
-        assert profile["statistics"]["total_games"] == 1
-        assert profile["statistics"]["wins"] == 1
-        assert profile["statistics"]["losses"] == 0
-        assert profile["statistics"]["win_rate"] == 1.0
-        assert profile["statistics"]["by_difficulty"]["2"]["games"] == 1
-        assert profile["statistics"]["by_difficulty"]["2"]["wins"] == 1
+                assert profile["statistics"]["total_games"] == 1
+                assert profile["statistics"]["wins"] == 1
+                assert profile["statistics"]["losses"] == 0
+                assert profile["statistics"]["win_rate"] == 1.0
+                assert profile["statistics"]["by_difficulty"]["2"]["games"] == 1
+                assert profile["statistics"]["by_difficulty"]["2"]["wins"] == 1
 
     def test_update_statistics_loss(self):
         """更新统计（失败）。"""
-        profile = load_profile()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch("guandan.storage.profile.get_profile_path") as mock:
+                mock.return_value = Path(tmpdir) / "profile.json"
+                profile = load_profile()
 
-        # 玩家下游（rank 4）
-        update_statistics(profile, player_rank=4, difficulty=2)
+                # 玩家下游（rank 4）
+                update_statistics(profile, player_rank=4, difficulty=2)
 
-        assert profile["statistics"]["total_games"] == 1
-        assert profile["statistics"]["wins"] == 0
-        assert profile["statistics"]["losses"] == 1
-        assert profile["statistics"]["win_rate"] == 0.0
+                assert profile["statistics"]["total_games"] == 1
+                assert profile["statistics"]["wins"] == 0
+                assert profile["statistics"]["losses"] == 1
+                assert profile["statistics"]["win_rate"] == 0.0
 
     def test_update_statistics_multiple_games(self):
         """更新统计（多局）。"""
-        profile = load_profile()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch("guandan.storage.profile.get_profile_path") as mock:
+                mock.return_value = Path(tmpdir) / "profile.json"
+                profile = load_profile()
 
-        update_statistics(profile, player_rank=1, difficulty=2)  # 赢
-        update_statistics(profile, player_rank=3, difficulty=2)  # 输
-        update_statistics(profile, player_rank=2, difficulty=3)  # 赢
+                update_statistics(profile, player_rank=1, difficulty=2)  # 赢
+                update_statistics(profile, player_rank=3, difficulty=2)  # 输
+                update_statistics(profile, player_rank=2, difficulty=3)  # 赢
 
-        assert profile["statistics"]["total_games"] == 3
-        assert profile["statistics"]["wins"] == 2
-        assert profile["statistics"]["losses"] == 1
-        assert profile["statistics"]["win_rate"] == 2 / 3
-        assert profile["statistics"]["by_difficulty"]["2"]["games"] == 2
-        assert profile["statistics"]["by_difficulty"]["2"]["wins"] == 1
-        assert profile["statistics"]["by_difficulty"]["3"]["games"] == 1
-        assert profile["statistics"]["by_difficulty"]["3"]["wins"] == 1
+                assert profile["statistics"]["total_games"] == 3
+                assert profile["statistics"]["wins"] == 2
+                assert profile["statistics"]["losses"] == 1
+                assert profile["statistics"]["win_rate"] == 2 / 3
+                assert profile["statistics"]["by_difficulty"]["2"]["games"] == 2
+                assert profile["statistics"]["by_difficulty"]["2"]["wins"] == 1
+                assert profile["statistics"]["by_difficulty"]["3"]["games"] == 1
+                assert profile["statistics"]["by_difficulty"]["3"]["wins"] == 1
 
 
 class TestSavegame:
