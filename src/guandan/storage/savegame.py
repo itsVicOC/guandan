@@ -176,6 +176,7 @@ def _state_to_dict(state: GameState) -> dict[str, Any]:
         "wild_card": _card_to_dict(state.wild_card) if state.wild_card else None,
         "hands": [[_card_to_dict(c) for c in hand] for hand in state.hands],
         "turn_index": state.turn_index,
+        "team_levels": list(state.team_levels),
         "table": [_pattern_to_dict(p) for p in state.table],
         "passed_players": sorted(state.passed_players),
         "leader": state.leader,
@@ -187,6 +188,12 @@ def _state_to_dict(state: GameState) -> dict[str, Any]:
         "drift": state.drift,
         "trick_number": state.trick_number,
         "next_trick_starter": state.next_trick_starter,
+        "team_levels_final": list(state.team_levels_final)
+        if state.team_levels_final
+        else None,
+        "drift_flag": state.drift_flag,
+        "guo_a": state.guo_a,
+        "guo_a_failed": state.guo_a_failed,
     }
 
 
@@ -196,6 +203,7 @@ def _dict_to_state(data: dict[str, Any], events: list[Any]) -> GameState:
         wild_card=_dict_to_card(data["wild_card"]) if data.get("wild_card") else None,
         hands=[[_dict_to_card(c) for c in hand] for hand in data["hands"]],
         turn_index=data["turn_index"],
+        team_levels=list(data.get("team_levels", [data["level"], data["level"]])),
         table=[_dict_to_pattern(p) for p in data.get("table", [])],
         passed_players=set(data.get("passed_players", [])),
         leader=data.get("leader"),
@@ -208,6 +216,12 @@ def _dict_to_state(data: dict[str, Any], events: list[Any]) -> GameState:
         drift=data.get("drift", False),
         trick_number=data.get("trick_number", 0),
         next_trick_starter=data.get("next_trick_starter"),
+        team_levels_final=list(data["team_levels_final"])
+        if data.get("team_levels_final")
+        else None,
+        drift_flag=data.get("drift_flag", False),
+        guo_a=data.get("guo_a", False),
+        guo_a_failed=data.get("guo_a_failed", False),
     )
     return state
 
@@ -222,6 +236,7 @@ def _replay_events_to_state(savegame: dict[str, Any]) -> GameState:
         level=shuffle.level,
         first_player=shuffle.first_player,
         seed=shuffle.seed,
+        team_levels=shuffle.team_levels,
     )
     for event in events[1:]:
         if state.finished:

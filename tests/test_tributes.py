@@ -16,6 +16,7 @@ from guandan.engine.card import (
 from guandan.engine.rules.tributes import (
     can_resist_tribute,
     can_return_tribute,
+    next_round_first_player_after_tribute,
     resolve_tribute,
     select_return_card,
     select_tribute_card,
@@ -49,6 +50,36 @@ class TestSelectTributeCard:
     def test_joker_max(self):
         hand = [c(RANK_A), c(RANK_BIG_JOKER, "BJ")]
         assert select_tribute_card(hand) == c(RANK_BIG_JOKER, "BJ")
+
+
+class TestNextRoundFirstPlayer:
+    def test_last_player_starts_when_third_and_last_are_different_teams(self):
+        finish_order = [0, 1, 2]  # 三游西，末游北，不同队
+        hands = [[c(RANK_2)], [c(RANK_A)], [c(RANK_2)], [c(RANK_5)]]
+
+        assert next_round_first_player_after_tribute(finish_order, hands) == 3
+
+    def test_larger_tribute_starts_when_third_and_last_are_same_team(self):
+        finish_order = [0, 2, 1]  # 三游南，末游北，同为下游方
+        hands = [
+            [c(RANK_2)],
+            [c(RANK_A)],
+            [c(RANK_2)],
+            [c(RANK_K)],
+        ]
+
+        assert next_round_first_player_after_tribute(finish_order, hands) == 1
+
+    def test_last_player_starts_when_double_tribute_ties(self):
+        finish_order = [0, 2, 1]  # 三游南，末游北，同为下游方
+        hands = [
+            [c(RANK_2)],
+            [c(RANK_A)],
+            [c(RANK_2)],
+            [c(RANK_A)],
+        ]
+
+        assert next_round_first_player_after_tribute(finish_order, hands) == 3
 
 
 class TestCanReturnTribute:

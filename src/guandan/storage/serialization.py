@@ -70,6 +70,8 @@ def dict_to_event(d: dict[str, Any]) -> Event:
     # 转换 tuple（JSON 会把 tuple 变成 list）
     if event_type == "ShuffleDeal":
         d["hand_sizes"] = tuple(d["hand_sizes"])
+        if d.get("team_levels") is not None:
+            d["team_levels"] = tuple(d["team_levels"])
     elif event_type == "GameOver":
         d["finish_order"] = tuple(d["finish_order"])
         d["team_levels"] = tuple(d["team_levels"])

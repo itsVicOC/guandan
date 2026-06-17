@@ -4,6 +4,7 @@
 
 State 组成：
 - level: 当前级牌点数（2..14，A=14）
+- team_levels: 本局开始时两队各自级牌（0=东西，1=南北）
 - wild_card: 逢人配（红心级牌）
 - hands: 4 家手牌（list of list[Card]）
 - turn_index: 当前轮到的玩家
@@ -81,6 +82,7 @@ class GameState:
     wild_card: Optional[Card]
     hands: list[list[Card]]  # 4 家手牌
     turn_index: int  # 0-3
+    team_levels: list[int] = field(default_factory=list)
     table: list[Pattern] = field(default_factory=list)
     # 本轮已过牌的玩家集合（spec 规则 3：一旦过牌，本圈不能再出）
     passed_players: set[int] = field(default_factory=set)
@@ -94,6 +96,10 @@ class GameState:
     drift: bool = False
     trick_number: int = 0  # 第几轮（一轮 = 一手出牌 + 后续过牌/压牌）
     next_trick_starter: Optional[int] = None  # 下一轮的先手
+    team_levels_final: Optional[list[int]] = None
+    drift_flag: bool = False
+    guo_a: bool = False
+    guo_a_failed: bool = False
 
     def hand(self, player: int) -> list[Card]:
         return self.hands[player]
@@ -110,6 +116,10 @@ class GameState:
     def to_wild_card(self) -> Optional[Card]:
         """返回本局的逢人配。"""
         return self.wild_card
+
+    def __post_init__(self) -> None:
+        if not self.team_levels:
+            self.team_levels = [self.level, self.level]
 
 
 # ---- 玩家行动 ----
@@ -371,8 +381,13 @@ def _finish_game(state: GameState) -> None:
     delta_team0, delta_team1 = compute_level_change(
         head, second, third, last, state.team_bomb_count
     )
-    new_level_0 = min(RANK_A, max(RANK_2, state.level + delta_team0))
-    new_level_1 = min(RANK_A, max(RANK_2, state.level + delta_team1))
+    base_levels = (
+        list(state.team_levels)
+        if len(state.team_levels) == 2
+        else [state.level, state.level]
+    )
+    new_level_0 = min(RANK_A, max(RANK_2, base_levels[0] + delta_team0))
+    new_level_1 = min(RANK_A, max(RANK_2, base_levels[1] + delta_team1))
     new_levels = [new_level_0, new_level_1]
 
     # 漂牌检查
@@ -396,15 +411,14 @@ def _finish_game(state: GameState) -> None:
             new_levels[upstream_team] = min(RANK_A, new_levels[upstream_team] + 3)
 
     # 过 A 判定：头游方 + 队友非末游（= 头游+二游 或 头游+三游）
-    # 当前局打到 A 才能"冲 A"
-    # 升级前的级牌是 state.level
+    # 头游队伍开局级牌打到 A 才能"冲 A"。
     guo_a = False
     guo_a_failed = False
     upstream_team = team_of(head)
     upstream_partner_rank = (
         2 if (second == partner_of(head)) else (3 if (third == partner_of(head)) else 4)
     )
-    if state.level == RANK_A:
+    if base_levels[upstream_team] == RANK_A:
         if upstream_partner_rank in (2, 3):
             # 队友是 2nd 或 3rd → 双上 → 过 A 成功
             guo_a = True
@@ -418,10 +432,10 @@ def _finish_game(state: GameState) -> None:
             new_levels[upstream_team] = RANK_2
             # 另一方不变
 
-    state.team_levels_final = new_levels  # type: ignore[attr-defined]
-    state.drift_flag = drift  # type: ignore[attr-defined]
-    state.guo_a = guo_a  # type: ignore[attr-defined]
-    state.guo_a_failed = guo_a_failed  # type: ignore[attr-defined]
+    state.team_levels_final = new_levels
+    state.drift_flag = drift
+    state.guo_a = guo_a
+    state.guo_a_failed = guo_a_failed
 
     from .events import GameOver, LevelUp
 
@@ -431,7 +445,7 @@ def _finish_game(state: GameState) -> None:
             LevelUp(
                 team=0,
                 new_level=new_levels[0],
-                delta=new_levels[0] - state.level,
+                delta=new_levels[0] - base_levels[0],
             )
         )
     if delta_team1 != 0 or guo_a or guo_a_failed:
@@ -439,7 +453,7 @@ def _finish_game(state: GameState) -> None:
             LevelUp(
                 team=1,
                 new_level=new_levels[1],
-                delta=new_levels[1] - state.level,
+                delta=new_levels[1] - base_levels[1],
             )
         )
     state.history.append(
@@ -460,6 +474,7 @@ def make_initial_state(
     level: int = 2,
     first_player: int = 0,
     seed: Optional[int] = None,
+    team_levels: Optional[list[int] | tuple[int, int]] = None,
 ) -> GameState:
     """构造一局的初始状态（发牌完毕）。
 
@@ -467,9 +482,19 @@ def make_initial_state(
         level: 本局级牌点数（2..14）
         first_player: 首发起家索引
         seed: 随机种子（用于复现）
+        team_levels: 本局开始时两队各自级牌。未传入时两队都视为 level。
     """
     if not RANK_2 <= level <= RANK_A:
         raise ValueError(f"level must be 2..14, got {level}")
+    if team_levels is None:
+        initial_team_levels = [level, level]
+    else:
+        initial_team_levels = list(team_levels)
+        if len(initial_team_levels) != 2:
+            raise ValueError("team_levels must contain exactly two levels")
+        for team_level in initial_team_levels:
+            if not RANK_2 <= team_level <= RANK_A:
+                raise ValueError(f"team level must be 2..14, got {team_level}")
 
     rng = random.Random(seed)
     deck = make_deck()
@@ -491,6 +516,7 @@ def make_initial_state(
         wild_card=wild_card,
         hands=hands,
         turn_index=first_player,
+        team_levels=initial_team_levels,
         leader=first_player,
     )
     # 记录发牌事件
@@ -501,6 +527,7 @@ def make_initial_state(
             hand_sizes=(len(hands[0]), len(hands[1]), len(hands[2]), len(hands[3])),
             first_player=first_player,
             seed=seed if seed is not None else 0,
+            team_levels=(initial_team_levels[0], initial_team_levels[1]),
         )
     )
     return state

@@ -377,6 +377,32 @@ class TestGameCompletion_Document:
         assert state.team_levels_final[0] == 3  # 2 + 1
         assert state.team_levels_final[1] == 2  # 对方不变
 
+    def test_level_up_uses_each_team_starting_level(self):
+        """连续多局时，头游方按本队级牌升级，对方保持自己的最终级牌。"""
+        from guandan.engine.state import _finish_game
+
+        state = make_initial_state(
+            level=2,
+            first_player=0,
+            seed=42,
+            team_levels=[2, 5],
+        )
+        state.finish_order = [0, 2, 1]  # 东西双下
+        state.hands[3] = [c(RANK_5)]
+        _finish_game(state)
+
+        assert state.team_levels_final == [5, 5]
+
+        next_state = make_initial_state(
+            level=state.team_levels_final[0],
+            first_player=state.finish_order[0],
+            seed=43,
+            team_levels=state.team_levels_final,
+        )
+        assert next_state.level == 5
+        assert next_state.team_levels == [5, 5]
+        assert next_state.turn_index == 0
+
     def test_guo_a_requires_shuangshang(self):
         """过 A 必须"双上"：队友是 2nd/3rd（即头游+二游 或 头游+三游）才算成功。"""
         from guandan.engine.state import _finish_game

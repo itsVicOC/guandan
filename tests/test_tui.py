@@ -390,9 +390,66 @@ def test_finished_game_can_start_next_round_from_head_team_level() -> None:
             assert screen.state is not state
             assert screen.state is not None
             assert screen.state.level == 5
+            assert screen.state.team_levels == [2, 5]
             assert screen.state.finished is False
             assert len(screen.state.hands[0]) == 27
             assert screen._game_saved is False
             assert "新一局开始" in screen._last_action
+
+    asyncio.run(run())
+
+
+def test_next_round_first_player_uses_last_when_third_and_last_different_teams() -> None:
+    async def run() -> None:
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[[], [], [], []],
+            turn_index=0,
+            leader=0,
+            finish_order=[0, 1, 2],  # 三游西，末游北，不同队
+            finished=True,
+        )
+        hands = [
+            [Card(RANK_4, Suit.HEARTS)],
+            [Card(RANK_BIG_JOKER, Suit.BIG_JOKER)],
+            [Card(RANK_4, Suit.SPADES)],
+            [Card(RANK_6, Suit.CLUBS)],
+        ]
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state, human=0)
+            app.push_screen(screen)
+            await pilot.pause()
+            assert screen._next_round_first_player_for_hands(state, hands) == 3
+
+    asyncio.run(run())
+
+
+def test_next_round_first_player_compares_double_tribute_cards() -> None:
+    async def run() -> None:
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[[], [], [], []],
+            turn_index=0,
+            leader=0,
+            finish_order=[0, 2, 1],  # 三游南，末游北，同为下游方
+            finished=True,
+        )
+        hands = [
+            [Card(RANK_4, Suit.HEARTS)],
+            [Card(RANK_BIG_JOKER, Suit.BIG_JOKER)],
+            [Card(RANK_4, Suit.SPADES)],
+            [Card(RANK_8, Suit.CLUBS)],
+        ]
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state, human=0)
+            app.push_screen(screen)
+            await pilot.pause()
+            assert screen._next_round_first_player_for_hands(state, hands) == 1
 
     asyncio.run(run())

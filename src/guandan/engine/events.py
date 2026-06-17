@@ -34,6 +34,7 @@ class ShuffleDeal:
     first_player: int  # 首发起家索引 (0-3)
     # 出于反作弊：保存种子，让他人能复现
     seed: int
+    team_levels: Optional[tuple[int, int]] = None  # 本局开始时两队各自级牌
 
 
 @dataclass(frozen=True)

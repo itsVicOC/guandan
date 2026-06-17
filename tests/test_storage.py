@@ -132,6 +132,7 @@ class TestSerialization:
                 hand_sizes=(27, 27, 27, 27),
                 first_player=0,
                 seed=42,
+                team_levels=(2, 5),
             ),
             Pass(player=0, hand_remaining=27),
             Pass(player=1, hand_remaining=27),
@@ -142,6 +143,8 @@ class TestSerialization:
 
         assert len(restored) == 3
         assert restored == events
+        assert isinstance(restored[0], ShuffleDeal)
+        assert restored[0].team_levels == (2, 5)
 
     def test_deserialize_unknown_event_type(self):
         """反序列化未知事件类型抛异常。"""
@@ -286,12 +289,15 @@ class TestSavegame:
                 mock.return_value = Path(tmpdir) / "savegame.json"
 
                 state = _make_test_state()
+                state.team_levels = [2, 5]
+                state.team_levels_final = [5, 5]
                 shuffle_event = ShuffleDeal(
                     level=state.level,
                     wild_card=state.wild_card,
                     hand_sizes=tuple(len(h) for h in state.hands),
                     first_player=0,
                     seed=42,
+                    team_levels=(2, 5),
                 )
                 state.history.append(shuffle_event)
 
@@ -312,6 +318,8 @@ class TestSavegame:
                 assert restored.table == state.table
                 assert restored.passed_players == state.passed_players
                 assert restored.history == state.history
+                assert restored.team_levels == [2, 5]
+                assert restored.team_levels_final == [5, 5]
 
     def test_load_game_no_savegame(self):
         """无存档时返回 None。"""

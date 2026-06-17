@@ -176,10 +176,10 @@ def main(argv: list[str] | None = None) -> int:
     print("\n" + "=" * 60)
     if state.finished:
         print("本局结束！")
-        if hasattr(state, "team_levels_final"):
+        if state.team_levels_final is not None:
             print(f"两队最终级牌：{[lvl for lvl in state.team_levels_final]}")
-            print(f"漂牌：{getattr(state, 'drift_flag', False)}")
-            print(f"过 A：{getattr(state, 'guo_a', False)}")
+            print(f"漂牌：{state.drift_flag}")
+            print(f"过 A：{state.guo_a}")
         for i, p in enumerate(state.finish_order):
             label = ["上游", "次游", "中游", "下游"][i] if i < 4 else f"第{i+1}名"
             print(f"  {label}：{SEAT_NAMES[p]}")

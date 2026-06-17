@@ -15,6 +15,7 @@ from ...ai import AINotImplementedError, make_strategy, play_or_pass
 from ...engine.card import Card, Suit
 from ...engine.events import Pass, TurnPlayed
 from ...engine.hand import Pattern, PatternType, sort_cards
+from ...engine.rules.tributes import next_round_first_player_after_tribute
 from ...engine.state import (
     SEAT_NAMES,
     GameState,
@@ -438,7 +439,7 @@ class GameScreen(Screen):
         table_players = self._current_table_players()
         top_player = SEAT_NAMES[table_players[-1]] if s.table and table_players else "-"
         finished = " > ".join(SEAT_NAMES[p] for p in s.finish_order) or "-"
-        levels = getattr(s, "team_levels_final", [s.level, s.level])
+        levels = self._visible_team_levels(s)
         text = (
             f"[bold #ffd978]级牌[/bold #ffd978] {s.level}   "
             f"[bold #ffd978]逢人配[/bold #ffd978] {wild}   "
@@ -482,11 +483,32 @@ class GameScreen(Screen):
             next_button.label = "N  下一局"
 
     def _next_round_level(self, state: GameState) -> int:
-        levels = getattr(state, "team_levels_final", None)
-        if levels is None or not state.finish_order:
+        if state.team_levels_final is None or not state.finish_order:
             return state.level
         head_team = state.finish_order[0] % 2
-        return int(levels[head_team])
+        return int(state.team_levels_final[head_team])
+
+    def _next_round_first_player(self, state: GameState) -> int:
+        return self._next_round_first_player_for_hands(state, state.hands)
+
+    def _next_round_first_player_for_hands(
+        self,
+        state: GameState,
+        hands: list[list[Card]],
+    ) -> int:
+        if not state.finish_order:
+            return self.human
+        return next_round_first_player_after_tribute(state.finish_order, hands)
+
+    def _next_round_team_levels(self, state: GameState) -> list[int]:
+        if state.team_levels_final is None:
+            return list(state.team_levels)
+        return list(state.team_levels_final)
+
+    def _visible_team_levels(self, state: GameState) -> list[int]:
+        if state.finished and state.team_levels_final is not None:
+            return list(state.team_levels_final)
+        return list(state.team_levels)
 
     def _last_player_of(self, p: Pattern) -> int:
         return last_player_of_pattern(self._state(), p, default=0) or 0
@@ -606,6 +628,7 @@ class GameScreen(Screen):
             self._save_game_result()
 
         next_level = self._next_round_level(s)
+        next_team_levels = self._next_round_team_levels(s)
         self.level = next_level
         self._seed = random.randint(1, 10000)
         self._game_id = f"game_{int(time.time())}"
@@ -613,12 +636,32 @@ class GameScreen(Screen):
         self._game_saved = False
         self._hand_selected_indices.clear()
         self._hand_cursor = 0
-        self.state = make_initial_state(
+        next_state = make_initial_state(
             level=next_level,
             first_player=self.human,
             seed=self._seed,
+            team_levels=next_team_levels,
         )
-        self._last_action = f"新一局开始：级牌 {next_level}"
+        next_first_player = self._next_round_first_player_for_hands(s, next_state.hands)
+        next_state.turn_index = next_first_player
+        next_state.leader = next_first_player
+        if next_state.history:
+            shuffle = next_state.history[0]
+            from ...engine.events import ShuffleDeal
+
+            if isinstance(shuffle, ShuffleDeal):
+                next_state.history[0] = ShuffleDeal(
+                    level=shuffle.level,
+                    wild_card=shuffle.wild_card,
+                    hand_sizes=shuffle.hand_sizes,
+                    first_player=next_first_player,
+                    seed=shuffle.seed,
+                    team_levels=shuffle.team_levels,
+                )
+        self.state = next_state
+        self._last_action = (
+            f"新一局开始：级牌 {next_level}，{SEAT_NAMES[next_first_player]}家先手"
+        )
         self._refresh_all()
         self.set_timer(0.3, self._maybe_ai_turn)
 
