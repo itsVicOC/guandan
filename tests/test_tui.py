@@ -237,6 +237,46 @@ def test_tui_current_pass_order_ignores_previous_tricks() -> None:
     asyncio.run(run())
 
 
+def test_table_display_clears_only_current_player_previous_action() -> None:
+    """出牌区只在轮到某玩家时清理该玩家上一轮次展示。"""
+
+    async def run() -> None:
+        old_actions = {
+            0: ("play", _single(Card(RANK_4, Suit.HEARTS))),
+            3: ("play", _single(Card(RANK_6, Suit.HEARTS))),
+            2: ("pass", None),
+            1: ("play", _single(Card(RANK_8, Suit.HEARTS))),
+        }
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[[Card(RANK_J, Suit.HEARTS)], [], [], []],
+            turn_index=0,
+            leader=0,
+            table=[],
+        )
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            screen._displayed_table_actions = dict(old_actions)
+            screen._last_display_turn = 3
+            screen._refresh_all()
+
+            table = screen.query_one("#table")
+            table_text = _plain(table.content)
+            assert "东: --" in table_text
+            assert "红4" not in table_text
+            assert "北:" in table_text
+            assert "西: 过牌" in table_text
+            assert "南:" in table_text
+
+    asyncio.run(run())
+
+
 def test_jokers_remain_visible_after_cursor_moves() -> None:
     """Cursor highlighting must not hide joker labels during hand redraw."""
     async def run() -> None:

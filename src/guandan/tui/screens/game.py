@@ -174,6 +174,7 @@ class TableWidget(Static):
         self._table_patterns: List[Pattern] = []
         self._players: List[int] = []
         self._passed: List[int] = []  # 本轮已过牌的玩家
+        self._seat_actions: dict[int, tuple[str, Pattern | None]] = {}
 
     def on_mount(self) -> None:
         self._do_render()
@@ -183,10 +184,12 @@ class TableWidget(Static):
         patterns: List[Pattern],
         players: List[int],
         passed: Optional[List[int]] = None,
+        seat_actions: Optional[dict[int, tuple[str, Pattern | None]]] = None,
     ) -> None:
         self._table_patterns = patterns
         self._players = players
         self._passed = passed if passed is not None else []
+        self._seat_actions = dict(seat_actions or {})
         self._do_render()
 
     def _pattern_str(self, p: Pattern) -> str:
@@ -198,7 +201,7 @@ class TableWidget(Static):
         return f"{p.type.value}  {cards_str}"
 
     def _do_render(self) -> None:
-        if not self._table_patterns and not self._passed:
+        if not self._table_patterns and not self._passed and not self._seat_actions:
             self.update("[bold #d6b35a]当前轮[/bold #d6b35a]\n\n[dim]桌面空，等待先手出牌[/dim]")
             return
         lines = ["[bold #d6b35a]当前轮[/bold #d6b35a]"]
@@ -212,8 +215,23 @@ class TableWidget(Static):
             lines.append("")
             for p, who in recent:
                 lines.append(f"  [#9fb7a6]{SEAT_NAMES[who]}:[/#9fb7a6] {self._pattern_str(p)}")
-        for who in self._passed:
-            lines.append(f"  [dim]{SEAT_NAMES[who]}: 过牌[/dim]")
+        if self._seat_actions:
+            lines.append("")
+            for who in (0, 3, 2, 1):
+                action = self._seat_actions.get(who)
+                if action is None:
+                    lines.append(f"  [dim]{SEAT_NAMES[who]}: --[/dim]")
+                    continue
+                kind, pattern = action
+                if kind == "pass":
+                    lines.append(f"  [dim]{SEAT_NAMES[who]}: 过牌[/dim]")
+                elif pattern is not None:
+                    lines.append(
+                        f"  [#9fb7a6]{SEAT_NAMES[who]}:[/#9fb7a6] {self._pattern_str(pattern)}"
+                    )
+        else:
+            for who in self._passed:
+                lines.append(f"  [dim]{SEAT_NAMES[who]}: 过牌[/dim]")
         self.update("\n".join(lines))
 
 
@@ -332,6 +350,8 @@ class GameScreen(Screen):
         self._hand_selected_indices: set[int] = set()
         self._hand_cursor = 0
         self._last_action = "准备开始"
+        self._displayed_table_actions: dict[int, tuple[str, Pattern | None]] = {}
+        self._last_display_turn: Optional[int] = None
         # M5 存储：追踪对局元数据
         self._game_id = game_id or f"game_{int(time.time())}"
         self._start_time = time.time()
@@ -412,10 +432,12 @@ class GameScreen(Screen):
         # 提取本轮已过牌且仍被锁定的玩家
         table_players = self._current_table_players()
         passed_players = self._locked_passed_players()
+        seat_actions = self._table_display_actions(table_players, passed_players)
         tbl.update_table(
             s.table,
             table_players,
             passed=passed_players,
+            seat_actions=seat_actions,
         )
         # 状态信息写入 screen title
         turn_name = SEAT_NAMES[s.turn_index]
@@ -524,6 +546,29 @@ class GameScreen(Screen):
     def _locked_passed_players(self) -> List[int]:
         """提取本轮仍被锁定的过牌玩家，按过牌发生顺序。"""
         return locked_passed_players(self._state())
+
+    def _table_display_actions(
+        self,
+        table_players: List[int],
+        passed_players: List[int],
+    ) -> dict[int, tuple[str, Pattern | None]]:
+        """按座位保留出牌区显示，只在轮到该座位时清理其上一手。"""
+        state = self._state()
+        if state.finished:
+            self._displayed_table_actions.clear()
+            self._last_display_turn = None
+            return {}
+
+        if self._last_display_turn != state.turn_index:
+            self._displayed_table_actions.pop(state.turn_index, None)
+            self._last_display_turn = state.turn_index
+
+        for player, pattern in zip(table_players, state.table):
+            self._displayed_table_actions[player] = ("play", pattern)
+        for player in passed_players:
+            self._displayed_table_actions[player] = ("pass", None)
+
+        return dict(self._displayed_table_actions)
 
     def action_cursor_left(self) -> None:
         if not self._hand_cards:
@@ -635,6 +680,8 @@ class GameScreen(Screen):
         self._start_time = time.time()
         self._game_saved = False
         self._hand_selected_indices.clear()
+        self._displayed_table_actions.clear()
+        self._last_display_turn = None
         self._hand_cursor = 0
         next_state = make_initial_state(
             level=next_level,
