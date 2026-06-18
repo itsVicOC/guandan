@@ -24,6 +24,12 @@ from guandan.engine.events import Pass, TributeReturned, TributeSent, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.state import GameState, next_seat_counterclockwise, pass_turn, play_pattern
 from guandan.tui.app import GuandanApp
+from guandan.tui.layout import (
+    RECOMMENDED_COLUMNS,
+    RECOMMENDED_LINES,
+    should_request_terminal_resize,
+    terminal_resize_disabled,
+)
 from guandan.tui.screens.game import GameScreen, _tui_card
 
 
@@ -52,6 +58,53 @@ def test_tui_card_marks_cursor_selection_and_wild() -> None:
     assert "配" in _plain(_tui_card(card, wild=True))
     assert "▶" in _plain(_tui_card(card, selected=True, cursor=True))
     assert "✓" in _plain(_tui_card(card, selected=True, cursor=True))
+
+
+def test_tui_startup_requests_larger_terminal_when_space_is_small() -> None:
+    class FakeTTY:
+        def isatty(self) -> bool:
+            return True
+
+    env = {"TERM": "xterm-256color"}
+
+    assert should_request_terminal_resize(
+        RECOMMENDED_COLUMNS - 1,
+        RECOMMENDED_LINES,
+        env=env,
+        stream=FakeTTY(),  # type: ignore[arg-type]
+    )
+    assert should_request_terminal_resize(
+        RECOMMENDED_COLUMNS,
+        RECOMMENDED_LINES - 1,
+        env=env,
+        stream=FakeTTY(),  # type: ignore[arg-type]
+    )
+    assert not should_request_terminal_resize(
+        RECOMMENDED_COLUMNS,
+        RECOMMENDED_LINES,
+        env=env,
+        stream=FakeTTY(),  # type: ignore[arg-type]
+    )
+
+
+def test_tui_startup_resize_can_be_disabled_for_managed_terminals() -> None:
+    class FakeTTY:
+        def isatty(self) -> bool:
+            return True
+
+    assert terminal_resize_disabled({"GUANDAN_TUI_NO_RESIZE": "1"})
+    assert not should_request_terminal_resize(
+        80,
+        24,
+        env={"TERM": "xterm-256color", "TMUX": "1"},
+        stream=FakeTTY(),  # type: ignore[arg-type]
+    )
+    assert not should_request_terminal_resize(
+        80,
+        24,
+        env={"TERM": "xterm-256color", "GUANDAN_TUI_NO_RESIZE": "true"},
+        stream=FakeTTY(),  # type: ignore[arg-type]
+    )
 
 
 def test_duplicate_cards_are_selected_by_position() -> None:

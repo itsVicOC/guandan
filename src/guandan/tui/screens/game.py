@@ -38,6 +38,7 @@ from ...storage import (
     save_profile,
     update_statistics,
 )
+from ..layout import MIN_COLUMNS, MIN_LINES, RECOMMENDED_COLUMNS, RECOMMENDED_LINES
 
 
 class OpponentWidget(Static):
@@ -284,7 +285,7 @@ class GameScreen(Screen):
         color: #cdd7c8;
     }
     #my-hand {
-        min-height: 10;
+        min-height: 9;
         padding: 1 2;
         border: round #d6b35a;
         background: #0d1412;
@@ -502,15 +503,38 @@ class GameScreen(Screen):
             cursor = i == self._hand_cursor
             wild = self.state is not None and c == self.state.wild_card
             parts.append(_tui_card(c, selected=selected, cursor=cursor, wild=wild))
-        rows = ["  ".join(parts[i : i + 7]) for i in range(0, len(parts), 7)]
+        cards_per_row = self._cards_per_hand_row()
+        rows = [
+            "  ".join(parts[i : i + cards_per_row])
+            for i in range(0, len(parts), cards_per_row)
+        ]
         selected_count = len(self._hand_selected_indices)
         cursor_pos = self._hand_cursor + 1 if self._hand_cards else 0
+        size_tip = self._terminal_size_tip()
         header = (
             "[bold #d6b35a]你的手牌[/bold #d6b35a]  "
-            f"[#cdd7c8]光标 {cursor_pos}/{len(self._hand_cards)} · 已选 {selected_count} 张[/#cdd7c8]\n"
+            f"[#cdd7c8]光标 {cursor_pos}/{len(self._hand_cards)} · 已选 {selected_count} 张{size_tip}[/#cdd7c8]\n"
             "[dim]红♥ / 方♦ / 黑♠ / 梅♣ · ▶光标 · ✓选中 · ★逢人配 · 空格选牌 · 回车出牌[/dim]"
         )
         self.query_one("#my-hand", Static).update(f"{header}\n" + "\n".join(rows))
+
+    def _cards_per_hand_row(self) -> int:
+        """Choose a stable hand wrap count from the live terminal width."""
+        size = getattr(self.app, "size", None)
+        width = size.width if size is not None else RECOMMENDED_COLUMNS
+        usable_width = max(40, width - 10)
+        return max(6, min(10, usable_width // 12))
+
+    def _terminal_size_tip(self) -> str:
+        size = getattr(self.app, "size", None)
+        if size is None:
+            return ""
+        if size.width >= MIN_COLUMNS and size.height >= MIN_LINES:
+            return ""
+        return (
+            f" · 建议终端 {RECOMMENDED_COLUMNS}x{RECOMMENDED_LINES}"
+            f"（当前 {size.width}x{size.height}）"
+        )
 
     def _refresh_round_actions(self) -> None:
         s = self._state()

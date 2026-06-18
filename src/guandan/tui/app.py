@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from textual.app import App
 
+from .layout import request_terminal_resize
 from .screens.main_menu import MainMenuScreen
 
 
@@ -18,6 +19,7 @@ class GuandanApp(App):
 
 def run() -> int:
     """启动 TUI。"""
+    request_terminal_resize()
     app = GuandanApp()
     return app.run() or 0
 
