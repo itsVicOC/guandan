@@ -252,6 +252,11 @@ class TestBomb:
         ]
         assert find_complete_pattern(eleven_cards, wild) is None
 
+    def test_bomb_uses_at_most_two_wild_cards(self):
+        wild = c(RANK_5, "H")
+        p = find_complete_pattern([c(RANK_7, "H"), wild, wild, wild], wild)
+        assert p is None
+
 
 class TestStraightFlush:
     def test_straight_flush(self):

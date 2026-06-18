@@ -549,7 +549,7 @@ def _try_triple_sequence(
 def _try_bomb(
     normal: Sequence[Card], wild_count: int, wild_card: Card | None
 ) -> list[Pattern]:
-    """炸弹：4+ 张同点。"""
+    """炸弹：4-10 张同点，最多使用 2 张逢人配。"""
     if _has_joker(normal):
         return []  # 4 王单独处理
 
@@ -602,44 +602,6 @@ def _try_bomb(
                         wild_used=2,
                     )
                 )
-
-    # 3 wilds
-    if wild_count >= 3 and wild_card is not None:
-        for rank, cards in by_rank.items():
-            for k in range(1, min(7, len(cards)) + 1):
-                patterns.append(
-                    Pattern(
-                        type=PatternType.BOMB,
-                        rank=rank,
-                        length=k + 3,
-                        cards=tuple(cards[:k] + [wild_card] * 3),
-                        wild_used=3,
-                    )
-                )
-
-    # 4 wilds
-    if wild_count >= 4 and wild_card is not None:
-        # 至少 4 wild，组成 4 张炸弹
-        patterns.append(
-            Pattern(
-                type=PatternType.BOMB,
-                rank=wild_card.rank,
-                length=4,
-                cards=tuple([wild_card] * 4),
-                wild_used=4,
-            )
-        )
-        # 5+ 张 wild 凑炸弹
-        for n in range(5, min(10, wild_count) + 1):
-            patterns.append(
-                Pattern(
-                    type=PatternType.BOMB,
-                    rank=wild_card.rank,
-                    length=n,
-                    cards=tuple([wild_card] * n),
-                    wild_used=n,
-                )
-            )
 
     return patterns
 

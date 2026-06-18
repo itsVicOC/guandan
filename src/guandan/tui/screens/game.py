@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import random
 import time
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from rich.markup import escape
 from textual.app import ComposeResult
@@ -15,7 +15,7 @@ from textual.widgets import Button, Footer, Header, Static
 from ...ai import AINotImplementedError, make_strategy, play_or_pass
 from ...engine.card import Card, Suit
 from ...engine.events import Pass, TurnPlayed
-from ...engine.hand import Pattern, PatternType, sort_cards
+from ...engine.hand import Pattern, PatternType, comparison_rank, sort_cards
 from ...engine.rules.tributes import apply_tribute_flow
 from ...engine.state import (
     SEAT_NAMES,
@@ -135,6 +135,62 @@ def _rank_label(card: Card) -> str:
     return str(card.rank)
 
 
+def _rank_value_label(rank: int) -> str:
+    if rank == 101:
+        return "大王"
+    if rank == 100:
+        return "小王"
+    if rank == 14:
+        return "A"
+    if rank == 13:
+        return "K"
+    if rank == 12:
+        return "Q"
+    if rank == 11:
+        return "J"
+    return str(rank)
+
+
+def _pattern_type_label(pattern_type: PatternType) -> str:
+    return {
+        PatternType.SINGLE: "单张",
+        PatternType.PAIR: "对子",
+        PatternType.TRIPLE: "三张",
+        PatternType.TRIPLE_PAIR: "三带二",
+        PatternType.STRAIGHT: "顺子",
+        PatternType.PAIR_SEQUENCE: "连对",
+        PatternType.TRIPLE_SEQUENCE: "钢板",
+        PatternType.BOMB: "炸弹",
+        PatternType.STRAIGHT_FLUSH: "同花顺",
+        PatternType.FOUR_JOKERS: "四王炸",
+    }[pattern_type]
+
+
+def _cards_text(cards: Sequence[Card]) -> str:
+    return " ".join(card.compact for card in cards)
+
+
+def _pattern_summary(pattern: Pattern, level: int) -> str:
+    base_rank = _rank_value_label(pattern.rank)
+    effective = comparison_rank(pattern, level)
+    rank_text = f"{base_rank}(级牌)" if effective != pattern.rank else base_rank
+    return (
+        f"{_pattern_type_label(pattern.type)}"
+        f" · 主牌 {rank_text}"
+        f" · 张数 {len(pattern.cards)}"
+        f" · [{_cards_text(pattern.cards)}]"
+    )
+
+
+def _play_rejection_message(selected: list[Card], pattern: Pattern, table_top: Pattern, level: int) -> str:
+    return (
+        "不能压过桌面："
+        f"你选 [{_cards_text(selected)}]，识别为 {_pattern_summary(pattern, level)}；"
+        f"桌面最大为 {_pattern_summary(table_top, level)}；"
+        f"当前级牌 {_rank_value_label(level)} 会参与单/对/三/三带二/炸弹点数比较"
+    )
+
+
 def _wild_card_from_hands(level: int, hands: list[list[Card]]) -> Optional[Card]:
     for hand in hands:
         for card in hand:
@@ -208,40 +264,40 @@ class TableWidget(Static):
         if p.type == PatternType.PAIR:
             return f"对{_tui_card(p.cards[0])}"
         cards_str = " ".join(_tui_card(c) for c in p.cards)
-        return f"{p.type.value}  {cards_str}"
+        return f"{_pattern_type_label(p.type)}  {cards_str}"
 
     def _do_render(self) -> None:
         if not self._table_patterns and not self._passed and not self._seat_actions:
             self.update("[bold #d6b35a]当前轮[/bold #d6b35a]\n\n[dim]桌面空，等待先手出牌[/dim]")
             return
-        lines = ["[bold #d6b35a]当前轮[/bold #d6b35a]"]
-        if self._table_patterns:
-            top = self._table_patterns[-1]
-            top_player = self._players[-1] if self._players else 0
-            lines.append(
-                f"[bold]最大[/bold] {SEAT_NAMES[top_player]}家 · {self._pattern_str(top)}"
+
+        top_player = self._players[-1] if self._table_patterns and self._players else None
+        title = "[bold #d6b35a]当前轮[/bold #d6b35a]"
+        if top_player is not None:
+            title += f" · [bold]最大 {SEAT_NAMES[top_player]}家[/bold]"
+        lines = [title]
+
+        actions = dict(self._seat_actions)
+        if not actions:
+            actions.update({player: ("pass", None) for player in self._passed})
+            actions.update(
+                {player: ("play", pattern) for player, pattern in zip(self._players, self._table_patterns)}
             )
-            recent = list(zip(self._table_patterns, self._players))[-5:]
-            lines.append("")
-            for p, who in recent:
-                lines.append(f"  [#9fb7a6]{SEAT_NAMES[who]}:[/#9fb7a6] {self._pattern_str(p)}")
-        if self._seat_actions:
-            lines.append("")
-            for who in (0, 3, 2, 1):
-                action = self._seat_actions.get(who)
-                if action is None:
-                    lines.append(f"  [dim]{SEAT_NAMES[who]}: --[/dim]")
-                    continue
-                kind, pattern = action
-                if kind == "pass":
-                    lines.append(f"  [dim]{SEAT_NAMES[who]}: 过牌[/dim]")
-                elif pattern is not None:
-                    lines.append(
-                        f"  [#9fb7a6]{SEAT_NAMES[who]}:[/#9fb7a6] {self._pattern_str(pattern)}"
-                    )
-        else:
-            for who in self._passed:
-                lines.append(f"  [dim]{SEAT_NAMES[who]}: 过牌[/dim]")
+
+        for who in (0, 3, 2, 1):
+            action = actions.get(who)
+            seat = f"[#9fb7a6]{SEAT_NAMES[who]}:[/#9fb7a6]"
+            marker = " [bold #ffd978]最大[/bold #ffd978]" if who == top_player else ""
+            if action is None:
+                lines.append(f"  {seat}{marker} [dim]--[/dim]")
+                continue
+            kind, pattern = action
+            if kind == "pass":
+                lines.append(f"  {seat}{marker} [dim]过牌[/dim]")
+            elif pattern is not None:
+                lines.append(f"  {seat}{marker} {self._pattern_str(pattern)}")
+            else:
+                lines.append(f"  {seat}{marker} [dim]--[/dim]")
         self.update("\n".join(lines))
 
 
@@ -660,19 +716,26 @@ class GameScreen(Screen):
 
         p = find_complete_pattern(sel, s.wild_card)
         if p is None:
-            self.sub_title = "这组牌不是合法牌型"
-            self._last_action = "这组牌不是合法牌型"
+            message = f"这组牌不是合法牌型：你选 [{_cards_text(sel)}]"
+            self.sub_title = message
+            self._last_action = message
             self._refresh_all()
             return
         try:
             play_pattern(s, self.human, p)
-            self._last_action = f"你出牌：{p.type.value} · {' '.join(_tui_card(c) for c in p.cards)}"
+            self._last_action = (
+                f"你出牌：{_pattern_type_label(p.type)} · {' '.join(_tui_card(c) for c in p.cards)}"
+            )
             self._hand_selected_indices.clear()
             self._refresh_all()
             self.set_timer(0.3, self._maybe_ai_turn)
         except IllegalPlayError as e:
-            self.sub_title = f"非法：{e}"
-            self._last_action = f"非法：{e}"
+            if s.table:
+                message = _play_rejection_message(sel, p, s.table[-1], s.level)
+            else:
+                message = f"非法：{e}"
+            self.sub_title = message
+            self._last_action = message
             self._refresh_all()
 
     def action_pass(self) -> None:
@@ -701,8 +764,8 @@ class GameScreen(Screen):
             self._last_action = "提示：建议过牌"
         else:
             cards_str = " ".join(_tui_card(c) for c in p.cards)
-            self.sub_title = f"💡 提示：{p.type.value} [{cards_str}]"
-            self._last_action = f"提示：{p.type.value} · {cards_str}"
+            self.sub_title = f"💡 提示：{_pattern_type_label(p.type)} [{cards_str}]"
+            self._last_action = f"提示：{_pattern_type_label(p.type)} · {cards_str}"
         self._refresh_all()
 
     def action_claim(self) -> None:
@@ -868,7 +931,7 @@ class GameScreen(Screen):
         for ev in reversed(state.history[history_len_before:]):
             if isinstance(ev, TurnPlayed) and ev.player == player:
                 cards = " ".join(_tui_card(c) for c in ev.pattern.cards)
-                return f"{SEAT_NAMES[player]} 出牌：{ev.pattern.type.value} · {cards}"
+                return f"{SEAT_NAMES[player]} 出牌：{_pattern_type_label(ev.pattern.type)} · {cards}"
             if isinstance(ev, Pass) and ev.player == player:
                 return f"{SEAT_NAMES[player]} 过牌"
         return f"{SEAT_NAMES[player]} 过牌"

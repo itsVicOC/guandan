@@ -41,6 +41,17 @@ def _single(card: Card) -> Pattern:
     return Pattern(PatternType.SINGLE, card.rank, 1, (card,), 0)
 
 
+def _triple_pair(triple_rank: int, pair_rank: int) -> Pattern:
+    cards = (
+        Card(triple_rank, Suit.HEARTS),
+        Card(triple_rank, Suit.DIAMONDS),
+        Card(triple_rank, Suit.SPADES),
+        Card(pair_rank, Suit.HEARTS),
+        Card(pair_rank, Suit.DIAMONDS),
+    )
+    return Pattern(PatternType.TRIPLE_PAIR, triple_rank, 1, cards, 0)
+
+
 def test_tui_card_uses_chinese_suit_labels() -> None:
     assert "红5" in _plain(_tui_card(Card(5, Suit.HEARTS)))
     assert "方10" in _plain(_tui_card(Card(10, Suit.DIAMONDS)))
@@ -292,6 +303,52 @@ def test_tui_current_pass_order_ignores_previous_tricks() -> None:
     asyncio.run(run())
 
 
+def test_table_display_renders_all_seat_actions_in_current_trick() -> None:
+    """当前轮东/北/西/南的出牌或过牌都应稳定出现在出牌区。"""
+
+    async def run() -> None:
+        east_play = _triple_pair(RANK_6, RANK_7)
+        north_press = _triple_pair(RANK_J, RANK_8)
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[
+                [Card(RANK_5, Suit.HEARTS)],
+                [],
+                [],
+                [],
+            ],
+            turn_index=0,
+            table=[east_play, north_press],
+            passed_players={2, 1},
+            leader=0,
+            history=[
+                TurnPlayed(player=0, pattern=east_play, hand_remaining=1),
+                TurnPlayed(player=3, pattern=north_press, hand_remaining=1),
+                Pass(player=2, hand_remaining=1),
+                Pass(player=1, hand_remaining=1),
+            ],
+        )
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            table = screen.query_one("#table")
+            lines = _plain(table.content).splitlines()
+
+            assert len(lines) == 5
+            assert "最大 北家" in lines[0]
+            assert any(line.startswith("  东:") and "三带二" in line for line in lines)
+            assert any(line.startswith("  北: 最大") and "三带二" in line for line in lines)
+            assert any(line == "  西: 过牌" for line in lines)
+            assert any(line == "  南: 过牌" for line in lines)
+
+    asyncio.run(run())
+
+
 def test_table_display_clears_only_current_player_previous_action() -> None:
     """出牌区只在轮到某玩家时清理该玩家上一轮次展示。"""
 
@@ -412,6 +469,81 @@ def test_two_big_jokers_selected_in_tui_play_as_pair() -> None:
             assert state.table[-1].type == PatternType.PAIR
             assert state.table[-1].rank == RANK_BIG_JOKER
             assert len(state.table[-1].cards) == 2
+
+    asyncio.run(run())
+
+
+def test_tui_triple_pair_can_press_lower_triple_pair() -> None:
+    """Human JJJ+88 must be playable over 666+77 when 6 is not level."""
+
+    async def run() -> None:
+        hand = [
+            Card(RANK_J, Suit.HEARTS),
+            Card(RANK_J, Suit.DIAMONDS),
+            Card(RANK_J, Suit.SPADES),
+            Card(RANK_8, Suit.HEARTS),
+            Card(RANK_8, Suit.DIAMONDS),
+        ]
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[hand, [], [], []],
+            turn_index=0,
+            leader=3,
+            table=[_triple_pair(RANK_6, RANK_7)],
+        )
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            screen._hand_selected_indices = set(range(5))
+            screen.action_play()
+
+            assert len(state.hands[0]) == 0
+            assert state.table[-1].type == PatternType.TRIPLE_PAIR
+            assert state.table[-1].rank == RANK_J
+            assert "你出牌" in screen._last_action
+
+    asyncio.run(run())
+
+
+def test_tui_reject_message_explains_level_triple_pair_comparison() -> None:
+    """When 6 is level, 666+77 is stronger than natural JJJ+88."""
+
+    async def run() -> None:
+        hand = [
+            Card(RANK_J, Suit.HEARTS),
+            Card(RANK_J, Suit.DIAMONDS),
+            Card(RANK_J, Suit.SPADES),
+            Card(RANK_8, Suit.HEARTS),
+            Card(RANK_8, Suit.DIAMONDS),
+        ]
+        state = GameState(
+            level=RANK_6,
+            wild_card=Card(RANK_6, Suit.HEARTS),
+            hands=[hand, [], [], []],
+            turn_index=0,
+            leader=3,
+            table=[_triple_pair(RANK_6, RANK_7)],
+        )
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            screen._hand_selected_indices = set(range(5))
+            screen.action_play()
+
+            assert len(state.hands[0]) == 5
+            assert len(state.table) == 1
+            assert "不能压过桌面" in screen._last_action
+            assert "当前级牌 6" in screen._last_action
+            assert "666" not in screen._last_action
 
     asyncio.run(run())
 

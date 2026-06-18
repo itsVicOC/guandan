@@ -12,6 +12,9 @@ from guandan.engine.card import (
     RANK_9,
     RANK_A,
     RANK_BIG_JOKER,
+    RANK_J,
+    RANK_K,
+    RANK_Q,
     RANK_SMALL_JOKER,
     Card,
     Suit,
@@ -37,6 +40,22 @@ def single(rank):
 
 def pair(rank):
     return Pattern(PatternType.PAIR, rank, 1, (c(rank, "H"), c(rank, "D")), 0)
+
+
+def triple_pair(triple_rank, pair_rank):
+    return Pattern(
+        PatternType.TRIPLE_PAIR,
+        triple_rank,
+        1,
+        (
+            c(triple_rank, "H"),
+            c(triple_rank, "D"),
+            c(triple_rank, "S"),
+            c(pair_rank, "H"),
+            c(pair_rank, "D"),
+        ),
+        0,
+    )
 
 
 def joker_pair(rank, suit):
@@ -139,6 +158,43 @@ class TestCompareSameType:
         assert compare_same_type(low_wrap, high_ace, level=RANK_5) == -1
         assert not can_play(low_wrap, high_ace, level=RANK_5)
 
+    def test_level_card_boosts_pair_rank(self):
+        assert can_play(pair(RANK_5), pair(RANK_A), level=RANK_5)
+        assert not can_play(pair(RANK_A), pair(RANK_5), level=RANK_5)
+
+    def test_triple_pair_uses_triple_rank_for_comparison(self):
+        assert can_play(
+            triple_pair(RANK_J, RANK_8),
+            triple_pair(RANK_6, RANK_7),
+            level=RANK_2,
+        )
+
+    def test_level_card_boosts_triple_pair_rank(self):
+        assert can_play(
+            triple_pair(RANK_6, RANK_7),
+            triple_pair(RANK_J, RANK_8),
+            level=RANK_6,
+        )
+        assert not can_play(
+            triple_pair(RANK_J, RANK_8),
+            triple_pair(RANK_6, RANK_7),
+            level=RANK_6,
+        )
+
+    def test_level_card_does_not_boost_pair_sequence_rank(self):
+        p1 = Pattern(PatternType.PAIR_SEQUENCE, RANK_5, 3, (c(RANK_3),) * 6, 0)
+        p2 = Pattern(PatternType.PAIR_SEQUENCE, RANK_A, 3, (c(RANK_Q),) * 6, 0)
+
+        assert compare_same_type(p1, p2, level=RANK_5) == -1
+        assert not can_play(p1, p2, level=RANK_5)
+
+    def test_level_card_does_not_boost_triple_sequence_rank(self):
+        p1 = Pattern(PatternType.TRIPLE_SEQUENCE, RANK_5, 2, (c(RANK_4),) * 6, 0)
+        p2 = Pattern(PatternType.TRIPLE_SEQUENCE, RANK_A, 2, (c(RANK_K),) * 6, 0)
+
+        assert compare_same_type(p1, p2, level=RANK_5) == -1
+        assert not can_play(p1, p2, level=RANK_5)
+
 
 class TestCompareBombs:
     def test_4bomb_vs_4bomb(self):
@@ -150,6 +206,27 @@ class TestCompareBombs:
         # 5 张 > 4 张
         assert compare_bombs(bomb(RANK_5, 5), bomb(RANK_7, 4)) == 1
         assert compare_bombs(bomb(RANK_7, 4), bomb(RANK_5, 5)) == -1
+
+    def test_bomb_length_beats_level_rank_boost(self):
+        assert compare_bombs(bomb(RANK_3, 5), bomb(RANK_5, 4), level=RANK_5) == 1
+        assert can_play(bomb(RANK_3, 5), bomb(RANK_5, 4), level=RANK_5)
+        assert not can_play(bomb(RANK_5, 4), bomb(RANK_3, 5), level=RANK_5)
+
+    def test_level_card_boosts_same_length_bomb_rank(self):
+        assert compare_bombs(bomb(RANK_5, 5), bomb(RANK_A, 5), level=RANK_5) == 1
+        assert can_play(bomb(RANK_5, 5), bomb(RANK_A, 5), level=RANK_5)
+
+    def test_level_card_does_not_boost_straight_flush_rank(self):
+        assert compare_bombs(
+            straight_flush(RANK_5, 5),
+            straight_flush(RANK_A, 5),
+            level=RANK_5,
+        ) == -1
+        assert not can_play(
+            straight_flush(RANK_5, 5),
+            straight_flush(RANK_A, 5),
+            level=RANK_5,
+        )
 
     def test_straight_flush_vs_4bomb(self):
         sf = straight_flush(RANK_5, 5)
