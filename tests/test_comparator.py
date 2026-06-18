@@ -114,6 +114,12 @@ class TestCanPlay:
         assert can_play(straight_flush(RANK_9, 5), bomb(RANK_A, 4))
         assert not can_play(straight_flush(RANK_9, 5), bomb(RANK_3, 6))
 
+    def test_six_plus_bomb_beats_straight_flush(self):
+        sf = straight_flush(RANK_9, 5)
+
+        assert can_play(bomb(RANK_3, 6), sf)
+        assert not can_play(bomb(RANK_A, 5), sf)
+
     def test_no_one_presses_four_jokers(self):
         assert not can_play(bomb(RANK_A, 8), four_jokers())
         assert not can_play(bomb(RANK_A, 4), four_jokers())
@@ -149,6 +155,15 @@ class TestCompareBombs:
         sf = straight_flush(RANK_5, 5)
         b4 = bomb(RANK_A, 4)
         assert compare_bombs(sf, b4) == 1
+
+    def test_six_plus_bomb_vs_straight_flush(self):
+        sf = straight_flush(RANK_A, 5)
+        b6 = bomb(RANK_3, 6)
+        b5 = bomb(RANK_A, 5)
+
+        assert compare_bombs(b6, sf) == 1
+        assert compare_bombs(sf, b6) == -1
+        assert compare_bombs(b5, sf) == -1
 
     def test_four_jokers_max(self):
         # 四王 > 同花顺 > 炸弹

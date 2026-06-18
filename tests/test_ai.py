@@ -264,6 +264,38 @@ class TestGreedy:
         assert p.rank == RANK_7
         assert p.length == 10
 
+    def test_bomb_order_uses_straight_flush_before_six_bomb(self) -> None:
+        """面对 5 张普通炸弹时，AI 应先用同花顺，再考虑更大的 6+ 普通炸弹。"""
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.table = [
+            Pattern(
+                PatternType.BOMB,
+                RANK_A,
+                5,
+                tuple(c(RANK_A, suit) for suit in ("H", "D", "S", "C", "H")),
+                0,
+            )
+        ]
+        state.hands[1] = [
+            c(RANK_3, "H"),
+            c(RANK_4, "H"),
+            c(RANK_5, "H"),
+            c(RANK_6, "H"),
+            c(RANK_7, "H"),
+            c(RANK_8, "H"),
+            c(RANK_8, "D"),
+            c(RANK_8, "S"),
+            c(RANK_8, "C"),
+            c(RANK_8, "H"),
+            c(RANK_8, "D"),
+        ]
+
+        p = select_min_winning(state, 1)
+
+        assert p is not None
+        assert p.type == PatternType.STRAIGHT_FLUSH
+
 
 # ---------- Valuation: estimate_pattern_cost ----------
 

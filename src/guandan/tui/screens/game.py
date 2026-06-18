@@ -684,8 +684,14 @@ class GameScreen(Screen):
         from ...engine.state import claim
 
         s = self._state()
-        claim(s, self.human, len(s.hands[self.human]))
-        self.sub_title = f"📢 你报了 {len(s.hands[self.human])} 张"
+        try:
+            claim(s, self.human, len(s.hands[self.human]))
+        except IllegalPlayError as e:
+            self.sub_title = f"报牌由系统自动执行：{e}"
+            self._last_action = f"报牌由系统自动执行：{e}"
+            self._refresh_all()
+            return
+        self.sub_title = f"你报了 {len(s.hands[self.human])} 张"
         self._last_action = f"你报牌：{len(s.hands[self.human])} 张"
         self._refresh_all()
 

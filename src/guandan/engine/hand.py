@@ -111,13 +111,16 @@ class Pattern:
         if self.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):
             if other.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):
                 if self.type != other.type:
-                    # 5 张同花顺可压 4 张或 5 张普通炸弹。
-                    return (
-                        self.type == PatternType.STRAIGHT_FLUSH
-                        and other.type == PatternType.BOMB
-                        and self.length == 5
-                        and other.length in (4, 5)
-                    )
+                    # 5 张同花顺可压 4 张或 5 张普通炸弹；6+ 普通炸弹可反压同花顺。
+                    if self.type == PatternType.STRAIGHT_FLUSH:
+                        return (
+                            other.type == PatternType.BOMB
+                            and self.length == 5
+                            and other.length in (4, 5)
+                        )
+                    if self.type == PatternType.BOMB:
+                        return other.type == PatternType.STRAIGHT_FLUSH and self.length >= 6
+                    return False
                 # 同 type: 先 length 再 rank
                 if self.length != other.length:
                     return self.length > other.length

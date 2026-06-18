@@ -33,7 +33,7 @@ from .card import (
 )
 from .deck import deal, make_deck, shuffle_deck
 from .events import Event, ShuffleDeal
-from .hand import Pattern
+from .hand import Pattern, PatternType
 
 
 # 队伍：0=东-西（player 0 & 2），1=南-北（player 1 & 3）
@@ -90,6 +90,7 @@ class GameState:
     history: list[Event] = field(default_factory=list)
     finish_order: list[int] = field(default_factory=list)
     team_bomb_count: list[int] = field(default_factory=lambda: [0, 0])
+    # 兼容旧存档/旧统计字段；当前过 A 只看 A 级局名次，不要求先出过 A。
     has_played_ace: list[bool] = field(default_factory=lambda: [False, False])
     finished: bool = False
     tribute_state: TributeState = field(default_factory=TributeState)
@@ -188,9 +189,9 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
     # passed_players 只在 _end_trick_or_jiefeng 里清空。
 
     # 累计本队炸弹数
-    from .hand import PatternType
+    from .rules.comparator import is_bomb_type
 
-    if pattern.type == PatternType.BOMB:
+    if is_bomb_type(pattern.type):
         state.team_bomb_count[team_of(player)] += 1
     # 记录出 A
     if pattern.type == PatternType.SINGLE and any(
@@ -252,9 +253,23 @@ def pass_turn(state: GameState, player: int) -> None:
 
 
 def claim(state: GameState, player: int, count: int) -> None:
-    """报牌。"""
+    """报牌。
+
+    当前规则采用自动报牌；此函数只允许在玩家实际手牌数 ≤10 时记录，
+    主要用于 UI/CLI 的手动补报和旧调用兼容。
+    """
+    actual_count = len(state.hands[player])
+    if actual_count > 10:
+        raise IllegalPlayError("claim is only allowed when hand size <= 10")
+    if count != actual_count:
+        raise IllegalPlayError(f"claim count mismatch: {count} != {actual_count}")
     from .events import Claim as ClaimEvent
 
+    if any(
+        isinstance(event, ClaimEvent) and event.player == player and event.count == count
+        for event in reversed(state.history)
+    ):
+        return
     state.history.append(ClaimEvent(player=player, count=count))
 
 

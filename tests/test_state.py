@@ -89,6 +89,25 @@ class TestPlayPattern:
         assert state.history[-1].count == 10
         assert any(isinstance(event, TurnPlayed) for event in state.history)
 
+    def test_manual_claim_rejects_more_than_ten_cards(self):
+        from guandan.engine.state import claim
+
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[
+                [c(RANK_3)] * 11,
+                [c(RANK_4)],
+                [c(RANK_5)],
+                [c(RANK_6)],
+            ],
+            turn_index=0,
+            leader=0,
+        )
+
+        with pytest.raises(IllegalPlayError, match="hand size <= 10"):
+            claim(state, 0, 11)
+
     def test_leader_play_advances_counterclockwise_from_every_seat(self):
         for leader in range(4):
             lead_card = c(RANK_3, "H")
@@ -155,6 +174,52 @@ class TestPlayPattern:
         play_pattern(state, 0, single_pattern(c(RANK_2, "D")))
 
         assert state.table[-1].rank == RANK_2
+
+    def test_bomb_count_tracks_straight_flush_and_four_jokers(self):
+        state = GameState(
+            level=RANK_2,
+            wild_card=None,
+            hands=[
+                [
+                    c(RANK_3, "H"),
+                    c(RANK_4, "H"),
+                    c(RANK_5, "H"),
+                    c(RANK_6, "H"),
+                    c(RANK_7, "H"),
+                ],
+                [],
+                [
+                    Card(101, Suit.BIG_JOKER),
+                    Card(101, Suit.BIG_JOKER),
+                    Card(100, Suit.SMALL_JOKER),
+                    Card(100, Suit.SMALL_JOKER),
+                ],
+                [],
+            ],
+            turn_index=0,
+            leader=0,
+        )
+        straight_flush = Pattern(
+            PatternType.STRAIGHT_FLUSH,
+            RANK_7,
+            5,
+            tuple(state.hands[0]),
+            0,
+        )
+        play_pattern(state, 0, straight_flush)
+        state.table.clear()
+        state.leader = 2
+        state.turn_index = 2
+        four_jokers = Pattern(
+            PatternType.FOUR_JOKERS,
+            101,
+            4,
+            tuple(state.hands[2]),
+            0,
+        )
+        play_pattern(state, 2, four_jokers)
+
+        assert state.team_bomb_count == [2, 0]
 
     def test_duplicate_card_count_must_exist_in_hand(self):
         big_joker = Card(RANK_BIG_JOKER, Suit.BIG_JOKER)

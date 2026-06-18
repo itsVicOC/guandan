@@ -9,7 +9,7 @@ from collections import Counter
 from typing import List, Optional
 
 from ..engine.card import Card
-from ..engine.hand import Pattern, PatternType, comparison_rank
+from ..engine.hand import Pattern, comparison_rank
 from ..engine.rules.comparator import bomb_strength, is_bomb_type
 from ..engine.rules.patterns import detect_patterns
 from ..engine.state import GameState
@@ -83,10 +83,6 @@ def enumerate_legal_patterns(
 
 
 def _bomb_order_key(pattern: Pattern, level: int) -> tuple[int, int, int, int]:
-    if pattern.type == PatternType.FOUR_JOKERS:
-        return (3, pattern.length, comparison_rank(pattern, level), pattern.wild_used)
-    if pattern.type == PatternType.STRAIGHT_FLUSH:
-        return (2, pattern.length, comparison_rank(pattern, level), pattern.wild_used)
     category, length, rank = bomb_strength(pattern, level=level)
     return (category, length, rank, pattern.wild_used)
 

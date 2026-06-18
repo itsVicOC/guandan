@@ -77,15 +77,14 @@ def can_return_tribute(card: Card, level: int | None = None) -> bool:
 
 
 def select_return_card(hand: List[Card], level: int | None = None) -> Card:
-    """选择还贡牌：符合规则的最小牌；极端情况退回非级牌最小牌。"""
+    """选择还贡牌：符合规则的最小牌。
+
+    若没有 ≤10、非王、非级牌的合法还贡牌，显式抛错。正常发牌状态下
+    极少出现这种手牌；抛错比静默还出非法牌更利于定位规则状态异常。
+    """
     candidates = [c for c in hand if can_return_tribute(c, level)]
     if not candidates:
-        non_level = [
-            c for c in hand if not c.is_joker and (level is None or c.rank != level)
-        ]
-        if non_level:
-            return min(non_level)
-        return min(hand)
+        raise ValueError("no legal return tribute card")
     return min(candidates)
 
 
@@ -278,7 +277,10 @@ def resolve_tribute(
     level: int | None = None,
     wild_card: Card | None = None,
 ) -> TributeResult:
-    """执行进 / 还贡流程。返回结果，调用方负责实际修改手牌。"""
+    """兼容旧接口：计算单次进 / 还贡结果，但不修改手牌。
+
+    新局真实换牌请使用 `apply_tribute_flow()`；本函数保留给旧测试和旧调用。
+    """
     if can_resist_tribute(downstream_hand):
         return TributeResult(
             resisted=True,

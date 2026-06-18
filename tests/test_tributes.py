@@ -118,6 +118,13 @@ class TestSelectReturnCard:
         # 不能还王，所以选 5
         assert select_return_card(hand) == c(RANK_5)
 
+    def test_raises_when_no_legal_return_card(self):
+        hand = [c(RANK_BIG_JOKER, "BJ"), c(RANK_A), c(RANK_5)]
+        import pytest
+
+        with pytest.raises(ValueError, match="no legal return tribute card"):
+            select_return_card(hand, level=RANK_5)
+
 
 class TestResolveTribute:
     def test_normal_flow(self):

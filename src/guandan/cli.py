@@ -137,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
                 # 报牌提示
                 print(f"⚠️ 你只剩 {state.hand_size(cur)} 张，必须报牌（自动报）")
 
-            prompt = "\n请出牌（输入序号，空格分隔）/ 过牌(p) / 报牌(b) > "
+            prompt = "\n请出牌（输入序号，空格分隔）/ 过牌(p) / 报牌状态(b) > "
             user_in = input(prompt).strip()
 
             if user_in.lower() in ("p", "pass", "过牌", "过"):
@@ -147,6 +147,12 @@ def main(argv: list[str] | None = None) -> int:
                 except IllegalPlayError as e:
                     print(f"非法：{e}")
                     continue
+            elif user_in.lower() in ("b", "claim", "报牌"):
+                if state.hand_size(cur) <= 10:
+                    print(f"→ 系统已自动报牌：你剩 {state.hand_size(cur)} 张")
+                else:
+                    print("→ 还未到报牌张数（剩余 10 张及以下会自动报牌）")
+                continue
             else:
                 indices = _parse_selection(user_in, len(sorted_hand))
                 if not indices:

@@ -47,22 +47,24 @@ def is_bomb_type(t: PatternType) -> bool:
 
 
 def bomb_strength(p: Pattern, *, level: int | None = None) -> tuple[int, int, int]:
-    """炸弹的"强度"三元组，用于跨类型比较。
+    """炸弹的"强度"三元组，用于排序和估值。
 
     返回 (category, length, rank)：
-    - category: 0=BOMB, 1=STRAIGHT_FLUSH, 2=FOUR_JOKERS（越大越强）
+    - category: 0=4/5 张普通炸弹, 1=同花顺, 2=6+ 普通炸弹, 3=四王炸
     - length: 炸弹张数（越大越强）
     - rank: 炸弹点数（越大越强）
 
-    同 category 比 length，再比 rank。
+    同 category 比 length，再比 rank。这个 key 只表达当前项目采用的
+    炸弹层级：4/5 张普通炸弹 < 同花顺 < 6+ 普通炸弹 < 四王炸。
     """
     rank = comparison_rank(p, level)
     if p.type == PatternType.BOMB:
-        return (0, p.length, rank)
+        category = 2 if p.length >= 6 else 0
+        return (category, p.length, rank)
     if p.type == PatternType.STRAIGHT_FLUSH:
         return (1, p.length, rank)
     if p.type == PatternType.FOUR_JOKERS:
-        return (2, p.length, rank)
+        return (3, p.length, rank)
     raise ValueError(f"not a bomb: {p.type}")
 
 
