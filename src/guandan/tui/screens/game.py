@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from rich.markup import escape
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Grid, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
@@ -314,16 +315,16 @@ class GameScreen(Screen):
     """
 
     BINDINGS = [
-        ("left", "cursor_left", "←"),
-        ("right", "cursor_right", "→"),
-        ("up", "cursor_left", "←"),
-        ("down", "cursor_right", "→"),
-        ("space", "toggle_select", "选牌"),
-        ("enter", "play", "出牌"),
-        ("p", "pass", "过牌"),
-        ("t", "hint", "提示"),
-        ("b", "claim", "报牌"),
-        ("n", "next_game", "下一局"),
+        Binding("left", "cursor_left", "←", priority=True),
+        Binding("right", "cursor_right", "→", priority=True),
+        Binding("up", "cursor_left", "←", priority=True),
+        Binding("down", "cursor_right", "→", priority=True),
+        Binding("space", "toggle_select", "选牌", priority=True),
+        Binding("enter", "play", "出牌", priority=True),
+        Binding("p", "pass", "过牌", priority=True),
+        Binding("t", "hint", "提示", priority=True),
+        Binding("b", "claim", "报牌", priority=True),
+        Binding("n", "next_game", "下一局", priority=True),
         ("?", "rules", "规则"),
         ("escape", "back", "返回"),
     ]

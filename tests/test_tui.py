@@ -416,6 +416,42 @@ def test_two_big_jokers_selected_in_tui_play_as_pair() -> None:
     asyncio.run(run())
 
 
+def test_enter_plays_card_even_when_back_button_has_focus() -> None:
+    """Enter should remain the play-card shortcut while the game screen is active."""
+
+    async def run() -> None:
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[
+                [Card(RANK_4, Suit.HEARTS), Card(RANK_8, Suit.CLUBS)],
+                [],
+                [],
+                [],
+            ],
+            turn_index=0,
+            leader=0,
+        )
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            screen.query_one("#btn-game-back", Button).focus()
+            await pilot.press("space")
+            await pilot.press("enter")
+            await pilot.pause()
+
+            assert app.screen is screen
+            assert len(state.table) == 1
+            assert state.table[-1].type == PatternType.SINGLE
+            assert len(state.hands[0]) == 1
+
+    asyncio.run(run())
+
+
 def test_four_jokers_selected_in_tui_play_as_four_joker_bomb() -> None:
     async def run() -> None:
         state = GameState(
