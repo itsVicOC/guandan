@@ -1,60 +1,90 @@
 """进贡 / 还贡 / 抗贡。
 
-流程（简化版）：
-1. 触发条件：一局结束，下游方进贡给上游方
-2. 进贡方选择手牌中最大的牌（含王），交给上游
-3. 上游还一张点数 ≤ 10 的牌
-4. 抗贡：进贡方手牌含 大王×2 + 小王×2，可拒绝进贡
-5. 进 / 还贡后：单贡由末游起牌；双贡比较三游、末游进贡牌，贡大者起牌
+流程：
+1. 触发条件：非首局发牌后，按上一局名次执行进贡 / 还贡。
+2. 进贡方选择手牌中最大的单牌，排除本局红心级牌。
+3. 收贡方还一张点数 ≤ 10、非级牌、非王的牌。
+4. 抗贡：单贡方自己有 2 张大王，或双贡方合计有 2 张大王。
+5. 单贡由末游先手；双贡由进贡给头游者先手；抗贡由上一局头游先手。
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import List, Optional
 
-from ..card import (
-    RANK_10,
-    Card,
-)
+from ..card import RANK_10, RANK_A, Card
+from ..events import Event, TributeResisted, TributeReturned, TributeSent
 
 
 def can_resist_tribute(hand: List[Card]) -> bool:
-    """是否可抗贡（手牌含 大王×2 + 小王×2）。"""
+    """兼容旧接口：单人是否可抗贡（手牌含 2 张大王）。"""
     big = sum(1 for c in hand if c.is_big_joker)
-    small = sum(1 for c in hand if c.is_small_joker)
-    return big >= 2 and small >= 2
+    return big >= 2
 
 
-def select_tribute_card(hand: List[Card]) -> Card:
-    """选择进贡的牌：手牌中最大的牌。"""
-    return max(hand)
+def _is_wild(card: Card, wild_card: Card | None) -> bool:
+    return wild_card is not None and card == wild_card
 
 
-def compare_tribute_cards(left: Card, right: Card) -> int:
+def _tribute_strength(card: Card, level: int | None = None) -> int:
+    if card.is_joker:
+        return card.rank
+    if level is not None and card.rank == level:
+        return RANK_A + 1
+    return card.rank
+
+
+def _tribute_sort_key(card: Card, level: int | None = None) -> tuple[int, int]:
+    return (_tribute_strength(card, level), -int(card.suit))
+
+
+def select_tribute_card(
+    hand: List[Card], wild_card: Card | None = None, level: int | None = None
+) -> Card:
+    """选择进贡牌：除本局红心级牌外，按本局牌力取最大单牌。"""
+    candidates = [card for card in hand if not _is_wild(card, wild_card)]
+    if not candidates:
+        candidates = list(hand)
+    return max(candidates, key=lambda card: _tribute_sort_key(card, level))
+
+
+def compare_tribute_cards(
+    left: Card, right: Card, *, level: int | None = None, same_rank_ties: bool = False
+) -> int:
     """比较两张进贡牌大小。
 
-    返回 1 表示 left 大，-1 表示 right 大，0 表示完全相同。这里复用
-    Card 的稳定排序：王 > A > ... > 2，同点数时按既有花色顺序兜底。
+    返回 1 表示 left 大，-1 表示 right 大，0 表示同等。双贡分配时
+    `same_rank_ties=True`，同点数即视为平局，由顺时针规则决定给头游的一方。
     """
-    if left > right:
+    if same_rank_ties and left.rank == right.rank:
+        return 0
+    left_key = _tribute_sort_key(left, level)
+    right_key = _tribute_sort_key(right, level)
+    if left_key > right_key:
         return 1
-    if left < right:
+    if left_key < right_key:
         return -1
     return 0
 
 
-def can_return_tribute(card: Card) -> bool:
-    """检查一张牌是否可以作为还贡（点数 ≤ 10，不含王）。"""
+def can_return_tribute(card: Card, level: int | None = None) -> bool:
+    """检查一张牌是否可以作为还贡（≤10、非王、非级牌）。"""
     if card.is_joker:
+        return False
+    if level is not None and card.rank == level:
         return False
     return card.rank <= RANK_10
 
 
-def select_return_card(hand: List[Card]) -> Card:
-    """选择还贡的牌：点数 ≤ 10 的最小牌。"""
-    candidates = [c for c in hand if can_return_tribute(c)]
+def select_return_card(hand: List[Card], level: int | None = None) -> Card:
+    """选择还贡牌：符合规则的最小牌；极端情况退回非级牌最小牌。"""
+    candidates = [c for c in hand if can_return_tribute(c, level)]
     if not candidates:
-        # 找不到合适的牌（极端情况）→ 还最小的
+        non_level = [
+            c for c in hand if not c.is_joker and (level is None or c.rank != level)
+        ]
+        if non_level:
+            return min(non_level)
         return min(hand)
     return min(candidates)
 
@@ -69,19 +99,42 @@ class TributeResult:
     first_player_after: int  # 进 / 还贡后下一轮先手
 
 
+@dataclass
+class TributeExchange:
+    """单次进贡与对应还贡。"""
+
+    from_player: int
+    to_player: int
+    tribute_card: Card
+    return_card: Optional[Card] = None
+
+
+@dataclass
+class TributeFlowResult:
+    """新局进贡流程结果。"""
+
+    first_player: int
+    resisted: bool
+    exchanges: list[TributeExchange]
+    events: list[Event]
+
+
 def next_round_first_player_after_tribute(
     finish_order: list[int],
     next_hands: list[list[Card]],
+    wild_card: Card | None = None,
+    level: int | None = None,
 ) -> int:
     """根据上局名次和新局进贡牌确定下一局先手。
 
     - 三游和末游不同队：末游单贡，末游先手。
     - 三游和末游同队：三游、末游双贡，比较两人的进贡牌，贡大者先手。
-    - 进贡牌完全相同时，采用末游先手作为稳定兜底。
+    - 进贡牌同点数时，按头游顺时针方向先遇到的进贡方先手。
     """
     if len(finish_order) < 3:
         return finish_order[0] if finish_order else 0
 
+    head = finish_order[0]
     third = finish_order[2]
     last = next(player for player in range(4) if player not in finish_order)
     if third % 2 != last % 2:
@@ -89,12 +142,131 @@ def next_round_first_player_after_tribute(
     if len(next_hands) <= max(third, last) or not next_hands[third] or not next_hands[last]:
         return last
 
-    third_tribute = select_tribute_card(next_hands[third])
-    last_tribute = select_tribute_card(next_hands[last])
-    comparison = compare_tribute_cards(third_tribute, last_tribute)
+    third_tribute = select_tribute_card(next_hands[third], wild_card, level)
+    last_tribute = select_tribute_card(next_hands[last], wild_card, level)
+    comparison = compare_tribute_cards(
+        third_tribute, last_tribute, level=level, same_rank_ties=True
+    )
     if comparison > 0:
         return third
-    return last
+    if comparison < 0:
+        return last
+    cursor = _clockwise_next(head)
+    while cursor not in (third, last):
+        cursor = _clockwise_next(cursor)
+    return cursor
+
+
+def _last_player(finish_order: list[int]) -> int:
+    return next(player for player in range(4) if player not in finish_order)
+
+
+def _clockwise_next(player: int) -> int:
+    return (player + 1) % 4
+
+
+def _tribute_team_has_two_big_jokers(
+    hands: list[list[Card]], players: list[int]
+) -> bool:
+    return sum(1 for player in players for card in hands[player] if card.is_big_joker) >= 2
+
+
+def apply_tribute_flow(
+    finish_order: list[int],
+    hands: list[list[Card]],
+    *,
+    level: int,
+    wild_card: Card | None,
+) -> TributeFlowResult:
+    """按上一局名次对新局手牌执行进贡/还贡，并返回本局先手。
+
+    单下：末游向头游进贡；若末游自己有 2 大王则抗贡，头游先手。
+    双下：三游和末游都进贡；若二者合计有 2 大王则抗贡，头游先手。
+    双贡时大贡给头游、小贡给二游；同点数按顺时针，靠近头游左侧者进贡给头游。
+    """
+    if len(finish_order) < 3:
+        return TributeFlowResult(
+            first_player=finish_order[0] if finish_order else 0,
+            resisted=False,
+            exchanges=[],
+            events=[],
+        )
+
+    head = finish_order[0]
+    second = finish_order[1]
+    third = finish_order[2]
+    last = _last_player(finish_order)
+    events: list[Event] = []
+
+    if third % 2 != last % 2:
+        if _tribute_team_has_two_big_jokers(hands, [last]):
+            events.append(TributeResisted(player=last, team=last % 2, reason="single"))
+            return TributeFlowResult(head, True, [], events)
+        tribute_card = select_tribute_card(hands[last], wild_card, level)
+        hands[last].remove(tribute_card)
+        hands[head].append(tribute_card)
+        events.append(TributeSent(last, head, tribute_card, reason="single"))
+        return_card = select_return_card(hands[head], level)
+        hands[head].remove(return_card)
+        hands[last].append(return_card)
+        events.append(TributeReturned(head, last, return_card, reason="single"))
+        exchange = TributeExchange(last, head, tribute_card, return_card)
+        return TributeFlowResult(last, False, [exchange], events)
+
+    tribute_players = [third, last]
+    if _tribute_team_has_two_big_jokers(hands, tribute_players):
+        for player in tribute_players:
+            events.append(
+                TributeResisted(player=player, team=player % 2, reason="double")
+            )
+        return TributeFlowResult(head, True, [], events)
+
+    tribute_cards = {
+        player: select_tribute_card(hands[player], wild_card, level)
+        for player in tribute_players
+    }
+    comparison = compare_tribute_cards(
+        tribute_cards[third],
+        tribute_cards[last],
+        level=level,
+        same_rank_ties=True,
+    )
+    if comparison > 0:
+        head_tributer = third
+    elif comparison < 0:
+        head_tributer = last
+    else:
+        # 同点数按顺时针进贡，头游顺时针方向先遇到的进贡给头游。
+        cursor = _clockwise_next(head)
+        while cursor not in tribute_players:
+            cursor = _clockwise_next(cursor)
+        head_tributer = cursor
+    second_tributer = last if head_tributer == third else third
+
+    assignments = [(head_tributer, head), (second_tributer, second)]
+    exchanges: list[TributeExchange] = []
+    for from_player, to_player in assignments:
+        tribute_card = tribute_cards[from_player]
+        hands[from_player].remove(tribute_card)
+        hands[to_player].append(tribute_card)
+        events.append(TributeSent(from_player, to_player, tribute_card, reason="double"))
+        exchanges.append(TributeExchange(from_player, to_player, tribute_card))
+
+    for exchange in exchanges:
+        return_card = select_return_card(hands[exchange.to_player], level)
+        hands[exchange.to_player].remove(return_card)
+        hands[exchange.from_player].append(return_card)
+        exchange.return_card = return_card
+        events.append(
+            TributeReturned(
+                exchange.to_player,
+                exchange.from_player,
+                return_card,
+                reason="double",
+            )
+        )
+
+    return TributeFlowResult(head_tributer, False, exchanges, events)
 
 
 def resolve_tribute(
@@ -102,6 +274,9 @@ def resolve_tribute(
     downstream: int,
     upstream_hand: List[Card],
     downstream_hand: List[Card],
+    *,
+    level: int | None = None,
+    wild_card: Card | None = None,
 ) -> TributeResult:
     """执行进 / 还贡流程。返回结果，调用方负责实际修改手牌。"""
     if can_resist_tribute(downstream_hand):
@@ -109,13 +284,13 @@ def resolve_tribute(
             resisted=True,
             tribute_card=None,
             return_card=None,
-            first_player_after=downstream,
+            first_player_after=upstream,
         )
 
-    tribute = select_tribute_card(downstream_hand)
+    tribute = select_tribute_card(downstream_hand, wild_card, level)
     remaining_upstream = [*list(upstream_hand), tribute]
 
-    return_card = select_return_card(remaining_upstream)
+    return_card = select_return_card(remaining_upstream, level)
 
     # 进 / 还贡后：从进贡方起牌（downstream）
     return TributeResult(

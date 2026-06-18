@@ -1,26 +1,21 @@
-"""漂牌规则。
+"""漂牌兼容接口。
 
-上游方在出过 A 之后，若最后一手出 5 张及以上级牌组成的炸弹（或更大的牌型），视为漂。
-漂后下局级数再额外升 3 级。
+当前项目不启用漂牌扩展玩法。保留本模块是为了兼容旧调用和旧存档
+schema，但任何牌型都不会触发额外升级。
 """
 from __future__ import annotations
 
 from typing import List
 
 from ..card import Card
-from ..hand import Pattern, PatternType
+from ..hand import Pattern
 
 
 def is_drift_pattern(pattern: Pattern, level: int) -> bool:
-    """判断一个牌型是否是"漂牌"（上游最后一手）。"""
-    if pattern.type != PatternType.BOMB:
-        return False
-    if pattern.length < 5:
-        return False
-    # 全部由级牌组成
-    return all(c.rank == level for c in pattern.cards)
+    """兼容旧接口：漂牌扩展玩法已禁用，始终返回 False。"""
+    return False
 
 
 def has_played_ace_this_game(history_cards_played: List[Card]) -> bool:
-    """检查本局是否出过 A。"""
+    """兼容旧接口：检查历史出牌中是否出现过 A。"""
     return any(not c.is_joker and c.rank == 14 for c in history_cards_played)  # RANK_A

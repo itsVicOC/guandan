@@ -75,6 +75,12 @@ def dict_to_event(d: dict[str, Any]) -> Event:
     elif event_type == "GameOver":
         d["finish_order"] = tuple(d["finish_order"])
         d["team_levels"] = tuple(d["team_levels"])
+        d.setdefault("winner_team", None)
+    elif event_type == "TributeResisted":
+        d.setdefault("team", -1)
+        d.setdefault("reason", "resist")
+    elif event_type in ("TributeSent", "TributeReturned"):
+        d.setdefault("reason", "tribute" if event_type == "TributeSent" else "return")
 
     return event_class(**d)
 

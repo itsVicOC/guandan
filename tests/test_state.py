@@ -18,6 +18,7 @@ from guandan.engine.card import (
     Card,
     Suit,
 )
+from guandan.engine.events import Claim, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.state import (
     GameState,
@@ -66,6 +67,27 @@ class TestPlayPattern:
         assert state.table == [p]
         assert state.hand_size(0) == 26
         assert state.turn_index == 3
+
+    def test_auto_claim_when_hand_reaches_ten(self):
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[
+                [c(RANK_3)] * 11,
+                [c(RANK_4)],
+                [c(RANK_5)],
+                [c(RANK_6)],
+            ],
+            turn_index=0,
+            leader=0,
+        )
+
+        play_pattern(state, 0, single_pattern(c(RANK_3)))
+
+        assert isinstance(state.history[-1], Claim)
+        assert state.history[-1].player == 0
+        assert state.history[-1].count == 10
+        assert any(isinstance(event, TurnPlayed) for event in state.history)
 
     def test_leader_play_advances_counterclockwise_from_every_seat(self):
         for leader in range(4):
@@ -414,6 +436,8 @@ class TestGameCompletion_Document:
         state.team_bomb_count = [3, 0]  # +3 双上 + 0 炸弹 = +3
         _finish_game(state)
         assert state.guo_a is True
+        assert state.match_finished is True
+        assert state.winner_team == 0
         # 头游方回到 2
         assert state.team_levels_final[0] == 2
 
@@ -425,8 +449,34 @@ class TestGameCompletion_Document:
         _finish_game(state)
         assert state.guo_a is False
         assert state.guo_a_failed is True
+        assert state.match_finished is False
+        assert state.winner_team is None
         # 头游方降回 2
         assert state.team_levels_final[0] == 2
+
+    def test_bomb_finish_does_not_add_extra_level(self):
+        """漂牌扩展玩法不启用：5 张以上含级牌炸弹也不额外升级。"""
+        from guandan.engine.state import _finish_game
+
+        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
+        cards = [
+            c(RANK_5, "H"),
+            c(RANK_5, "D"),
+            c(RANK_5, "S"),
+            c(RANK_5, "C"),
+            c(RANK_5, "H"),
+            c(RANK_5, "D"),
+        ]
+        pattern = Pattern(PatternType.BOMB, RANK_5, 6, tuple(cards), 0)
+        state.history.append(TurnPlayed(player=0, pattern=pattern, hand_remaining=0))
+        state.finish_order = [0, 2, 1]
+        state.hands[3] = [c(RANK_7)]
+
+        _finish_game(state)
+
+        assert state.drift_flag is False
+        assert state.drift is False
+        assert state.team_levels_final[0] == RANK_5 + 3
 
 
 class TestPassedLockout:

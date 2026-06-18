@@ -71,7 +71,7 @@ class TestPatternProperties:
     @given(st.lists(single_cards(min_rank=3, max_rank=RANK_A), min_size=5, max_size=10))
     @settings(max_examples=100)
     def test_consecutive_cards_may_be_straight(self, cards):
-        """去重后 ≥ 5 张连续 rank 应能识别为顺子。"""
+        """去重后含 5 张连续 rank 应能识别为固定 5 张顺子。"""
         ranks = sorted({c.rank for c in cards})
         if len(ranks) < 5:
             return
@@ -86,15 +86,15 @@ class TestPatternProperties:
                 cur = 1
         if longest < 5:
             return
-        # 构造一个长度 5+ 的连续段
+        # 构造一个固定 5 张连续段
         start = None
-        for i in range(len(ranks) - longest + 1):
-            if ranks[i + longest - 1] - ranks[i] == longest - 1:
+        for i in range(len(ranks) - 4):
+            if ranks[i + 4] - ranks[i] == 4:
                 start = i
                 break
         if start is None:
             return
-        window = ranks[start : start + longest]
+        window = ranks[start : start + 5]
         # 取每种 rank 一张牌
         used = []
         for r in window:
@@ -102,12 +102,12 @@ class TestPatternProperties:
                 if c.rank == r and c not in used:
                     used.append(c)
                     break
-        if len(used) != longest:
+        if len(used) != 5:
             return
         ps = detect_patterns(used, None)
         straights = [p for p in ps if p.type == PatternType.STRAIGHT]
-        # 至少一个长度匹配
-        assert any(p.length == longest for p in straights), (
+        # 至少一个固定 5 张顺子
+        assert any(p.length == 5 for p in straights), (
             f"Failed for ranks={window}, got {[p.length for p in straights]}"
         )
 

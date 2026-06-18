@@ -334,7 +334,7 @@ def _try_triple_pair(
 def _try_straight(
     normal: Sequence[Card], wild_count: int, wild_card: Card | None, suit_filter: int | None = None
 ) -> list[Pattern]:
-    """顺子 / 同花顺：5+ 张连续单张。
+    """顺子 / 同花顺：固定 5 张连续单张。
 
     suit_filter: None = 顺子（任意花色），int = 同花顺（指定花色 Suit 值）
 
@@ -382,25 +382,24 @@ def _try_straight(
                     actual.append(wild_card)
         return True, wild_needed, actual
 
-    # 1. 非 wrap 情形：枚举 [start, end] 长度 ≥ 5 的窗口
-    for start in range(RANK_3, RANK_A):  # start 不能是 A
-        for end in range(start + 4, RANK_A + 1):  # end ≥ start+4
-            window = list(range(start, end + 1))
-            if RANK_2 in window:
-                continue
-            valid, w, used = _window_uses(window)
-            if not valid:
-                continue
-            patterns.append(
-                Pattern(
-                    type=ptype,
-                    rank=window[-1],
-                    length=len(window),
-                    cards=tuple(used),
-                    wild_used=w,
-                    suit=suit_filter,
-                )
+    # 1. 非 wrap 情形：顺子 / 同花顺固定 5 张
+    for start in range(RANK_3, RANK_A - 3):
+        window = list(range(start, start + 5))
+        if RANK_2 in window:
+            continue
+        valid, w, used = _window_uses(window)
+        if not valid:
+            continue
+        patterns.append(
+            Pattern(
+                type=ptype,
+                rank=window[-1],
+                length=5,
+                cards=tuple(used),
+                wild_used=w,
+                suit=suit_filter,
             )
+        )
 
     # 2. A2345 wrap 情形
     # 需要 A, 2, 3, 4, 5 都在或由 wild 替代
@@ -425,12 +424,12 @@ def _is_valid_straight_window(window: list[int]) -> bool:
     """判断一组连续 rank 是否构成合法顺子窗口。
 
     规则：
-    - 长度 ≥ 5
+    - 长度 = 5
     - 全部在 [RANK_2..RANK_A] 内
     - 不能含 RANK_2（除非是 wrap A2345，但 wrap 单独处理）
     - A 只能作最大或最小
     """
-    if len(window) < 5:
+    if len(window) != 5:
         return False
     if any(r < RANK_2 or r > RANK_A for r in window):
         return False

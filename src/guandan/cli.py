@@ -74,7 +74,7 @@ def _parse_selection(user_input: str, max_idx: int) -> list[int]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="掼蛋 CLI (v0.7.0-beta.3 / Public Beta)")
     parser.add_argument("--level", type=int, default=2, help="本局级牌 (2-14, 14=A)")
-    parser.add_argument("--first", type=int, default=0, help="首发起家 (0-3)")
+    parser.add_argument("--first", type=int, default=None, help="首发起家 (0-3，默认随机)")
     parser.add_argument("--seed", type=int, default=None, help="随机种子")
     parser.add_argument(
         "--human", type=int, default=0, help="真人玩家座位 (0-3, default=0)"
@@ -99,11 +99,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     print("=" * 60)
-    print(f"掼蛋 CLI (Public Beta) · 级牌 = {args.level} · 首发起家 = {SEAT_NAMES[args.first]} · AI 档位 = {strategy.name}")
+    rng = random.Random(args.seed)
+    first_player = args.first if args.first is not None else rng.randint(0, 3)
+    print(f"掼蛋 CLI (Public Beta) · 级牌 = {args.level} · 首发起家 = {SEAT_NAMES[first_player]} · AI 档位 = {strategy.name}")
     print("=" * 60)
 
     state = make_initial_state(
-        level=args.level, first_player=args.first, seed=args.seed
+        level=args.level, first_player=first_player, seed=args.seed
     )
 
     global _GLOBAL_WILD
@@ -118,7 +120,6 @@ def main(argv: list[str] | None = None) -> int:
 
     turn_count = 0
     max_turns = 200  # 防卡死
-    rng = random.Random(args.seed)
     while not state.finished and turn_count < max_turns:
         turn_count += 1
         cur = state.turn_index
@@ -165,11 +166,13 @@ def main(argv: list[str] | None = None) -> int:
         else:
             # AI
             ai_name = SEAT_NAMES[cur]
+            history_len_before = len(state.history)
             played = _ai_play(state, cur, strategy, rng)
             if played:
-                last = state.history[-1]
-                if isinstance(last, TurnPlayed):
-                    print(f"  {ai_name} 出：{_pattern_short(last.pattern)}")
+                for event in reversed(state.history[history_len_before:]):
+                    if isinstance(event, TurnPlayed):
+                        print(f"  {ai_name} 出：{_pattern_short(event.pattern)}")
+                        break
             else:
                 print(f"  {ai_name} 过牌")
 
@@ -178,7 +181,6 @@ def main(argv: list[str] | None = None) -> int:
         print("本局结束！")
         if state.team_levels_final is not None:
             print(f"两队最终级牌：{[lvl for lvl in state.team_levels_final]}")
-            print(f"漂牌：{state.drift_flag}")
             print(f"过 A：{state.guo_a}")
         for i, p in enumerate(state.finish_order):
             label = ["上游", "次游", "中游", "下游"][i] if i < 4 else f"第{i+1}名"

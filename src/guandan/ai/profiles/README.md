@@ -30,10 +30,9 @@
     "bomb_threshold": 0.8,
     "control_priority": 0.9,
     "teammate_awareness": 0.95,
-    "drift_bonus": 0.7,
     "pass_probability_multiplier": 1.2
   },
-  "description": "炸弹吝啬、控场节奏、配合意识、漂牌决策"
+  "description": "炸弹吝啬、控场节奏、配合意识"
 }
 ```
 

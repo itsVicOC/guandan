@@ -100,6 +100,8 @@ class GameState:
     drift_flag: bool = False
     guo_a: bool = False
     guo_a_failed: bool = False
+    match_finished: bool = False
+    winner_team: Optional[int] = None
 
     def hand(self, player: int) -> list[Card]:
         return self.hands[player]
@@ -176,6 +178,7 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
             hand_remaining=len(hand),
         )
     )
+    _auto_claim_if_needed(state, player)
 
     # 更新本轮 leader
     if state.leader is None:
@@ -253,6 +256,21 @@ def claim(state: GameState, player: int, count: int) -> None:
     from .events import Claim as ClaimEvent
 
     state.history.append(ClaimEvent(player=player, count=count))
+
+
+def _auto_claim_if_needed(state: GameState, player: int) -> None:
+    """手牌数 ≤ 10 时自动报牌；同一玩家同一张数只报一次。"""
+    count = len(state.hands[player])
+    if count > 10:
+        return
+    from .events import Claim as ClaimEvent
+
+    if any(
+        isinstance(event, ClaimEvent) and event.player == player and event.count == count
+        for event in reversed(state.history)
+    ):
+        return
+    claim(state, player, count)
 
 
 # ---- 内部工具 ----
@@ -355,13 +373,13 @@ def _end_trick_or_jiefeng(state: GameState) -> None:
 
 
 def _finish_game(state: GameState) -> None:
-    """结束一局。计算升级、漂牌、过 A。
+    """结束一局。计算升级和过 A。
 
     文档规则：
     - 3rd finisher 产生时结束游戏，剩 1 人为末游
     - 升级：头游+二游=+3, 头游+三游=+2, 头游+末游=+1
     - 对方不降级
-    - 漂牌：上游最后一手为 5+ 张级牌炸弹 → 额外 +3
+    - 漂牌扩展玩法不启用：保留兼容字段，但不参与升级
     - 过 A：必须"双上"（头游方队友非末游）才算成功
     """
     state.finished = True
@@ -390,25 +408,9 @@ def _finish_game(state: GameState) -> None:
     new_level_1 = min(RANK_A, max(RANK_2, base_levels[1] + delta_team1))
     new_levels = [new_level_0, new_level_1]
 
-    # 漂牌检查
-    from .hand import PatternType
-
+    # 兼容旧存档 / 历史 schema：漂牌扩展玩法不启用，始终不加级。
     drift = False
-    if state.history:
-        for ev in reversed(state.history):
-            if isinstance(ev, TurnPlayed) and ev.player == head:
-                p = ev.pattern
-                if (
-                    p.type == PatternType.BOMB
-                    and p.length >= 5
-                    and all(c.rank == state.level for c in p.cards)
-                ):
-                    drift = True
-                    state.drift = True
-                break
-        if drift:
-            upstream_team = team_of(head)
-            new_levels[upstream_team] = min(RANK_A, new_levels[upstream_team] + 3)
+    state.drift = False
 
     # 过 A 判定：头游方 + 队友非末游（= 头游+二游 或 头游+三游）
     # 头游队伍开局级牌打到 A 才能"冲 A"。
@@ -422,6 +424,8 @@ def _finish_game(state: GameState) -> None:
         if upstream_partner_rank in (2, 3):
             # 队友是 2nd 或 3rd → 双上 → 过 A 成功
             guo_a = True
+            state.match_finished = True
+            state.winner_team = upstream_team
             new_levels[upstream_team] = RANK_2  # 过 A 后回到 2
             # 另一队不降级
         else:
@@ -436,6 +440,9 @@ def _finish_game(state: GameState) -> None:
     state.drift_flag = drift
     state.guo_a = guo_a
     state.guo_a_failed = guo_a_failed
+    if guo_a:
+        state.match_finished = True
+        state.winner_team = upstream_team
 
     from .events import GameOver, LevelUp
 
@@ -462,12 +469,9 @@ def _finish_game(state: GameState) -> None:
             team_levels=(new_levels[0], new_levels[1]),
             drift=drift,
             guo_a=guo_a,
+            winner_team=state.winner_team,
         )
     )
-
-
-# ---- 暴露给 events 模块的 TurnPlayed（避免循环导入）----
-from .events import TurnPlayed  # noqa: E402
 
 
 def make_initial_state(

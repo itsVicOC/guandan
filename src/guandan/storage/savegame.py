@@ -194,6 +194,8 @@ def _state_to_dict(state: GameState) -> dict[str, Any]:
         "drift_flag": state.drift_flag,
         "guo_a": state.guo_a,
         "guo_a_failed": state.guo_a_failed,
+        "match_finished": state.match_finished,
+        "winner_team": state.winner_team,
     }
 
 
@@ -222,6 +224,8 @@ def _dict_to_state(data: dict[str, Any], events: list[Any]) -> GameState:
         drift_flag=data.get("drift_flag", False),
         guo_a=data.get("guo_a", False),
         guo_a_failed=data.get("guo_a_failed", False),
+        match_finished=data.get("match_finished", False),
+        winner_team=data.get("winner_team"),
     )
     return state
 

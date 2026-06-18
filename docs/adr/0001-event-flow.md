@@ -4,10 +4,10 @@
 提议中（2026-06-02）
 
 ## 背景
-掼蛋游戏的**对局过程**是一连串离散事件（发牌、出牌、过牌、报牌、进贡、还贡、抗贡、漂牌、升级、过 A），
+掼蛋游戏的**对局过程**是一连串离散事件（发牌、出牌、过牌、报牌、进贡、还贡、抗贡、升级、过 A，以及历史兼容事件），
 这些事件是 engine / tui / ai / storage 之间的**唯一通信协议**。
 
-如果走"GameState 字段变更"的方案，后期加新功能（报牌、漂牌、抗贡）就要反复改 GameState schema，
+如果走"GameState 字段变更"的方案，后期加新功能（报牌、抗贡等）就要反复改 GameState schema，
 每次改都让历史回放/断点档失效。
 
 ## 决策
@@ -22,7 +22,7 @@
 | `Tribute` | 进贡 | from_idx, to_idx, card |
 | `ReturnTribute` | 还贡 | from_idx, to_idx, card |
 | `ResistTribute` | 抗贡 | player_idx |
-| `Drift` | 漂牌 | player_idx, level |
+| `Drift` | 历史兼容事件（当前规则不再产生） | player_idx, level |
 | `LevelUp` | 升级 | team, delta |
 | `GameOver` | 一局结束 | winner_team, final_levels |
 

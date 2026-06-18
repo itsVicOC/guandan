@@ -160,10 +160,10 @@ class TestStraight:
         ps = detect_patterns(cards("3H", "4H", "5H", "6H"))
         assert not any(p.type == PatternType.STRAIGHT for p in ps)
 
-    def test_straight_6_cards(self):
+    def test_straight_6_cards_invalid(self):
         # 3-4-5-6-7-8
-        ps = detect_patterns(cards("3H", "4D", "5S", "6C", "7H", "8D"))
-        assert any(p.type == PatternType.STRAIGHT and p.length == 6 and p.rank == RANK_8 for p in ps)
+        pattern = find_complete_pattern(cards("3H", "4D", "5S", "6C", "7H", "8D"))
+        assert pattern is None
 
 
 class TestPairSequence:

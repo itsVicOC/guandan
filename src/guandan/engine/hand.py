@@ -23,11 +23,11 @@ class PatternType(str, Enum):
     PAIR = "pair"
     TRIPLE = "triple"
     TRIPLE_PAIR = "triple_pair"  # 三带二（三张 + 一对子）
-    STRAIGHT = "straight"  # 5+ 张连续单张
+    STRAIGHT = "straight"  # 固定 5 张连续单张
     PAIR_SEQUENCE = "pair_sequence"  # 3+ 对连续对子
     TRIPLE_SEQUENCE = "triple_sequence"  # 2+ 组连续三张（钢板）
     BOMB = "bomb"  # 4+ 张同点
-    STRAIGHT_FLUSH = "straight_flush"  # 5+ 张同花色顺子
+    STRAIGHT_FLUSH = "straight_flush"  # 固定 5 张同花色顺子
     FOUR_JOKERS = "four_jokers"  # 四王炸弹
 
 
@@ -111,12 +111,12 @@ class Pattern:
         if self.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):
             if other.type in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH):
                 if self.type != other.type:
-                    # 同花顺可压 4 张炸弹，或同为 5 张的普通炸弹。
+                    # 5 张同花顺可压 4 张或 5 张普通炸弹。
                     return (
                         self.type == PatternType.STRAIGHT_FLUSH
                         and other.type == PatternType.BOMB
-                        and other.length <= self.length
-                        and other.length < 6
+                        and self.length == 5
+                        and other.length in (4, 5)
                     )
                 # 同 type: 先 length 再 rank
                 if self.length != other.length:

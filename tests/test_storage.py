@@ -113,6 +113,7 @@ class TestSerialization:
             team_levels=(3, 2),
             drift=False,
             guo_a=True,
+            winner_team=0,
         )
 
         dicts = serialize_events([event])
@@ -122,6 +123,7 @@ class TestSerialization:
         assert restored[0] == event
         assert isinstance(restored[0].finish_order, tuple)
         assert isinstance(restored[0].team_levels, tuple)
+        assert restored[0].winner_team == 0
 
     def test_serialize_multiple_events(self):
         """多个事件往返。"""
@@ -291,6 +293,8 @@ class TestSavegame:
                 state = _make_test_state()
                 state.team_levels = [2, 5]
                 state.team_levels_final = [5, 5]
+                state.match_finished = True
+                state.winner_team = 0
                 shuffle_event = ShuffleDeal(
                     level=state.level,
                     wild_card=state.wild_card,
@@ -320,6 +324,8 @@ class TestSavegame:
                 assert restored.history == state.history
                 assert restored.team_levels == [2, 5]
                 assert restored.team_levels_final == [5, 5]
+                assert restored.match_finished is True
+                assert restored.winner_team == 0
 
     def test_load_game_no_savegame(self):
         """无存档时返回 None。"""
@@ -376,6 +382,7 @@ class TestHistory:
                     team_levels=(3, 2),
                     drift=False,
                     guo_a=False,
+                    winner_team=0,
                 )
                 state.history.append(game_over)
 
@@ -394,6 +401,7 @@ class TestHistory:
                 assert len(history_list) == 1
                 assert history_list[0]["game_id"] == "game001"
                 assert history_list[0]["result"]["player_rank"] == 2  # 0 在 finish_order 中排第 2
+                assert history_list[0]["result"]["winner_team"] == 0
                 assert history_list[0]["duration_seconds"] == 180
 
                 # 加载详情

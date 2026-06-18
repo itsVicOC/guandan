@@ -67,6 +67,7 @@ def save_history(
             "final_levels": list(game_over_event.team_levels),
             "drift": game_over_event.drift,
             "guo_a": game_over_event.guo_a,
+            "winner_team": game_over_event.winner_team,
             "player_rank": player_rank,
         },
         "events": serialize_events(state.history),

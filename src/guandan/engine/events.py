@@ -11,7 +11,7 @@
 - TributeSent: 进贡
 - TributeReturned: 还贡
 - TributeResisted: 抗贡
-- Drift: 漂牌
+- Drift: 漂牌兼容事件（当前规则不再产生）
 - LevelUp: 升级
 - GameOver: 一局结束
 """
@@ -65,6 +65,7 @@ class TributeSent:
     from_player: int
     to_player: int
     card: Card
+    reason: str = "tribute"
 
 
 @dataclass(frozen=True)
@@ -74,6 +75,7 @@ class TributeReturned:
     from_player: int
     to_player: int
     card: Card
+    reason: str = "return"
 
 
 @dataclass(frozen=True)
@@ -81,11 +83,13 @@ class TributeResisted:
     """抗贡：player 拒绝进贡。"""
 
     player: int
+    team: int = -1
+    reason: str = "resist"
 
 
 @dataclass(frozen=True)
 class Drift:
-    """漂牌：上游最后一手为 5 张+级牌炸弹，额外升 3 级。"""
+    """漂牌兼容事件：当前规则不再产生新的 Drift。"""
 
     player: int
     bonus_levels: int = 3
@@ -108,6 +112,7 @@ class GameOver:
     team_levels: tuple[int, int]  # 两队当前级牌
     drift: bool
     guo_a: bool  # 是否过 A
+    winner_team: Optional[int] = None
 
 
 # 所有事件类型

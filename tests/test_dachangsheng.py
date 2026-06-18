@@ -86,7 +86,6 @@ class TestProfileLoading:
         assert "bomb_threshold" in style
         assert "control_priority" in style
         assert "teammate_awareness" in style
-        assert "drift_bonus" in style
 
 
 class TestDaiChangshengStrategy:
@@ -164,7 +163,6 @@ class TestDaiChangshengStrategy:
         state.hands[2] = [Card(5, Suit.CLUBS), Card(6, Suit.CLUBS)]
         state.hands[3] = [Card(7, Suit.CLUBS), Card(10, Suit.CLUBS)]
         strategy = DaiChangshengStrategy(rng=random.Random(42))
-        strategy.style["drift_bonus"] = 0.0
         strategy.style["teammate_awareness"] = 1.0
 
         pattern = strategy.select_pattern(state, player=0)
@@ -247,15 +245,14 @@ class TestStyleBehavior:
         state.hands[3] = [Card(7, Suit.CLUBS), Card(10, Suit.CLUBS)]
         bomb = Pattern(PatternType.BOMB, 9, 4, tuple(state.hands[0][:4]), 0)
         strategy = DaiChangshengStrategy(rng=random.Random(42))
-        strategy.style["drift_bonus"] = 0.0
         strategy.style["teammate_awareness"] = 1.0
 
         chosen = strategy._apply_style(state, player=0, pattern=bomb)
 
         assert chosen == bomb
 
-    def test_drift_finish_prefers_level_bomb(self):
-        """最后一手可漂牌时，优先选择 5 张以上级牌炸弹。"""
+    def test_no_drift_override_for_finish_candidate(self):
+        """不启用漂牌后，不会为了级牌炸弹覆盖原本决策。"""
         state = _make_test_state(level=5)
         state.hands[0] = [
             Card(5, Suit.HEARTS),
@@ -263,23 +260,20 @@ class TestStyleBehavior:
             Card(5, Suit.DIAMONDS),
             Card(5, Suit.SPADES),
             Card(5, Suit.CLUBS),
+            Card(5, Suit.DIAMONDS),
         ]
         state.turn_index = 0
         state.table = []
 
         strategy = DaiChangshengStrategy(rng=random.Random(1))
-        strategy.style["drift_bonus"] = 1.0
 
         fallback = Pattern(PatternType.SINGLE, 5, 1, (state.hands[0][0],), 0)
         chosen = strategy._apply_style(state, 0, fallback)
 
-        assert chosen is not None
-        assert chosen.type == PatternType.BOMB
-        assert chosen.length == 5
-        assert all(card.rank == state.level for card in chosen.cards)
+        assert chosen == fallback
 
-    def test_preserve_drift_bomb_before_final_hand(self):
-        """非终局跟牌时，避免提前拆掉可漂的级牌炸弹材料。"""
+    def test_no_drift_preserve_before_final_hand(self):
+        """不启用漂牌后，不会因为保留级牌炸弹材料而主动过牌。"""
         state = _make_test_state(level=5)
         state.hands[0] = [
             Card(5, Suit.HEARTS),
@@ -287,6 +281,7 @@ class TestStyleBehavior:
             Card(5, Suit.DIAMONDS),
             Card(5, Suit.SPADES),
             Card(5, Suit.CLUBS),
+            Card(5, Suit.DIAMONDS),
             Card(9, Suit.CLUBS),
         ]
         state.hands[1] = [Card(3, Suit.CLUBS)] * 8
@@ -295,8 +290,7 @@ class TestStyleBehavior:
         state.table = [Pattern(PatternType.SINGLE, 4, 1, (Card(4, Suit.SPADES),), 0)]
 
         strategy = DaiChangshengStrategy(rng=random.Random(1))
-        strategy.style["drift_bonus"] = 1.0
 
         early_level_play = Pattern(PatternType.SINGLE, 5, 1, (state.hands[0][0],), 0)
 
-        assert strategy._apply_style(state, 0, early_level_play) is None
+        assert strategy._apply_style(state, 0, early_level_play) == early_level_play

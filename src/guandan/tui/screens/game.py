@@ -15,7 +15,7 @@ from ...ai import AINotImplementedError, make_strategy, play_or_pass
 from ...engine.card import Card, Suit
 from ...engine.events import Pass, TurnPlayed
 from ...engine.hand import Pattern, PatternType, sort_cards
-from ...engine.rules.tributes import next_round_first_player_after_tribute
+from ...engine.rules.tributes import apply_tribute_flow
 from ...engine.state import (
     SEAT_NAMES,
     GameState,
@@ -131,6 +131,14 @@ def _rank_label(card: Card) -> str:
     if card.rank == 11:
         return "J"
     return str(card.rank)
+
+
+def _wild_card_from_hands(level: int, hands: list[list[Card]]) -> Optional[Card]:
+    for hand in hands:
+        for card in hand:
+            if card.rank == level and card.suit == Suit.HEARTS:
+                return card
+    return None
 
 
 class PlayerStatusWidget(Static):
@@ -381,8 +389,9 @@ class GameScreen(Screen):
 
     def on_mount(self) -> None:
         if self.state is None:
+            first_player = random.randint(0, 3)
             self.state = make_initial_state(
-                level=self.level, first_player=self.human, seed=self._seed
+                level=self.level, first_player=first_player, seed=self._seed
             )
         else:
             self.level = self.state.level
@@ -443,8 +452,12 @@ class GameScreen(Screen):
         turn_name = SEAT_NAMES[s.turn_index]
         if s.finished:
             order_str = " > ".join(SEAT_NAMES[p] for p in s.finish_order)
-            next_level = self._next_round_level(s)
-            self.sub_title = f"本局结束！名次：{order_str} · 下一局级牌 {next_level} · 按 N 继续"
+            if s.match_finished and s.winner_team is not None:
+                winner = "东西" if s.winner_team == 0 else "南北"
+                self.sub_title = f"比赛结束！{winner}方获胜 · 名次：{order_str}"
+            else:
+                next_level = self._next_round_level(s)
+                self.sub_title = f"本局结束！名次：{order_str} · 下一局级牌 {next_level} · 按 N 继续"
         elif s.turn_index == self.human:
             hand_size = len(s.hands[self.human])
             self.sub_title = f"轮到你（{turn_name}）· {hand_size} 张"
@@ -470,7 +483,11 @@ class GameScreen(Screen):
             f"先手 {leader}家 · 最大 {top_player}家 · 队伍级数 东西:{levels[0]} 南北:{levels[1]} · 名次 {finished}"
         )
         if s.finished:
-            text += f" · 下一局级牌 {self._next_round_level(s)}"
+            if s.match_finished and s.winner_team is not None:
+                winner = "东西" if s.winner_team == 0 else "南北"
+                text += f" · 比赛结束：{winner}方获胜"
+            else:
+                text += f" · 下一局级牌 {self._next_round_level(s)}"
         self.query_one("#status-bar", Static).update(text)
 
     def _do_render_hand(self) -> None:
@@ -498,8 +515,10 @@ class GameScreen(Screen):
     def _refresh_round_actions(self) -> None:
         s = self._state()
         next_button = self.query_one("#btn-next-game", Button)
-        next_button.disabled = not s.finished
-        if s.finished:
+        next_button.disabled = not s.finished or s.match_finished
+        if s.finished and s.match_finished:
+            next_button.label = "比赛已结束"
+        elif s.finished:
             next_button.label = f"N  下一局 · 级牌 {self._next_round_level(s)}"
         else:
             next_button.label = "N  下一局"
@@ -520,7 +539,14 @@ class GameScreen(Screen):
     ) -> int:
         if not state.finish_order:
             return self.human
-        return next_round_first_player_after_tribute(state.finish_order, hands)
+        next_level = self._next_round_level(state)
+        result = apply_tribute_flow(
+            list(state.finish_order),
+            [list(hand) for hand in hands],
+            level=next_level,
+            wild_card=_wild_card_from_hands(next_level, hands),
+        )
+        return result.first_player
 
     def _next_round_team_levels(self, state: GameState) -> list[int]:
         if state.team_levels_final is None:
@@ -669,6 +695,10 @@ class GameScreen(Screen):
             self._last_action = "本局尚未结束，不能开始下一局"
             self._refresh_all()
             return
+        if s.match_finished:
+            self._last_action = "比赛已经结束，不能开始下一局"
+            self._refresh_all()
+            return
         if not self._game_saved:
             self._save_game_result()
 
@@ -689,7 +719,14 @@ class GameScreen(Screen):
             seed=self._seed,
             team_levels=next_team_levels,
         )
-        next_first_player = self._next_round_first_player_for_hands(s, next_state.hands)
+        tribute_result = apply_tribute_flow(
+            list(s.finish_order),
+            next_state.hands,
+            level=next_state.level,
+            wild_card=next_state.wild_card,
+        )
+        next_state.history.extend(tribute_result.events)
+        next_first_player = tribute_result.first_player
         next_state.turn_index = next_first_player
         next_state.leader = next_first_player
         if next_state.history:
@@ -706,8 +743,9 @@ class GameScreen(Screen):
                     team_levels=shuffle.team_levels,
                 )
         self.state = next_state
+        tribute_note = "抗贡，" if tribute_result.resisted else ""
         self._last_action = (
-            f"新一局开始：级牌 {next_level}，{SEAT_NAMES[next_first_player]}家先手"
+            f"新一局开始：级牌 {next_level}，{tribute_note}{SEAT_NAMES[next_first_player]}家先手"
         )
         self._refresh_all()
         self.set_timer(0.3, self._maybe_ai_turn)

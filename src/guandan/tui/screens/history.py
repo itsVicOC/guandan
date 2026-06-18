@@ -92,8 +92,6 @@ class HistoryScreen(Screen):
         duration_sec = duration % 60
 
         marks = []
-        if result["drift"]:
-            marks.append("漂")
         if result["guo_a"]:
             marks.append("过A")
 

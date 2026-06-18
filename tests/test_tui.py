@@ -8,7 +8,9 @@ from rich.text import Text
 from textual.widgets import Button
 
 from guandan.engine.card import (
+    RANK_3,
     RANK_4,
+    RANK_5,
     RANK_6,
     RANK_7,
     RANK_8,
@@ -18,7 +20,7 @@ from guandan.engine.card import (
     Card,
     Suit,
 )
-from guandan.engine.events import Pass, TurnPlayed
+from guandan.engine.events import Pass, TributeReturned, TributeSent, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.state import GameState, next_seat_counterclockwise, pass_turn, play_pattern
 from guandan.tui.app import GuandanApp
@@ -439,6 +441,90 @@ def test_finished_game_can_start_next_round_from_head_team_level() -> None:
     asyncio.run(run())
 
 
+def test_next_round_applies_tribute_card_swaps_and_records_events() -> None:
+    """下一局开始时应真实执行进贡/还贡，而不是只计算先手。"""
+
+    async def run() -> None:
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[[], [], [], []],
+            turn_index=0,
+            leader=0,
+            finish_order=[0, 1, 2],
+            finished=True,
+        )
+        state.team_levels_final = [5, 2]
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state, human=0)
+            screen._game_saved = True
+            app.push_screen(screen)
+            await pilot.pause()
+
+            fixed_hands = [
+                [Card(RANK_3, Suit.HEARTS), Card(RANK_4, Suit.HEARTS)],
+                [Card(RANK_4, Suit.SPADES), Card(RANK_6, Suit.SPADES)],
+                [Card(RANK_5, Suit.CLUBS), Card(RANK_7, Suit.CLUBS)],
+                [Card(RANK_BIG_JOKER, Suit.BIG_JOKER), Card(RANK_8, Suit.CLUBS)],
+            ]
+
+            def fake_initial_state(**kwargs) -> GameState:
+                return GameState(
+                    level=kwargs["level"],
+                    wild_card=Card(RANK_5, Suit.HEARTS),
+                    hands=[list(hand) for hand in fixed_hands],
+                    turn_index=kwargs["first_player"],
+                    leader=kwargs["first_player"],
+                    team_levels=list(kwargs["team_levels"]),
+                )
+
+            from unittest.mock import patch
+
+            with patch("guandan.tui.screens.game.make_initial_state", fake_initial_state):
+                screen.action_next_game()
+                await pilot.pause()
+
+            assert screen.state is not None
+            assert screen.state.turn_index == 3
+            assert all(len(hand) == 2 for hand in screen.state.hands)
+            assert Card(RANK_BIG_JOKER, Suit.BIG_JOKER) in screen.state.hands[0]
+            assert Card(RANK_3, Suit.HEARTS) in screen.state.hands[3]
+            assert any(isinstance(event, TributeSent) for event in screen.state.history)
+            assert any(isinstance(event, TributeReturned) for event in screen.state.history)
+
+    asyncio.run(run())
+
+
+def test_match_finished_disables_next_round_button() -> None:
+    async def run() -> None:
+        state = GameState(
+            level=14,
+            wild_card=None,
+            hands=[[], [], [], []],
+            turn_index=0,
+            leader=0,
+            finish_order=[0, 2, 1],
+            finished=True,
+            match_finished=True,
+            winner_team=0,
+        )
+        state.team_levels_final = [2, 14]
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state, human=0)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            next_button = screen.query_one("#btn-next-game", Button)
+            assert next_button.disabled is True
+            assert "比赛已结束" in str(next_button.label)
+
+    asyncio.run(run())
+
+
 def test_next_round_first_player_uses_last_when_third_and_last_different_teams() -> None:
     async def run() -> None:
         state = GameState(
@@ -491,5 +577,34 @@ def test_next_round_first_player_compares_double_tribute_cards() -> None:
             app.push_screen(screen)
             await pilot.pause()
             assert screen._next_round_first_player_for_hands(state, hands) == 1
+
+    asyncio.run(run())
+
+
+def test_next_round_first_player_uses_next_level_wild_card() -> None:
+    async def run() -> None:
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[[], [], [], []],
+            turn_index=0,
+            leader=0,
+            finish_order=[0, 2, 1],  # 三游南，末游北，同为下游方
+            finished=True,
+        )
+        state.team_levels_final = [5, 2]
+        hands = [
+            [Card(RANK_4, Suit.HEARTS)],
+            [Card(RANK_5, Suit.HEARTS), Card(RANK_7, Suit.CLUBS)],
+            [Card(RANK_4, Suit.SPADES)],
+            [Card(RANK_8, Suit.CLUBS)],
+        ]
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state, human=0)
+            app.push_screen(screen)
+            await pilot.pause()
+            assert screen._next_round_first_player_for_hands(state, hands) == 3
 
     asyncio.run(run())

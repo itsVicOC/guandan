@@ -34,6 +34,7 @@ from guandan.engine.card import (
     Card,
     Suit,
 )
+from guandan.engine.events import TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.state import (
     make_initial_state,
@@ -865,7 +866,7 @@ class TestPlayOrPass:
         rng = random.Random(0)
         result = play_or_pass(state, 0, make_strategy(0), rng)
         assert result is True
-        assert len(state.history) == 2  # ShuffleDeal + TurnPlayed
+        assert any(isinstance(event, TurnPlayed) for event in state.history[1:])
         assert state.turn_index == 3
 
     def test_no_pattern_with_no_table_uses_leader_fallback(self) -> None:
