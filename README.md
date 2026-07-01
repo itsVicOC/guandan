@@ -1,29 +1,31 @@
-# 掼蛋（Guandan）— 本地 TUI 单机版
+# 掼蛋（Guandan）— 本地 GUI / TUI 单机版
 
-> 状态：**v0.7.0-beta.4 / 公测版**（规则细节、进贡/还贡、报牌与 TUI 试玩反馈继续收口）
+> 状态：**v0.8.0-beta.1 / 公测版**（桌面 GUI 首版已加入，规则细节与试玩反馈继续收口）
 > 规则：与全国锦标赛通用口径一致
 > AI：5 档（新手 / 进阶 / 高手 / 职业（IS-MCTS）/ **戴长胜（风格化）**）
 > 持久化：Profile / Savegame / History / 断点续局恢复已实现
+> 运行环境：Python 3.10+
 
 ## 特性
 
 - 🎴 严格按全国掼蛋比赛规则：2 副牌 108 张、4 人固定搭档、级牌、4-10 张炸弹、同花顺、进贡/还贡、报牌、逢人配、抗贡、过 A
 - 🤖 5 档 AI 难度，规则驱动候选出牌，最高档致敬戴长胜牌风（IS-MCTS + 炸弹吝啬 + 配合意识）
 - 🔁 历史战绩 / 自动保存 / 断点续局恢复
+- 🖥️ 桌面 GUI（`PySide6`）：大厅 / 难度 / 牌局 / 存档 / 历史 / 规则，鼠标选牌与高对比中文花色牌面
 - 💻 终端 TUI（`textual`），首页 / 难度页 / 牌局页已统一深色牌桌风格，macOS / Linux 主流终端兼容
-- 🧪 公测版已完成规则回归、AI 候选策略、AI 对战基准、TUI 主流程与断点续局的自动化验证
+- 🧪 公测版已完成规则回归、AI 候选策略、AI 对战基准、GUI session、TUI 主流程与断点续局的自动化验证
 
 ## 安装
 
 ```bash
 # 推荐使用 uv
 uv venv
-uv pip install -e ".[dev]"
+uv pip install -e ".[dev,gui]"
 
 # 或用 pip
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[dev,gui]"
 ```
 
 ## 快速开始
@@ -34,6 +36,9 @@ python -m guandan.cli
 
 # TUI 模式
 guandan
+
+# GUI 模式
+guandan-gui
 ```
 
 ## 规则摘要
@@ -67,7 +72,9 @@ guandan/
 ├── src/guandan/      # 源码
 │   ├── engine/       # 纯规则逻辑
 │   ├── ai/           # AI 策略
+│   ├── gui/          # PySide6 桌面界面
 │   ├── tui/          # 文本界面（M1）
+│   ├── ui/           # 前端共享牌局 session / 展示 helper
 │   ├── cli.py        # 命令行入口
 │   └── storage/      # 持久化
 ├── tests/            # pytest + hypothesis 测试
@@ -90,12 +97,13 @@ guandan/
 - [x] **M6.4** 公测版回合顺序修复（v0.7.0-beta.2）：当前轮显示隔离、AI 牌权逆时针回归测试
 - [x] **M7** AI 对战基准与策略调优（v0.7.0-beta.3）：benchmark、牌墩公共 helper、高阶过牌控制、MCTS 评分升级与残局策略收口
 - [x] **M7.1** 规则细节公测补丁（v0.7.0-beta.4）：同花顺/炸弹层级、还贡边界、报牌入口与规则文档再校准
+- [x] **M8** 桌面 GUI 首版：PySide6 原生窗口、完整牌局流程、共享 session 层、存档/历史/规则页面
 - [~] v1.0 发布前调优：更强残局策略、更多 TUI 细节、文档/回放体验完善
 
 ## 开发
 
 ```bash
-# 运行测试
+# 运行测试（本项目要求 Python 3.10+）
 pytest
 
 # 静态检查

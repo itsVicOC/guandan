@@ -4,20 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guandan"
-version = "0.7.0b4"
-description = "本地掼蛋游戏（终端 TUI），5 档 AI 含致敬戴长胜牌风"
+version = "0.8.0b1"
+description = "本地掼蛋游戏（桌面 GUI / 终端 TUI），5 档 AI 含致敬戴长胜牌风"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "vic" }]
-keywords = ["guandan", "card-game", "tui", "cli"]
+keywords = ["guandan", "card-game", "gui", "tui", "cli"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console :: Curses",
+    "Environment :: X11 Applications :: Qt",
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Topic :: Games/Entertainment",
 ]
 
@@ -27,6 +28,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+gui = [
+    "PySide6>=6.7,<7",
+]
 dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
@@ -38,6 +42,7 @@ dev = [
 [project.scripts]
 guandan = "guandan.tui.app:run"
 guandan-cli = "guandan.cli:main"
+guandan-gui = "guandan.gui.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -65,25 +70,28 @@ exclude_lines = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 extend-exclude = [".venv", "build", "dist"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 ignore = [
     "E501",    # line-length
+    "B905",    # keep existing zip style outside focused changes
     "RUF001",  # 中文文本
     "RUF002",  # 中文文本
     "RUF003",  # 中文文本
     "RUF012",  # Textual BINDINGS
     "SIM117",  # nested context managers are clearer in storage tests
-    "UP006",   # keep Python 3.9-compatible typing style
-    "UP035",   # keep Python 3.9-compatible typing imports
-    "UP045",   # PEP 604 requires Python 3.10+
+    "UP007",   # avoid broad Python 3.10 typing churn in existing modules
+    "UP006",   # keep existing typing style
+    "UP035",   # keep existing typing imports
+    "UP037",   # quoted annotations are used with future annotations
+    "UP045",   # avoid broad Optional[...] churn in existing modules
 ]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 strict = false
 warn_unused_ignores = true
 disallow_untyped_defs = false

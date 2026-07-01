@@ -1,5 +1,29 @@
 # 变更日志
 
+## [Unreleased]
+
+## [0.8.0-beta.1] - 2026-07-01
+
+### GUI
+- 新增 PySide6 桌面 GUI 入口 `guandan-gui`，包含大厅、难度选择、牌局、断点续局、历史战绩和规则说明页面。
+- 牌局页采用固定东 / 北 / 西 / 南动作区、高对比中文花色牌面、鼠标点击选牌、出牌 / 过牌 / 提示 / 下一局按钮。
+- GUI 默认玩家坐东：东在底部、西在对面、北在右侧、南在左侧。
+- 新增 `guandan.ui.session` 共享牌局控制层，封装新局、AI 推进、出牌 / 过牌、下一局进贡还贡、保存历史和存档。
+- 修复 GUI 手牌区域高度未随换行行数更新的问题，开局 27 张手牌现在会完整显示。
+- GUI 手牌牌面改为自绘：红心 / 方片使用红色，黑桃 / 梅花使用黑色，并放大中央花色，便于一眼识别。
+
+### 项目
+- Python 下限提升为 3.10+，新增 `gui` optional dependency：`PySide6>=6.7,<7`。
+- README 同步 GUI 安装、启动方式和 M8 里程碑状态。
+- CLI / TUI / GUI 显示版本号同步为 `v0.8.0-beta.1`。
+- Python 包版本更新为 `0.8.0b1`。
+
+### 验证
+- `ruff check src tests --no-cache` 通过。
+- `mypy src` 通过。
+- `pytest`：329 个测试通过，1 个 PySide6 GUI smoke 测试因当前环境未安装 PySide6 跳过。
+- `pytest tests/test_gui_session.py::test_gui_window_smoke_offscreen` 在安装 `.[gui]` 的 Python 3.12 环境通过。
+
 ## [0.7.0-beta.4] - 2026-06-18
 
 ### TUI

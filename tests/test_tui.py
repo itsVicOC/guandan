@@ -577,8 +577,11 @@ def test_enter_plays_card_even_when_back_button_has_focus() -> None:
             await pilot.pause()
 
             assert app.screen is screen
-            assert len(state.table) == 1
-            assert state.table[-1].type == PatternType.SINGLE
+            played = [
+                ev for ev in state.history if isinstance(ev, TurnPlayed) and ev.player == 0
+            ]
+            assert played
+            assert played[-1].pattern.type == PatternType.SINGLE
             assert len(state.hands[0]) == 1
 
     asyncio.run(run())
