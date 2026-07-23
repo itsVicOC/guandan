@@ -149,6 +149,23 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
         # spec 规则 3：已过牌玩家本圈不能再出
         raise IllegalPlayError(f"player {player} already passed this trick")
 
+    # Pattern 是跨 UI、AI 和存档边界传递的数据，不能信任调用方给出的
+    # type/rank/length。必须确认实际选出的整组牌确实能按该解释构成合法牌型。
+    from .rules.patterns import detect_patterns
+
+    if not any(
+        candidate.type == pattern.type
+        and candidate.rank == pattern.rank
+        and candidate.length == pattern.length
+        and candidate.wild_used == pattern.wild_used
+        and Counter(candidate.cards) == Counter(pattern.cards)
+        # suit is display metadata for a straight flush. Older save files and
+        # callers may omit it, but a supplied value must still be correct.
+        and (pattern.suit is None or candidate.suit == pattern.suit)
+        for candidate in detect_patterns(pattern.cards, state.wild_card)
+    ):
+        raise IllegalPlayError("pattern does not match a legal interpretation of its cards")
+
     # 验证 pattern 的牌都在手牌中
     hand = state.hands[player]
     hand_counts = Counter(hand)

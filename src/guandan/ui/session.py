@@ -130,7 +130,7 @@ class GameSession:
             self.displayed_table_actions.pop(state.turn_index, None)
             self.last_display_turn = state.turn_index
 
-        for player, pattern in zip(self.current_table_players(), state.table, strict=False):
+        for player, pattern in zip(self.current_table_players(), state.table):
             self.displayed_table_actions[player] = ("play", pattern)
         for player in self.locked_passed_players():
             self.displayed_table_actions[player] = ("pass", None)
@@ -313,13 +313,12 @@ class GameSession:
         )
         return SessionAction(True, self.last_action)
 
-    def save_finished_if_needed(self) -> None:
+    def save_finished_if_needed(self) -> bool:
         if self.game_saved:
-            return
+            return True
         state = self.require_state()
         if not state.finished:
-            return
-        self.game_saved = True
+            return False
         try:
             duration = int(time.time() - self.start_time)
             ai_difficulties = [
@@ -335,11 +334,20 @@ class GameSession:
             )
             player_rank = state.finish_order.index(self.human) + 1 if self.human in state.finish_order else 4
             profile = load_profile()
-            update_statistics(profile, player_rank=player_rank, difficulty=self.difficulty)
+            update_statistics(
+                profile,
+                player_rank=player_rank,
+                difficulty=self.difficulty,
+                game_id=self.game_id,
+            )
             save_profile(profile)
             delete_savegame()
         except Exception as exc:
+            self.game_saved = False
             self.last_action = f"保存失败：{exc}"
+            return False
+        self.game_saved = True
+        return True
 
     def save_unfinished(self) -> None:
         state = self.require_state()

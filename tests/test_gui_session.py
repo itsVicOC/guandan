@@ -98,6 +98,40 @@ def test_session_next_game_applies_tribute_swaps_and_records_events() -> None:
     assert any(isinstance(event, TributeReturned) for event in session.state.history)
 
 
+def test_session_retries_finished_save_without_double_counting() -> None:
+    finished = GameState(
+        level=2,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=0,
+        leader=0,
+        finish_order=[0, 1, 2, 3],
+        finished=True,
+    )
+    session = GameSession(difficulty=0, existing_state=finished, human=0, game_id="retry-game")
+    profile = {
+        "statistics": {
+            "total_games": 0,
+            "wins": 0,
+            "losses": 0,
+            "win_rate": 0.0,
+            "by_difficulty": {},
+            "recorded_game_ids": [],
+        }
+    }
+    with patch("guandan.ui.session.save_history"), patch(
+        "guandan.ui.session.load_profile", return_value=profile
+    ), patch("guandan.ui.session.save_profile"), patch(
+        "guandan.ui.session.delete_savegame", side_effect=[OSError("busy"), None]
+    ):
+        assert session.save_finished_if_needed() is False
+        assert session.game_saved is False
+        assert session.save_finished_if_needed() is True
+
+    assert profile["statistics"]["total_games"] == 1
+    assert profile["statistics"]["recorded_game_ids"] == ["retry-game"]
+
+
 def test_gui_window_smoke_offscreen() -> None:
     if importlib.util.find_spec("PySide6") is None:
         pytest.skip("PySide6 is not installed")
@@ -133,6 +167,12 @@ def test_gui_window_smoke_offscreen() -> None:
         "page.play_selected(); "
         "assert len(state.table) == 1; "
         "assert len(state.hands[0]) == 26; "
+        "window.show_replay({'played_at': '2026-07-23T12:00:00', 'events': state.history}); "
+        "replay = window.stack.currentWidget(); "
+        "assert replay.__class__.__name__ == 'ReplayPage'; "
+        "assert replay.event_index == len(state.history) - 1; "
+        "replay.set_event_index(0); "
+        "assert replay.event_index == 0; "
         "window.game_page = None; "
         "window.close(); "
         "app.processEvents(); "

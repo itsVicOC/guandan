@@ -27,18 +27,21 @@ from PySide6.QtWidgets import (
 
 from ..ai import AINotImplementedError, make_strategy
 from ..engine.card import Card
+from ..engine.events import Event
 from ..engine.hand import Pattern
-from ..engine.state import SEAT_NAMES, GameState
+from ..engine.state import SEAT_NAMES, GameState, IllegalPlayError
 from ..storage import (
     delete_savegame,
     has_savegame,
     load_game,
+    load_history_detail,
     load_history_list,
     restore_game_state,
 )
-from ..tui.screens.difficulty import DIFFICULTIES
-from ..tui.screens.rule import RULES_TEXT
+from ..ui.content import DIFFICULTIES, RULES_TEXT
 from ..ui.formatting import card_label, pattern_type_label, rank_value_label
+from ..ui.history import HISTORY_COLUMNS, history_entry_cells, history_statistics_text
+from ..ui.replay import ReplayCursor, replay_event_text, replay_state_text
 from ..ui.session import GameSession
 from .cards import HandWidget
 
@@ -353,6 +356,8 @@ class LoadPage(QWidget):
 class HistoryPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
+        self.window = window
+        self.entries: list[dict] = []
         layout = QVBoxLayout(self)
         layout.setContentsMargins(48, 40, 48, 40)
         layout.setSpacing(16)
@@ -360,46 +365,118 @@ class HistoryPage(QWidget):
         title.setObjectName("title")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
-        self.table = QTableWidget(0, 5)
-        self.table.setHorizontalHeaderLabels(["时间", "名次", "难度", "时长", "标记"])
+        self.table = QTableWidget(0, len(HISTORY_COLUMNS))
+        self.table.setHorizontalHeaderLabels(list(HISTORY_COLUMNS))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.cellDoubleClicked.connect(self.open_selected_replay)
         layout.addWidget(self.table, 1)
+        layout.addWidget(button("查看回放", self.open_selected_replay, primary=True))
         layout.addWidget(button("返回大厅", window.show_menu))
         self.refresh()
 
     def refresh(self) -> None:
         self.table.setRowCount(0)
         try:
-            entries = load_history_list(limit=50)
+            self.entries = load_history_list(limit=50)
         except OSError:
-            entries = []
-        for entry in entries:
+            self.entries = []
+        for entry in self.entries:
             row = self.table.rowCount()
             self.table.insertRow(row)
             for col, value in enumerate(self._entry_cells(entry)):
                 self.table.setItem(row, col, QTableWidgetItem(value))
 
-    def _entry_cells(self, entry: dict) -> tuple[str, str, str, str, str]:
-        result = entry["result"]
-        rank_names = ["上游", "二游", "三游", "下游"]
-        rank = rank_names[result["player_rank"] - 1]
-        ai_diffs = entry["metadata"]["ai_difficulties"]
-        ai_diff = next((d for d in ai_diffs if d is not None), 2)
-        duration = entry["duration_seconds"]
-        marks = []
-        if result["guo_a"]:
-            marks.append("过 A")
-        return (
-            entry["played_at"][:19],
-            rank,
-            str(ai_diff),
-            f"{duration // 60}:{duration % 60:02d}",
-            " / ".join(marks) or "-",
-        )
+    def _entry_cells(self, entry: dict) -> tuple[str, ...]:
+        return history_entry_cells(entry)
 
+    def open_selected_replay(self, *_: object) -> None:
+        row = self.table.currentRow()
+        if not 0 <= row < len(self.entries):
+            QMessageBox.information(self, "查看回放", "请先选择一局历史战绩。")
+            return
+        detail = load_history_detail(self.entries[row]["game_id"])
+        if detail is None:
+            QMessageBox.warning(self, "查看回放", "这局历史记录无法读取。")
+            return
+        self.window.show_replay(detail)
+
+
+class ReplayPage(QWidget):
+    """Event-backed historical replay with deterministic step navigation."""
+
+    def __init__(self, window: "GuandanMainWindow", history: dict) -> None:
+        super().__init__()
+        self.window = window
+        self.history = history
+        self.events: list[Event] = list(history.get("events", []))
+        if not self.events:
+            raise ValueError("history has no events")
+        try:
+            self.cursor = ReplayCursor(self.events)
+        except (IllegalPlayError, ValueError) as exc:
+            raise ValueError("history event stream cannot be replayed") from exc
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(48, 40, 48, 40)
+        layout.setSpacing(14)
+        title = QLabel("对局回放")
+        title.setObjectName("title")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title)
+
+        self.meta = QLabel()
+        self.meta.setObjectName("muted")
+        self.meta.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.meta)
+
+        self.state_summary = QLabel()
+        self.state_summary.setObjectName("statusBar")
+        self.state_summary.setWordWrap(True)
+        layout.addWidget(self.state_summary)
+
+        self.timeline = QTextBrowser()
+        self.timeline.setReadOnly(True)
+        layout.addWidget(self.timeline, 1)
+
+        controls = QHBoxLayout()
+        self.first_button = button("首步", lambda: self.set_event_index(0))
+        self.previous_button = button("上一步", lambda: self.set_event_index(self.event_index - 1))
+        self.next_button = button("下一步", lambda: self.set_event_index(self.event_index + 1), primary=True)
+        self.last_button = button("末步", lambda: self.set_event_index(len(self.events) - 1))
+        for item in (self.first_button, self.previous_button, self.next_button, self.last_button):
+            controls.addWidget(item)
+        layout.addLayout(controls)
+        layout.addWidget(button("返回战绩", window.show_history))
+        self.refresh()
+
+    def set_event_index(self, index: int) -> None:
+        self.cursor.set_index(index)
+        self.refresh()
+
+    @property
+    def event_index(self) -> int:
+        return self.cursor.index
+
+    def refresh(self) -> None:
+        state = self.cursor.state
+        self.meta.setText(
+            f"{self.history.get('played_at', '-')[:19]} · "
+            f"第 {self.event_index + 1} / {len(self.events)} 个事件\n"
+            f"{history_statistics_text(self.history)}"
+        )
+        self.state_summary.setText(replay_state_text(state))
+        lines = []
+        for index, event in enumerate(self.events):
+            marker = "▶" if index == self.event_index else " "
+            lines.append(f"{marker} {index + 1:>3}. {replay_event_text(event)}")
+        self.timeline.setPlainText("\n".join(lines))
+        self.first_button.setEnabled(self.event_index > 0)
+        self.previous_button.setEnabled(self.event_index > 0)
+        self.next_button.setEnabled(self.event_index < len(self.events) - 1)
+        self.last_button.setEnabled(self.event_index < len(self.events) - 1)
 
 class RulesPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
@@ -760,6 +837,12 @@ class GuandanMainWindow(QMainWindow):
 
     def show_history(self) -> None:
         self._replace_page(HistoryPage(self))
+
+    def show_replay(self, history: dict) -> None:
+        try:
+            self._replace_page(ReplayPage(self, history))
+        except ValueError as exc:
+            QMessageBox.warning(self, "查看回放", f"回放数据无效：{exc}")
 
     def show_rules(self) -> None:
         self._replace_page(RulesPage(self))

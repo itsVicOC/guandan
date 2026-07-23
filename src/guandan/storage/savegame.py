@@ -13,11 +13,14 @@ from datetime import datetime
 from typing import Any, Optional
 
 from ..engine.card import Card, Suit
-from ..engine.events import Pass, ShuffleDeal, TurnPlayed
 from ..engine.hand import Pattern, PatternType
-from ..engine.state import GameState, TributeState, make_initial_state, pass_turn, play_pattern
+from ..engine.replay import replay_events
+from ..engine.state import GameState, IllegalPlayError, TributeState
+from .jsonio import write_json_atomic
 from .paths import get_savegame_path
 from .serialization import deserialize_events, serialize_events
+
+SAVEGAME_VERSION = "2.0"
 
 
 def save_game(
@@ -37,7 +40,7 @@ def save_game(
         seed: 随机种子
     """
     data = {
-        "version": "1.0",
+        "version": SAVEGAME_VERSION,
         "saved_at": datetime.now().isoformat(),
         "game_id": game_id,
         "metadata": {
@@ -57,8 +60,7 @@ def save_game(
     }
 
     path = get_savegame_path()
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+    write_json_atomic(path, data)
 
 
 def load_game() -> Optional[dict[str, Any]]:
@@ -74,12 +76,16 @@ def load_game() -> Optional[dict[str, Any]]:
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
+        if not isinstance(data, dict):
+            raise ValueError("savegame must be an object")
 
         # 反序列化事件流
         data["events"] = deserialize_events(data["events"])
+        data = _migrate_savegame(data)
+        _validate_loaded_savegame(data)
 
         return data
-    except (OSError, json.JSONDecodeError, ValueError):
+    except (KeyError, OSError, TypeError, ValueError):
         # 文件损坏
         return None
 
@@ -90,9 +96,55 @@ def restore_game_state(savegame: dict[str, Any]) -> GameState:
     新版存档包含完整 `state` 快照，优先直接恢复。旧版存档没有完整
     手牌快照时，退回到 `seed + events` 重放。
     """
-    if savegame.get("state"):
-        return _dict_to_state(savegame["state"], savegame.get("events", []))
-    return _replay_events_to_state(savegame)
+    try:
+        if savegame.get("state"):
+            return _dict_to_state(savegame["state"], savegame.get("events", []))
+        return _replay_events_to_state(savegame)
+    except (IndexError, KeyError, TypeError, ValueError, IllegalPlayError) as exc:
+        raise ValueError("invalid savegame state") from exc
+
+
+def _validate_loaded_savegame(savegame: dict[str, Any]) -> None:
+    metadata = savegame.get("metadata")
+    snapshot = savegame.get("current_state_snapshot")
+    if not isinstance(savegame.get("saved_at"), str):
+        raise ValueError("savegame has no valid timestamp")
+    if not isinstance(metadata, dict) or not isinstance(snapshot, dict):
+        raise ValueError("savegame metadata or snapshot is invalid")
+    player_seat = metadata.get("player_seat")
+    turn_index = snapshot.get("turn_index")
+    hand_sizes = snapshot.get("hand_sizes")
+    if not isinstance(player_seat, int) or not 0 <= player_seat < 4:
+        raise ValueError("savegame player seat is invalid")
+    if not isinstance(turn_index, int) or not 0 <= turn_index < 4:
+        raise ValueError("savegame turn index is invalid")
+    if (
+        not isinstance(hand_sizes, list)
+        or len(hand_sizes) != 4
+        or not all(isinstance(size, int) and size >= 0 for size in hand_sizes)
+    ):
+        raise ValueError("savegame hand sizes are invalid")
+    restore_game_state(savegame)
+
+
+def _migrate_savegame(savegame: dict[str, Any]) -> dict[str, Any]:
+    version = str(savegame.get("version", "1.0"))
+    if version not in {"1.0", SAVEGAME_VERSION}:
+        raise ValueError(f"unsupported savegame version: {version}")
+    if version == "1.0":
+        restored = restore_game_state(savegame)
+        savegame.setdefault("state", _state_to_dict(restored))
+        savegame.setdefault(
+            "current_state_snapshot",
+            {
+                "turn_index": restored.turn_index,
+                "finish_order": list(restored.finish_order),
+                "hand_sizes": [len(hand) for hand in restored.hands],
+                "finished": restored.finished,
+            },
+        )
+        savegame["version"] = SAVEGAME_VERSION
+    return savegame
 
 
 def delete_savegame() -> None:
@@ -112,6 +164,7 @@ def has_savegame() -> bool:
 
 
 __all__ = [
+    "SAVEGAME_VERSION",
     "delete_savegame",
     "has_savegame",
     "load_game",
@@ -232,21 +285,4 @@ def _dict_to_state(data: dict[str, Any], events: list[Any]) -> GameState:
 
 def _replay_events_to_state(savegame: dict[str, Any]) -> GameState:
     events = savegame.get("events") or []
-    shuffle = next((ev for ev in events if isinstance(ev, ShuffleDeal)), None)
-    if shuffle is None:
-        raise ValueError("Savegame has no ShuffleDeal event")
-
-    state = make_initial_state(
-        level=shuffle.level,
-        first_player=shuffle.first_player,
-        seed=shuffle.seed,
-        team_levels=shuffle.team_levels,
-    )
-    for event in events[1:]:
-        if state.finished:
-            break
-        if isinstance(event, TurnPlayed):
-            play_pattern(state, event.player, event.pattern)
-        elif isinstance(event, Pass):
-            pass_turn(state, event.player)
-    return state
+    return replay_events(events)

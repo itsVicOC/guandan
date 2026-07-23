@@ -289,3 +289,14 @@ def test_main_compare_json_returns_failure_for_gate_regression(
 def test_run_benchmark_requires_positive_games() -> None:
     with pytest.raises(ValueError):
         run_benchmark(games=0)
+
+
+def test_checked_in_mixed_baseline_has_stable_configuration() -> None:
+    baseline_path = Path(__file__).parents[1] / "benchmarks" / "v0.8.0b1-mixed-20.json"
+    payload = load_benchmark_payload(baseline_path)
+
+    assert payload["games"] == 20
+    assert payload["finished"] == 20
+    assert payload["completion_rate"] == 1.0
+    assert [result["seed"] for result in payload["results"]] == list(range(800, 820))
+    assert all(result["difficulties"] == [0, 1, 2, 3] for result in payload["results"])

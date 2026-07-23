@@ -11,8 +11,16 @@ import json
 from datetime import datetime
 from typing import Any, Optional
 
-from ..engine.events import GameOver
+from ..engine.events import (
+    Claim,
+    GameOver,
+    Pass,
+    TributeResisted,
+    TributeSent,
+    TurnPlayed,
+)
 from ..engine.state import GameState
+from .jsonio import write_json_atomic
 from .paths import get_history_dir
 from .serialization import deserialize_events, serialize_events
 
@@ -51,10 +59,22 @@ def save_history(
     # 玩家名次
     player_rank = game_over_event.finish_order.index(player_seat) + 1
 
+    existing_paths = list(get_history_dir().glob(f"*_{game_id}.json"))
+    existing_path = existing_paths[0] if existing_paths else None
+    played_at = datetime.now().isoformat()
+    if existing_path is not None:
+        try:
+            with open(existing_path, encoding="utf-8") as stream:
+                existing_data = json.load(stream)
+            if isinstance(existing_data, dict) and isinstance(existing_data.get("played_at"), str):
+                played_at = existing_data["played_at"]
+        except (OSError, TypeError, ValueError):
+            pass
+
     data = {
         "version": "1.0",
         "game_id": game_id,
-        "played_at": datetime.now().isoformat(),
+        "played_at": played_at,
         "duration_seconds": duration_seconds,
         "metadata": {
             "level": state.level,
@@ -70,16 +90,15 @@ def save_history(
             "winner_team": game_over_event.winner_team,
             "player_rank": player_rank,
         },
+        "statistics": _history_statistics(state),
         "events": serialize_events(state.history),
     }
 
     # 文件名：时间戳_game_id.json
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     filename = f"{timestamp}_{game_id}.json"
-    path = get_history_dir() / filename
-
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+    path = existing_path or get_history_dir() / filename
+    write_json_atomic(path, data)
 
 
 def load_history_list(limit: int = 20) -> list[dict[str, Any]]:
@@ -108,10 +127,11 @@ def load_history_list(limit: int = 20) -> list[dict[str, Any]]:
                     "duration_seconds": data["duration_seconds"],
                     "result": data["result"],
                     "metadata": data["metadata"],
+                    "statistics": data.get("statistics", {}),
                     "file_path": str(file_path),
                 }
             )
-        except (OSError, json.JSONDecodeError, KeyError):
+        except (KeyError, OSError, TypeError, ValueError):
             # 跳过损坏的文件
             continue
 
@@ -134,16 +154,35 @@ def load_history_detail(game_id: str) -> Optional[dict[str, Any]]:
         try:
             with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                raise ValueError("history must be an object")
 
             # 反序列化事件流
             data["events"] = deserialize_events(data["events"])
 
             return data
-        except (OSError, json.JSONDecodeError, ValueError):
+        except (KeyError, OSError, TypeError, ValueError):
             # 跳过损坏的文件
             continue
 
     return None
+
+
+def _history_statistics(state: GameState) -> dict[str, Any]:
+    plays = sum(isinstance(event, TurnPlayed) for event in state.history)
+    passes = sum(isinstance(event, Pass) for event in state.history)
+    return {
+        "actions": plays + passes,
+        "plays": plays,
+        "passes": passes,
+        "claims": sum(isinstance(event, Claim) for event in state.history),
+        "tributes": sum(isinstance(event, TributeSent) for event in state.history),
+        "tribute_resisted": any(
+            isinstance(event, TributeResisted) for event in state.history
+        ),
+        "bombs": list(state.team_bomb_count),
+        "event_count": len(state.history),
+    }
 
 
 __all__ = [

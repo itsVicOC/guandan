@@ -156,6 +156,23 @@ class TestPlayPattern:
         with pytest.raises(IllegalPlayError):
             play_pattern(state, 2, p)
 
+    def test_rejects_forged_pattern(self):
+        cards = [c(RANK_3), c(RANK_4), c(RANK_5), c(RANK_6)]
+        state = GameState(
+            level=RANK_2,
+            wild_card=None,
+            hands=[cards, [], [], []],
+            turn_index=0,
+            leader=0,
+        )
+        forged_bomb = Pattern(PatternType.BOMB, RANK_6, 4, tuple(cards))
+
+        with pytest.raises(IllegalPlayError, match="legal interpretation"):
+            play_pattern(state, 0, forged_bomb)
+
+        assert state.hands[0] == cards
+        assert state.table == []
+
     def test_level_card_single_can_press_higher_natural_rank(self):
         state = GameState(
             level=RANK_2,

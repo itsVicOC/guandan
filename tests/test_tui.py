@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import asyncio
 import random
+from unittest.mock import patch
 
 from rich.text import Text
 from textual.widgets import Button
 
 from guandan.engine.card import (
+    RANK_2,
     RANK_3,
     RANK_4,
     RANK_5,
@@ -22,7 +24,14 @@ from guandan.engine.card import (
 )
 from guandan.engine.events import Pass, TributeReturned, TributeSent, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
-from guandan.engine.state import GameState, next_seat_counterclockwise, pass_turn, play_pattern
+from guandan.engine.rules.patterns import find_complete_pattern
+from guandan.engine.state import (
+    GameState,
+    make_initial_state,
+    next_seat_counterclockwise,
+    pass_turn,
+    play_pattern,
+)
 from guandan.tui.app import GuandanApp
 from guandan.tui.layout import (
     RECOMMENDED_COLUMNS,
@@ -31,6 +40,8 @@ from guandan.tui.layout import (
     terminal_resize_disabled,
 )
 from guandan.tui.screens.game import GameScreen, _tui_card
+from guandan.tui.screens.history import HistoryScreen
+from guandan.tui.screens.replay import ReplayScreen
 
 
 def _plain(markup: str) -> str:
@@ -69,6 +80,53 @@ def test_tui_card_marks_cursor_selection_and_wild() -> None:
     assert "配" in _plain(_tui_card(card, wild=True))
     assert "▶" in _plain(_tui_card(card, selected=True, cursor=True))
     assert "✓" in _plain(_tui_card(card, selected=True, cursor=True))
+
+
+def test_tui_history_opens_event_replay_and_steps_between_events() -> None:
+    async def run() -> None:
+        state = make_initial_state(level=RANK_2, first_player=0, seed=7)
+        played_card = state.hands[0][0]
+        pattern = find_complete_pattern([played_card], state.wild_card)
+        assert pattern is not None
+        play_pattern(state, 0, pattern)
+        entry = {
+            "game_id": "replay-demo",
+            "played_at": "2026-07-23T12:00:00",
+            "duration_seconds": 12,
+            "metadata": {"ai_difficulties": [None, 1, 1, 1]},
+            "result": {"player_rank": 1, "guo_a": False},
+        }
+        detail = {**entry, "events": state.history}
+
+        app = GuandanApp()
+        with patch("guandan.tui.screens.history.load_history_list", return_value=[entry]), patch(
+            "guandan.tui.screens.history.load_history_detail", return_value=detail
+        ):
+            async with app.run_test() as pilot:
+                history = HistoryScreen()
+                app.push_screen(history)
+                await pilot.pause()
+
+                history.action_replay()
+                await pilot.pause()
+
+                replay = app.screen
+                assert isinstance(replay, ReplayScreen)
+                assert replay._event_index == 1
+                assert "东家出 单张" in _plain(
+                    replay.query_one("#replay-timeline").content
+                )
+
+                replay.action_first()
+                assert replay._event_index == 0
+                assert replay.query_one("#btn-replay-previous", Button).disabled
+                assert "发牌" in _plain(replay.query_one("#replay-timeline").content)
+
+                replay.action_last()
+                assert replay._event_index == 1
+                assert replay.query_one("#btn-replay-next", Button).disabled
+
+    asyncio.run(run())
 
 
 def test_tui_startup_requests_larger_terminal_when_space_is_small() -> None:
@@ -706,7 +764,7 @@ def test_next_round_applies_tribute_card_swaps_and_records_events() -> None:
 
             from unittest.mock import patch
 
-            with patch("guandan.tui.screens.game.make_initial_state", fake_initial_state):
+            with patch("guandan.ui.session.make_initial_state", fake_initial_state):
                 screen.action_next_game()
                 await pilot.pause()
 

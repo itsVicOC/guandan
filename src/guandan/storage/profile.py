@@ -6,15 +6,19 @@ Profile 包含：
 """
 from __future__ import annotations
 
+import copy
 import json
 from datetime import datetime
 from typing import Any
 
+from .jsonio import write_json_atomic
 from .paths import get_profile_path
+
+PROFILE_VERSION = "2.0"
 
 # 默认配置
 DEFAULT_PROFILE: dict[str, Any] = {
-    "version": "1.0",
+    "version": PROFILE_VERSION,
     "player_name": "玩家",
     "preferences": {
         "default_difficulty": 2,
@@ -26,6 +30,7 @@ DEFAULT_PROFILE: dict[str, Any] = {
         "losses": 0,
         "win_rate": 0.0,
         "by_difficulty": {},
+        "recorded_game_ids": [],
     },
     "created_at": None,
     "updated_at": None,
@@ -42,18 +47,15 @@ def load_profile() -> dict[str, Any]:
     """
     path = get_profile_path()
     if not path.exists():
-        profile = DEFAULT_PROFILE.copy()
-        profile["preferences"] = DEFAULT_PROFILE["preferences"].copy()
-        profile["statistics"] = DEFAULT_PROFILE["statistics"].copy()
-        profile["statistics"]["by_difficulty"] = {}
-        return profile
+        return copy.deepcopy(DEFAULT_PROFILE)
 
     try:
         with open(path, encoding="utf-8") as f:
-            return json.load(f)
-    except (OSError, json.JSONDecodeError):
+            data = json.load(f)
+        return _migrate_profile(data)
+    except (OSError, TypeError, ValueError):
         # 文件损坏，返回默认值
-        return DEFAULT_PROFILE.copy()
+        return copy.deepcopy(DEFAULT_PROFILE)
 
 
 def save_profile(profile: dict[str, Any]) -> None:
@@ -67,11 +69,17 @@ def save_profile(profile: dict[str, Any]) -> None:
         profile["created_at"] = profile["updated_at"]
 
     path = get_profile_path()
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(profile, f, indent=2, ensure_ascii=False)
+    profile["version"] = PROFILE_VERSION
+    write_json_atomic(path, profile)
 
 
-def update_statistics(profile: dict[str, Any], player_rank: int, difficulty: int) -> None:
+def update_statistics(
+    profile: dict[str, Any],
+    player_rank: int,
+    difficulty: int,
+    *,
+    game_id: str | None = None,
+) -> bool:
     """更新统计数据（对局结束后调用）。
 
     Args:
@@ -80,6 +88,9 @@ def update_statistics(profile: dict[str, Any], player_rank: int, difficulty: int
         difficulty: AI 难度（0-4）
     """
     stats = profile["statistics"]
+    recorded_game_ids = stats.setdefault("recorded_game_ids", [])
+    if game_id is not None and game_id in recorded_game_ids:
+        return False
 
     # 总对局数
     stats["total_games"] += 1
@@ -102,10 +113,36 @@ def update_statistics(profile: dict[str, Any], player_rank: int, difficulty: int
     stats["by_difficulty"][diff_key]["games"] += 1
     if player_rank <= 2:
         stats["by_difficulty"][diff_key]["wins"] += 1
+    if game_id is not None:
+        recorded_game_ids.append(game_id)
+    return True
+
+
+def _migrate_profile(data: Any) -> dict[str, Any]:
+    if not isinstance(data, dict):
+        raise ValueError("profile must be an object")
+    profile = copy.deepcopy(DEFAULT_PROFILE)
+    if isinstance(data.get("player_name"), str):
+        profile["player_name"] = data["player_name"]
+    if isinstance(data.get("preferences"), dict):
+        profile["preferences"].update(data["preferences"])
+    if isinstance(data.get("statistics"), dict):
+        profile["statistics"].update(data["statistics"])
+    recorded = profile["statistics"].get("recorded_game_ids", [])
+    profile["statistics"]["recorded_game_ids"] = (
+        [item for item in recorded if isinstance(item, str)]
+        if isinstance(recorded, list)
+        else []
+    )
+    profile["created_at"] = data.get("created_at")
+    profile["updated_at"] = data.get("updated_at")
+    profile["version"] = PROFILE_VERSION
+    return profile
 
 
 __all__ = [
     "DEFAULT_PROFILE",
+    "PROFILE_VERSION",
     "load_profile",
     "save_profile",
     "update_statistics",

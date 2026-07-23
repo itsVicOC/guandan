@@ -1,9 +1,15 @@
 """Property-based testing：牌型识别 / 比较的随机性质验证。"""
 from __future__ import annotations
 
+import random
+from collections import Counter
+from itertools import chain
+
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from guandan.ai import make_strategy
+from guandan.ai.play import play_or_pass
 from guandan.engine.card import (
     RANK_2,
     RANK_A,
@@ -13,12 +19,16 @@ from guandan.engine.card import (
     Suit,
 )
 from guandan.engine.deck import make_deck
+from guandan.engine.events import GameOver, TurnPlayed
 from guandan.engine.hand import PatternType
+from guandan.engine.replay import replay_events
 from guandan.engine.rules.patterns import (
     detect_patterns,
     find_complete_pattern,
     has_legal_pattern,
 )
+from guandan.engine.rules.tributes import apply_tribute_flow
+from guandan.engine.state import make_initial_state
 
 # 测试用 suit 列表
 SUITS_NORMAL = [Suit.HEARTS, Suit.DIAMONDS, Suit.SPADES, Suit.CLUBS]
@@ -155,3 +165,53 @@ class TestDeck:
 
         cnt = Counter(deck)
         assert all(v == 2 for v in cnt.values())
+
+
+def _assert_card_conservation(state) -> None:
+    played_cards = [
+        card
+        for event in state.history
+        if isinstance(event, TurnPlayed)
+        for card in event.pattern.cards
+    ]
+    cards_in_hands = list(chain.from_iterable(state.hands))
+    assert Counter(cards_in_hands + played_cards) == Counter(make_deck())
+
+
+class TestStateProperties:
+    @given(st.integers(min_value=0, max_value=10_000))
+    @settings(max_examples=8, deadline=None)
+    def test_ai_game_preserves_cards_and_replays_exactly(self, seed: int) -> None:
+        state = make_initial_state(level=2, first_player=0, seed=seed)
+        strategy = make_strategy(0)
+        rng = random.Random(seed)
+
+        for turn in range(2000):
+            if state.finished:
+                break
+            play_or_pass(state, state.turn_index, strategy, rng)
+            _assert_card_conservation(state)
+            if turn % 16 == 0:
+                assert replay_events(state.history) == state
+
+        assert state.finished
+        assert len(state.finish_order) == 3
+        assert sum(isinstance(event, GameOver) for event in state.history) == 1
+        assert replay_events(state.history) == state
+
+    @given(st.permutations([0, 1, 2, 3]), st.integers(min_value=0, max_value=10_000))
+    @settings(max_examples=20, deadline=None)
+    def test_tribute_flow_preserves_the_full_deck(self, finish_order, seed: int) -> None:
+        state = make_initial_state(level=2, first_player=0, seed=seed)
+        before = Counter(chain.from_iterable(state.hands))
+        result = apply_tribute_flow(
+            list(finish_order[:3]),
+            state.hands,
+            level=state.level,
+            wild_card=state.wild_card,
+        )
+        after = Counter(chain.from_iterable(state.hands))
+
+        assert after == before == Counter(make_deck())
+        assert all(len(hand) == 27 for hand in state.hands)
+        assert result.first_player in range(4)

@@ -9,14 +9,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
 from ...engine.card import RANK_2
-
-DIFFICULTIES = [
-    ("新手", "随机贪心，记牌弱"),
-    ("进阶", "贪心 + 简单估值"),
-    ("高手", "贪心 + 记牌 + 协作分"),
-    ("职业", "IS-MCTS + 完整估值"),
-    ("戴长胜", "IS-MCTS + 风格化参数（致敬）"),
-]
+from ...ui.content import DIFFICULTIES
 
 
 class DifficultySelectScreen(Screen):

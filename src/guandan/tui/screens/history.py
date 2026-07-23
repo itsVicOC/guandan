@@ -6,13 +6,16 @@ from textual.containers import Center, Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Static
 
-from ...storage import load_history_list
+from ...storage import load_history_detail, load_history_list
+from ...ui.history import HISTORY_COLUMNS, history_entry_cells
+from .error import ErrorModal
 
 
 class HistoryScreen(Screen):
     """历史战绩屏（显示最近对局记录）。"""
 
     BINDINGS = [
+        ("r", "replay", "查看回放"),
         ("escape", "back", "返回"),
     ]
 
@@ -48,6 +51,7 @@ class HistoryScreen(Screen):
                 yield Static(f"最近 {len(self._history)} 场对局", id="hist-subtitle")
                 yield DataTable(id="hist-table")
             with Center():
+                yield Button("R  查看回放", id="btn-replay", variant="primary")
                 yield Button("← 返回", id="btn-back")
 
         yield Footer()
@@ -58,17 +62,48 @@ class HistoryScreen(Screen):
         tables = list(self.query(DataTable))
         if tables:
             table = tables[0]
-            table.add_columns("时间", "名次", "难度", "时长", "标记")
+            table.add_columns(*HISTORY_COLUMNS)
             for entry in self._history:
                 table.add_row(*self._entry_cells(entry))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        self.app.pop_screen()
+        if event.button.id == "btn-replay":
+            self.action_replay()
+        else:
+            self.app.pop_screen()
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        event.stop()
+        self.action_replay()
+
+    def action_replay(self) -> None:
+        if not self._history:
+            self.app.push_screen(ErrorModal("暂无可查看的历史战绩。"))
+            return
+        table = self.query_one("#hist-table", DataTable)
+        row = table.cursor_row
+        if not 0 <= row < len(self._history):
+            self.app.push_screen(ErrorModal("请先选择一局历史战绩。"))
+            return
+        try:
+            detail = load_history_detail(self._history[row]["game_id"])
+        except OSError as exc:
+            self.app.push_screen(ErrorModal(str(exc), title="无法读取回放"))
+            return
+        if detail is None:
+            self.app.push_screen(ErrorModal("这局历史记录无法读取。", title="无法读取回放"))
+            return
+        from .replay import ReplayScreen
+
+        try:
+            self.app.push_screen(ReplayScreen(detail))
+        except ValueError as exc:
+            self.app.push_screen(ErrorModal(str(exc), title="回放数据无效"))
 
     def action_back(self) -> None:
         self.app.pop_screen()
 
-    def _entry_cells(self, entry: dict) -> tuple[str, str, str, str, str]:
+    def _entry_cells(self, entry: dict) -> tuple[str, ...]:
         """格式化历史记录表格行。
 
         Args:
@@ -78,27 +113,4 @@ class HistoryScreen(Screen):
             时间、名次、难度、时长、标记。
         """
 
-        played_at = entry["played_at"][:19]  # 去掉毫秒
-        result = entry["result"]
-        rank = result["player_rank"]
-        rank_names = ["上游", "二游", "三游", "下游"]
-        rank_text = rank_names[rank - 1]
-
-        ai_diffs = entry["metadata"]["ai_difficulties"]
-        ai_diff = next((d for d in ai_diffs if d is not None), 2)
-
-        duration = entry["duration_seconds"]
-        duration_min = duration // 60
-        duration_sec = duration % 60
-
-        marks = []
-        if result["guo_a"]:
-            marks.append("过A")
-
-        return (
-            played_at,
-            rank_text,
-            str(ai_diff),
-            f"{duration_min}:{duration_sec:02d}",
-            " / ".join(marks) or "-",
-        )
+        return history_entry_cells(entry)

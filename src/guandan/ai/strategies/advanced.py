@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import Optional
 
 from ...engine.hand import Pattern, PatternType
-from ...engine.rules.patterns import find_complete_pattern
 from ...engine.state import GameState, is_teammate
 from ...engine.trick import current_top_player
 from ..context import opponent_has_one_card
+from ..endgame import legal_finish_pattern
 from ..greedy import select_min_winning
 from ..memory import PlayedTracker
 from ..valuation import enumerate_candidate_plays, estimate_pattern_cost
@@ -64,15 +64,7 @@ def _cover_teammate_against_one_card_opponent(
 
 
 def _finish_now(state: GameState, player: int) -> Optional[Pattern]:
-    hand = state.hands[player]
-    if not hand:
-        return None
-    candidate = find_complete_pattern(hand, state.wild_card)
-    if candidate is None:
-        return None
-    if state.table and not candidate.can_be_played_on(state.table[-1], level=state.level):
-        return None
-    return candidate
+    return legal_finish_pattern(state, player)
 
 
 class AdvancedStrategy:

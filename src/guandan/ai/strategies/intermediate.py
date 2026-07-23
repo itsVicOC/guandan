@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from ...engine.hand import Pattern
 from ...engine.state import GameState
+from ..endgame import legal_finish_pattern
 from ..greedy import select_min_winning
 from ..valuation import enumerate_candidate_plays
 
@@ -20,6 +21,9 @@ class IntermediateStrategy:
     def select_pattern(
         self, state: GameState, player: int
     ) -> Pattern | None:
+        finish = legal_finish_pattern(state, player)
+        if finish is not None:
+            return finish
         candidates = enumerate_candidate_plays(state, player, max_candidates=5)
         if candidates:
             return candidates[0]

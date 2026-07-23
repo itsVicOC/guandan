@@ -119,6 +119,28 @@ class TestGreedy:
         assert p.rank == RANK_2
         assert p.cards[0] == c(RANK_2, "S")
 
+    def test_novice_prioritizes_a_legal_one_move_finish(self) -> None:
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.hands[0] = [c(RANK_7, "H"), c(RANK_7, "D")]
+
+        pattern = NoviceStrategy().select_pattern(state, 0)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.PAIR
+        assert len(pattern.cards) == len(state.hands[0])
+
+    def test_intermediate_prioritizes_a_legal_one_move_finish(self) -> None:
+        state = make_initial_state(level=RANK_2, first_player=0, seed=42)
+        state.wild_card = None
+        state.hands[0] = [c(RANK_7, "H"), c(RANK_7, "D")]
+
+        pattern = IntermediateStrategy().select_pattern(state, 0)
+
+        assert pattern is not None
+        assert pattern.type == PatternType.PAIR
+        assert len(pattern.cards) == len(state.hands[0])
+
     def test_follower_no_table_top_returns_leader_move(self) -> None:
         """table 空 → 等价 leader，并保护非 wild 级牌。"""
         state = make_initial_state(level=RANK_2, first_player=0, seed=42)

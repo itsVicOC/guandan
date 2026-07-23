@@ -1,8 +1,6 @@
 """牌桌屏（M1 核心，M2 接入 AI 包，M5 存储集成，M6 TUI 优化）。"""
 from __future__ import annotations
 
-import random
-import time
 from typing import List, Optional, Sequence
 
 from rich.markup import escape
@@ -12,7 +10,6 @@ from textual.containers import Grid, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
-from ...ai import AINotImplementedError, make_strategy, play_or_pass
 from ...engine.card import Card, Suit
 from ...engine.events import Pass, TurnPlayed
 from ...engine.hand import Pattern, PatternType, comparison_rank, sort_cards
@@ -21,24 +18,11 @@ from ...engine.state import (
     SEAT_NAMES,
     GameState,
     IllegalPlayError,
-    make_initial_state,
-    pass_turn,
-    play_pattern,
 )
 from ...engine.trick import (
-    current_table_players,
     current_trick_actions,
-    last_player_of_pattern,
-    locked_passed_players,
 )
-from ...storage import (
-    delete_savegame,
-    load_profile,
-    save_game,
-    save_history,
-    save_profile,
-    update_statistics,
-)
+from ...ui.session import GameSession
 from ..layout import MIN_COLUMNS, MIN_LINES, RECOMMENDED_COLUMNS, RECOMMENDED_LINES
 
 
@@ -397,32 +381,83 @@ class GameScreen(Screen):
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.difficulty = difficulty
-        self.level = level
-        self.human = human
-        self.state: Optional[GameState] = existing_state
+        self.session = GameSession(
+            difficulty=difficulty,
+            level=level,
+            human=human,
+            existing_state=existing_state,
+            game_id=game_id,
+            seed=seed,
+        )
         self.message = ""
-        # 注入 AI 策略（档 3/4 会在 DifficultySelectScreen._start_game 阻断）
-        # 这里再兜底一次：万一直接构造 GameScreen 时给了一个未实现的档
-        try:
-            self._strategy = make_strategy(difficulty)
-        except AINotImplementedError:
-            # 降级到 档 1 (进阶)
-            self._strategy = make_strategy(1)
-            self.difficulty = 1
-        self._ai_rng = random.Random()
         # 交互状态（不放在 widget 上以避免 textual 命名冲突）
         self._hand_cards: List[Card] = []
         self._hand_selected_indices: set[int] = set()
         self._hand_cursor = 0
-        self._last_action = "准备开始"
-        self._displayed_table_actions: dict[int, tuple[str, Pattern | None]] = {}
-        self._last_display_turn: Optional[int] = None
-        # M5 存储：追踪对局元数据
-        self._game_id = game_id or f"game_{int(time.time())}"
-        self._start_time = time.time()
-        self._seed = seed if seed is not None else random.randint(1, 10000)
-        self._game_saved = False  # 防止重复保存
+
+    @property
+    def difficulty(self) -> int:
+        return self.session.difficulty
+
+    @property
+    def level(self) -> int:
+        return self.session.level
+
+    @property
+    def human(self) -> int:
+        return self.session.human
+
+    @property
+    def state(self) -> Optional[GameState]:
+        return self.session.state
+
+    @state.setter
+    def state(self, value: Optional[GameState]) -> None:
+        self.session.state = value
+
+    @property
+    def _strategy(self):
+        return self.session.strategy
+
+    @property
+    def _ai_rng(self):
+        return self.session.ai_rng
+
+    @_ai_rng.setter
+    def _ai_rng(self, value) -> None:
+        self.session.ai_rng = value
+
+    @property
+    def _last_action(self) -> str:
+        return self.session.last_action
+
+    @_last_action.setter
+    def _last_action(self, value: str) -> None:
+        self.session.last_action = value
+
+    @property
+    def _game_saved(self) -> bool:
+        return self.session.game_saved
+
+    @_game_saved.setter
+    def _game_saved(self, value: bool) -> None:
+        self.session.game_saved = value
+
+    @property
+    def _displayed_table_actions(self) -> dict[int, tuple[str, Pattern | None]]:
+        return self.session.displayed_table_actions
+
+    @_displayed_table_actions.setter
+    def _displayed_table_actions(self, value: dict[int, tuple[str, Pattern | None]]) -> None:
+        self.session.displayed_table_actions = value
+
+    @property
+    def _last_display_turn(self) -> Optional[int]:
+        return self.session.last_display_turn
+
+    @_last_display_turn.setter
+    def _last_display_turn(self, value: Optional[int]) -> None:
+        self.session.last_display_turn = value
 
     def compose(self) -> ComposeResult:
         ai_label = f"AI·{self._strategy.name}"
@@ -446,27 +481,16 @@ class GameScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        if self.state is None:
-            first_player = random.randint(0, 3)
-            self.state = make_initial_state(
-                level=self.level, first_player=first_player, seed=self._seed
-            )
-        else:
-            self.level = self.state.level
+        self.session.ensure_started()
         self._refresh_all()
         self.set_timer(0.3, self._maybe_ai_turn)
 
     def _state(self) -> GameState:
-        assert self.state is not None
-        return self.state
+        return self.session.require_state()
 
     def _visual_seats(self) -> dict[str, int]:
         """返回以当前玩家为底部视角的左右和对面座位。"""
-        return {
-            "left": (self.human + 1) % 4,
-            "opposite": (self.human + 2) % 4,
-            "right": (self.human - 1) % 4,
-        }
+        return self.session.visual_seats()
 
     def _refresh_all(self) -> None:
         s = self._state()
@@ -605,10 +629,7 @@ class GameScreen(Screen):
             next_button.label = "N  下一局"
 
     def _next_round_level(self, state: GameState) -> int:
-        if state.team_levels_final is None or not state.finish_order:
-            return state.level
-        head_team = state.finish_order[0] % 2
-        return int(state.team_levels_final[head_team])
+        return self.session.next_round_level(state)
 
     def _next_round_first_player(self, state: GameState) -> int:
         return self._next_round_first_player_for_hands(state, state.hands)
@@ -630,21 +651,18 @@ class GameScreen(Screen):
         return result.first_player
 
     def _next_round_team_levels(self, state: GameState) -> list[int]:
-        if state.team_levels_final is None:
-            return list(state.team_levels)
-        return list(state.team_levels_final)
+        return self.session.next_round_team_levels(state)
 
     def _visible_team_levels(self, state: GameState) -> list[int]:
-        if state.finished and state.team_levels_final is not None:
-            return list(state.team_levels_final)
-        return list(state.team_levels)
+        del state
+        return self.session.visible_team_levels()
 
     def _last_player_of(self, p: Pattern) -> int:
-        return last_player_of_pattern(self._state(), p, default=0) or 0
+        return self.session.last_player_of(p)
 
     def _current_table_players(self) -> List[int]:
         """返回当前桌面每手牌对应的玩家，顺序与 `state.table` 一致。"""
-        return current_table_players(self._state())
+        return self.session.current_table_players()
 
     def _current_trick_actions(self) -> List[TurnPlayed | Pass]:
         """从事件历史尾部提取当前 trick 的出牌/过牌事件。"""
@@ -652,7 +670,7 @@ class GameScreen(Screen):
 
     def _locked_passed_players(self) -> List[int]:
         """提取本轮仍被锁定的过牌玩家，按过牌发生顺序。"""
-        return locked_passed_players(self._state())
+        return self.session.locked_passed_players()
 
     def _table_display_actions(
         self,
@@ -660,22 +678,8 @@ class GameScreen(Screen):
         passed_players: List[int],
     ) -> dict[int, tuple[str, Pattern | None]]:
         """按座位保留出牌区显示，只在轮到该座位时清理其上一手。"""
-        state = self._state()
-        if state.finished:
-            self._displayed_table_actions.clear()
-            self._last_display_turn = None
-            return {}
-
-        if self._last_display_turn != state.turn_index:
-            self._displayed_table_actions.pop(state.turn_index, None)
-            self._last_display_turn = state.turn_index
-
-        for player, pattern in zip(table_players, state.table):
-            self._displayed_table_actions[player] = ("play", pattern)
-        for player in passed_players:
-            self._displayed_table_actions[player] = ("pass", None)
-
-        return dict(self._displayed_table_actions)
+        del table_players, passed_players
+        return self.session.table_display_actions()
 
     def action_cursor_left(self) -> None:
         if not self._hand_cards:
@@ -707,65 +711,33 @@ class GameScreen(Screen):
             for i in sorted(self._hand_selected_indices)
             if i < len(self._hand_cards)
         ]
-        if not sel:
-            self.sub_title = "未选牌"
-            self._last_action = "未选牌"
-            self._refresh_all()
-            return
-        from ...engine.rules.patterns import find_complete_pattern
-
-        p = find_complete_pattern(sel, s.wild_card)
-        if p is None:
-            message = f"这组牌不是合法牌型：你选 [{_cards_text(sel)}]"
-            self.sub_title = message
-            self._last_action = message
-            self._refresh_all()
-            return
-        try:
-            play_pattern(s, self.human, p)
-            self._last_action = (
-                f"你出牌：{_pattern_type_label(p.type)} · {' '.join(_tui_card(c) for c in p.cards)}"
-            )
+        result = self.session.play_human_cards(sel)
+        if result.ok:
             self._hand_selected_indices.clear()
             self._refresh_all()
             self.set_timer(0.3, self._maybe_ai_turn)
-        except IllegalPlayError as e:
-            if s.table:
-                message = _play_rejection_message(sel, p, s.table[-1], s.level)
-            else:
-                message = f"非法：{e}"
-            self.sub_title = message
-            self._last_action = message
+        else:
+            self.sub_title = result.message
             self._refresh_all()
 
     def action_pass(self) -> None:
         s = self._state()
         if s.finished or s.turn_index != self.human:
             return
-        try:
-            pass_turn(s, self.human)
-            self._last_action = "你选择过牌"
+        result = self.session.pass_human()
+        if result.ok:
             self._refresh_all()
             self.set_timer(0.3, self._maybe_ai_turn)
-        except IllegalPlayError as e:
-            self.sub_title = f"非法：{e}"
-            self._last_action = f"非法：{e}"
+        else:
+            self.sub_title = result.message
             self._refresh_all()
 
     def action_hint(self) -> None:
         s = self._state()
         if s.finished or s.turn_index != self.human:
             return
-        # 提示固定用 档 1 (进阶) —— 用户决策：避免新手档提示太弱 / 高档太怪
-        hint_strategy = make_strategy(1)
-        p = hint_strategy.select_pattern(s, self.human)
-        if p is None:
-            self.sub_title = "（无提示：过牌）"
-            self._last_action = "提示：建议过牌"
-        else:
-            cards_str = " ".join(_tui_card(c) for c in p.cards)
-            self.sub_title = f"💡 提示：{_pattern_type_label(p.type)} [{cards_str}]"
-            self._last_action = f"提示：{_pattern_type_label(p.type)} · {cards_str}"
+        result = self.session.hint_for_human()
+        self.sub_title = result.message
         self._refresh_all()
 
     def action_claim(self) -> None:
@@ -784,63 +756,12 @@ class GameScreen(Screen):
         self._refresh_all()
 
     def action_next_game(self) -> None:
-        s = self._state()
-        if not s.finished:
-            self._last_action = "本局尚未结束，不能开始下一局"
+        result = self.session.start_next_game()
+        if not result.ok:
             self._refresh_all()
             return
-        if s.match_finished:
-            self._last_action = "比赛已经结束，不能开始下一局"
-            self._refresh_all()
-            return
-        if not self._game_saved:
-            self._save_game_result()
-
-        next_level = self._next_round_level(s)
-        next_team_levels = self._next_round_team_levels(s)
-        self.level = next_level
-        self._seed = random.randint(1, 10000)
-        self._game_id = f"game_{int(time.time())}"
-        self._start_time = time.time()
-        self._game_saved = False
         self._hand_selected_indices.clear()
-        self._displayed_table_actions.clear()
-        self._last_display_turn = None
         self._hand_cursor = 0
-        next_state = make_initial_state(
-            level=next_level,
-            first_player=self.human,
-            seed=self._seed,
-            team_levels=next_team_levels,
-        )
-        tribute_result = apply_tribute_flow(
-            list(s.finish_order),
-            next_state.hands,
-            level=next_state.level,
-            wild_card=next_state.wild_card,
-        )
-        next_state.history.extend(tribute_result.events)
-        next_first_player = tribute_result.first_player
-        next_state.turn_index = next_first_player
-        next_state.leader = next_first_player
-        if next_state.history:
-            shuffle = next_state.history[0]
-            from ...engine.events import ShuffleDeal
-
-            if isinstance(shuffle, ShuffleDeal):
-                next_state.history[0] = ShuffleDeal(
-                    level=shuffle.level,
-                    wild_card=shuffle.wild_card,
-                    hand_sizes=shuffle.hand_sizes,
-                    first_player=next_first_player,
-                    seed=shuffle.seed,
-                    team_levels=shuffle.team_levels,
-                )
-        self.state = next_state
-        tribute_note = "抗贡，" if tribute_result.resisted else ""
-        self._last_action = (
-            f"新一局开始：级牌 {next_level}，{tribute_note}{SEAT_NAMES[next_first_player]}家先手"
-        )
         self._refresh_all()
         self.set_timer(0.3, self._maybe_ai_turn)
 
@@ -851,24 +772,14 @@ class GameScreen(Screen):
 
     def action_back(self) -> None:
         s = self._state()
-        if s.finished and not self._game_saved:
-            self._save_game_result()
-        # M5: 退出时保存存档（如果游戏未完成）
-        if not s.finished and not self._game_saved:
-            try:
-                ai_difficulties = [
-                    None if i == self.human else self.difficulty for i in range(4)
-                ]
-                save_game(
-                    state=s,
-                    game_id=self._game_id,
-                    player_seat=self.human,
-                    ai_difficulties=ai_difficulties,
-                    seed=self._seed,
-                )
-            except Exception:
-                # 保存失败不影响退出
-                pass
+        try:
+            if s.finished:
+                self.session.save_finished_if_needed()
+            else:
+                self.session.save_unfinished()
+        except Exception:
+            # 保存失败不影响退出
+            pass
         self.app.pop_screen()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -883,94 +794,29 @@ class GameScreen(Screen):
         s = self._state()
         if s.finished:
             self._refresh_all()
-            # M5: 游戏结束，保存历史和统计
-            if not self._game_saved:
-                self._save_game_result()
+            self.session.save_finished_if_needed()
             return
-        ai_actions: list[str] = []
         ai_action_limit = 12
-        try:
-            while (
-                not s.finished
-                and s.turn_index != self.human
-                and len(ai_actions) < ai_action_limit
-            ):
-                self._last_action = f"{SEAT_NAMES[s.turn_index]} 思考中..."
-                self._refresh_all()
-                player_before = s.turn_index
-                history_len_before = len(s.history)
-                play_or_pass(
-                    s,
-                    s.turn_index,
-                    self._strategy,
-                    self._ai_rng,
-                )
-                self._last_action = self._describe_ai_action(
-                    s, player_before, history_len_before
-                )
-                ai_actions.append(self._last_action)
-                self._refresh_all()
-                import time
-                time.sleep(0.05)
-        except IllegalPlayError as e:
-            self.sub_title = f"AI 错误：{e}"
+        ai_actions = self.session.run_ai_until_human(limit=ai_action_limit)
         if ai_actions:
             self._last_action = "；".join(ai_actions[-4:])
         self._refresh_all()
+        s = self._state()
         if (
             not s.finished
             and s.turn_index != self.human
             and len(ai_actions) >= ai_action_limit
         ):
             self.set_timer(0.1, self._maybe_ai_turn)
-        # 检查游戏是否刚结束
-        if s.finished and not self._game_saved:
-            self._save_game_result()
+        if s.finished:
+            self.session.save_finished_if_needed()
 
     def _describe_ai_action(self, state: GameState, player: int, history_len_before: int) -> str:
-        for ev in reversed(state.history[history_len_before:]):
-            if isinstance(ev, TurnPlayed) and ev.player == player:
-                cards = " ".join(_tui_card(c) for c in ev.pattern.cards)
-                return f"{SEAT_NAMES[player]} 出牌：{_pattern_type_label(ev.pattern.type)} · {cards}"
-            if isinstance(ev, Pass) and ev.player == player:
-                return f"{SEAT_NAMES[player]} 过牌"
-        return f"{SEAT_NAMES[player]} 过牌"
+        del state
+        return self.session.describe_player_action(player, history_len_before)
 
     def _save_game_result(self) -> None:
         """保存游戏结果（历史和统计）。"""
-        if self._game_saved:
-            return
-        self._game_saved = True
-
-        try:
-            s = self._state()
-            # 计算对局时长
-            duration = int(time.time() - self._start_time)
-
-            # AI 难度列表
-            ai_difficulties = [
-                None if i == self.human else self.difficulty for i in range(4)
-            ]
-
-            # 保存历史记录
-            save_history(
-                state=s,
-                game_id=self._game_id,
-                player_seat=self.human,
-                ai_difficulties=ai_difficulties,
-                seed=self._seed,
-                duration_seconds=duration,
-            )
-
-            # 更新统计
-            player_rank = s.finish_order.index(self.human) + 1 if self.human in s.finish_order else 4
-            profile = load_profile()
-            update_statistics(profile, player_rank=player_rank, difficulty=self.difficulty)
-            save_profile(profile)
-
-            # 删除存档（如果存在）
-            delete_savegame()
-
-        except Exception as e:
-            # 保存失败不影响游戏，但记录错误
-            self.sub_title = f"保存失败：{e}"
+        self.session.save_finished_if_needed()
+        if self._last_action.startswith("保存失败："):
+            self.sub_title = self._last_action

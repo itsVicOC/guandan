@@ -1,6 +1,7 @@
 """存储模块测试：序列化、Profile、Savegame、History。"""
 from __future__ import annotations
 
+import json
 import random
 import tempfile
 from pathlib import Path
@@ -10,10 +11,19 @@ import pytest
 
 from guandan.engine.card import Card, Suit
 from guandan.engine.deck import deal, make_deck, shuffle_deck
-from guandan.engine.events import GameOver, Pass, ShuffleDeal, TurnPlayed
+from guandan.engine.events import (
+    Claim,
+    GameOver,
+    Pass,
+    ShuffleDeal,
+    TributeResisted,
+    TributeReturned,
+    TributeSent,
+    TurnPlayed,
+)
 from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.rules.patterns import find_complete_pattern
-from guandan.engine.state import GameState, pass_turn, play_pattern
+from guandan.engine.state import GameState, make_initial_state, pass_turn, play_pattern
 from guandan.storage import (
     delete_savegame,
     deserialize_events,
@@ -155,6 +165,19 @@ class TestSerialization:
         with pytest.raises(ValueError, match="Unknown event type"):
             deserialize_events(dicts)
 
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            [{}],
+            [{"_type": "Pass"}],
+            [{"_type": "event_to_dict"}],
+            ["not-an-object"],
+        ],
+    )
+    def test_deserialize_rejects_malformed_event_payloads(self, payload):
+        with pytest.raises(ValueError):
+            deserialize_events(payload)
+
 
 class TestProfile:
     """测试 Profile 管理。"""
@@ -187,6 +210,32 @@ class TestProfile:
                 assert loaded["player_name"] == "测试玩家"
                 assert "created_at" in loaded
                 assert "updated_at" in loaded
+
+    def test_load_profile_migrates_legacy_statistics(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "profile.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "version": "1.0",
+                        "player_name": "旧玩家",
+                        "statistics": {
+                            "total_games": 2,
+                            "wins": 1,
+                            "losses": 1,
+                            "win_rate": 0.5,
+                            "by_difficulty": {},
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with patch("guandan.storage.profile.get_profile_path", return_value=path):
+                profile = load_profile()
+
+            assert profile["version"] == "2.0"
+            assert profile["player_name"] == "旧玩家"
+            assert profile["statistics"]["recorded_game_ids"] == []
 
     def test_update_statistics_win(self):
         """更新统计（获胜）。"""
@@ -327,6 +376,43 @@ class TestSavegame:
                 assert restored.match_finished is True
                 assert restored.winner_team == 0
 
+    def test_restore_game_state_replays_tribute_events_without_snapshot(self):
+        state = make_initial_state(level=5, first_player=0, seed=42)
+        original_hands = [list(hand) for hand in state.hands]
+        tribute = state.hands[3][0]
+        returned = state.hands[0][0]
+        state.hands[3].remove(tribute)
+        state.hands[0].append(tribute)
+        state.history.append(TributeSent(3, 0, tribute, reason="single"))
+        state.hands[0].remove(returned)
+        state.hands[3].append(returned)
+        state.history.append(TributeReturned(0, 3, returned, reason="single"))
+
+        restored = restore_game_state({"events": state.history})
+
+        assert restored.hands == state.hands
+        assert restored.history == state.history
+        assert restored.hands != original_hands
+
+    def test_load_game_migrates_legacy_snapshotless_save(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "savegame.json"
+            state = make_initial_state(level=2, first_player=0, seed=42)
+            # Write a real legacy payload using the current serializer, then remove
+            # the full snapshot to exercise the events-only migration path.
+            with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
+                save_game(state, "legacy", 0, [None, 2, 2, 2], 42)
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["version"] = "1.0"
+            payload.pop("state")
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
+                loaded = load_game()
+
+            assert loaded is not None
+            assert loaded["version"] == "2.0"
+            assert "state" in loaded
+
     def test_load_game_no_savegame(self):
         """无存档时返回 None。"""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -335,6 +421,26 @@ class TestSavegame:
 
                 loaded = load_game()
                 assert loaded is None
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            [],
+            {},
+            {"events": [{}]},
+            {"events": "not-a-list"},
+        ],
+    )
+    def test_load_game_returns_none_for_structurally_invalid_json(self, payload):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "savegame.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
+                assert load_game() is None
+
+    def test_restore_game_state_normalizes_invalid_snapshot_error(self):
+        with pytest.raises(ValueError, match="invalid savegame state"):
+            restore_game_state({"state": {"level": 2}, "events": []})
 
     def test_has_savegame(self):
         """检查是否存在存档。"""
@@ -411,6 +517,40 @@ class TestHistory:
                 assert isinstance(detail["events"], list)
                 assert len(detail["events"]) > 0
 
+    def test_history_persists_action_statistics(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch("guandan.storage.history.get_history_dir", return_value=Path(tmpdir)):
+                state = _make_test_state()
+                state.team_bomb_count = [2, 1]
+                state.history.extend(
+                    [
+                        Pass(player=0, hand_remaining=27),
+                        Claim(player=1, count=10),
+                        TributeSent(3, 0, state.hands[3][0], reason="single"),
+                        TributeResisted(player=2, team=0, reason="double"),
+                        GameOver(
+                            finish_order=(0, 1, 2, 3),
+                            team_levels=(2, 2),
+                            drift=False,
+                            guo_a=False,
+                        ),
+                    ]
+                )
+                save_history(state, "stats-game", 0, [None, 2, 2, 2], 42, 10)
+                detail = load_history_detail("stats-game")
+
+            assert detail is not None
+            assert detail["statistics"] == {
+                "actions": 1,
+                "plays": 0,
+                "passes": 1,
+                "claims": 1,
+                "tributes": 1,
+                "tribute_resisted": True,
+                "bombs": [2, 1],
+                "event_count": 5,
+            }
+
     def test_save_history_no_game_over(self):
         """保存没有 GameOver 事件的历史抛异常。"""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -421,6 +561,22 @@ class TestHistory:
 
                 with pytest.raises(ValueError, match="No GameOver event"):
                     save_history(state, "game001", 0, [None, 2, 2, 2], 42, 180)
+
+    def test_save_history_is_idempotent_for_game_id(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch("guandan.storage.history.get_history_dir", return_value=Path(tmpdir)):
+                state = _make_test_state()
+                state.history.append(
+                    GameOver(
+                        finish_order=(0, 1, 2, 3),
+                        team_levels=(2, 2),
+                        drift=False,
+                        guo_a=False,
+                    )
+                )
+                save_history(state, "same-game", 0, [None, 2, 2, 2], 42, 10)
+                save_history(state, "same-game", 0, [None, 2, 2, 2], 42, 11)
+                assert len(list(Path(tmpdir).glob("*_same-game.json"))) == 1
 
     def test_load_history_list_empty(self):
         """无历史记录时返回空列表。"""
@@ -461,3 +617,15 @@ class TestHistory:
 
                 detail = load_history_detail("nonexistent")
                 assert detail is None
+
+    def test_history_loaders_skip_structurally_invalid_json(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            history_dir = Path(tmpdir)
+            (history_dir / "2026-07-23_bad-list.json").write_text("[]", encoding="utf-8")
+            (history_dir / "2026-07-23_bad-events.json").write_text(
+                json.dumps({"events": [{}]}),
+                encoding="utf-8",
+            )
+            with patch("guandan.storage.history.get_history_dir", return_value=history_dir):
+                assert load_history_list() == []
+                assert load_history_detail("bad-events") is None

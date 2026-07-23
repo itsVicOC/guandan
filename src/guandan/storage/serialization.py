@@ -7,7 +7,20 @@ from __future__ import annotations
 from typing import Any
 
 from ..engine.card import Card, Suit
-from ..engine.events import Event, event_to_dict
+from ..engine.events import (
+    Claim,
+    Drift,
+    Event,
+    GameOver,
+    LevelUp,
+    Pass,
+    ShuffleDeal,
+    TributeResisted,
+    TributeReturned,
+    TributeSent,
+    TurnPlayed,
+    event_to_dict,
+)
 from ..engine.hand import Pattern, PatternType
 
 
@@ -35,7 +48,9 @@ def deserialize_events(dicts: list[dict[str, Any]]) -> list[Event]:
     Raises:
         ValueError: 事件类型未知或格式错误
     """
-    return [dict_to_event(d.copy()) for d in dicts]
+    if not isinstance(dicts, list) or not all(isinstance(item, dict) for item in dicts):
+        raise ValueError("event stream must be a list of objects")
+    return [dict_to_event(item.copy()) for item in dicts]
 
 
 def dict_to_event(d: dict[str, Any]) -> Event:
@@ -50,39 +65,54 @@ def dict_to_event(d: dict[str, Any]) -> Event:
     Raises:
         ValueError: 事件类型未知或格式错误
     """
-    from ..engine import events
-
-    event_type = d.pop("_type")
-
     try:
-        event_class = getattr(events, event_type)
-    except AttributeError as exc:
+        event_type = d.pop("_type")
+    except KeyError as exc:
+        raise ValueError("Event is missing _type") from exc
+    event_types = {
+        "ShuffleDeal": ShuffleDeal,
+        "TurnPlayed": TurnPlayed,
+        "Pass": Pass,
+        "Claim": Claim,
+        "TributeSent": TributeSent,
+        "TributeReturned": TributeReturned,
+        "TributeResisted": TributeResisted,
+        "Drift": Drift,
+        "LevelUp": LevelUp,
+        "GameOver": GameOver,
+    }
+    try:
+        event_class = event_types[event_type]
+    except (KeyError, TypeError) as exc:
         raise ValueError(f"Unknown event type: {event_type}") from exc
 
-    # 递归转换嵌套对象
-    if event_type == "TurnPlayed":
-        d["pattern"] = _dict_to_pattern(d["pattern"])
-    elif event_type in ("TributeSent", "TributeReturned"):
-        d["card"] = _dict_to_card(d["card"])
-    elif event_type == "ShuffleDeal" and d.get("wild_card"):
-        d["wild_card"] = _dict_to_card(d["wild_card"])
+    try:
+        # 递归转换嵌套对象
+        if event_type == "TurnPlayed":
+            d["pattern"] = _dict_to_pattern(d["pattern"])
+        elif event_type in ("TributeSent", "TributeReturned"):
+            d["card"] = _dict_to_card(d["card"])
+        elif event_type == "ShuffleDeal" and d.get("wild_card"):
+            d["wild_card"] = _dict_to_card(d["wild_card"])
 
-    # 转换 tuple（JSON 会把 tuple 变成 list）
-    if event_type == "ShuffleDeal":
-        d["hand_sizes"] = tuple(d["hand_sizes"])
-        if d.get("team_levels") is not None:
+        # 转换 tuple（JSON 会把 tuple 变成 list）
+        if event_type == "ShuffleDeal":
+            d["hand_sizes"] = tuple(d["hand_sizes"])
+            if d.get("team_levels") is not None:
+                d["team_levels"] = tuple(d["team_levels"])
+        elif event_type == "GameOver":
+            d["finish_order"] = tuple(d["finish_order"])
             d["team_levels"] = tuple(d["team_levels"])
-    elif event_type == "GameOver":
-        d["finish_order"] = tuple(d["finish_order"])
-        d["team_levels"] = tuple(d["team_levels"])
-        d.setdefault("winner_team", None)
-    elif event_type == "TributeResisted":
-        d.setdefault("team", -1)
-        d.setdefault("reason", "resist")
-    elif event_type in ("TributeSent", "TributeReturned"):
-        d.setdefault("reason", "tribute" if event_type == "TributeSent" else "return")
+            d.setdefault("winner_team", None)
+        elif event_type == "TributeResisted":
+            d.setdefault("team", -1)
+            d.setdefault("reason", "resist")
+        elif event_type in ("TributeSent", "TributeReturned"):
+            d.setdefault("reason", "tribute" if event_type == "TributeSent" else "return")
 
-    return event_class(**d)
+        return event_class(**d)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid {event_type} event payload") from exc
 
 
 def _dict_to_card(d: dict[str, Any]) -> Card:
