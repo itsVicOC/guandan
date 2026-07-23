@@ -131,7 +131,7 @@ QTextBrowser {
 """
 
 
-def button(text: str, callback: Callable[[], None], *, primary: bool = False) -> QPushButton:
+def button(text: str, callback: Callable[..., object], *, primary: bool = False) -> QPushButton:
     btn = QPushButton(text)
     if primary:
         btn.setObjectName("primaryButton")
@@ -150,7 +150,7 @@ def make_panel(object_name: str = "panel") -> QFrame:
 class MenuPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
-        self.window = window
+        self._main_window = window
         layout = QVBoxLayout(self)
         layout.setContentsMargins(64, 48, 64, 48)
         layout.setSpacing(24)
@@ -257,7 +257,7 @@ class DifficultyPage(QWidget):
 class LoadPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
-        self.window = window
+        self._main_window = window
         layout = QVBoxLayout(self)
         layout.setContentsMargins(80, 56, 80, 56)
         layout.setSpacing(16)
@@ -274,6 +274,8 @@ class LoadPage(QWidget):
     def refresh(self) -> None:
         while self.content.count():
             item = self.content.takeAt(0)
+            if item is None:
+                break
             widget = item.widget()
             if widget is not None:
                 widget.deleteLater()
@@ -288,7 +290,10 @@ class LoadPage(QWidget):
             return
         if not savegame:
             panel = self._message_panel("存档文件损坏", "可以删除损坏存档后重新开始。")
-            panel.layout().addWidget(button("删除存档", self._delete_save))
+            panel_layout = panel.layout()
+            if panel_layout is None:
+                raise RuntimeError("message panel has no layout")
+            panel_layout.addWidget(button("删除存档", self._delete_save))
             self.content.addWidget(panel)
             return
 
@@ -332,7 +337,7 @@ class LoadPage(QWidget):
         metadata = savegame.get("metadata", {})
         ai_difficulties = metadata.get("ai_difficulties", [None, 2, 2, 2])
         difficulty = next((d for d in ai_difficulties if d is not None), 2)
-        self.window.start_game(
+        self._main_window.start_game(
             GameSession(
                 difficulty=difficulty,
                 level=metadata.get("level", state.level),
@@ -356,7 +361,7 @@ class LoadPage(QWidget):
 class HistoryPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
-        self.window = window
+        self._main_window = window
         self.entries: list[dict] = []
         layout = QVBoxLayout(self)
         layout.setContentsMargins(48, 40, 48, 40)
@@ -401,7 +406,7 @@ class HistoryPage(QWidget):
         if detail is None:
             QMessageBox.warning(self, "查看回放", "这局历史记录无法读取。")
             return
-        self.window.show_replay(detail)
+        self._main_window.show_replay(detail)
 
 
 class ReplayPage(QWidget):
@@ -409,13 +414,13 @@ class ReplayPage(QWidget):
 
     def __init__(self, window: "GuandanMainWindow", history: dict) -> None:
         super().__init__()
-        self.window = window
+        self._main_window = window
         self.history = history
         self.events: list[Event] = list(history.get("events", []))
         if not self.events:
             raise ValueError("history has no events")
         try:
-            self.cursor = ReplayCursor(self.events)
+            self._replay_cursor = ReplayCursor(self.events)
         except (IllegalPlayError, ValueError) as exc:
             raise ValueError("history event stream cannot be replayed") from exc
 
@@ -453,15 +458,15 @@ class ReplayPage(QWidget):
         self.refresh()
 
     def set_event_index(self, index: int) -> None:
-        self.cursor.set_index(index)
+        self._replay_cursor.set_index(index)
         self.refresh()
 
     @property
     def event_index(self) -> int:
-        return self.cursor.index
+        return self._replay_cursor.index
 
     def refresh(self) -> None:
-        state = self.cursor.state
+        state = self._replay_cursor.state
         self.meta.setText(
             f"{self.history.get('played_at', '-')[:19]} · "
             f"第 {self.event_index + 1} / {len(self.events)} 个事件\n"
@@ -568,7 +573,7 @@ class TablePanel(QFrame):
 class GamePage(QWidget):
     def __init__(self, window: "GuandanMainWindow", session: GameSession) -> None:
         super().__init__()
-        self.window = window
+        self._main_window = window
         self.session = session
         self.selected_indices: set[int] = set()
         self.hand_cards: list[Card] = []
@@ -796,8 +801,8 @@ class GamePage(QWidget):
         self.schedule_ai()
 
     def back_to_menu(self) -> None:
-        self.window.save_current_game()
-        self.window.show_menu()
+        self._main_window.save_current_game()
+        self._main_window.show_menu()
 
 
 class GuandanMainWindow(QMainWindow):
@@ -821,7 +826,7 @@ class GuandanMainWindow(QMainWindow):
         self.stack.setCurrentWidget(page)
         while self.stack.count() > 3:
             old = self.stack.widget(0)
-            if old is page:
+            if old is None or old is page:
                 break
             self.stack.removeWidget(old)
             old.deleteLater()
@@ -873,6 +878,7 @@ def run_gui() -> int:
     owns_app = app is None
     if app is None:
         app = QApplication(sys.argv)
+    assert isinstance(app, QApplication)
     app.setStyleSheet(APP_QSS)
     window = GuandanMainWindow()
     window.show()
