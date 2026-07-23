@@ -701,24 +701,25 @@ def test_finished_game_can_start_next_round_from_head_team_level() -> None:
         async with app.run_test() as pilot:
             screen = GameScreen(difficulty=0, existing_state=state, human=0)
             screen._game_saved = True
-            app.push_screen(screen)
-            await pilot.pause()
+            with patch.object(screen, "_maybe_ai_turn"):
+                app.push_screen(screen)
+                await pilot.pause()
 
-            next_button = screen.query_one("#btn-next-game", Button)
-            assert next_button.disabled is False
-            assert "级牌 5" in str(next_button.label)
+                next_button = screen.query_one("#btn-next-game", Button)
+                assert next_button.disabled is False
+                assert "级牌 5" in str(next_button.label)
 
-            screen.action_next_game()
-            await pilot.pause()
+                screen.action_next_game()
+                await pilot.pause()
 
-            assert screen.state is not state
-            assert screen.state is not None
-            assert screen.state.level == 5
-            assert screen.state.team_levels == [2, 5]
-            assert screen.state.finished is False
-            assert len(screen.state.hands[0]) == 27
-            assert screen._game_saved is False
-            assert "新一局开始" in screen._last_action
+                assert screen.state is not state
+                assert screen.state is not None
+                assert screen.state.level == 5
+                assert screen.state.team_levels == [2, 5]
+                assert screen.state.finished is False
+                assert len(screen.state.hands[0]) == 27
+                assert screen._game_saved is False
+                assert "新一局开始" in screen._last_action
 
     asyncio.run(run())
 
@@ -742,39 +743,38 @@ def test_next_round_applies_tribute_card_swaps_and_records_events() -> None:
         async with app.run_test() as pilot:
             screen = GameScreen(difficulty=0, existing_state=state, human=0)
             screen._game_saved = True
-            app.push_screen(screen)
-            await pilot.pause()
-
-            fixed_hands = [
-                [Card(RANK_3, Suit.HEARTS), Card(RANK_4, Suit.HEARTS)],
-                [Card(RANK_4, Suit.SPADES), Card(RANK_6, Suit.SPADES)],
-                [Card(RANK_5, Suit.CLUBS), Card(RANK_7, Suit.CLUBS)],
-                [Card(RANK_BIG_JOKER, Suit.BIG_JOKER), Card(RANK_8, Suit.CLUBS)],
-            ]
-
-            def fake_initial_state(**kwargs) -> GameState:
-                return GameState(
-                    level=kwargs["level"],
-                    wild_card=Card(RANK_5, Suit.HEARTS),
-                    hands=[list(hand) for hand in fixed_hands],
-                    turn_index=kwargs["first_player"],
-                    leader=kwargs["first_player"],
-                    team_levels=list(kwargs["team_levels"]),
-                )
-
-            from unittest.mock import patch
-
-            with patch("guandan.ui.session.make_initial_state", fake_initial_state):
-                screen.action_next_game()
+            with patch.object(screen, "_maybe_ai_turn"):
+                app.push_screen(screen)
                 await pilot.pause()
 
-            assert screen.state is not None
-            assert screen.state.turn_index == 3
-            assert all(len(hand) == 2 for hand in screen.state.hands)
-            assert Card(RANK_BIG_JOKER, Suit.BIG_JOKER) in screen.state.hands[0]
-            assert Card(RANK_3, Suit.HEARTS) in screen.state.hands[3]
-            assert any(isinstance(event, TributeSent) for event in screen.state.history)
-            assert any(isinstance(event, TributeReturned) for event in screen.state.history)
+                fixed_hands = [
+                    [Card(RANK_3, Suit.HEARTS), Card(RANK_4, Suit.HEARTS)],
+                    [Card(RANK_4, Suit.SPADES), Card(RANK_6, Suit.SPADES)],
+                    [Card(RANK_5, Suit.CLUBS), Card(RANK_7, Suit.CLUBS)],
+                    [Card(RANK_BIG_JOKER, Suit.BIG_JOKER), Card(RANK_8, Suit.CLUBS)],
+                ]
+
+                def fake_initial_state(**kwargs) -> GameState:
+                    return GameState(
+                        level=kwargs["level"],
+                        wild_card=Card(RANK_5, Suit.HEARTS),
+                        hands=[list(hand) for hand in fixed_hands],
+                        turn_index=kwargs["first_player"],
+                        leader=kwargs["first_player"],
+                        team_levels=list(kwargs["team_levels"]),
+                    )
+
+                with patch("guandan.ui.session.make_initial_state", fake_initial_state):
+                    screen.action_next_game()
+                    await pilot.pause()
+
+                assert screen.state is not None
+                assert screen.state.turn_index == 3
+                assert all(len(hand) == 2 for hand in screen.state.hands)
+                assert Card(RANK_BIG_JOKER, Suit.BIG_JOKER) in screen.state.hands[0]
+                assert Card(RANK_3, Suit.HEARTS) in screen.state.hands[3]
+                assert any(isinstance(event, TributeSent) for event in screen.state.history)
+                assert any(isinstance(event, TributeReturned) for event in screen.state.history)
 
     asyncio.run(run())
 
