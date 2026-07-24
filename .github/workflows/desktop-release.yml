@@ -4,9 +4,18 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing tag to package and publish
+        required: true
+        type: string
 
 permissions:
   contents: write
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
 jobs:
   build-desktop:
@@ -20,12 +29,14 @@ jobs:
             asset: windows-x64
           - os: ubuntu-22.04
             asset: linux-x64
-          - os: macos-15
+          - os: macos-15-intel
             asset: macos-x64
-          - os: macos-15-arm64
+          - os: macos-15
             asset: macos-arm64
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -53,17 +64,17 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force release-assets | Out-Null
-          Compress-Archive -Path dist/Guandan -DestinationPath "release-assets/Guandan-${env:GITHUB_REF_NAME}-windows-x64.zip"
+          Compress-Archive -Path dist/Guandan -DestinationPath "release-assets/Guandan-${env:RELEASE_TAG}-windows-x64.zip"
       - name: Archive Linux application
         if: runner.os == 'Linux'
         run: |
           mkdir -p release-assets
-          tar -C dist -czf "release-assets/Guandan-${GITHUB_REF_NAME}-linux-x64.tar.gz" Guandan
+          tar -C dist -czf "release-assets/Guandan-${RELEASE_TAG}-linux-x64.tar.gz" Guandan
       - name: Archive macOS application
         if: runner.os == 'macOS'
         run: |
           mkdir -p release-assets
-          ditto -c -k --sequesterRsrc --keepParent dist/Guandan.app "release-assets/Guandan-${GITHUB_REF_NAME}-${{ matrix.asset }}.zip"
+          ditto -c -k --sequesterRsrc --keepParent dist/Guandan.app "release-assets/Guandan-${RELEASE_TAG}-${{ matrix.asset }}.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.asset }}
@@ -76,6 +87,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -95,11 +108,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          notes="docs/releases/${GITHUB_REF_NAME}.md"
+          notes="docs/releases/${RELEASE_TAG}.md"
           test -f "$notes"
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file "$notes" --prerelease
-            gh release upload "$GITHUB_REF_NAME" release-assets/* --clobber
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --title "$RELEASE_TAG" --notes-file "$notes" --prerelease
+            gh release upload "$RELEASE_TAG" release-assets/* --clobber
           else
-            gh release create "$GITHUB_REF_NAME" release-assets/* --verify-tag --title "$GITHUB_REF_NAME" --notes-file "$notes" --prerelease
+            gh release create "$RELEASE_TAG" release-assets/* --verify-tag --title "$RELEASE_TAG" --notes-file "$notes" --prerelease
           fi
