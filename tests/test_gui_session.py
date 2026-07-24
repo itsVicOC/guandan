@@ -9,7 +9,19 @@ from unittest.mock import patch
 
 import pytest
 
-from guandan.engine.card import RANK_3, RANK_4, RANK_5, RANK_8, RANK_BIG_JOKER, Card, Suit
+from guandan.engine.card import (
+    RANK_2,
+    RANK_3,
+    RANK_4,
+    RANK_5,
+    RANK_8,
+    RANK_A,
+    RANK_BIG_JOKER,
+    RANK_K,
+    RANK_SMALL_JOKER,
+    Card,
+    Suit,
+)
 from guandan.engine.events import TributeReturned, TributeSent
 from guandan.engine.hand import PatternType, sort_cards
 from guandan.engine.state import GameState
@@ -44,6 +56,61 @@ def test_session_selects_duplicate_jokers_by_position() -> None:
     assert len(state.table[-1].cards) == 2
 
 
+def test_gui_display_sort_places_level_between_jokers_and_ace() -> None:
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    from guandan.gui.cards import sort_cards_for_display
+
+    cards = [
+        Card(RANK_2, Suit.HEARTS),
+        Card(RANK_2, Suit.CLUBS),
+        Card(RANK_A, Suit.HEARTS),
+        Card(RANK_K, Suit.SPADES),
+        Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+        Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+    ]
+
+    displayed = sort_cards_for_display(cards, level=RANK_2)
+
+    assert displayed == [
+        Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+        Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+        Card(RANK_2, Suit.CLUBS),
+        Card(RANK_2, Suit.HEARTS),
+        Card(RANK_A, Suit.HEARTS),
+        Card(RANK_K, Suit.SPADES),
+    ]
+
+
+def test_gui_display_sort_handles_other_level_and_ace_level() -> None:
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    from guandan.gui.cards import sort_cards_for_display
+
+    cards = [
+        Card(RANK_A, Suit.HEARTS),
+        Card(RANK_5, Suit.CLUBS),
+        Card(RANK_5, Suit.HEARTS),
+        Card(RANK_K, Suit.SPADES),
+        Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+    ]
+
+    assert [card.rank for card in sort_cards_for_display(cards, level=RANK_5)] == [
+        RANK_BIG_JOKER,
+        RANK_5,
+        RANK_5,
+        RANK_A,
+        RANK_K,
+    ]
+    assert [card.rank for card in sort_cards_for_display(cards, level=RANK_A)] == [
+        RANK_BIG_JOKER,
+        RANK_A,
+        RANK_K,
+        RANK_5,
+        RANK_5,
+    ]
+
+
 def test_session_visual_seats_match_east_perspective() -> None:
     session = GameSession(difficulty=0, human=0)
 
@@ -52,6 +119,15 @@ def test_session_visual_seats_match_east_perspective() -> None:
         "opposite": 2,
         "right": 3,
     }
+
+
+def test_session_game_ids_are_unique_and_filesystem_safe() -> None:
+    first = GameSession(difficulty=0)
+    second = GameSession(difficulty=0)
+
+    assert first.game_id != second.game_id
+    assert first.game_id.startswith("game_")
+    assert first.game_id.replace("_", "").isalnum()
 
 
 def test_session_next_game_applies_tribute_swaps_and_records_events() -> None:
@@ -98,6 +174,58 @@ def test_session_next_game_applies_tribute_swaps_and_records_events() -> None:
     assert any(isinstance(event, TributeReturned) for event in session.state.history)
 
 
+def test_session_keeps_finished_state_when_persistence_fails() -> None:
+    finished = GameState(
+        level=2,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=0,
+        leader=0,
+        finish_order=[0, 1, 2],
+        finished=True,
+        team_levels_final=[5, 2],
+    )
+    session = GameSession(difficulty=0, existing_state=finished, human=0)
+
+    with patch.object(session, "save_finished_if_needed", return_value=False):
+        session.last_action = "保存失败：disk full"
+        result = session.start_next_game()
+
+    assert result.ok is False
+    assert "保存失败" in result.message
+    assert session.state is finished
+
+
+def test_session_records_team_result_instead_of_personal_rank() -> None:
+    finished = GameState(
+        level=2,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=0,
+        leader=1,
+        finish_order=[1, 0, 3],
+        finished=True,
+    )
+    session = GameSession(difficulty=0, existing_state=finished, human=0, game_id="team-loss")
+    profile = {
+        "statistics": {
+            "total_games": 0,
+            "wins": 0,
+            "losses": 0,
+            "win_rate": 0.0,
+            "by_difficulty": {},
+            "recorded_game_ids": [],
+        }
+    }
+    with patch("guandan.ui.session.save_history"), patch(
+        "guandan.ui.session.load_profile", return_value=profile
+    ), patch("guandan.ui.session.save_profile"), patch("guandan.ui.session.delete_savegame"):
+        assert session.save_finished_if_needed() is True
+
+    assert profile["statistics"]["wins"] == 0
+    assert profile["statistics"]["losses"] == 1
+
+
 def test_session_retries_finished_save_without_double_counting() -> None:
     finished = GameState(
         level=2,
@@ -142,7 +270,7 @@ def test_gui_window_smoke_offscreen() -> None:
         "from guandan.engine.card import Card, Suit; "
         "from guandan.engine.state import make_initial_state; "
         "from guandan.gui.cards import BLACK_SUIT_COLOR, NORMAL_SUIT_FONT_SIZE, RED_SUIT_COLOR, card_palette, gui_suit_name; "
-        "from guandan.gui.window import GuandanMainWindow; "
+        "from guandan.gui.window import APP_QSS, GuandanMainWindow; "
         "from guandan.ui.session import GameSession; "
         "assert card_palette(Card(5, Suit.HEARTS))[0] == RED_SUIT_COLOR; "
         "assert card_palette(Card(5, Suit.DIAMONDS))[0] == RED_SUIT_COLOR; "
@@ -150,7 +278,7 @@ def test_gui_window_smoke_offscreen() -> None:
         "assert card_palette(Card(5, Suit.CLUBS))[0] == BLACK_SUIT_COLOR; "
         "assert gui_suit_name(Suit.DIAMONDS) == '方片'; "
         "assert NORMAL_SUIT_FONT_SIZE >= 44; "
-        "app = QApplication([]); "
+        "app = QApplication([]); app.setStyleSheet(APP_QSS); "
         "window = GuandanMainWindow(); "
         "assert window.minimumWidth() >= 1080; "
         "assert window.windowTitle().startswith('掼蛋 GUI'); "
@@ -162,11 +290,14 @@ def test_gui_window_smoke_offscreen() -> None:
         "assert page.opposite.title.text().startswith('西家'); "
         "assert page.right.title.text().startswith('北家'); "
         "assert len(page.hand_cards) == 27; "
-        "assert page.hand.minimumHeight() >= 200; "
+        "assert 100 <= page.hand.minimumHeight() <= 150; "
+        "assert page.play_button.isEnabled() is False; "
         "page.toggle_card(0); "
+        "assert page.play_button.isEnabled() is True; "
         "page.play_selected(); "
         "assert len(state.table) == 1; "
         "assert len(state.hands[0]) == 26; "
+        "assert '单张' in page.table.rows[0].text(); "
         "window.show_replay({'played_at': '2026-07-23T12:00:00', 'events': state.history}); "
         "replay = window.stack.currentWidget(); "
         "assert replay.__class__.__name__ == 'ReplayPage'; "
@@ -179,6 +310,60 @@ def test_gui_window_smoke_offscreen() -> None:
         "app.quit(); "
         "print('ok')"
     )
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=os.getcwd(),
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
+def test_gui_stops_ai_when_table_is_hidden_or_ai_fails() -> None:
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    env = dict(os.environ)
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    code = """
+from unittest.mock import Mock
+from PySide6.QtCore import QEventLoop, QTimer
+from PySide6.QtWidgets import QApplication
+from guandan.engine.state import make_initial_state
+from guandan.gui.window import GuandanMainWindow
+from guandan.ui.session import GameSession, SessionAction
+
+app = QApplication([])
+window = GuandanMainWindow()
+
+state = make_initial_state(level=2, first_player=3, seed=9)
+session = GameSession(difficulty=0, existing_state=state, human=0)
+session.save_unfinished = Mock()
+window.start_game(session)
+before = len(state.history)
+window.game_page.back_to_menu()
+loop = QEventLoop()
+QTimer.singleShot(500, loop.quit)
+loop.exec()
+assert len(state.history) == before
+
+failed_state = make_initial_state(level=2, first_player=3, seed=10)
+failed_session = GameSession(difficulty=0, existing_state=failed_state, human=0)
+failed_session.step_ai = Mock(return_value=SessionAction(False, "AI 错误：invalid"))
+window.start_game(failed_session)
+loop = QEventLoop()
+QTimer.singleShot(700, loop.quit)
+loop.exec()
+assert failed_session.step_ai.call_count == 1
+assert not window.game_page._ai_timer.isActive()
+
+window.game_page = None
+window.close()
+app.quit()
+print("ok")
+"""
     result = subprocess.run(
         [sys.executable, "-c", code],
         cwd=os.getcwd(),

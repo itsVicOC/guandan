@@ -9,15 +9,18 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from datetime import datetime
 from typing import Any, Optional
 
-from ..engine.card import Card, Suit
+from ..engine.card import RANK_2, RANK_A, Card, Suit
+from ..engine.deck import make_deck
+from ..engine.events import TurnPlayed
 from ..engine.hand import Pattern, PatternType
 from ..engine.replay import replay_events
 from ..engine.state import GameState, IllegalPlayError, TributeState
 from .jsonio import write_json_atomic
-from .paths import get_savegame_path
+from .paths import get_savegame_path, validate_game_id
 from .serialization import deserialize_events, serialize_events
 
 SAVEGAME_VERSION = "2.0"
@@ -39,6 +42,7 @@ def save_game(
         ai_difficulties: 4 个座位的 AI 难度（玩家位置为 None）
         seed: 随机种子
     """
+    game_id = validate_game_id(game_id)
     data = {
         "version": SAVEGAME_VERSION,
         "saved_at": datetime.now().isoformat(),
@@ -109,6 +113,7 @@ def _validate_loaded_savegame(savegame: dict[str, Any]) -> None:
     snapshot = savegame.get("current_state_snapshot")
     if not isinstance(savegame.get("saved_at"), str):
         raise ValueError("savegame has no valid timestamp")
+    validate_game_id(savegame.get("game_id"))
     if not isinstance(metadata, dict) or not isinstance(snapshot, dict):
         raise ValueError("savegame metadata or snapshot is invalid")
     player_seat = metadata.get("player_seat")
@@ -124,7 +129,58 @@ def _validate_loaded_savegame(savegame: dict[str, Any]) -> None:
         or not all(isinstance(size, int) and size >= 0 for size in hand_sizes)
     ):
         raise ValueError("savegame hand sizes are invalid")
-    restore_game_state(savegame)
+    restored = restore_game_state(savegame)
+    if restored.turn_index != turn_index:
+        raise ValueError("savegame turn index does not match its state")
+    if [len(hand) for hand in restored.hands] != hand_sizes:
+        raise ValueError("savegame hand sizes do not match its state")
+    if list(snapshot.get("finish_order", [])) != restored.finish_order:
+        raise ValueError("savegame finish order does not match its state")
+    if snapshot.get("finished") is not restored.finished:
+        raise ValueError("savegame finished flag does not match its state")
+    _validate_state_invariants(restored)
+
+    events = savegame.get("events", [])
+    replayed = replay_events(events)
+    if replayed != restored:
+        raise ValueError("savegame state does not match its event stream")
+
+
+def _validate_state_invariants(state: GameState) -> None:
+    if not RANK_2 <= state.level <= RANK_A:
+        raise ValueError("savegame level is invalid")
+    if len(state.hands) != 4:
+        raise ValueError("savegame must contain four hands")
+    if state.turn_index not in range(4):
+        raise ValueError("savegame state turn is invalid")
+    if state.leader is not None and state.leader not in range(4):
+        raise ValueError("savegame leader is invalid")
+    if len(state.team_levels) != 2 or any(
+        level not in range(RANK_2, RANK_A + 1) for level in state.team_levels
+    ):
+        raise ValueError("savegame team levels are invalid")
+    if len(state.team_bomb_count) != 2 or any(count < 0 for count in state.team_bomb_count):
+        raise ValueError("savegame bomb counts are invalid")
+    if len(state.has_played_ace) != 2:
+        raise ValueError("savegame ace flags are invalid")
+    if (
+        len(set(state.finish_order)) != len(state.finish_order)
+        or any(player not in range(4) for player in state.finish_order)
+        or len(state.finish_order) > 3
+    ):
+        raise ValueError("savegame finish order is invalid")
+    if any(player not in range(4) for player in state.passed_players):
+        raise ValueError("savegame passed players are invalid")
+
+    accounted_cards = [card for hand in state.hands for card in hand]
+    accounted_cards.extend(
+        card
+        for event in state.history
+        if isinstance(event, TurnPlayed)
+        for card in event.pattern.cards
+    )
+    if Counter(accounted_cards) != Counter(make_deck()):
+        raise ValueError("savegame cards do not conserve the two-deck shoe")
 
 
 def _migrate_savegame(savegame: dict[str, Any]) -> dict[str, Any]:

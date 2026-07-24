@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import random
 import time
+import uuid
 from dataclasses import dataclass
 
 from ..ai import AINotImplementedError, make_strategy, play_or_pass
@@ -24,6 +25,7 @@ from ..engine.state import (
     make_initial_state,
     pass_turn,
     play_pattern,
+    team_of,
 )
 from ..engine.trick import (
     current_table_players,
@@ -81,13 +83,17 @@ class GameSession:
             self.strategy = make_strategy(1)
             self.difficulty = 1
         self.ai_rng = rng or random.Random()
-        self.game_id = game_id or f"game_{int(time.time())}"
+        self.game_id = game_id or self._new_game_id()
         self.seed = seed if seed is not None else random.randint(1, 10000)
         self.start_time = time.time()
         self.game_saved = False
         self.last_action = "准备开始"
         self.displayed_table_actions: dict[int, tuple[str, Pattern | None]] = {}
         self.last_display_turn: int | None = None
+
+    @staticmethod
+    def _new_game_id() -> str:
+        return f"game_{uuid.uuid4().hex}"
 
     def ensure_started(self) -> GameState:
         if self.state is None:
@@ -267,13 +273,14 @@ class GameSession:
         if state.match_finished:
             self.last_action = "比赛已经结束，不能开始下一局"
             return SessionAction(False, self.last_action)
-        self.save_finished_if_needed()
+        if not self.save_finished_if_needed():
+            return SessionAction(False, self.last_action)
 
         next_level = self.next_round_level(state)
         next_team_levels = self.next_round_team_levels(state)
         self.level = next_level
         self.seed = random.randint(1, 10000)
-        self.game_id = f"game_{int(time.time())}"
+        self.game_id = self._new_game_id()
         self.start_time = time.time()
         self.game_saved = False
         self.displayed_table_actions.clear()
@@ -332,11 +339,11 @@ class GameSession:
                 seed=self.seed,
                 duration_seconds=duration,
             )
-            player_rank = state.finish_order.index(self.human) + 1 if self.human in state.finish_order else 4
+            won = team_of(state.finish_order[0]) == team_of(self.human)
             profile = load_profile()
             update_statistics(
                 profile,
-                player_rank=player_rank,
+                won=won,
                 difficulty=self.difficulty,
                 game_id=self.game_id,
             )

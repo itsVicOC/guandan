@@ -10,7 +10,17 @@
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
+
+_GAME_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
+
+
+def validate_game_id(game_id: object) -> str:
+    """Return a filesystem-safe game identifier or reject it."""
+    if not isinstance(game_id, str) or _GAME_ID_PATTERN.fullmatch(game_id) is None:
+        raise ValueError("game_id must use 1-128 ASCII letters, digits, underscores or hyphens")
+    return game_id
 
 
 def get_storage_dir() -> Path:
@@ -62,4 +72,5 @@ __all__ = [
     "get_profile_path",
     "get_savegame_path",
     "get_storage_dir",
+    "validate_game_id",
 ]

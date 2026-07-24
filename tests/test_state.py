@@ -58,6 +58,11 @@ class TestInitialState:
         for h1, h2 in zip(s1.hands, s2.hands):
             assert h1 == h2
 
+    @pytest.mark.parametrize("first_player", [-1, 4])
+    def test_rejects_invalid_first_player(self, first_player):
+        with pytest.raises(ValueError, match="first_player"):
+            make_initial_state(level=2, first_player=first_player, seed=42)
+
 
 class TestPlayPattern:
     def test_first_play(self):

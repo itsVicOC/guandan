@@ -45,8 +45,8 @@ def _make_test_state(level: int = 2, seed: int = 42) -> GameState:
     """创建测试用游戏状态。"""
     rng = random.Random(seed)
     deck = make_deck()
-    shuffle_deck(deck, rng)
-    hands = deal(deck)
+    shuffled = shuffle_deck(deck, rng)
+    hands = deal(shuffled)
 
     # 找到逢人配
     wild_card = None
@@ -60,6 +60,7 @@ def _make_test_state(level: int = 2, seed: int = 42) -> GameState:
         wild_card=wild_card,
         hands=hands,
         turn_index=0,
+        leader=0,
     )
     return state
 
@@ -244,8 +245,7 @@ class TestProfile:
                 mock.return_value = Path(tmpdir) / "profile.json"
                 profile = load_profile()
 
-                # 玩家上游（rank 1）
-                update_statistics(profile, player_rank=1, difficulty=2)
+                update_statistics(profile, won=True, difficulty=2)
 
                 assert profile["statistics"]["total_games"] == 1
                 assert profile["statistics"]["wins"] == 1
@@ -261,8 +261,7 @@ class TestProfile:
                 mock.return_value = Path(tmpdir) / "profile.json"
                 profile = load_profile()
 
-                # 玩家下游（rank 4）
-                update_statistics(profile, player_rank=4, difficulty=2)
+                update_statistics(profile, won=False, difficulty=2)
 
                 assert profile["statistics"]["total_games"] == 1
                 assert profile["statistics"]["wins"] == 0
@@ -276,9 +275,9 @@ class TestProfile:
                 mock.return_value = Path(tmpdir) / "profile.json"
                 profile = load_profile()
 
-                update_statistics(profile, player_rank=1, difficulty=2)  # 赢
-                update_statistics(profile, player_rank=3, difficulty=2)  # 输
-                update_statistics(profile, player_rank=2, difficulty=3)  # 赢
+                update_statistics(profile, won=True, difficulty=2)
+                update_statistics(profile, won=False, difficulty=2)
+                update_statistics(profile, won=True, difficulty=3)
 
                 assert profile["statistics"]["total_games"] == 3
                 assert profile["statistics"]["wins"] == 2
@@ -311,6 +310,7 @@ class TestSavegame:
                     hand_sizes=tuple(len(h) for h in state.hands),
                     first_player=0,
                     seed=42,
+                    team_levels=(2, 2),
                 )
                 state.history.append(shuffle_event)
 
@@ -341,9 +341,6 @@ class TestSavegame:
 
                 state = _make_test_state()
                 state.team_levels = [2, 5]
-                state.team_levels_final = [5, 5]
-                state.match_finished = True
-                state.winner_team = 0
                 shuffle_event = ShuffleDeal(
                     level=state.level,
                     wild_card=state.wild_card,
@@ -372,9 +369,9 @@ class TestSavegame:
                 assert restored.passed_players == state.passed_players
                 assert restored.history == state.history
                 assert restored.team_levels == [2, 5]
-                assert restored.team_levels_final == [5, 5]
-                assert restored.match_finished is True
-                assert restored.winner_team == 0
+                assert restored.team_levels_final is None
+                assert restored.match_finished is False
+                assert restored.winner_team is None
 
     def test_restore_game_state_replays_tribute_events_without_snapshot(self):
         state = make_initial_state(level=5, first_player=0, seed=42)
@@ -441,6 +438,24 @@ class TestSavegame:
     def test_restore_game_state_normalizes_invalid_snapshot_error(self):
         with pytest.raises(ValueError, match="invalid savegame state"):
             restore_game_state({"state": {"level": 2}, "events": []})
+
+    def test_load_game_rejects_snapshot_that_disagrees_with_events(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "savegame.json"
+            state = make_initial_state(level=2, first_player=0, seed=42)
+            with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
+                save_game(state, "consistent", 0, [None, 2, 2, 2], 42)
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                payload["state"]["hands"][0].pop()
+                path.write_text(json.dumps(payload), encoding="utf-8")
+
+                assert load_game() is None
+
+    def test_save_game_rejects_unsafe_game_id(self):
+        state = make_initial_state(level=2, first_player=0, seed=42)
+
+        with pytest.raises(ValueError, match="game_id"):
+            save_game(state, "../../../escaped", 0, [None, 2, 2, 2], 42)
 
     def test_has_savegame(self):
         """检查是否存在存档。"""
@@ -561,6 +576,21 @@ class TestHistory:
 
                 with pytest.raises(ValueError, match="No GameOver event"):
                     save_history(state, "game001", 0, [None, 2, 2, 2], 42, 180)
+
+    def test_history_rejects_unsafe_game_id(self):
+        state = _make_test_state()
+        state.history.append(
+            GameOver(
+                finish_order=(0, 1, 2, 3),
+                team_levels=(2, 2),
+                drift=False,
+                guo_a=False,
+            )
+        )
+
+        with pytest.raises(ValueError, match="game_id"):
+            save_history(state, "../../../escaped", 0, [None, 2, 2, 2], 42, 10)
+        assert load_history_detail("../../../escaped") is None
 
     def test_save_history_is_idempotent_for_game_id(self):
         with tempfile.TemporaryDirectory() as tmpdir:

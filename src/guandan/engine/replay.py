@@ -58,6 +58,8 @@ def _replay_events(
         seed=shuffle.seed,
         team_levels=shuffle.team_levels,
     )
+    if state.history[0] != shuffle:
+        raise ValueError("ShuffleDeal does not match the reproducible deal")
     states = [_snapshot_state(state)] if capture_states else []
     confirmed_history_length = 1
     gameplay_started = False

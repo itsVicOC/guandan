@@ -21,7 +21,7 @@ from ..engine.events import (
 )
 from ..engine.state import GameState
 from .jsonio import write_json_atomic
-from .paths import get_history_dir
+from .paths import get_history_dir, validate_game_id
 from .serialization import deserialize_events, serialize_events
 
 
@@ -46,6 +46,8 @@ def save_history(
     Raises:
         ValueError: 未找到 GameOver 事件
     """
+    game_id = validate_game_id(game_id)
+
     # 提取结果
     game_over_event = None
     for ev in reversed(state.history):
@@ -147,6 +149,10 @@ def load_history_detail(game_id: str) -> Optional[dict[str, Any]]:
     Returns:
         完整历史记录（包含反序列化的事件流），未找到时返回 None
     """
+    try:
+        game_id = validate_game_id(game_id)
+    except ValueError:
+        return None
     history_dir = get_history_dir()
 
     # 查找匹配的文件（文件名包含 game_id）

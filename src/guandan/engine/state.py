@@ -522,6 +522,8 @@ def make_initial_state(
     """
     if not RANK_2 <= level <= RANK_A:
         raise ValueError(f"level must be 2..14, got {level}")
+    if first_player not in range(4):
+        raise ValueError(f"first_player must be 0..3, got {first_player}")
     if team_levels is None:
         initial_team_levels = [level, level]
     else:
@@ -532,7 +534,8 @@ def make_initial_state(
             if not RANK_2 <= team_level <= RANK_A:
                 raise ValueError(f"team level must be 2..14, got {team_level}")
 
-    rng = random.Random(seed)
+    resolved_seed = seed if seed is not None else random.SystemRandom().randrange(1, 2**63)
+    rng = random.Random(resolved_seed)
     deck = make_deck()
     shuffled = shuffle_deck(deck, rng)
     hands = deal(shuffled, 4)
@@ -562,7 +565,7 @@ def make_initial_state(
             wild_card=wild_card,
             hand_sizes=(len(hands[0]), len(hands[1]), len(hands[2]), len(hands[3])),
             first_player=first_player,
-            seed=seed if seed is not None else 0,
+            seed=resolved_seed,
             team_levels=(initial_team_levels[0], initial_team_levels[1]),
         )
     )

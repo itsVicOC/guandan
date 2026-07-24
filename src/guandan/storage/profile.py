@@ -75,16 +75,16 @@ def save_profile(profile: dict[str, Any]) -> None:
 
 def update_statistics(
     profile: dict[str, Any],
-    player_rank: int,
-    difficulty: int,
     *,
+    won: bool,
+    difficulty: int,
     game_id: str | None = None,
 ) -> bool:
     """更新统计数据（对局结束后调用）。
 
     Args:
         profile: 用户配置
-        player_rank: 玩家名次（1=上游，2=二游，3=三游，4=下游）
+        won: 真人所在搭档队伍是否取得头游
         difficulty: AI 难度（0-4）
     """
     stats = profile["statistics"]
@@ -95,8 +95,7 @@ def update_statistics(
     # 总对局数
     stats["total_games"] += 1
 
-    # 胜负（上游/二游算赢，三游/下游算输）
-    if player_rank <= 2:
+    if won:
         stats["wins"] += 1
     else:
         stats["losses"] += 1
@@ -111,7 +110,7 @@ def update_statistics(
         stats["by_difficulty"][diff_key] = {"games": 0, "wins": 0}
 
     stats["by_difficulty"][diff_key]["games"] += 1
-    if player_rank <= 2:
+    if won:
         stats["by_difficulty"][diff_key]["wins"] += 1
     if game_id is not None:
         recorded_game_ids.append(game_id)

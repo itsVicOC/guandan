@@ -4,8 +4,17 @@ from __future__ import annotations
 import sys
 from typing import Callable
 
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QCloseEvent, QFont, QKeySequence, QShortcut
+from PySide6.QtCore import QRect, Qt, QTimer
+from PySide6.QtGui import (
+    QCloseEvent,
+    QColor,
+    QFont,
+    QKeySequence,
+    QPainter,
+    QPaintEvent,
+    QPen,
+    QShortcut,
+)
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -43,98 +52,22 @@ from ..ui.formatting import card_label, pattern_type_label, rank_value_label
 from ..ui.history import HISTORY_COLUMNS, history_entry_cells, history_statistics_text
 from ..ui.replay import ReplayCursor, replay_event_text, replay_state_text
 from ..ui.session import GameSession
-from .cards import HandWidget
-
-APP_QSS = """
-QWidget {
-    font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
-    color: #f4f1de;
-}
-QMainWindow, QWidget#root {
-    background: #0f1713;
-}
-QFrame#panel {
-    background: #16231d;
-    border: 1px solid #40594b;
-    border-radius: 8px;
-}
-QFrame#tablePanel {
-    background: #123c2c;
-    border: 2px solid #d4af37;
-    border-radius: 8px;
-}
-QLabel#title {
-    color: #f8d46b;
-    font-size: 36px;
-    font-weight: 900;
-}
-QLabel#subtitle, QLabel#muted {
-    color: #a7c0ad;
-}
-QLabel#sectionTitle {
-    color: #f8d46b;
-    font-size: 20px;
-    font-weight: 800;
-}
-QLabel#statusBar {
-    background: #16231d;
-    border: 1px solid #40594b;
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: #f4f1de;
-}
-QPushButton {
-    background: #23372e;
-    border: 1px solid #587460;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-weight: 700;
-}
-QPushButton:hover {
-    background: #2d473a;
-    border-color: #d4af37;
-}
-QPushButton:pressed {
-    background: #1d2d26;
-}
-QPushButton:disabled {
-    color: #708476;
-    background: #17231d;
-    border-color: #2f4237;
-}
-QPushButton#primaryButton {
-    background: #d4af37;
-    color: #132019;
-    border-color: #f8d46b;
-}
-QPushButton#dangerButton {
-    background: #7f1d1d;
-    border-color: #ef4444;
-}
-QTableWidget {
-    background: #122019;
-    border: 1px solid #40594b;
-    gridline-color: #334b3d;
-}
-QHeaderView::section {
-    background: #23372e;
-    color: #f8d46b;
-    padding: 6px;
-    border: 0;
-}
-QTextBrowser {
-    background: #122019;
-    border: 1px solid #40594b;
-    border-radius: 8px;
-    padding: 12px;
-}
-"""
+from .cards import CardBackWidget, HandWidget, MiniCardStrip, sort_cards_for_display
+from .theme import APP_QSS, CYAN, FELT, FELT_DARK, FELT_LINE, GOLD_BRIGHT, TEXT_MUTED
 
 
-def button(text: str, callback: Callable[..., object], *, primary: bool = False) -> QPushButton:
+def button(
+    text: str,
+    callback: Callable[..., object],
+    *,
+    primary: bool = False,
+    role: str | None = None,
+) -> QPushButton:
     btn = QPushButton(text)
     if primary:
         btn.setObjectName("primaryButton")
+    elif role is not None:
+        btn.setObjectName(role)
     btn.setCursor(Qt.CursorShape.PointingHandCursor)
     btn.clicked.connect(callback)
     return btn
@@ -147,90 +80,164 @@ def make_panel(object_name: str = "panel") -> QFrame:
     return frame
 
 
+def set_property(widget: QWidget, name: str, value: object) -> None:
+    """Set a QSS property and immediately refresh the widget's style."""
+    widget.setProperty(name, value)
+    style = widget.style()
+    style.unpolish(widget)
+    style.polish(widget)
+
+
+def page_header(eyebrow: str, title: str, detail: str) -> QWidget:
+    header = QWidget()
+    layout = QVBoxLayout(header)
+    layout.setContentsMargins(0, 0, 0, 4)
+    layout.setSpacing(5)
+    kicker = QLabel(eyebrow.upper())
+    kicker.setObjectName("eyebrow")
+    heading = QLabel(title)
+    heading.setObjectName("pageTitle")
+    body = QLabel(detail)
+    body.setObjectName("subtitle")
+    body.setWordWrap(True)
+    layout.addWidget(kicker)
+    layout.addWidget(heading)
+    layout.addWidget(body)
+    return header
+
+
+class LobbyTableWidget(QWidget):
+    """Painted table preview used by the landing page."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setMinimumSize(520, 420)
+        self.setObjectName("lobbyTable")
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        del event
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        outer = self.rect().adjusted(8, 8, -8, -8)
+        painter.setPen(QPen(FELT_LINE, 2))
+        painter.setBrush(FELT)
+        painter.drawRoundedRect(outer, 22, 22)
+        inner = outer.adjusted(16, 16, -16, -16)
+        painter.setPen(QPen(QColor(117, 197, 174, 115), 1, Qt.PenStyle.DashLine))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(inner, 18, 18)
+        center = outer.center()
+        painter.setPen(QPen(QColor(117, 197, 174, 125), 1))
+        painter.drawEllipse(center, 84, 44)
+        painter.setPen(GOLD_BRIGHT)
+        painter.setFont(QFont("PingFang SC", 26, QFont.Weight.Black))
+        painter.drawText(QRect(center.x() - 90, center.y() - 24, 180, 38), Qt.AlignmentFlag.AlignCenter, "掼蛋")
+        painter.setPen(QColor(183, 221, 207))
+        painter.setFont(QFont("Arial", 11, QFont.Weight.Bold))
+        painter.drawText(QRect(center.x() - 90, center.y() + 15, 180, 22), Qt.AlignmentFlag.AlignCenter, "108 张 · 四人搭档")
+
+        seats = (
+            (center.x(), outer.top() + 58, "西", False, "gold"),
+            (outer.left() + 96, center.y(), "南", False, "cyan"),
+            (outer.right() - 96, center.y(), "北", False, "cyan"),
+            (center.x(), outer.bottom() - 58, "东", True, "gold"),
+        )
+        for x, y, label, human, team in seats:
+            color = GOLD_BRIGHT if team == "gold" else CYAN
+            painter.setPen(QPen(color, 2))
+            painter.setBrush(QColor("#18372f"))
+            painter.drawEllipse(x - 28, y - 28, 56, 56)
+            painter.setPen(color)
+            painter.setFont(QFont("PingFang SC", 20, QFont.Weight.Black))
+            painter.drawText(QRect(x - 27, y - 15, 54, 30), Qt.AlignmentFlag.AlignCenter, label)
+            painter.setPen(QColor(205, 226, 218))
+            painter.setFont(QFont("PingFang SC", 10, QFont.Weight.DemiBold))
+            painter.drawText(QRect(x - 60, y + 32, 120, 18), Qt.AlignmentFlag.AlignCenter, "你" if human else "AI")
+        painter.end()
+
+
 class MenuPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
         self._main_window = window
+        self.setObjectName("page")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(64, 48, 64, 48)
-        layout.setSpacing(24)
+        layout.setContentsMargins(52, 38, 52, 34)
+        layout.setSpacing(22)
 
-        title = QLabel("掼蛋")
-        title.setObjectName("title")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle = QLabel("本地四人牌局 · 桌面 GUI / TUI / CLI")
-        subtitle.setObjectName("subtitle")
-        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
-        layout.addWidget(subtitle)
+        masthead = QHBoxLayout()
+        mark = QLabel("GD")
+        mark.setObjectName("brandMark")
+        masthead.addWidget(mark)
+        masthead.addSpacing(12)
+        masthead.addWidget(QLabel("LOCAL TABLE  ·  公测版"), 1)
+        version = QLabel("v0.8.0-beta.2")
+        version.setObjectName("muted")
+        masthead.addWidget(version)
+        layout.addLayout(masthead)
+
+        layout.addWidget(page_header("四人搭档牌局", "掼蛋", "一张桌、两副牌。选择难度，坐到东家，开始一局完整的本地对战。"))
 
         body = QHBoxLayout()
-        body.setSpacing(24)
+        body.setSpacing(18)
         layout.addLayout(body, 1)
 
-        table_panel = make_panel()
-        table_layout = QVBoxLayout(table_panel)
-        table_layout.setSpacing(16)
-        seat_title = QLabel("座位关系")
-        seat_title.setObjectName("sectionTitle")
-        seat_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        seat_map = QLabel("西\n\n南          北\n\n东")
-        seat_map.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        seat_map.setFont(QFont("Menlo", 24, QFont.Weight.Bold))
-        note = QLabel("你默认坐东，对家在西，右手为北，左手为南。")
-        note.setObjectName("muted")
-        note.setWordWrap(True)
-        note.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        table_layout.addStretch(1)
-        table_layout.addWidget(seat_title)
-        table_layout.addWidget(seat_map)
-        table_layout.addWidget(note)
-        table_layout.addStretch(1)
-        body.addWidget(table_panel, 2)
+        body.addWidget(LobbyTableWidget(), 3)
 
-        action_panel = make_panel()
+        action_panel = make_panel("actionPanel")
         action_layout = QVBoxLayout(action_panel)
-        action_layout.setSpacing(14)
+        action_layout.setContentsMargins(24, 24, 24, 24)
+        action_layout.setSpacing(11)
         action_title = QLabel("牌局大厅")
         action_title.setObjectName("sectionTitle")
-        action_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        action_layout.addWidget(action_title)
+        action_layout.addWidget(action_title, 0, Qt.AlignmentFlag.AlignLeft)
+        intro = QLabel("从这里开始一局本地掼蛋。\n你的对家是西家。")
+        intro.setObjectName("muted")
+        intro.setWordWrap(True)
+        action_layout.addWidget(intro)
+        action_layout.addSpacing(8)
         action_layout.addWidget(button("开始新局", window.show_difficulty, primary=True))
-        action_layout.addWidget(button("继续存档", window.show_load))
-        action_layout.addWidget(button("历史战绩", window.show_history))
-        action_layout.addWidget(button("规则说明", window.show_rules))
+        action_layout.addWidget(button("继续存档", window.show_load, role="quietButton"))
+        action_layout.addWidget(button("历史战绩", window.show_history, role="quietButton"))
+        action_layout.addWidget(button("规则说明", window.show_rules, role="quietButton"))
         action_layout.addStretch(1)
-        action_layout.addWidget(button("退出", window.close))
+        action_layout.addWidget(QLabel("东 ↔ 西  ·  南 ↔ 北"), 0, Qt.AlignmentFlag.AlignCenter)
+        action_layout.addWidget(button("退出", window.close, role="quietButton"))
         body.addWidget(action_panel, 1)
 
 
 class DifficultyPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
+        self.setObjectName("page")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(80, 56, 80, 56)
+        layout.setContentsMargins(60, 44, 60, 36)
         layout.setSpacing(18)
-        title = QLabel("选择 AI 难度")
-        title.setObjectName("title")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
+        layout.addWidget(page_header("开始一局", "选择 AI 难度", "难度会影响记牌、牌型判断和残局决策。你可以随时从历史页回看完整事件流。"))
         layout.addWidget(self._summary_panel())
 
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(12)
+        grid.setVerticalSpacing(12)
         for index, (name, desc) in enumerate(DIFFICULTIES):
-            layout.addWidget(
-                button(
-                    f"{index + 1}. {name}  ·  {desc}",
-                    self._difficulty_callback(window, index),
-                    primary=index == 1,
-                )
+            difficulty_button = button(
+                f"{index + 1:02d}  {name}\n      {desc}",
+                self._difficulty_callback(window, index),
+                role="difficultyCard",
             )
+            if index == 1:
+                set_property(difficulty_button, "recommended", True)
+            row, column = divmod(index, 2)
+            grid.addWidget(difficulty_button, row, column, 1, 2 if index == 4 else 1)
+        layout.addLayout(grid)
         layout.addStretch(1)
-        layout.addWidget(button("返回大厅", window.show_menu))
+        layout.addWidget(button("返回大厅", window.show_menu, role="quietButton"))
 
     def _summary_panel(self) -> QFrame:
-        panel = make_panel()
+        panel = make_panel("actionPanel")
         layout = QVBoxLayout(panel)
-        info = QLabel("首局级牌 2。更高难度会更重视牌型结构、协作和残局搜索。")
+        layout.setContentsMargins(18, 13, 18, 13)
+        info = QLabel("推荐从进阶开始 · 首局级牌 2 · 更高难度会更重视牌型结构、协作和残局搜索。")
         info.setObjectName("muted")
         info.setWordWrap(True)
         info.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -258,17 +265,16 @@ class LoadPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
         self._main_window = window
+        self.setObjectName("page")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(80, 56, 80, 56)
-        layout.setSpacing(16)
-        title = QLabel("继续存档")
-        title.setObjectName("title")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
+        layout.setContentsMargins(60, 44, 60, 36)
+        layout.setSpacing(18)
+        layout.addWidget(page_header("继续牌局", "继续存档", "未完成的牌局会在离开时保存。损坏的存档可以单独删除，不会影响历史记录。"))
         self.content = QVBoxLayout()
+        self.content.setSpacing(12)
         layout.addLayout(self.content)
         layout.addStretch(1)
-        layout.addWidget(button("返回大厅", window.show_menu))
+        layout.addWidget(button("返回大厅", window.show_menu, role="quietButton"))
         self.refresh()
 
     def refresh(self) -> None:
@@ -363,23 +369,27 @@ class HistoryPage(QWidget):
         super().__init__()
         self._main_window = window
         self.entries: list[dict] = []
+        self.setObjectName("page")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(48, 40, 48, 40)
+        layout.setContentsMargins(52, 40, 52, 32)
         layout.setSpacing(16)
-        title = QLabel("历史战绩")
-        title.setObjectName("title")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
+        layout.addWidget(page_header("战绩与回放", "历史战绩", "每一局都保留事件流、行动数、炸弹和进贡标记。双击任意一行查看回放。"))
         self.table = QTableWidget(0, len(HISTORY_COLUMNS))
         self.table.setHorizontalHeaderLabels(list(HISTORY_COLUMNS))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
+        self.table.setAlternatingRowColors(True)
+        self.table.setMinimumHeight(280)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.cellDoubleClicked.connect(self.open_selected_replay)
         layout.addWidget(self.table, 1)
-        layout.addWidget(button("查看回放", self.open_selected_replay, primary=True))
-        layout.addWidget(button("返回大厅", window.show_menu))
+        actions = QHBoxLayout()
+        actions.addWidget(button("查看回放", self.open_selected_replay, primary=True))
+        actions.addWidget(button("返回大厅", window.show_menu, role="quietButton"))
+        layout.addLayout(actions)
         self.refresh()
 
     def refresh(self) -> None:
@@ -415,6 +425,7 @@ class ReplayPage(QWidget):
     def __init__(self, window: "GuandanMainWindow", history: dict) -> None:
         super().__init__()
         self._main_window = window
+        self.setObjectName("page")
         self.history = history
         self.events: list[Event] = list(history.get("events", []))
         if not self.events:
@@ -425,12 +436,9 @@ class ReplayPage(QWidget):
             raise ValueError("history event stream cannot be replayed") from exc
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(48, 40, 48, 40)
-        layout.setSpacing(14)
-        title = QLabel("对局回放")
-        title.setObjectName("title")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
+        layout.setContentsMargins(52, 40, 52, 32)
+        layout.setSpacing(13)
+        layout.addWidget(page_header("事件流查看器", "对局回放", "用首步、上一步、下一步和末步逐事件检查这局牌的状态变化。"))
 
         self.meta = QLabel()
         self.meta.setObjectName("muted")
@@ -454,7 +462,7 @@ class ReplayPage(QWidget):
         for item in (self.first_button, self.previous_button, self.next_button, self.last_button):
             controls.addWidget(item)
         layout.addLayout(controls)
-        layout.addWidget(button("返回战绩", window.show_history))
+        layout.addWidget(button("返回战绩", window.show_history, role="quietButton"))
         self.refresh()
 
     def set_event_index(self, index: int) -> None:
@@ -486,62 +494,154 @@ class ReplayPage(QWidget):
 class RulesPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
+        self.setObjectName("page")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(48, 40, 48, 40)
+        layout.setContentsMargins(52, 40, 52, 32)
         layout.setSpacing(16)
-        title = QLabel("规则说明")
-        title.setObjectName("title")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
+        layout.addWidget(page_header("桌面规则", "规则说明", "掼蛋的牌型、比较、接风、升级和进贡规则。"))
         browser = QTextBrowser()
         browser.setPlainText(RULES_TEXT)
         layout.addWidget(browser, 1)
-        layout.addWidget(button("返回大厅", window.show_menu))
+        layout.addWidget(button("返回大厅", window.show_menu, role="quietButton"))
+
+
+class GameArena(QFrame):
+    """Painted felt surface behind the four seats and current trick."""
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        del event
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        outer = self.rect().adjusted(1, 1, -1, -1)
+        painter.setPen(QPen(FELT_LINE, 1))
+        painter.setBrush(FELT_DARK)
+        painter.drawRoundedRect(outer, 18, 18)
+        inner = outer.adjusted(12, 12, -12, -12)
+        painter.setPen(QPen(QColor(71, 151, 126, 150), 1, Qt.PenStyle.DashLine))
+        painter.setBrush(FELT)
+        painter.drawRoundedRect(inner, 14, 14)
+        center = inner.center()
+        painter.setPen(QPen(QColor(126, 205, 181, 95), 1))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawEllipse(center, min(150, inner.width() // 5), min(82, inner.height() // 4))
+        painter.setPen(QPen(QColor(126, 205, 181, 50), 1, Qt.PenStyle.DotLine))
+        painter.drawLine(center.x(), inner.top() + 24, center.x(), inner.bottom() - 24)
+        painter.end()
 
 
 class SeatPanel(QFrame):
-    def __init__(self, title: str) -> None:
+    def __init__(self, *, human: bool = False) -> None:
         super().__init__()
-        self.setObjectName("panel")
-        self.setMinimumHeight(86)
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 10, 12, 10)
-        self.title = QLabel(title)
-        self.title.setObjectName("sectionTitle")
-        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._human = human
+        self.setObjectName("seatPanel")
+        self.setMinimumSize(170, 72)
+        self.setMaximumHeight(80)
+        set_property(self, "human", human)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setSpacing(9)
+
+        self.avatar = QLabel("-")
+        self.avatar.setObjectName("seatAvatar")
+        self.avatar.setFixedSize(40, 40)
+        self.avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.avatar)
+
+        labels = QVBoxLayout()
+        labels.setSpacing(2)
+        self.title = QLabel("")
+        self.title.setObjectName("seatName")
         self.detail = QLabel("")
-        self.detail.setObjectName("muted")
-        self.detail.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.title)
-        layout.addWidget(self.detail)
+        self.detail.setObjectName("seatMeta")
+        labels.addWidget(self.title)
+        labels.addWidget(self.detail)
+        layout.addLayout(labels, 1)
+
+        self.card_back = CardBackWidget()
+        self.card_back.setVisible(not human)
+        layout.addWidget(self.card_back)
 
     def update_state(self, seat: int, hand_size: int, finished: bool, is_turn: bool, ai_name: str) -> None:
-        marker = " · 行动中" if is_turn else ""
-        self.title.setText(f"{SEAT_NAMES[seat]}家{marker}")
-        done = "已出完" if finished else f"{hand_size} 张"
-        self.detail.setText(f"{ai_name} · {done}")
+        team = "gold" if seat % 2 == 0 else "cyan"
+        self.avatar.setText(SEAT_NAMES[seat])
+        set_property(self.avatar, "team", team)
+        set_property(self, "active", is_turn)
+        set_property(self.detail, "active", is_turn)
+        self.title.setText(f"{SEAT_NAMES[seat]}家" + (" · 你" if self._human else ""))
+        if finished:
+            meta = "已出完"
+        elif is_turn:
+            meta = f"● 行动中 · {hand_size} 张"
+        else:
+            meta = f"{ai_name} · {hand_size} 张"
+        self.detail.setText(meta)
+        self.card_back.setVisible(not self._human and not finished)
+
+
+class TrickRow(QFrame):
+    def __init__(self, seat: int) -> None:
+        super().__init__()
+        self.seat = seat
+        self.setObjectName("trickRow")
+        self.setFixedHeight(38)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 0, 7, 0)
+        layout.setSpacing(8)
+        self.seat_label = QLabel(SEAT_NAMES[seat])
+        self.seat_label.setFixedWidth(26)
+        self.seat_label.setObjectName("muted")
+        self.action_label = QLabel("等待")
+        self.action_label.setMinimumWidth(78)
+        self.cards = MiniCardStrip()
+        layout.addWidget(self.seat_label)
+        layout.addWidget(self.action_label)
+        layout.addWidget(self.cards, 1)
+
+    def update_action(self, action: tuple[str, Pattern | None] | None, *, is_top: bool) -> None:
+        prefix = "最大 · " if is_top else ""
+        if action is None:
+            self.action_label.setText("等待")
+            self.cards.set_cards(())
+        else:
+            kind, pattern = action
+            if kind == "pass":
+                self.action_label.setText("过牌")
+                self.cards.set_cards(())
+            elif pattern is not None:
+                self.action_label.setText(prefix + pattern_type_label(pattern.type))
+                self.cards.set_cards(pattern.cards)
+            else:
+                self.action_label.setText("等待")
+                self.cards.set_cards(())
+        color = GOLD_BRIGHT.name() if is_top else TEXT_MUTED.name()
+        self.seat_label.setStyleSheet(f"color: {color}; font-weight: 800;")
+        self.action_label.setStyleSheet(f"color: {color}; font-weight: 750;")
 
 
 class TablePanel(QFrame):
     def __init__(self) -> None:
         super().__init__()
-        self.setObjectName("tablePanel")
+        self.setObjectName("trickPanel")
+        self.setMinimumSize(430, 210)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 14, 18, 14)
-        layout.setSpacing(8)
-        self.title = QLabel("当前轮")
-        self.title.setObjectName("sectionTitle")
-        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.title)
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setSpacing(4)
+        header = QHBoxLayout()
+        self.title = QLabel("当前牌墩")
+        self.title.setObjectName("accentTitle")
+        self.trick_meta = QLabel("等待先手")
+        self.trick_meta.setObjectName("muted")
+        header.addWidget(self.title)
+        header.addStretch(1)
+        header.addWidget(self.trick_meta)
+        layout.addLayout(header)
+        self.trick_rows: dict[int, TrickRow] = {}
         self.rows: dict[int, QLabel] = {}
         for seat in (0, 3, 2, 1):
-            label = QLabel()
-            label.setWordWrap(True)
-            label.setMinimumHeight(36)
-            label.setStyleSheet("background: rgba(255, 255, 255, 0.06); border-radius: 6px; padding: 6px;")
-            self.rows[seat] = label
-            layout.addWidget(label)
-        layout.addStretch(1)
+            row = TrickRow(seat)
+            self.trick_rows[seat] = row
+            self.rows[seat] = row.action_label
+            layout.addWidget(row)
 
     def update_table(
         self,
@@ -550,24 +650,11 @@ class TablePanel(QFrame):
         table_players: list[int],
     ) -> None:
         top_player = table_players[-1] if state.table and table_players else None
-        title = "当前轮"
-        if top_player is not None:
-            title += f" · 最大 {SEAT_NAMES[top_player]}家"
-        self.title.setText(title)
-        for seat, label in self.rows.items():
-            marker = "最大 · " if seat == top_player else ""
-            action = actions.get(seat)
-            if action is None:
-                label.setText(f"{SEAT_NAMES[seat]}：{marker}--")
-                continue
-            kind, pattern = action
-            if kind == "pass":
-                label.setText(f"{SEAT_NAMES[seat]}：{marker}过牌")
-            elif pattern is not None:
-                cards = " ".join(card_label(card, include_symbol=False) for card in pattern.cards)
-                label.setText(f"{SEAT_NAMES[seat]}：{marker}{pattern_type_label(pattern.type)} · {cards}")
-            else:
-                label.setText(f"{SEAT_NAMES[seat]}：{marker}--")
+        self.trick_meta.setText(
+            f"最大：{SEAT_NAMES[top_player]}家" if top_player is not None else "等待先手"
+        )
+        for seat, row in self.trick_rows.items():
+            row.update_action(actions.get(seat), is_top=seat == top_player)
 
 
 class GamePage(QWidget):
@@ -577,27 +664,47 @@ class GamePage(QWidget):
         self.session = session
         self.selected_indices: set[int] = set()
         self.hand_cards: list[Card] = []
-        self._ai_timer_active = False
+        self._ai_timer = QTimer(self)
+        self._ai_timer.setSingleShot(True)
+        self._ai_timer.setInterval(260)
+        self._ai_timer.timeout.connect(self._ai_step)
         self._build()
         self.session.ensure_started()
         self.refresh()
-        self.schedule_ai()
 
     def _build(self) -> None:
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(18, 14, 18, 14)
+        layout.setContentsMargins(16, 14, 16, 12)
         layout.setSpacing(10)
-        self.status = QLabel()
-        self.status.setObjectName("statusBar")
-        self.status.setWordWrap(True)
-        layout.addWidget(self.status)
 
-        table_grid = QGridLayout()
+        hud = make_panel("hud")
+        hud_layout = QHBoxLayout(hud)
+        hud_layout.setContentsMargins(14, 9, 14, 9)
+        hud_layout.setSpacing(12)
+        brand = QLabel("牌桌")
+        brand.setObjectName("brandMark")
+        hud_layout.addWidget(brand)
+        self.status = QLabel()
+        self.status.setObjectName("statusText")
+        self.status.setWordWrap(True)
+        hud_layout.addWidget(self.status, 1)
+        self.turn_label = QLabel("等待行动")
+        self.turn_label.setObjectName("turnBanner")
+        hud_layout.addWidget(self.turn_label)
+        self.score_label = QLabel()
+        self.score_label.setObjectName("goldChip")
+        hud_layout.addWidget(self.score_label)
+        layout.addWidget(hud)
+
+        arena = GameArena()
+        self.arena = arena
+        table_grid = QGridLayout(arena)
+        table_grid.setContentsMargins(24, 18, 24, 18)
         table_grid.setSpacing(10)
-        self.opposite = SeatPanel("")
-        self.left = SeatPanel("")
-        self.right = SeatPanel("")
-        self.me = SeatPanel("")
+        self.opposite = SeatPanel()
+        self.left = SeatPanel()
+        self.right = SeatPanel()
+        self.me = SeatPanel(human=True)
         self.table = TablePanel()
         table_grid.addWidget(self.opposite, 0, 1)
         table_grid.addWidget(self.left, 1, 0)
@@ -608,13 +715,15 @@ class GamePage(QWidget):
         table_grid.setColumnStretch(1, 3)
         table_grid.setColumnStretch(2, 1)
         table_grid.setRowStretch(1, 1)
-        layout.addLayout(table_grid, 1)
+        layout.addWidget(arena, 1)
 
-        hand_panel = make_panel()
+        hand_panel = make_panel("handDock")
         hand_layout = QVBoxLayout(hand_panel)
+        hand_layout.setContentsMargins(12, 10, 12, 10)
+        hand_layout.setSpacing(7)
         hand_head = QHBoxLayout()
         self.hand_title = QLabel("你的手牌")
-        self.hand_title.setObjectName("sectionTitle")
+        self.hand_title.setObjectName("accentTitle")
         self.hand_counter = QLabel("")
         self.hand_counter.setObjectName("muted")
         hand_head.addWidget(self.hand_title)
@@ -627,13 +736,13 @@ class GamePage(QWidget):
         layout.addWidget(hand_panel)
 
         actions = QHBoxLayout()
-        actions.setSpacing(10)
+        actions.setSpacing(8)
         self.play_button = button("出牌", self.play_selected, primary=True)
         self.pass_button = button("过牌", self.pass_turn)
-        self.hint_button = button("提示", self.hint)
-        self.clear_button = button("清空选择", self.clear_selection)
+        self.hint_button = button("提示", self.hint, role="infoButton")
+        self.clear_button = button("清空选择", self.clear_selection, role="quietButton")
         self.next_button = button("下一局", self.next_game, primary=True)
-        self.back_button = button("返回大厅", self.back_to_menu)
+        self.back_button = button("返回大厅", self.back_to_menu, role="quietButton")
         for item in (
             self.play_button,
             self.pass_button,
@@ -646,7 +755,7 @@ class GamePage(QWidget):
         layout.addLayout(actions)
 
         self.log = QLabel("准备开始")
-        self.log.setObjectName("statusBar")
+        self.log.setObjectName("muted")
         self.log.setWordWrap(True)
         layout.addWidget(self.log)
         self._install_shortcuts()
@@ -697,7 +806,7 @@ class GamePage(QWidget):
         )
         self.log.setText(self.session.last_action)
         human_turn = state.turn_index == self.session.human and not state.finished
-        self.play_button.setEnabled(human_turn)
+        self.play_button.setEnabled(human_turn and bool(self.selected_indices))
         self.pass_button.setEnabled(human_turn and bool(state.table))
         self.hint_button.setEnabled(human_turn)
         self.clear_button.setEnabled(bool(self.selected_indices))
@@ -719,15 +828,19 @@ class GamePage(QWidget):
         else:
             suffix = f"等待 {turn}家出牌"
         self.status.setText(
-            f"级牌 {rank_value_label(state.level)} · 逢人配 {wild} · 当前 {turn}家 · "
-            f"东西 {rank_value_label(levels[0])} / 南北 {rank_value_label(levels[1])} · "
-            f"名次 {finished} · {suffix}"
+            f"级牌 {rank_value_label(state.level)}  ·  逢人配 {wild}  ·  当前 {turn}家  ·  "
+            f"名次 {finished}  ·  {suffix}"
         )
+        self.score_label.setText(
+            f"东西 {rank_value_label(levels[0])}  /  南北 {rank_value_label(levels[1])}"
+        )
+        self.turn_label.setText("你的回合" if state.turn_index == self.session.human else f"{turn}家行动")
 
     def _refresh_hand(self, state: GameState) -> None:
-        from ..engine.hand import sort_cards
-
-        self.hand_cards = sort_cards(state.hands[self.session.human])
+        self.hand_cards = sort_cards_for_display(
+            state.hands[self.session.human],
+            level=state.level,
+        )
         self.selected_indices = {
             index for index in self.selected_indices if index < len(self.hand_cards)
         }
@@ -785,22 +898,33 @@ class GamePage(QWidget):
 
     def schedule_ai(self) -> None:
         state = self.session.ensure_started()
-        if state.finished or state.turn_index == self.session.human or self._ai_timer_active:
+        if (
+            self._main_window.stack.currentWidget() is not self
+            or state.finished
+            or state.turn_index == self.session.human
+            or self._ai_timer.isActive()
+        ):
             return
-        self._ai_timer_active = True
-        QTimer.singleShot(260, self._ai_step)
+        self._ai_timer.start()
 
     def _ai_step(self) -> None:
-        self._ai_timer_active = False
+        if self._main_window.stack.currentWidget() is not self:
+            return
         state = self.session.ensure_started()
         if state.finished or state.turn_index == self.session.human:
             self.refresh()
             return
-        self.session.step_ai()
+        result = self.session.step_ai()
         self.refresh()
-        self.schedule_ai()
+        if result.ok:
+            self.schedule_ai()
+
+    def deactivate(self) -> None:
+        """Stop deferred work when this table is no longer visible."""
+        self._ai_timer.stop()
 
     def back_to_menu(self) -> None:
+        self.deactivate()
         self._main_window.save_current_game()
         self._main_window.show_menu()
 
@@ -808,7 +932,7 @@ class GamePage(QWidget):
 class GuandanMainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("掼蛋 GUI · v0.8.0-beta.1")
+        self.setWindowTitle("掼蛋 GUI · v0.8.0-beta.2")
         self.resize(1280, 860)
         self.setMinimumSize(1080, 760)
         self.stack = QStackedWidget()
@@ -822,6 +946,9 @@ class GuandanMainWindow(QMainWindow):
         self.show_menu()
 
     def _replace_page(self, page: QWidget) -> None:
+        current = self.stack.currentWidget()
+        if isinstance(current, GamePage) and current is not page:
+            current.deactivate()
         self.stack.addWidget(page)
         self.stack.setCurrentWidget(page)
         while self.stack.count() > 3:
@@ -855,6 +982,7 @@ class GuandanMainWindow(QMainWindow):
     def start_game(self, session: GameSession) -> None:
         self.game_page = GamePage(self, session)
         self._replace_page(self.game_page)
+        self.game_page.schedule_ai()
 
     def save_current_game(self) -> None:
         if self.game_page is None:
@@ -869,6 +997,8 @@ class GuandanMainWindow(QMainWindow):
                 QMessageBox.warning(self, "保存失败", str(exc))
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        if self.game_page is not None:
+            self.game_page.deactivate()
         self.save_current_game()
         event.accept()
 

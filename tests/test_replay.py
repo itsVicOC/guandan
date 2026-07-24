@@ -30,6 +30,13 @@ def test_complete_event_stream_replays_exactly() -> None:
     assert replay_events(state.history) == state
 
 
+def test_unseeded_deal_records_the_resolved_seed_for_exact_replay() -> None:
+    state = make_initial_state(level=2, first_player=0, seed=None)
+
+    assert state.history[0].seed != 0
+    assert replay_events(state.history) == state
+
+
 def test_complete_replay_rejects_omitted_engine_events_but_prefix_allows_them() -> None:
     state = _completed_game()
     truncated = state.history[:-1]
