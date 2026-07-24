@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [0.8.0-beta.3] - 2026-07-24
+
+### GUI 交互
+- “提示”现在会直接选中一组可压过桌面牌型的手牌；连续点击会遍历不同合法方案并在末尾循环，无牌可压时明确建议过牌。
+- 修复手牌中另有王时，提示和 AI 候选会漏掉普通炸弹、顺子、连对与钢板的问题。
+
+### 发布
+- 新增 PyInstaller 跨平台桌面构建与启动 smoke test，GitHub 标签发布会生成 Windows x64、Linux x64、macOS Intel 和 macOS Apple Silicon 免 Python 安装包。
+- GitHub Release 同时提供 Python wheel 与 `SHA256SUMS.txt`，全部桌面构建成功后才会发布。
+
 ## [0.8.0-beta.2] - 2026-07-24
 
 ### GUI 视觉与交互

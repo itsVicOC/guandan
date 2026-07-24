@@ -14,6 +14,8 @@ from guandan.engine.card import (
     RANK_3,
     RANK_4,
     RANK_5,
+    RANK_6,
+    RANK_7,
     RANK_8,
     RANK_A,
     RANK_BIG_JOKER,
@@ -23,7 +25,7 @@ from guandan.engine.card import (
     Suit,
 )
 from guandan.engine.events import TributeReturned, TributeSent
-from guandan.engine.hand import PatternType, sort_cards
+from guandan.engine.hand import Pattern, PatternType, sort_cards
 from guandan.engine.state import GameState
 from guandan.ui.session import GameSession
 
@@ -119,6 +121,119 @@ def test_session_visual_seats_match_east_perspective() -> None:
         "opposite": 2,
         "right": 3,
     }
+
+
+def test_session_hint_cycles_through_distinct_legal_responses() -> None:
+    table_top = Pattern(
+        PatternType.SINGLE,
+        rank=RANK_5,
+        length=1,
+        cards=(Card(RANK_5, Suit.SPADES),),
+    )
+    state = GameState(
+        level=RANK_2,
+        wild_card=None,
+        hands=[
+            [
+                Card(RANK_8, Suit.CLUBS),
+                Card(RANK_8, Suit.CLUBS),
+                Card(RANK_K, Suit.HEARTS),
+            ],
+            [],
+            [],
+            [],
+        ],
+        turn_index=0,
+        leader=1,
+        table=[table_top],
+    )
+    session = GameSession(difficulty=0, existing_state=state, human=0)
+
+    first = session.hint_for_human()
+    second = session.hint_for_human()
+    wrapped = session.hint_for_human()
+
+    assert first.ok and second.ok and wrapped.ok
+    assert first.suggested_cards != second.suggested_cards
+    assert wrapped.suggested_cards == first.suggested_cards
+    assert "提示 1/2" in first.message
+    assert "提示 2/2" in second.message
+    for result in (first, second):
+        pattern = Pattern(
+            PatternType.SINGLE,
+            rank=result.suggested_cards[0].rank,
+            length=1,
+            cards=result.suggested_cards,
+        )
+        assert pattern.can_be_played_on(table_top, level=state.level)
+
+
+def test_session_hint_suggests_pass_when_table_cannot_be_beaten() -> None:
+    four_jokers = Pattern(
+        PatternType.FOUR_JOKERS,
+        rank=RANK_BIG_JOKER,
+        length=4,
+        cards=(
+            Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+            Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+            Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+            Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+        ),
+    )
+    state = GameState(
+        level=RANK_2,
+        wild_card=None,
+        hands=[[Card(RANK_K, Suit.HEARTS)], [], [], []],
+        turn_index=0,
+        leader=1,
+        table=[four_jokers],
+    )
+
+    result = GameSession(difficulty=0, existing_state=state, human=0).hint_for_human()
+
+    assert result.ok
+    assert result.suggested_cards == ()
+    assert result.message == "提示：建议过牌"
+
+
+def test_session_hint_includes_bomb_over_straight_with_unrelated_joker() -> None:
+    table_top = Pattern(
+        PatternType.STRAIGHT,
+        rank=RANK_7,
+        length=5,
+        cards=(
+            Card(RANK_3, Suit.HEARTS),
+            Card(RANK_4, Suit.DIAMONDS),
+            Card(RANK_5, Suit.SPADES),
+            Card(RANK_6, Suit.CLUBS),
+            Card(RANK_7, Suit.HEARTS),
+        ),
+    )
+    bomb_cards = (
+        Card(RANK_8, Suit.HEARTS),
+        Card(RANK_8, Suit.DIAMONDS),
+        Card(RANK_8, Suit.SPADES),
+        Card(RANK_8, Suit.CLUBS),
+    )
+    state = GameState(
+        level=RANK_2,
+        wild_card=None,
+        hands=[
+            [*bomb_cards, Card(RANK_BIG_JOKER, Suit.BIG_JOKER)],
+            [],
+            [],
+            [],
+        ],
+        turn_index=0,
+        leader=1,
+        table=[table_top],
+    )
+
+    result = GameSession(difficulty=0, existing_state=state, human=0).hint_for_human()
+
+    assert result.ok
+    assert result.suggested_cards == bomb_cards
+    assert "炸弹" in result.message
 
 
 def test_session_game_ids_are_unique_and_filesystem_safe() -> None:
@@ -292,6 +407,14 @@ def test_gui_window_smoke_offscreen() -> None:
         "assert len(page.hand_cards) == 27; "
         "assert 100 <= page.hand.minimumHeight() <= 150; "
         "assert page.play_button.isEnabled() is False; "
+        "page.hint(); "
+        "first_hint = set(page.selected_indices); "
+        "assert first_hint; "
+        "assert page.play_button.isEnabled() is True; "
+        "page.hint(); "
+        "assert page.selected_indices; "
+        "assert page.selected_indices != first_hint; "
+        "page.clear_selection(); "
         "page.toggle_card(0); "
         "assert page.play_button.isEnabled() is True; "
         "page.play_selected(); "

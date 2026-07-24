@@ -155,6 +155,17 @@ class TestStraight:
         ps = detect_patterns(cards("3H", "4H", "5H", "6H", "BJ"))
         assert not any(p.type == PatternType.STRAIGHT for p in ps)
 
+    def test_straight_subset_is_detected_with_unrelated_joker(self):
+        ps = detect_patterns(cards("3H", "4D", "5H", "6S", "7C", "BJ"))
+
+        assert any(
+            p.type == PatternType.STRAIGHT
+            and p.rank == RANK_7
+            and all(not card.is_joker for card in p.cards)
+            for p in ps
+        )
+        assert find_complete_pattern(cards("3H", "4D", "5H", "6S", "7C", "BJ")) is None
+
     def test_straight_too_short(self):
         # 4 张不够
         ps = detect_patterns(cards("3H", "4H", "5H", "6H"))
@@ -213,6 +224,18 @@ class TestBomb:
     def test_bomb_4(self):
         ps = detect_patterns(cards("5H", "5D", "5S", "5C"))
         assert any(p.type == PatternType.BOMB and p.length == 4 and p.rank == RANK_5 for p in ps)
+
+    def test_bomb_subset_is_detected_with_unrelated_joker(self):
+        ps = detect_patterns(cards("8H", "8D", "8S", "8C", "BJ"))
+
+        assert any(
+            p.type == PatternType.BOMB
+            and p.length == 4
+            and p.rank == RANK_8
+            and all(not card.is_joker for card in p.cards)
+            for p in ps
+        )
+        assert find_complete_pattern(cards("8H", "8D", "8S", "8C", "BJ")) is None
 
     def test_bomb_5(self):
         # 实际游戏中同 rank 最多 4 张，所以 5 张炸弹需要不同 rank... 不，实际游戏中 4-7 张炸弹都是同 rank

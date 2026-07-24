@@ -22,7 +22,7 @@ from ...engine.state import (
 from ...engine.trick import (
     current_trick_actions,
 )
-from ...ui.session import GameSession
+from ...ui.session import GameSession, card_indices_for_selection
 from ..layout import MIN_COLUMNS, MIN_LINES, RECOMMENDED_COLUMNS, RECOMMENDED_LINES
 
 
@@ -696,6 +696,7 @@ class GameScreen(Screen):
     def action_toggle_select(self) -> None:
         if not self._hand_cards:
             return
+        self.session.reset_hint_cycle()
         if self._hand_cursor in self._hand_selected_indices:
             self._hand_selected_indices.discard(self._hand_cursor)
         else:
@@ -737,6 +738,10 @@ class GameScreen(Screen):
         if s.finished or s.turn_index != self.human:
             return
         result = self.session.hint_for_human()
+        self._hand_selected_indices = card_indices_for_selection(
+            self._hand_cards,
+            result.suggested_cards,
+        )
         self.sub_title = result.message
         self._refresh_all()
 

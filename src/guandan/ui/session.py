@@ -9,9 +9,11 @@ from __future__ import annotations
 import random
 import time
 import uuid
+from collections import Counter
 from dataclasses import dataclass
 
 from ..ai import AINotImplementedError, make_strategy, play_or_pass
+from ..ai.candidates import enumerate_legal_patterns, greedy_pattern_key
 from ..ai.strategy import AIStrategy
 from ..engine.card import Card, Suit
 from ..engine.events import Pass, ShuffleDeal, TurnPlayed
@@ -49,6 +51,22 @@ class SessionAction:
 
     ok: bool
     message: str
+    suggested_cards: tuple[Card, ...] = ()
+
+
+def card_indices_for_selection(
+    hand_cards: list[Card],
+    selected_cards: tuple[Card, ...],
+) -> set[int]:
+    """Map a card multiset to stable positions in a rendered hand."""
+    remaining = Counter(selected_cards)
+    indices: set[int] = set()
+    for index, card in enumerate(hand_cards):
+        if remaining[card] <= 0:
+            continue
+        indices.add(index)
+        remaining[card] -= 1
+    return indices
 
 
 def wild_card_from_hands(level: int, hands: list[list[Card]]) -> Card | None:
@@ -90,6 +108,9 @@ class GameSession:
         self.last_action = "准备开始"
         self.displayed_table_actions: dict[int, tuple[str, Pattern | None]] = {}
         self.last_display_turn: int | None = None
+        self._hint_state_key: tuple[object, ...] | None = None
+        self._hint_candidates: tuple[Pattern, ...] = ()
+        self._hint_index = 0
 
     @staticmethod
     def _new_game_id() -> str:
@@ -195,14 +216,63 @@ class GameSession:
             return SessionAction(False, "本局已经结束")
         if state.turn_index != self.human:
             return SessionAction(False, f"还没轮到你，当前是 {SEAT_NAMES[state.turn_index]}家")
-        hint_strategy = make_strategy(1)
-        pattern = hint_strategy.select_pattern(state, self.human)
-        if pattern is None:
+        state_key = (
+            id(state),
+            state.turn_index,
+            state.level,
+            state.wild_card,
+            tuple(state.hands[self.human]),
+            tuple(state.table),
+        )
+        if state_key != self._hint_state_key:
+            unique_candidates: list[Pattern] = []
+            seen_cards: set[tuple[tuple[int, int, int], ...]] = set()
+            table_top = state.table[-1] if state.table else None
+            for detected_pattern in enumerate_legal_patterns(state, self.human):
+                pattern = find_complete_pattern(detected_pattern.cards, state.wild_card)
+                if pattern is None:
+                    continue
+                if table_top is not None and not pattern.can_be_played_on(
+                    table_top,
+                    level=state.level,
+                ):
+                    continue
+                card_key = tuple(
+                    sorted(
+                        (card.rank, int(card.suit), count)
+                        for card, count in Counter(pattern.cards).items()
+                    )
+                )
+                if card_key in seen_cards:
+                    continue
+                seen_cards.add(card_key)
+                unique_candidates.append(pattern)
+            unique_candidates.sort(
+                key=lambda pattern: greedy_pattern_key(pattern, state.level),
+            )
+            self._hint_state_key = state_key
+            self._hint_candidates = tuple(unique_candidates)
+            self._hint_index = 0
+
+        if not self._hint_candidates:
             self.last_action = "提示：建议过牌"
-        else:
-            cards = " ".join(card_label(card) for card in pattern.cards)
-            self.last_action = f"提示：{pattern_type_label(pattern.type)} · {cards}"
-        return SessionAction(True, self.last_action)
+            return SessionAction(True, self.last_action)
+
+        pattern = self._hint_candidates[self._hint_index]
+        position = self._hint_index + 1
+        self._hint_index = (self._hint_index + 1) % len(self._hint_candidates)
+        cards = " ".join(card_label(card) for card in pattern.cards)
+        self.last_action = (
+            f"提示 {position}/{len(self._hint_candidates)}："
+            f"{pattern_type_label(pattern.type)} · {cards}"
+        )
+        return SessionAction(True, self.last_action, pattern.cards)
+
+    def reset_hint_cycle(self) -> None:
+        """Restart hints after the player manually changes their selection."""
+        self._hint_state_key = None
+        self._hint_candidates = ()
+        self._hint_index = 0
 
     def step_ai(self) -> SessionAction:
         state = self.require_state()

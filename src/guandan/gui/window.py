@@ -51,7 +51,7 @@ from ..ui.content import DIFFICULTIES, RULES_TEXT
 from ..ui.formatting import card_label, pattern_type_label, rank_value_label
 from ..ui.history import HISTORY_COLUMNS, history_entry_cells, history_statistics_text
 from ..ui.replay import ReplayCursor, replay_event_text, replay_state_text
-from ..ui.session import GameSession
+from ..ui.session import GameSession, card_indices_for_selection
 from .cards import CardBackWidget, HandWidget, MiniCardStrip, sort_cards_for_display
 from .theme import APP_QSS, CYAN, FELT, FELT_DARK, FELT_LINE, GOLD_BRIGHT, TEXT_MUTED
 
@@ -171,7 +171,7 @@ class MenuPage(QWidget):
         masthead.addWidget(mark)
         masthead.addSpacing(12)
         masthead.addWidget(QLabel("LOCAL TABLE  ·  公测版"), 1)
-        version = QLabel("v0.8.0-beta.2")
+        version = QLabel("v0.8.0-beta.3")
         version.setObjectName("muted")
         masthead.addWidget(version)
         layout.addLayout(masthead)
@@ -854,6 +854,7 @@ class GamePage(QWidget):
         )
 
     def toggle_card(self, index: int) -> None:
+        self.session.reset_hint_cycle()
         if index in self.selected_indices:
             self.selected_indices.remove(index)
         else:
@@ -882,10 +883,15 @@ class GamePage(QWidget):
         self.schedule_ai()
 
     def hint(self) -> None:
-        self.session.hint_for_human()
+        result = self.session.hint_for_human()
+        self.selected_indices = card_indices_for_selection(
+            self.hand_cards,
+            result.suggested_cards,
+        )
         self.refresh()
 
     def clear_selection(self) -> None:
+        self.session.reset_hint_cycle()
         self.selected_indices.clear()
         self.refresh()
 
@@ -932,7 +938,7 @@ class GamePage(QWidget):
 class GuandanMainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("掼蛋 GUI · v0.8.0-beta.2")
+        self.setWindowTitle("掼蛋 GUI · v0.8.0-beta.3")
         self.resize(1280, 860)
         self.setMinimumSize(1080, 760)
         self.stack = QStackedWidget()

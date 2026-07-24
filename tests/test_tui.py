@@ -208,6 +208,48 @@ def test_duplicate_cards_are_selected_by_position() -> None:
     asyncio.run(run())
 
 
+def test_tui_hint_selects_and_cycles_legal_responses() -> None:
+    async def run() -> None:
+        table_top = _single(Card(RANK_5, Suit.SPADES))
+        state = GameState(
+            level=RANK_2,
+            wild_card=None,
+            hands=[
+                [Card(RANK_8, Suit.CLUBS), Card(RANK_J, Suit.HEARTS)],
+                [],
+                [],
+                [],
+            ],
+            turn_index=0,
+            leader=1,
+            table=[table_top],
+        )
+
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            screen.action_hint()
+            first = set(screen._hand_selected_indices)
+            screen.action_hint()
+            second = set(screen._hand_selected_indices)
+
+            assert len(first) == 1
+            assert len(second) == 1
+            assert first != second
+            for selected in (first, second):
+                pattern = find_complete_pattern(
+                    [screen._hand_cards[index] for index in selected],
+                    state.wild_card,
+                )
+                assert pattern is not None
+                assert pattern.can_be_played_on(table_top, level=state.level)
+
+    asyncio.run(run())
+
+
 def test_locked_passes_remain_visible_after_later_play() -> None:
     """Earlier passes in the same trick must remain visible after a later press."""
     async def run() -> None:

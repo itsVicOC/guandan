@@ -1,6 +1,6 @@
 # 掼蛋（Guandan）— 本地 GUI / TUI 单机版
 
-> 状态：**v0.8.0-beta.2 / 公测版**（桌面 GUI 视觉重构与回放、存档稳定性收口）
+> 状态：**v0.8.0-beta.3 / 公测版**（循环出牌提示、牌型候选修复与跨平台桌面包）
 > 规则：与全国锦标赛通用口径一致
 > AI：5 档（新手 / 进阶 / 高手 / 职业（IS-MCTS）/ **戴长胜（风格化）**）
 > 持久化：Profile / Savegame / History / 断点续局恢复已实现
@@ -16,6 +16,18 @@
 - 🧪 公测版已完成规则回归、AI 候选策略、AI 对战基准、GUI session、TUI 主流程与断点续局的自动化验证
 
 ## 安装
+
+### 直接运行桌面包
+
+从 [GitHub Releases](https://github.com/itsVicOC/guandan/releases) 下载对应平台压缩包，解压后即可运行，无需安装 Python：
+
+- Windows x64：运行 `Guandan/Guandan.exe`。
+- macOS Apple Silicon / Intel：打开 `Guandan.app`。
+- Linux x64：运行 `Guandan/Guandan`；若执行位丢失，先执行 `chmod +x Guandan/Guandan`。
+
+当前测试包尚未进行商业代码签名。Windows SmartScreen 或 macOS Gatekeeper 首次启动时可能要求用户确认；macOS 可在 Finder 中右键应用并选择“打开”。
+
+### Python 安装
 
 ```bash
 # 推荐使用 uv

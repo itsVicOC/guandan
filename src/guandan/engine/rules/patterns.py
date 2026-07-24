@@ -49,10 +49,6 @@ def _is_normal(c: Card) -> bool:
     return RANK_2 <= c.rank <= RANK_A
 
 
-def _has_joker(cards: Sequence[Card]) -> bool:
-    return any(c.is_joker for c in cards)
-
-
 def _can_use_wild_for(cards: Sequence[Card], wild_count: int) -> list[tuple[list[Card], int]]:
     """枚举"用 k 张 wild 替换为某种牌"的所有可能性。
 
@@ -340,9 +336,6 @@ def _try_straight(
 
     wild 处理：wild 可填入窗口中的"缺口"（即 rank_count[r]==0 的位置）。
     """
-    if _has_joker(normal):
-        return []  # 顺子不含王
-
     # 过滤出指定花色（如果 suit_filter 不为 None）
     if suit_filter is not None:
         cards_of_filter = [c for c in normal if c.suit == suit_filter]
@@ -447,9 +440,6 @@ def _try_pair_sequence(
     normal: Sequence[Card], wild_count: int, wild_card: Card | None
 ) -> list[Pattern]:
     """连对：3+ 对连续对子。"""
-    if _has_joker(normal):
-        return []
-
     # 按 rank 统计
     by_rank: dict[int, list[Card]] = {}
     for c in normal:
@@ -499,9 +489,6 @@ def _try_triple_sequence(
     normal: Sequence[Card], wild_count: int, wild_card: Card | None
 ) -> list[Pattern]:
     """钢板：2+ 组连续三张。"""
-    if _has_joker(normal):
-        return []
-
     by_rank: dict[int, list[Card]] = {}
     for c in normal:
         if not _is_normal(c):
@@ -550,9 +537,6 @@ def _try_bomb(
     normal: Sequence[Card], wild_count: int, wild_card: Card | None
 ) -> list[Pattern]:
     """炸弹：4-10 张同点，最多使用 2 张逢人配。"""
-    if _has_joker(normal):
-        return []  # 4 王单独处理
-
     by_rank: dict[int, list[Card]] = {}
     for c in normal:
         if not _is_normal(c):
