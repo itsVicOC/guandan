@@ -9,10 +9,18 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Grid, Horizontal, Vertical
 from textual.screen import Screen
+from textual.timer import Timer
 from textual.widgets import Button, Footer, Header, Static
 
 from ...engine.card import Card, Suit
-from ...engine.events import Pass, TurnPlayed
+from ...engine.events import (
+    Event,
+    Pass,
+    TributeResisted,
+    TributeReturned,
+    TributeSent,
+    TurnPlayed,
+)
 from ...engine.hand import Pattern, PatternType, comparison_rank, sort_cards
 from ...engine.rules.tributes import apply_tribute_flow
 from ...engine.state import (
@@ -238,6 +246,7 @@ class TableWidget(Static):
         self._players: List[int] = []
         self._passed: List[int] = []  # 本轮已过牌的玩家
         self._seat_actions: dict[int, tuple[str, Pattern | None]] = {}
+        self._tribute_events: tuple[Event, ...] = ()
 
     def on_mount(self) -> None:
         self._do_render()
@@ -248,11 +257,13 @@ class TableWidget(Static):
         players: List[int],
         passed: Optional[List[int]] = None,
         seat_actions: Optional[dict[int, tuple[str, Pattern | None]]] = None,
+        tribute_events: Sequence[Event] = (),
     ) -> None:
         self._table_patterns = patterns
         self._players = players
         self._passed = passed if passed is not None else []
         self._seat_actions = dict(seat_actions or {})
+        self._tribute_events = tuple(tribute_events)
         self._do_render()
 
     def _pattern_str(self, p: Pattern) -> str:
@@ -264,7 +275,12 @@ class TableWidget(Static):
         return f"{_pattern_type_label(p.type)}  {cards_str}"
 
     def _do_render(self) -> None:
-        if not self._table_patterns and not self._passed and not self._seat_actions:
+        if (
+            not self._table_patterns
+            and not self._passed
+            and not self._seat_actions
+            and not self._tribute_events
+        ):
             self.update("[bold #d6b35a]当前轮[/bold #d6b35a]\n\n[dim]桌面空，等待先手出牌[/dim]")
             return
 
@@ -273,6 +289,24 @@ class TableWidget(Static):
         if top_player is not None:
             title += f" · [bold]最大 {SEAT_NAMES[top_player]}家[/bold]"
         lines = [title]
+        if self._tribute_events:
+            tribute_parts: list[str] = []
+            for event in self._tribute_events:
+                if isinstance(event, TributeSent):
+                    tribute_parts.append(
+                        f"{SEAT_NAMES[event.from_player]}→{SEAT_NAMES[event.to_player]}进贡 "
+                        f"{_tui_card(event.card)}"
+                    )
+                elif isinstance(event, TributeReturned):
+                    tribute_parts.append(
+                        f"{SEAT_NAMES[event.from_player]}→{SEAT_NAMES[event.to_player]}还贡 "
+                        f"{_tui_card(event.card)}"
+                    )
+                elif isinstance(event, TributeResisted):
+                    tribute_parts.append(f"{SEAT_NAMES[event.player]}家抗贡")
+            lines.append(
+                "[bold #f6d779]本局贡还牌[/bold #f6d779] · " + " · ".join(tribute_parts)
+            )
 
         actions = dict(self._seat_actions)
         if not actions:
@@ -413,6 +447,7 @@ class GameScreen(Screen):
         self._hand_selected_indices: set[int] = set()
         self._hand_cursor = 0
         self._ai_running = False
+        self._tribute_timer: Timer | None = None
 
     @property
     def difficulty(self) -> int:
@@ -505,7 +540,7 @@ class GameScreen(Screen):
         self.set_timer(0.3, self._maybe_ai_turn)
 
     def _state(self) -> GameState:
-        return self.session.require_state()
+        return self.session.display_state()
 
     def _visual_seats(self) -> dict[str, int]:
         """返回以当前玩家为底部视角的左右和对面座位。"""
@@ -513,6 +548,7 @@ class GameScreen(Screen):
 
     def _refresh_all(self) -> None:
         s = self._state()
+        tribute_pending = self.session.is_next_game_pending()
         seats = self._visual_seats()
         for p, wid in [
             (seats["left"], "opp-left"),
@@ -523,12 +559,12 @@ class GameScreen(Screen):
             w.update_state(
                 hand_size=len(s.hands[p]),
                 finished=p in s.finish_order,
-                is_turn=s.turn_index == p,
+                is_turn=not tribute_pending and s.turn_index == p,
             )
         self.query_one("#player-south", PlayerStatusWidget).update_state(
             SEAT_NAMES[self.human],
             len(s.hands[self.human]),
-            s.turn_index == self.human,
+            not tribute_pending and s.turn_index == self.human,
         )
         # 更新玩家手牌（在自己管理的状态 + 外部渲染）
         self._hand_cards = sort_cards(s.hands[self.human])
@@ -548,10 +584,18 @@ class GameScreen(Screen):
             table_players,
             passed=passed_players,
             seat_actions=seat_actions,
+            tribute_events=self.session.tribute_events(),
         )
         # 状态信息写入 screen title
         turn_name = SEAT_NAMES[s.turn_index]
-        if s.finished:
+        if self.session.is_next_game_pending():
+            choice = self.session.pending_next_game_choice()
+            if choice is None:
+                self.sub_title = "新局手牌已发放 · 即将开始贡还牌"
+            else:
+                verb = "进贡" if choice.kind == "tribute" else "还贡"
+                self.sub_title = f"贡还牌阶段 · 请选择{verb}牌"
+        elif s.finished:
             order_str = " > ".join(SEAT_NAMES[p] for p in s.finish_order)
             if s.match_finished and s.winner_team is not None:
                 winner = "东西" if s.winner_team == 0 else "南北"
@@ -571,15 +615,24 @@ class GameScreen(Screen):
     def _render_status(self) -> None:
         s = self._state()
         wild = _tui_card(s.wild_card, wild=True) if s.wild_card is not None else "无"
-        leader = SEAT_NAMES[s.leader] if s.leader is not None else "-"
+        leader = (
+            SEAT_NAMES[s.leader]
+            if not self.session.is_next_game_pending() and s.leader is not None
+            else "-"
+        )
         table_players = self._current_table_players()
         top_player = SEAT_NAMES[table_players[-1]] if s.table and table_players else "-"
         finished = " > ".join(SEAT_NAMES[p] for p in s.finish_order) or "-"
         levels = self._visible_team_levels(s)
+        current = (
+            "贡还牌阶段"
+            if self.session.is_next_game_pending()
+            else f"{SEAT_NAMES[s.turn_index]}家"
+        )
         text = (
             f"[bold #ffd978]级牌[/bold #ffd978] {s.level}   "
             f"[bold #ffd978]逢人配[/bold #ffd978] {wild}   "
-            f"[bold #ffd978]当前[/bold #ffd978] {SEAT_NAMES[s.turn_index]}家   "
+            f"[bold #ffd978]当前[/bold #ffd978] {current}   "
             f"[bold #ffd978]AI[/bold #ffd978] {self._strategy.name}\n"
             f"先手 {leader}家 · 最大 {top_player}家 · 队伍级数 东西:{levels[0]} 南北:{levels[1]} · 名次 {finished}"
         )
@@ -601,7 +654,7 @@ class GameScreen(Screen):
         for i, c in enumerate(self._hand_cards):
             selected = i in self._hand_selected_indices
             cursor = i == self._hand_cursor
-            wild = self.state is not None and c == self.state.wild_card
+            wild = c == self._state().wild_card
             parts.append(_tui_card(c, selected=selected, cursor=cursor, wild=wild))
         cards_per_row = self._cards_per_hand_row()
         rows = [
@@ -640,9 +693,12 @@ class GameScreen(Screen):
         s = self._state()
         next_button = self.query_one("#btn-next-game", Button)
         back_button = self.query_one("#btn-game-back", Button)
-        back_button.disabled = self._ai_running
-        next_button.disabled = not s.finished or s.match_finished
-        if s.finished and s.match_finished:
+        tribute_pending = self.session.is_next_game_pending()
+        back_button.disabled = self._ai_running or tribute_pending
+        next_button.disabled = tribute_pending or not s.finished or s.match_finished
+        if tribute_pending:
+            next_button.label = "已发牌"
+        elif s.finished and s.match_finished:
             next_button.label = "比赛已结束"
         elif s.finished:
             next_button.label = f"N  下一局 · 级牌 {self._next_round_level(s)}"
@@ -726,7 +782,12 @@ class GameScreen(Screen):
 
     def action_play(self) -> None:
         s = self._state()
-        if self._ai_running or s.finished or s.turn_index != self.human:
+        if (
+            self._ai_running
+            or self.session.is_next_game_pending()
+            or s.finished
+            or s.turn_index != self.human
+        ):
             return
         sel = [
             self._hand_cards[i]
@@ -744,7 +805,12 @@ class GameScreen(Screen):
 
     def action_pass(self) -> None:
         s = self._state()
-        if self._ai_running or s.finished or s.turn_index != self.human:
+        if (
+            self._ai_running
+            or self.session.is_next_game_pending()
+            or s.finished
+            or s.turn_index != self.human
+        ):
             return
         result = self.session.pass_human()
         if result.ok:
@@ -756,7 +822,12 @@ class GameScreen(Screen):
 
     def action_hint(self) -> None:
         s = self._state()
-        if self._ai_running or s.finished or s.turn_index != self.human:
+        if (
+            self._ai_running
+            or self.session.is_next_game_pending()
+            or s.finished
+            or s.turn_index != self.human
+        ):
             return
         result = self.session.hint_for_human()
         self._hand_selected_indices = card_indices_for_selection(
@@ -767,22 +838,43 @@ class GameScreen(Screen):
         self._refresh_all()
 
     def action_next_game(self) -> None:
-        if self._ai_running:
+        if self._ai_running or self.session.is_next_game_pending():
             return
         prepared = self.session.prepare_next_game()
         if not prepared.ok:
             self._refresh_all()
             return
-        choice = self.session.pending_next_game_choice()
-        if choice is not None:
-            from .confirm import TributeChoiceModal
+        self._hand_selected_indices.clear()
+        self._hand_cursor = 0
+        self._refresh_all()
+        self._tribute_timer = self.set_timer(0.5, self._begin_next_game_tribute)
 
-            self.app.push_screen(
-                TributeChoiceModal(choice.kind, choice.cards),
-                self._finish_next_game,
-            )
+    def _begin_next_game_tribute(self) -> None:
+        if self._tribute_timer is not None:
+            self._tribute_timer.stop()
+            self._tribute_timer = None
+        if not self.session.is_next_game_pending():
+            return
+        started = self.session.begin_next_game_tribute()
+        if not started.ok:
+            self._refresh_all()
+            return
+        self._refresh_all()
+        if self.session.pending_next_game_choice() is not None:
+            self.call_after_refresh(self._show_tribute_choice)
             return
         self._finish_next_game(None)
+
+    def _show_tribute_choice(self) -> None:
+        choice = self.session.pending_next_game_choice()
+        if choice is None:
+            return
+        from .confirm import TributeChoiceModal
+
+        self.app.push_screen(
+            TributeChoiceModal(choice.kind, choice.cards),
+            self._finish_next_game,
+        )
 
     def _finish_next_game(self, selected_card: Card | None) -> None:
         if selected_card is None and self.session.pending_next_game_choice() is not None:
@@ -804,10 +896,15 @@ class GameScreen(Screen):
         self.app.push_screen(RuleScreen())
 
     def action_back(self) -> None:
-        if self._ai_running:
+        if self._ai_running or self.session.is_next_game_pending():
             from .error import ErrorModal
 
-            self.app.push_screen(ErrorModal("请等待当前 AI 行动完成后再离开。", title="AI 行动中"))
+            message = (
+                "请先完成当前贡还牌流程。"
+                if self.session.is_next_game_pending()
+                else "请等待当前 AI 行动完成后再离开。"
+            )
+            self.app.push_screen(ErrorModal(message, title="暂时无法离开"))
             return
         s = self._state()
         try:
@@ -832,7 +929,7 @@ class GameScreen(Screen):
             event.stop()
 
     def _maybe_ai_turn(self) -> None:
-        if self._ai_running:
+        if self._ai_running or self.session.is_next_game_pending():
             return
         s = self._state()
         if s.finished:
@@ -875,3 +972,8 @@ class GameScreen(Screen):
         self.session.save_finished_if_needed()
         if self._last_action.startswith("保存失败："):
             self.sub_title = self._last_action
+
+    def on_unmount(self) -> None:
+        if self._tribute_timer is not None:
+            self._tribute_timer.stop()
+            self._tribute_timer = None

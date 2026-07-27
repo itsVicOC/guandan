@@ -137,6 +137,16 @@ QFrame#trickPanel {
     border: 1px solid #4a937d;
     border-radius: 8px;
 }
+QFrame#tributeBanner {
+    background: rgba(65, 51, 20, 190);
+    border: 1px solid #a88a3f;
+    border-radius: 5px;
+}
+QLabel#tributeText {
+    color: #f6d779;
+    font-size: 11px;
+    font-weight: 800;
+}
 QFrame#trickRow {
     background: rgba(10, 53, 42, 180);
     border: 0;

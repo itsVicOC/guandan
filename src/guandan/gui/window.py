@@ -40,7 +40,7 @@ from PySide6.QtWidgets import (
 
 from ..ai import AINotImplementedError, make_strategy
 from ..engine.card import Card
-from ..engine.events import Event
+from ..engine.events import Event, TributeResisted, TributeReturned, TributeSent
 from ..engine.hand import Pattern
 from ..engine.state import SEAT_NAMES, GameState, IllegalPlayError
 from ..storage import (
@@ -237,7 +237,7 @@ class MenuPage(QWidget):
         masthead.addWidget(mark)
         masthead.addSpacing(12)
         masthead.addWidget(QLabel("LOCAL TABLE  ·  公测版"), 1)
-        version = QLabel("v0.8.0-beta.5")
+        version = QLabel("v0.8.0-beta.6")
         version.setObjectName("muted")
         masthead.addWidget(version)
         layout.addLayout(masthead)
@@ -860,7 +860,7 @@ class TablePanel(QFrame):
     def __init__(self) -> None:
         super().__init__()
         self.setObjectName("trickPanel")
-        self.setMinimumSize(430, 210)
+        self.setMinimumSize(430, 248)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 10, 12, 10)
         layout.setSpacing(4)
@@ -873,6 +873,19 @@ class TablePanel(QFrame):
         header.addStretch(1)
         header.addWidget(self.trick_meta)
         layout.addLayout(header)
+        self.tribute_banner = QFrame()
+        self.tribute_banner.setObjectName("tributeBanner")
+        tribute_layout = QHBoxLayout(self.tribute_banner)
+        tribute_layout.setContentsMargins(8, 2, 8, 2)
+        tribute_layout.setSpacing(8)
+        self.tribute_text = QLabel()
+        self.tribute_text.setObjectName("tributeText")
+        self.tribute_text.setWordWrap(True)
+        self.tribute_cards = MiniCardStrip()
+        tribute_layout.addWidget(self.tribute_text, 1)
+        tribute_layout.addWidget(self.tribute_cards)
+        self.tribute_banner.hide()
+        layout.addWidget(self.tribute_banner)
         self.trick_rows: dict[int, TrickRow] = {}
         self.rows: dict[int, QLabel] = {}
         for seat in (0, 3, 2, 1):
@@ -886,13 +899,35 @@ class TablePanel(QFrame):
         state: GameState,
         actions: dict[int, tuple[str, Pattern | None]],
         table_players: list[int],
+        tribute_events: tuple[Event, ...],
     ) -> None:
+        self._update_tribute(tribute_events)
         top_player = table_players[-1] if state.table and table_players else None
         self.trick_meta.setText(
             f"最大：{SEAT_NAMES[top_player]}家" if top_player is not None else "等待先手"
         )
         for seat, row in self.trick_rows.items():
             row.update_action(actions.get(seat), is_top=seat == top_player)
+
+    def _update_tribute(self, events: tuple[Event, ...]) -> None:
+        descriptions: list[str] = []
+        cards: list[Card] = []
+        for event in events:
+            if isinstance(event, TributeSent):
+                descriptions.append(
+                    f"{SEAT_NAMES[event.from_player]}→{SEAT_NAMES[event.to_player]}进贡"
+                )
+                cards.append(event.card)
+            elif isinstance(event, TributeReturned):
+                descriptions.append(
+                    f"{SEAT_NAMES[event.from_player]}→{SEAT_NAMES[event.to_player]}还贡"
+                )
+                cards.append(event.card)
+            elif isinstance(event, TributeResisted):
+                descriptions.append(f"{SEAT_NAMES[event.player]}家抗贡")
+        self.tribute_text.setText("本局贡还牌 · " + " · ".join(descriptions))
+        self.tribute_cards.set_cards(cards)
+        self.tribute_banner.setVisible(bool(events))
 
 
 class GamePage(QWidget):
@@ -906,6 +941,10 @@ class GamePage(QWidget):
         self._ai_timer.setSingleShot(True)
         self._ai_timer.setInterval(180)
         self._ai_timer.timeout.connect(self._start_ai_worker)
+        self._tribute_timer = QTimer(self)
+        self._tribute_timer.setSingleShot(True)
+        self._tribute_timer.setInterval(500)
+        self._tribute_timer.timeout.connect(self._begin_next_game_tribute)
         self._ai_running = False
         self._ai_worker: AIWorker | None = None
         self._build()
@@ -1015,7 +1054,8 @@ class GamePage(QWidget):
             shortcut.activated.connect(handler)
 
     def refresh(self) -> None:
-        state = self.session.ensure_started()
+        state = self.session.display_state()
+        tribute_pending = self.session.is_next_game_pending()
         seats = self.session.visual_seats()
         ai_label = f"AI·{self.session.strategy.name}"
         for seat, panel in (
@@ -1027,14 +1067,14 @@ class GamePage(QWidget):
                 seat,
                 len(state.hands[seat]),
                 seat in state.finish_order,
-                state.turn_index == seat,
+                not tribute_pending and state.turn_index == seat,
                 ai_label,
             )
         self.me.update_state(
             self.session.human,
             len(state.hands[self.session.human]),
             self.session.human in state.finish_order,
-            state.turn_index == self.session.human,
+            not tribute_pending and state.turn_index == self.session.human,
             "你",
         )
         self._refresh_status(state)
@@ -1043,20 +1083,45 @@ class GamePage(QWidget):
             state,
             self.session.table_display_actions(),
             self.session.current_table_players(),
+            self.session.tribute_events(),
         )
         self.log.setText(self.session.last_action)
-        human_turn = state.turn_index == self.session.human and not state.finished
+        human_turn = (
+            not tribute_pending
+            and state.turn_index == self.session.human
+            and not state.finished
+        )
         self.play_button.setEnabled(human_turn and bool(self.selected_indices))
         self.pass_button.setEnabled(human_turn and bool(state.table))
         self.hint_button.setEnabled(human_turn)
         self.clear_button.setEnabled(bool(self.selected_indices))
-        self.next_button.setEnabled(state.finished and not state.match_finished)
-        self.next_button.setText("比赛已结束" if state.match_finished else "下一局")
-        self.back_button.setEnabled(not self._ai_running)
+        self.next_button.setEnabled(
+            not tribute_pending and state.finished and not state.match_finished
+        )
+        if tribute_pending:
+            self.next_button.setText("已发牌")
+        else:
+            self.next_button.setText("比赛已结束" if state.match_finished else "下一局")
+        self.back_button.setEnabled(not self._ai_running and not tribute_pending)
 
     def _refresh_status(self, state: GameState) -> None:
         wild = card_label(state.wild_card) if state.wild_card is not None else "无"
         levels = self.session.visible_team_levels()
+        if self.session.is_next_game_pending():
+            choice = self.session.pending_next_game_choice()
+            if choice is None:
+                phase = "手牌已发放，即将开始贡还牌"
+            else:
+                verb = "进贡" if choice.kind == "tribute" else "还贡"
+                phase = f"贡还牌阶段：请选择{verb}牌"
+            self.status.setText(
+                f"级牌 {rank_value_label(state.level)}  ·  逢人配 {wild}  ·  {phase}"
+            )
+            self.score_label.setText(
+                f"东西 {rank_value_label(levels[0])}  /  南北 {rank_value_label(levels[1])}"
+            )
+            self.turn_label.setText("贡还牌阶段")
+            return
         turn = SEAT_NAMES[state.turn_index]
         finished = " > ".join(SEAT_NAMES[p] for p in state.finish_order) or "-"
         if state.finished and state.match_finished and state.winner_team is not None:
@@ -1137,23 +1202,53 @@ class GamePage(QWidget):
         self.refresh()
 
     def next_game(self) -> None:
+        if self.session.is_next_game_pending():
+            return
         prepared = self.session.prepare_next_game()
         if not prepared.ok:
             self.refresh()
             return
-        selected_card = None
+        self.selected_indices.clear()
+        self.refresh()
+        self._tribute_timer.start()
+
+    def _begin_next_game_tribute(self) -> None:
+        self._tribute_timer.stop()
+        if (
+            self._main_window.stack.currentWidget() is not self
+            or not self.session.is_next_game_pending()
+        ):
+            return
+        started = self.session.begin_next_game_tribute()
+        if not started.ok:
+            self.refresh()
+            return
+        self.refresh()
         choice = self.session.pending_next_game_choice()
         if choice is not None:
-            dialog = CardChoiceDialog(choice.kind, choice.cards, self)
-            if dialog.exec() != QDialog.DialogCode.Accepted:
-                self.session.cancel_next_game()
-                self.refresh()
-                return
-            selected_card = dialog.selected_card()
-            if selected_card is None:
-                self.session.cancel_next_game()
-                self.refresh()
-                return
+            QTimer.singleShot(0, self._show_tribute_choice)
+            return
+        self._finish_next_game(None)
+
+    def _show_tribute_choice(self) -> None:
+        if self._main_window.stack.currentWidget() is not self:
+            return
+        choice = self.session.pending_next_game_choice()
+        if choice is None:
+            return
+        dialog = CardChoiceDialog(choice.kind, choice.cards, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            self.session.cancel_next_game()
+            self.refresh()
+            return
+        selected_card = dialog.selected_card()
+        if selected_card is None:
+            self.session.cancel_next_game()
+            self.refresh()
+            return
+        self._finish_next_game(selected_card)
+
+    def _finish_next_game(self, selected_card: Card | None) -> None:
         result = self.session.finalize_next_game(selected_card)
         if result.ok:
             self.selected_indices.clear()
@@ -1164,6 +1259,7 @@ class GamePage(QWidget):
         state = self.session.ensure_started()
         if (
             self._main_window.stack.currentWidget() is not self
+            or self.session.is_next_game_pending()
             or state.finished
             or state.turn_index == self.session.human
             or self._ai_timer.isActive()
@@ -1211,6 +1307,7 @@ class GamePage(QWidget):
     def deactivate(self) -> None:
         """Stop deferred work when this table is no longer visible."""
         self._ai_timer.stop()
+        self._tribute_timer.stop()
 
     def back_to_menu(self) -> None:
         self.deactivate()
@@ -1221,7 +1318,7 @@ class GamePage(QWidget):
 class GuandanMainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("掼蛋 GUI · v0.8.0-beta.5")
+        self.setWindowTitle("掼蛋 GUI · v0.8.0-beta.6")
         self.resize(1280, 860)
         self.setMinimumSize(1080, 760)
         self.stack = QStackedWidget()

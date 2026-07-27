@@ -257,6 +257,7 @@ class HandWidget(QWidget):
 
     def _rebuild_buttons(self) -> None:
         for card_button in self._buttons:
+            card_button.hide()
             card_button.deleteLater()
         self._buttons = []
         for index, card in enumerate(self._cards):

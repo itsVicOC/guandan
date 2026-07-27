@@ -40,7 +40,7 @@ from guandan.tui.layout import (
     terminal_resize_disabled,
 )
 from guandan.tui.screens.confirm import ConfirmModal, TributeChoiceModal
-from guandan.tui.screens.game import GameScreen, _tui_card
+from guandan.tui.screens.game import GameScreen, TableWidget, _tui_card
 from guandan.tui.screens.history import HistoryScreen
 from guandan.tui.screens.load_save import LoadSaveScreen
 from guandan.tui.screens.replay import ReplayScreen
@@ -899,6 +899,14 @@ def test_finished_game_can_start_next_round_from_head_team_level() -> None:
 
                 screen.action_next_game()
                 await pilot.pause()
+                assert screen.state is state
+                dealt_state = screen._state()
+                assert dealt_state is not state
+                assert dealt_state.level == 5
+                assert len(dealt_state.hands[0]) == 27
+                assert "手牌已发放" in screen.sub_title
+
+                screen._begin_next_game_tribute()
                 choice = screen.session.pending_next_game_choice()
                 if choice is not None:
                     screen._finish_next_game(choice.cards[0])
@@ -958,8 +966,18 @@ def test_next_round_applies_tribute_card_swaps_and_records_events() -> None:
                 with patch("guandan.ui.session.make_initial_state", fake_initial_state):
                     screen.action_next_game()
                     await pilot.pause()
+                    assert screen.state is state
+                    assert screen._state().hands[0] == fixed_hands[0]
+                    assert screen.session.tribute_events() == ()
+
+                    screen._begin_next_game_tribute()
                     choice = screen.session.pending_next_game_choice()
                     assert choice is not None
+                    assert len(screen._state().hands[0]) == 3
+                    assert Card(RANK_BIG_JOKER, Suit.BIG_JOKER) in screen._state().hands[0]
+                    table = screen.query_one("#table", TableWidget)
+                    assert "本局贡还牌" in str(table.content)
+                    assert "进贡" in str(table.content)
                     screen._finish_next_game(choice.cards[0])
 
                 assert screen.state is not None
@@ -969,6 +987,10 @@ def test_next_round_applies_tribute_card_swaps_and_records_events() -> None:
                 assert Card(RANK_3, Suit.HEARTS) in screen.state.hands[3]
                 assert any(isinstance(event, TributeSent) for event in screen.state.history)
                 assert any(isinstance(event, TributeReturned) for event in screen.state.history)
+                table = screen.query_one("#table", TableWidget)
+                assert "本局贡还牌" in str(table.content)
+                assert "进贡" in str(table.content)
+                assert "还贡" in str(table.content)
 
     asyncio.run(run())
 

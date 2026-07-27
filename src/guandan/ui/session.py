@@ -6,6 +6,7 @@ persisting save/history records.
 """
 from __future__ import annotations
 
+import copy
 import random
 import time
 import uuid
@@ -17,7 +18,15 @@ from ..ai import AINotImplementedError, make_strategy, play_or_pass
 from ..ai.candidates import enumerate_legal_patterns, greedy_pattern_key
 from ..ai.strategy import AIStrategy
 from ..engine.card import Card, Suit
-from ..engine.events import Pass, ShuffleDeal, TributeSent, TurnPlayed
+from ..engine.events import (
+    Event,
+    Pass,
+    ShuffleDeal,
+    TributeResisted,
+    TributeReturned,
+    TributeSent,
+    TurnPlayed,
+)
 from ..engine.hand import Pattern
 from ..engine.rules.patterns import find_complete_pattern
 from ..engine.rules.tributes import (
@@ -73,11 +82,12 @@ class PendingNextGame:
     """Prepared next-round state that has not replaced the completed round yet."""
 
     state: GameState
+    display_state: GameState
     finish_order: tuple[int, ...]
     game_id: str
     seed: int
     round_index: int
-    preview: TributeFlowResult
+    preview: TributeFlowResult | None = None
     human_choice: PendingCardChoice | None = None
 
 
@@ -181,15 +191,34 @@ class GameSession:
             "right": (self.human - 1) % 4,
         }
 
+    def display_state(self) -> GameState:
+        """Return the dealt next round while its tribute phase is pending."""
+        if self._pending_next_game is not None:
+            return self._pending_next_game.display_state
+        return self.require_state()
+
+    def is_next_game_pending(self) -> bool:
+        return self._pending_next_game is not None
+
     def current_table_players(self) -> list[int]:
-        return current_table_players(self.require_state())
+        return current_table_players(self.display_state())
 
     def locked_passed_players(self) -> list[int]:
-        return locked_passed_players(self.require_state())
+        return locked_passed_players(self.display_state())
+
+    def tribute_events(self) -> tuple[Event, ...]:
+        """Return public tribute events that remain visible for this round."""
+        return tuple(
+            event
+            for event in self.display_state().history
+            if isinstance(event, (TributeSent, TributeReturned, TributeResisted))
+        )
 
     def table_display_actions(self) -> dict[int, tuple[str, Pattern | None]]:
         """Keep each seat's last visible action until that seat is asked to act again."""
-        state = self.require_state()
+        if self.is_next_game_pending():
+            return {}
+        state = self.display_state()
         if state.finished:
             self.displayed_table_actions.clear()
             self.last_display_turn = None
@@ -372,7 +401,7 @@ class GameSession:
         return list(current.team_levels_final)
 
     def visible_team_levels(self) -> list[int]:
-        state = self.require_state()
+        state = self.display_state()
         if state.finished and state.team_levels_final is not None:
             return list(state.team_levels_final)
         return list(state.team_levels)
@@ -382,14 +411,10 @@ class GameSession:
         return pending.human_choice if pending is not None else None
 
     def prepare_next_game(self) -> SessionAction:
-        """Prepare a round and expose any human tribute decision without committing it."""
+        """Deal the next round without starting its tribute phase yet."""
         state = self.require_state()
         if self._pending_next_game is not None:
-            choice = self._pending_next_game.human_choice
-            if choice is not None:
-                verb = "进贡" if choice.kind == "tribute" else "还贡"
-                return SessionAction(True, f"请选择一张牌{verb}", choice.cards)
-            return SessionAction(True, "下一局已经准备好")
+            return SessionAction(True, self.last_action)
         if not state.finished:
             self.last_action = "本局尚未结束，不能开始下一局"
             return SessionAction(False, self.last_action)
@@ -409,9 +434,35 @@ class GameSession:
             seed=next_seed,
             team_levels=next_team_levels,
         )
+        self._pending_next_game = PendingNextGame(
+            state=next_state,
+            display_state=next_state,
+            finish_order=tuple(state.finish_order),
+            game_id=self._new_game_id(),
+            seed=next_seed,
+            round_index=self.round_index + 1,
+        )
+        self.last_action = f"第 {self.round_index + 1} 局已发牌，请查看手牌"
+        return SessionAction(True, self.last_action)
+
+    def begin_next_game_tribute(self) -> SessionAction:
+        """Begin tribute only after the newly dealt hands have been displayed."""
+        pending = self._pending_next_game
+        if pending is None:
+            self.last_action = "请先准备下一局"
+            return SessionAction(False, self.last_action)
+        if pending.preview is not None:
+            choice = pending.human_choice
+            if choice is not None:
+                verb = "进贡" if choice.kind == "tribute" else "还贡"
+                return SessionAction(True, f"请选择一张牌{verb}", choice.cards)
+            return SessionAction(True, "贡还牌已经准备好")
+
+        next_state = pending.state
+        next_level = next_state.level
         preview_hands = [list(hand) for hand in next_state.hands]
         preview = apply_tribute_flow(
-            list(state.finish_order),
+            list(pending.finish_order),
             preview_hands,
             level=next_state.level,
             wild_card=next_state.wild_card,
@@ -432,15 +483,16 @@ class GameSession:
                 "return",
                 tuple(legal_return_cards(hands_after_tribute[self.human], next_level)),
             )
-        self._pending_next_game = PendingNextGame(
-            state=next_state,
-            finish_order=tuple(state.finish_order),
-            game_id=self._new_game_id(),
-            seed=next_seed,
-            round_index=self.round_index + 1,
-            preview=preview,
-            human_choice=human_choice,
-        )
+            display_state = copy.deepcopy(next_state)
+            for event in preview.events:
+                if not isinstance(event, TributeSent):
+                    continue
+                display_state.hands[event.from_player].remove(event.card)
+                display_state.hands[event.to_player].append(event.card)
+                display_state.history.append(event)
+            pending.display_state = display_state
+        pending.preview = preview
+        pending.human_choice = human_choice
         if human_choice is not None:
             verb = "进贡" if human_choice.kind == "tribute" else "还贡"
             self.last_action = f"请选择一张牌{verb}"
@@ -462,6 +514,10 @@ class GameSession:
         if pending is None:
             self.last_action = "请先准备下一局"
             return SessionAction(False, self.last_action)
+        if pending.preview is None:
+            started = self.begin_next_game_tribute()
+            if not started.ok:
+                return started
         choice = pending.human_choice
         if selected_card is not None and (choice is None or selected_card not in choice.cards):
             self.last_action = "所选牌不符合进贡规则"
@@ -523,6 +579,9 @@ class GameSession:
         prepared = self.prepare_next_game()
         if not prepared.ok:
             return prepared
+        started = self.begin_next_game_tribute()
+        if not started.ok:
+            return started
         return self.finalize_next_game()
 
     @staticmethod

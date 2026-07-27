@@ -287,10 +287,21 @@ def test_session_next_game_uses_selected_human_return_and_records_events() -> No
     with patch("guandan.ui.session.make_initial_state", fake_initial_state):
         prepared = session.prepare_next_game()
         assert session.state is finished
+        dealt_state = session.display_state()
+        assert dealt_state is not finished
+        assert dealt_state.hands[0] == fixed_hands[0]
+        assert session.tribute_events() == ()
+
+        started = session.begin_next_game_tribute()
         choice = session.pending_next_game_choice()
         assert choice is not None
         assert choice.kind == "return"
         assert Card(RANK_4, Suit.HEARTS) in choice.cards
+        return_state = session.display_state()
+        assert len(return_state.hands[0]) == 3
+        assert Card(RANK_BIG_JOKER, Suit.BIG_JOKER) in return_state.hands[0]
+        assert len(session.tribute_events()) == 1
+        assert isinstance(session.tribute_events()[0], TributeSent)
         result = session.finalize_next_game(Card(RANK_4, Suit.HEARTS))
 
     assert result.ok
@@ -304,6 +315,8 @@ def test_session_next_game_uses_selected_human_return_and_records_events() -> No
     assert any(isinstance(event, TributeSent) for event in session.state.history)
     assert any(isinstance(event, TributeReturned) for event in session.state.history)
     assert prepared.ok
+    assert started.ok
+    assert len(session.tribute_events()) == 2
 
 
 def test_session_cancel_prepared_next_game_keeps_completed_round() -> None:
@@ -328,9 +341,11 @@ def test_session_cancel_prepared_next_game_keeps_completed_round() -> None:
     session.game_saved = True
 
     assert session.prepare_next_game().ok
+    assert session.display_state() is not finished
     assert session.cancel_next_game().ok
 
     assert session.state is finished
+    assert session.display_state() is finished
     assert session.game_id == "finished-round"
     assert session.match_id == "same-match"
     assert session.round_index == 2
@@ -598,6 +613,97 @@ with patch(
 assert window.stack.currentWidget() is error_page
 warning.assert_called_once()
 
+window.close()
+app.quit()
+print("ok")
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=os.getcwd(),
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
+def test_gui_next_round_shows_deal_before_public_tribute_cards() -> None:
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    env = dict(os.environ)
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    code = """
+from unittest.mock import patch
+from PySide6.QtWidgets import QApplication
+from guandan.engine.card import RANK_3, RANK_4, RANK_5, RANK_8, RANK_BIG_JOKER, Card, Suit
+from guandan.engine.state import GameState
+from guandan.gui.window import GuandanMainWindow
+from guandan.ui.session import GameSession
+
+app = QApplication([])
+finished = GameState(
+    level=2,
+    wild_card=None,
+    hands=[[], [], [], []],
+    turn_index=0,
+    leader=0,
+    finish_order=[0, 1, 2],
+    finished=True,
+    team_levels_final=[5, 2],
+)
+session = GameSession(difficulty=0, existing_state=finished, human=0)
+session.game_saved = True
+window = GuandanMainWindow()
+window.start_game(session)
+page = window.game_page
+assert page is not None
+
+fixed_hands = [
+    [Card(RANK_3, Suit.HEARTS), Card(RANK_4, Suit.HEARTS)],
+    [Card(RANK_4, Suit.SPADES), Card(RANK_8, Suit.SPADES)],
+    [Card(RANK_5, Suit.CLUBS), Card(RANK_8, Suit.CLUBS)],
+    [Card(RANK_BIG_JOKER, Suit.BIG_JOKER), Card(RANK_8, Suit.DIAMONDS)],
+]
+
+def fake_initial_state(**kwargs):
+    return GameState(
+        level=kwargs["level"],
+        wild_card=Card(RANK_5, Suit.HEARTS),
+        hands=[list(hand) for hand in fixed_hands],
+        turn_index=kwargs["first_player"],
+        leader=kwargs["first_player"],
+        team_levels=list(kwargs["team_levels"]),
+    )
+
+with patch("guandan.ui.session.make_initial_state", fake_initial_state):
+    page.next_game()
+    assert session.state is finished
+    assert set(page.hand_cards) == set(fixed_hands[0])
+    assert "手牌已发放" in page.status.text()
+    assert page.table.tribute_banner.isHidden()
+
+    page._begin_next_game_tribute()
+    choice = session.pending_next_game_choice()
+    assert choice is not None and choice.kind == "return"
+    assert len(page.hand_cards) == 3
+    assert Card(RANK_BIG_JOKER, Suit.BIG_JOKER) in page.hand_cards
+    assert page.table.tribute_banner.isHidden() is False
+    assert "进贡" in page.table.tribute_text.text()
+
+    page._finish_next_game(Card(RANK_4, Suit.HEARTS))
+
+assert session.state is not finished
+assert "进贡" in page.table.tribute_text.text()
+assert "还贡" in page.table.tribute_text.text()
+assert len(page.table.tribute_cards._cards) == 2
+page.refresh()
+assert page.table.tribute_banner.isHidden() is False
+assert len(page.table.tribute_cards._cards) == 2
+
+page.deactivate()
+window.game_page = None
 window.close()
 app.quit()
 print("ok")
