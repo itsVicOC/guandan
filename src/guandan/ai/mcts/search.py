@@ -10,9 +10,10 @@ from __future__ import annotations
 
 import copy
 import math
+from collections import Counter
 from typing import Optional
 
-from ...engine.card import Card
+from ...engine.card import RANK_A, Card
 from ...engine.hand import Pattern, PatternType, comparison_rank
 from ...engine.rules.patterns import find_complete_pattern
 from ...engine.rules.scoring import compute_level_change
@@ -22,8 +23,11 @@ from ...engine.state import (
     is_teammate,
     pass_turn,
     play_pattern,
+    team_of,
 )
 from ...engine.trick import current_top_player
+from ..candidates import enumerate_legal_patterns, greedy_pattern_key, is_bomb_pattern
+from ..context import opponent_min_cards
 from ..valuation import enumerate_candidate_plays
 from .node import MCTSNode
 
@@ -50,7 +54,7 @@ def ucb1_score(node: MCTSNode, parent_visits: int, c: float = 1.41) -> float:
     return exploit + explore
 
 
-def _select(node: MCTSNode, c: float) -> MCTSNode:
+def _select(node: MCTSNode, c: float, root_player: int | None = None) -> MCTSNode:
     """Selection: 用 UCB1 选择最优路径到叶子节点。
 
     从根节点出发，每次选择 UCB1 分数最高的子节点，
@@ -64,8 +68,27 @@ def _select(node: MCTSNode, c: float) -> MCTSNode:
         # 如果没有子节点，说明需要先展开
         if not node.children:
             return node
-        # 选择 UCB1 最大的子节点
-        node = max(node.children, key=lambda child: ucb1_score(child, node.visits, c))
+        if root_player is None or team_of(node.player) == team_of(root_player):
+            node = max(
+                node.children,
+                key=lambda child: ucb1_score(child, node.visits, c),
+            )
+        else:
+            # Opponents minimize the root team's result while retaining the
+            # same exploration pressure.  The legacy perfect-information tree
+            # remains correct for external callers even though the production
+            # strategy now uses information-set search.
+            node = max(
+                node.children,
+                key=lambda child: (
+                    1.0 - child.win_rate()
+                    + (
+                        float("inf")
+                        if child.visits == 0
+                        else c * math.sqrt(math.log(node.visits) / child.visits)
+                    )
+                ),
+            )
     return node
 
 
@@ -163,7 +186,24 @@ def _simulate(
     Returns:
         从 root_player 视角的胜率（0.0 - 1.0）
     """
-    sim_state = copy.deepcopy(node.state)
+    return simulate_state(
+        node.state,
+        root_player,
+        rollout_strategy_level=rollout_strategy_level,
+        max_turns=max_turns,
+    )
+
+
+def simulate_state(
+    state: GameState,
+    root_player: int,
+    *,
+    rollout_strategy_level: int,
+    max_turns: int,
+    copy_state: bool = True,
+) -> float:
+    """Roll out a state and return its value from ``root_player``'s team view."""
+    sim_state = copy.deepcopy(state) if copy_state else state
 
     # 用 rollout 策略玩到结束
     turn_count = 0
@@ -213,9 +253,56 @@ def _rollout_select_pattern(
 
     if rollout_strategy_level >= 2 and state.table:
         top_player = current_top_player(state)
-        if top_player is not None and is_teammate(top_player, player):
+        if (
+            top_player is not None
+            and is_teammate(top_player, player)
+            and opponent_min_cards(state, player) != 1
+        ):
             return None
+
+    # A complete but bounded policy is affordable in the middle/end game and
+    # keeps rollout behaviour representative of actual play.  Large hidden
+    # hands retain the specialized fast path to protect the search budget.
+    table_top = state.table[-1] if state.table else None
+    complex_response = table_top is not None and table_top.type not in (
+        PatternType.SINGLE,
+        PatternType.PAIR,
+        PatternType.TRIPLE,
+    )
+    if rollout_strategy_level >= 2 and (
+        state.hand_size(player) <= 8 or complex_response
+    ):
+        structured = _structured_rollout_pattern(state, player)
+        if structured is not None:
+            return structured
     return _smallest_rollout_pattern(state, player)
+
+
+def _structured_rollout_pattern(state: GameState, player: int) -> Optional[Pattern]:
+    """One-pass full-pattern policy for complex responses and short hands."""
+    candidates = enumerate_legal_patterns(state, player)
+    if not candidates:
+        return None
+    non_bombs = [pattern for pattern in candidates if not is_bomb_pattern(pattern)]
+    if not state.table and non_bombs:
+        return min(
+            non_bombs,
+            key=lambda pattern: (
+                -len(pattern.cards),
+                pattern.weight,
+                comparison_rank(pattern, state.level),
+                pattern.wild_used,
+            ),
+        )
+    if non_bombs:
+        return min(
+            non_bombs,
+            key=lambda pattern: greedy_pattern_key(pattern, state.level),
+        )
+    return min(
+        candidates,
+        key=lambda pattern: greedy_pattern_key(pattern, state.level),
+    )
 
 
 def _legal_finish_pattern(
@@ -446,19 +533,30 @@ def _evaluate_result(state: GameState, root_player: int) -> float:
         return _evaluate_unfinished(state, root_player)
 
     if state.finished:
+        root_team = team_of(root_player)
+        if state.match_finished and state.winner_team is not None:
+            return 1.0 if state.winner_team == root_team else 0.0
+
         full_order = list(state.finish_order)
         full_order.extend(player for player in range(4) if player not in full_order)
         head, second, third, last = full_order[:4]
         deltas = compute_level_change(
             head, second, third, last, state.team_bomb_count
         )
-        my_team = root_player % 2
+        my_team = root_team
         opponent_team = 1 - my_team
         score = 0.5 + (deltas[my_team] - deltas[opponent_team]) / 6.0
         if is_teammate(head, root_player):
             score += 0.10
         else:
             score -= 0.10
+
+        final_levels = state.team_levels_final or state.team_levels
+        if len(final_levels) == 2:
+            if final_levels[my_team] == RANK_A:
+                score += 0.04
+            if final_levels[opponent_team] == RANK_A:
+                score -= 0.04
         return max(0.0, min(1.0, score))
 
     return _evaluate_unfinished(state, root_player)
@@ -486,7 +584,39 @@ def _evaluate_unfinished(state: GameState, root_player: int) -> float:
     if my_cards + opponent_cards:
         score += (opponent_cards - my_cards) / (my_cards + opponent_cards) * 0.15
 
+    top_player = current_top_player(state)
+    if top_player is not None:
+        score += 0.035 if is_teammate(top_player, root_player) else -0.035
+
+    root_team = team_of(root_player)
+    control = [_team_control_strength(state, team) for team in (0, 1)]
+    control_total = control[0] + control[1]
+    if control_total:
+        opponent_team = 1 - root_team
+        score += (control[root_team] - control[opponent_team]) / control_total * 0.06
+
     return max(0.0, min(1.0, score))
+
+
+def _team_control_strength(state: GameState, team: int) -> float:
+    """Cheap sampled-world estimate of remaining control cards and bombs."""
+    strength = 0.0
+    for player in range(4):
+        if team_of(player) != team or player in state.finish_order:
+            continue
+        hand = state.hands[player]
+        rank_counts = Counter(card.rank for card in hand if not card.is_joker)
+        for card in hand:
+            if card.is_big_joker:
+                strength += 2.5
+            elif card.is_small_joker:
+                strength += 1.7
+            elif card.rank == state.level:
+                strength += 1.0
+            elif card.rank == RANK_A:
+                strength += 0.45
+        strength += sum(max(0, count - 3) * 1.4 for count in rank_counts.values())
+    return strength
 
 
 def _backpropagate(node: MCTSNode, result: float) -> None:
@@ -528,7 +658,7 @@ def mcts_search(
 
     for _ in range(iterations):
         # 1. Selection
-        node = _select(root, ucb_c)
+        node = _select(root, ucb_c, root_player)
 
         # 2. Expansion
         if not node.is_terminal():

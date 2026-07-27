@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 from typing import Callable
 
-from PySide6.QtCore import QRect, Qt, QTimer
+from PySide6.QtCore import QObject, QRect, QRunnable, Qt, QThreadPool, QTimer, Signal
 from PySide6.QtGui import (
     QCloseEvent,
     QColor,
@@ -18,14 +18,18 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
+    QDialog,
+    QDialogButtonBox,
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QHeaderView,
     QLabel,
+    QListWidget,
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QSlider,
     QStackedWidget,
     QTableWidget,
     QTableWidgetItem,
@@ -47,7 +51,7 @@ from ..storage import (
     load_history_list,
     restore_game_state,
 )
-from ..ui.content import DIFFICULTIES, RULES_TEXT
+from ..ui.content import DIFFICULTIES, GAME_RULES_TEXT, GUI_CONTROLS_TEXT
 from ..ui.formatting import card_label, pattern_type_label, rank_value_label
 from ..ui.history import HISTORY_COLUMNS, history_entry_cells, history_statistics_text
 from ..ui.replay import ReplayCursor, replay_event_text, replay_state_text
@@ -104,6 +108,68 @@ def page_header(eyebrow: str, title: str, detail: str) -> QWidget:
     layout.addWidget(heading)
     layout.addWidget(body)
     return header
+
+
+class CardChoiceDialog(QDialog):
+    """Compact, keyboard-accessible selector for legal tribute cards."""
+
+    def __init__(self, kind: str, cards: tuple[Card, ...], parent: QWidget) -> None:
+        super().__init__(parent)
+        self._cards = cards
+        verb = "进贡" if kind == "tribute" else "还贡"
+        self.setWindowTitle(f"选择{verb}牌")
+        self.setModal(True)
+        self.setMinimumWidth(360)
+        layout = QVBoxLayout(self)
+        title = QLabel(f"请选择一张合法牌{verb}")
+        title.setObjectName("sectionTitle")
+        layout.addWidget(title)
+        self.list = QListWidget()
+        for card in cards:
+            self.list.addItem(card_label(card))
+        if cards:
+            self.list.setCurrentRow(0)
+        self.list.itemDoubleClicked.connect(self.accept)
+        layout.addWidget(self.list)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        cancel_button = buttons.button(QDialogButtonBox.StandardButton.Cancel)
+        if ok_button is not None:
+            ok_button.setText("确认")
+        if cancel_button is not None:
+            cancel_button.setText("取消")
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def selected_card(self) -> Card | None:
+        row = self.list.currentRow()
+        return self._cards[row] if 0 <= row < len(self._cards) else None
+
+
+class AIWorkerSignals(QObject):
+    completed = Signal(object)
+
+
+class AIWorker(QRunnable):
+    """Run a bounded batch of AI turns outside the Qt event thread."""
+
+    def __init__(self, session: GameSession, limit: int = 12) -> None:
+        super().__init__()
+        self.session = session
+        self.limit = limit
+        self.signals = AIWorkerSignals()
+
+    def run(self) -> None:
+        try:
+            messages = self.session.run_ai_until_human(limit=self.limit)
+            if not any("AI 错误" in message for message in messages) and not self.session.autosave_after_ai():
+                raise OSError(self.session.last_action)
+            self.signals.completed.emit((messages, None))
+        except Exception as exc:
+            self.signals.completed.emit(([], exc))
 
 
 class LobbyTableWidget(QWidget):
@@ -171,7 +237,7 @@ class MenuPage(QWidget):
         masthead.addWidget(mark)
         masthead.addSpacing(12)
         masthead.addWidget(QLabel("LOCAL TABLE  ·  公测版"), 1)
-        version = QLabel("v0.8.0-beta.3")
+        version = QLabel("v0.8.0-beta.4")
         version.setObjectName("muted")
         masthead.addWidget(version)
         layout.addLayout(masthead)
@@ -258,6 +324,8 @@ class DifficultyPage(QWidget):
         except AINotImplementedError as exc:
             QMessageBox.warning(self, "AI 档位不可用", str(exc))
             return
+        if not window.confirm_start_new_game():
+            return
         window.start_game(GameSession(difficulty=difficulty, level=2, human=0))
 
 
@@ -339,7 +407,11 @@ class LoadPage(QWidget):
         return panel
 
     def _continue(self, savegame: dict) -> None:
-        state = restore_game_state(savegame)
+        try:
+            state = restore_game_state(savegame)
+        except (OSError, ValueError) as exc:
+            QMessageBox.warning(self, "无法继续存档", str(exc))
+            return
         metadata = savegame.get("metadata", {})
         ai_difficulties = metadata.get("ai_difficulties", [None, 2, 2, 2])
         difficulty = next((d for d in ai_difficulties if d is not None), 2)
@@ -350,12 +422,28 @@ class LoadPage(QWidget):
                 human=metadata.get("player_seat", 0),
                 existing_state=state,
                 game_id=savegame.get("game_id"),
+                match_id=savegame.get("match_id"),
+                round_index=savegame.get("round_index", 1),
+                elapsed_seconds=savegame.get("elapsed_seconds", 0),
                 seed=metadata.get("seed"),
             )
         )
 
     def _delete_save(self) -> None:
-        delete_savegame()
+        answer = QMessageBox.question(
+            self,
+            "删除存档",
+            "确定删除当前存档？此操作不会删除历史战绩。",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            delete_savegame()
+        except OSError as exc:
+            QMessageBox.warning(self, "删除失败", str(exc))
+            return
         self.refresh()
 
     def _hand_sizes_text(self, sizes: list[int]) -> str:
@@ -374,6 +462,15 @@ class HistoryPage(QWidget):
         layout.setContentsMargins(52, 40, 52, 32)
         layout.setSpacing(16)
         layout.addWidget(page_header("战绩与回放", "历史战绩", "每一局都保留事件流、行动数、炸弹和进贡标记。双击任意一行查看回放。"))
+        self.summary = QLabel("")
+        self.summary.setObjectName("muted")
+        self.summary.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.summary)
+        self.empty = QLabel("暂无对局记录\n完成一局后，比赛与小局记录会显示在这里。")
+        self.empty.setObjectName("emptyState")
+        self.empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.empty.setWordWrap(True)
+        layout.addWidget(self.empty, 1)
         self.table = QTableWidget(0, len(HISTORY_COLUMNS))
         self.table.setHorizontalHeaderLabels(list(HISTORY_COLUMNS))
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -387,17 +484,31 @@ class HistoryPage(QWidget):
         self.table.cellDoubleClicked.connect(self.open_selected_replay)
         layout.addWidget(self.table, 1)
         actions = QHBoxLayout()
-        actions.addWidget(button("查看回放", self.open_selected_replay, primary=True))
+        self.replay_button = button("查看回放", self.open_selected_replay, primary=True)
+        actions.addWidget(self.replay_button)
         actions.addWidget(button("返回大厅", window.show_menu, role="quietButton"))
         layout.addLayout(actions)
         self.refresh()
 
     def refresh(self) -> None:
         self.table.setRowCount(0)
+        error = ""
         try:
             self.entries = load_history_list(limit=50)
-        except OSError:
+        except OSError as exc:
             self.entries = []
+            error = str(exc)
+        has_entries = bool(self.entries)
+        self.table.setVisible(has_entries)
+        self.empty.setVisible(not has_entries)
+        self.empty.setText(
+            f"无法读取历史记录\n{error}"
+            if error
+            else "暂无对局记录\n完成一局后，比赛与小局记录会显示在这里。"
+        )
+        self.replay_button.setEnabled(has_entries)
+        match_count = len({entry.get("match_id") for entry in self.entries if entry.get("match_id")})
+        self.summary.setText(f"{match_count} 场比赛 · {len(self.entries)} 局记录" if has_entries else "")
         for entry in self.entries:
             row = self.table.rowCount()
             self.table.insertRow(row)
@@ -412,15 +523,71 @@ class HistoryPage(QWidget):
         if not 0 <= row < len(self.entries):
             QMessageBox.information(self, "查看回放", "请先选择一局历史战绩。")
             return
-        detail = load_history_detail(self.entries[row]["game_id"])
+        try:
+            detail = load_history_detail(self.entries[row]["game_id"])
+        except OSError as exc:
+            QMessageBox.warning(self, "查看回放", f"无法读取历史记录：{exc}")
+            return
         if detail is None:
             QMessageBox.warning(self, "查看回放", "这局历史记录无法读取。")
             return
         self._main_window.show_replay(detail)
 
 
+class ReplayHandPanel(QFrame):
+    def __init__(self, seat: int) -> None:
+        super().__init__()
+        self.setObjectName("replayHand")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 5, 8, 5)
+        layout.setSpacing(2)
+        self.title = QLabel()
+        self.title.setObjectName("seatName")
+        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.cards = MiniCardStrip()
+        self.card_text = QLabel()
+        self.card_text.setObjectName("replayCardsText")
+        self.card_text.setWordWrap(True)
+        self.card_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.title)
+        layout.addWidget(self.cards)
+        layout.addWidget(self.card_text)
+        self.seat = seat
+
+    def update_hand(self, cards: list[Card], finished: bool) -> None:
+        suffix = " · 已出完" if finished else f" · {len(cards)} 张"
+        self.title.setText(f"{SEAT_NAMES[self.seat]}家{suffix}")
+        self.cards.set_cards(cards)
+        self.card_text.setText(" ".join(card_label(card) for card in cards) or "-")
+
+
+class ReplayCenterPanel(QFrame):
+    def __init__(self) -> None:
+        super().__init__()
+        self.setObjectName("trickPanel")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 8, 10, 8)
+        self.title = QLabel("当前桌面")
+        self.title.setObjectName("accentTitle")
+        self.detail = QLabel("等待先手")
+        self.detail.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.cards = MiniCardStrip()
+        layout.addWidget(self.title, 0, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.detail)
+        layout.addWidget(self.cards)
+
+    def update_state(self, state: GameState) -> None:
+        if not state.table:
+            self.detail.setText("等待先手")
+            self.cards.set_cards(())
+            return
+        top = state.table[-1]
+        self.detail.setText(pattern_type_label(top.type))
+        self.cards.set_cards(top.cards)
+
+
 class ReplayPage(QWidget):
-    """Event-backed historical replay with deterministic step navigation."""
+    """Table-shaped event replay with full hands, timeline and autoplay."""
 
     def __init__(self, window: "GuandanMainWindow", history: dict) -> None:
         super().__init__()
@@ -434,35 +601,64 @@ class ReplayPage(QWidget):
             self._replay_cursor = ReplayCursor(self.events)
         except (IllegalPlayError, ValueError) as exc:
             raise ValueError("history event stream cannot be replayed") from exc
+        self._auto_timer = QTimer(self)
+        self._auto_timer.setInterval(700)
+        self._auto_timer.timeout.connect(self._auto_step)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(52, 40, 52, 32)
-        layout.setSpacing(13)
-        layout.addWidget(page_header("事件流查看器", "对局回放", "用首步、上一步、下一步和末步逐事件检查这局牌的状态变化。"))
-
+        layout.setContentsMargins(28, 22, 28, 20)
+        layout.setSpacing(9)
+        layout.addWidget(page_header("事件流查看器", "对局回放", "四家手牌、当前桌面与事件流同步重建。"))
         self.meta = QLabel()
         self.meta.setObjectName("muted")
         self.meta.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.meta)
 
+        body = QHBoxLayout()
+        body.setSpacing(10)
+        arena = make_panel("replayTable")
+        arena_grid = QGridLayout(arena)
+        arena_grid.setContentsMargins(12, 10, 12, 10)
+        arena_grid.setSpacing(8)
+        self.replay_hands = {seat: ReplayHandPanel(seat) for seat in range(4)}
+        self.replay_center = ReplayCenterPanel()
+        arena_grid.addWidget(self.replay_hands[2], 0, 1)
+        arena_grid.addWidget(self.replay_hands[1], 1, 0)
+        arena_grid.addWidget(self.replay_center, 1, 1)
+        arena_grid.addWidget(self.replay_hands[3], 1, 2)
+        arena_grid.addWidget(self.replay_hands[0], 2, 1)
+        arena_grid.setColumnStretch(1, 2)
+        body.addWidget(arena, 3)
+        self.timeline = QTextBrowser()
+        self.timeline.setReadOnly(True)
+        body.addWidget(self.timeline, 2)
+        layout.addLayout(body, 1)
+
         self.state_summary = QLabel()
         self.state_summary.setObjectName("statusBar")
         self.state_summary.setWordWrap(True)
         layout.addWidget(self.state_summary)
-
-        self.timeline = QTextBrowser()
-        self.timeline.setReadOnly(True)
-        layout.addWidget(self.timeline, 1)
+        self.progress = QSlider(Qt.Orientation.Horizontal)
+        self.progress.setRange(0, len(self.events) - 1)
+        self.progress.valueChanged.connect(self.set_event_index)
+        layout.addWidget(self.progress)
 
         controls = QHBoxLayout()
         self.first_button = button("首步", lambda: self.set_event_index(0))
         self.previous_button = button("上一步", lambda: self.set_event_index(self.event_index - 1))
+        self.auto_button = button("自动播放", self.toggle_auto_play, role="infoButton")
         self.next_button = button("下一步", lambda: self.set_event_index(self.event_index + 1), primary=True)
         self.last_button = button("末步", lambda: self.set_event_index(len(self.events) - 1))
-        for item in (self.first_button, self.previous_button, self.next_button, self.last_button):
+        for item in (
+            self.first_button,
+            self.previous_button,
+            self.auto_button,
+            self.next_button,
+            self.last_button,
+        ):
             controls.addWidget(item)
         layout.addLayout(controls)
-        layout.addWidget(button("返回战绩", window.show_history, role="quietButton"))
+        layout.addWidget(button("返回战绩", self.back_to_history, role="quietButton"))
         self.refresh()
 
     def set_event_index(self, index: int) -> None:
@@ -473,23 +669,48 @@ class ReplayPage(QWidget):
     def event_index(self) -> int:
         return self._replay_cursor.index
 
+    def toggle_auto_play(self) -> None:
+        if self._auto_timer.isActive():
+            self._auto_timer.stop()
+        else:
+            if self.event_index == len(self.events) - 1:
+                self._replay_cursor.set_index(0)
+            self._auto_timer.start()
+        self.refresh()
+
+    def _auto_step(self) -> None:
+        if self.event_index >= len(self.events) - 1:
+            self._auto_timer.stop()
+            self.refresh()
+            return
+        self.set_event_index(self.event_index + 1)
+
+    def back_to_history(self) -> None:
+        self._auto_timer.stop()
+        self._main_window.show_history()
+
     def refresh(self) -> None:
         state = self._replay_cursor.state
         self.meta.setText(
             f"{self.history.get('played_at', '-')[:19]} · "
-            f"第 {self.event_index + 1} / {len(self.events)} 个事件\n"
+            f"第 {self.event_index + 1} / {len(self.events)} 个事件 · "
             f"{history_statistics_text(self.history)}"
         )
         self.state_summary.setText(replay_state_text(state))
+        for seat, panel in self.replay_hands.items():
+            panel.update_hand(state.hands[seat], seat in state.finish_order)
+        self.replay_center.update_state(state)
         lines = []
         for index, event in enumerate(self.events):
             marker = "▶" if index == self.event_index else " "
             lines.append(f"{marker} {index + 1:>3}. {replay_event_text(event)}")
         self.timeline.setPlainText("\n".join(lines))
+        self.progress.setValue(self.event_index)
         self.first_button.setEnabled(self.event_index > 0)
         self.previous_button.setEnabled(self.event_index > 0)
         self.next_button.setEnabled(self.event_index < len(self.events) - 1)
         self.last_button.setEnabled(self.event_index < len(self.events) - 1)
+        self.auto_button.setText("暂停" if self._auto_timer.isActive() else "自动播放")
 
 class RulesPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
@@ -500,7 +721,7 @@ class RulesPage(QWidget):
         layout.setSpacing(16)
         layout.addWidget(page_header("桌面规则", "规则说明", "掼蛋的牌型、比较、接风、升级和进贡规则。"))
         browser = QTextBrowser()
-        browser.setPlainText(RULES_TEXT)
+        browser.setPlainText(f"{GAME_RULES_TEXT}\n{GUI_CONTROLS_TEXT}")
         layout.addWidget(browser, 1)
         layout.addWidget(button("返回大厅", window.show_menu, role="quietButton"))
 
@@ -553,9 +774,13 @@ class SeatPanel(QFrame):
         self.title.setObjectName("seatName")
         self.detail = QLabel("")
         self.detail.setObjectName("seatMeta")
+        self.claim_badge = QLabel("")
+        self.claim_badge.setObjectName("claimBadge")
+        self.claim_badge.hide()
         labels.addWidget(self.title)
         labels.addWidget(self.detail)
         layout.addLayout(labels, 1)
+        layout.addWidget(self.claim_badge)
 
         self.card_back = CardBackWidget()
         self.card_back.setVisible(not human)
@@ -575,7 +800,20 @@ class SeatPanel(QFrame):
         else:
             meta = f"{ai_name} · {hand_size} 张"
         self.detail.setText(meta)
+        claim = self._claim_text(hand_size) if not finished else ""
+        self.claim_badge.setText(claim)
+        self.claim_badge.setVisible(bool(claim))
         self.card_back.setVisible(not self._human and not finished)
+
+    @staticmethod
+    def _claim_text(hand_size: int) -> str:
+        if hand_size == 1:
+            return "报单"
+        if hand_size == 2:
+            return "报双"
+        if 0 < hand_size <= 10:
+            return f"报{hand_size}张"
+        return ""
 
 
 class TrickRow(QFrame):
@@ -666,8 +904,10 @@ class GamePage(QWidget):
         self.hand_cards: list[Card] = []
         self._ai_timer = QTimer(self)
         self._ai_timer.setSingleShot(True)
-        self._ai_timer.setInterval(260)
-        self._ai_timer.timeout.connect(self._ai_step)
+        self._ai_timer.setInterval(180)
+        self._ai_timer.timeout.connect(self._start_ai_worker)
+        self._ai_running = False
+        self._ai_worker: AIWorker | None = None
         self._build()
         self.session.ensure_started()
         self.refresh()
@@ -812,6 +1052,7 @@ class GamePage(QWidget):
         self.clear_button.setEnabled(bool(self.selected_indices))
         self.next_button.setEnabled(state.finished and not state.match_finished)
         self.next_button.setText("比赛已结束" if state.match_finished else "下一局")
+        self.back_button.setEnabled(not self._ai_running)
 
     def _refresh_status(self, state: GameState) -> None:
         wild = card_label(state.wild_card) if state.wild_card is not None else "无"
@@ -896,7 +1137,24 @@ class GamePage(QWidget):
         self.refresh()
 
     def next_game(self) -> None:
-        result = self.session.start_next_game()
+        prepared = self.session.prepare_next_game()
+        if not prepared.ok:
+            self.refresh()
+            return
+        selected_card = None
+        choice = self.session.pending_next_game_choice()
+        if choice is not None:
+            dialog = CardChoiceDialog(choice.kind, choice.cards, self)
+            if dialog.exec() != QDialog.DialogCode.Accepted:
+                self.session.cancel_next_game()
+                self.refresh()
+                return
+            selected_card = dialog.selected_card()
+            if selected_card is None:
+                self.session.cancel_next_game()
+                self.refresh()
+                return
+        result = self.session.finalize_next_game(selected_card)
         if result.ok:
             self.selected_indices.clear()
         self.refresh()
@@ -909,21 +1167,46 @@ class GamePage(QWidget):
             or state.finished
             or state.turn_index == self.session.human
             or self._ai_timer.isActive()
+            or self._ai_running
         ):
             return
         self._ai_timer.start()
 
-    def _ai_step(self) -> None:
+    def _start_ai_worker(self) -> None:
         if self._main_window.stack.currentWidget() is not self:
             return
         state = self.session.ensure_started()
-        if state.finished or state.turn_index == self.session.human:
+        if state.finished or state.turn_index == self.session.human or self._ai_running:
             self.refresh()
             return
-        result = self.session.step_ai()
+        self._ai_running = True
         self.refresh()
-        if result.ok:
-            self.schedule_ai()
+        worker = AIWorker(self.session)
+        self._ai_worker = worker
+        worker.signals.completed.connect(self._ai_finished)
+        QThreadPool.globalInstance().start(worker)
+
+    def _ai_finished(self, payload: object) -> None:
+        if not isinstance(payload, tuple) or len(payload) != 2:
+            messages: list[str] = []
+            error: Exception | None = RuntimeError("invalid AI worker result")
+        else:
+            raw_messages, raw_error = payload
+            messages = raw_messages if isinstance(raw_messages, list) else []
+            error = raw_error if isinstance(raw_error, Exception) else None
+        self._ai_running = False
+        self._ai_worker = None
+        if error is not None:
+            self.session.last_action = f"后台操作失败：{error}"
+        elif messages:
+            self.session.last_action = "；".join(messages[-4:])
+        if self._main_window.stack.currentWidget() is self:
+            self.refresh()
+            if not any("AI 错误" in message for message in messages):
+                self.schedule_ai()
+
+    def is_ai_running(self) -> bool:
+        return self._ai_running
 
     def deactivate(self) -> None:
         """Stop deferred work when this table is no longer visible."""
@@ -931,14 +1214,14 @@ class GamePage(QWidget):
 
     def back_to_menu(self) -> None:
         self.deactivate()
-        self._main_window.save_current_game()
-        self._main_window.show_menu()
+        if self._main_window.save_current_game():
+            self._main_window.show_menu()
 
 
 class GuandanMainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("掼蛋 GUI · v0.8.0-beta.3")
+        self.setWindowTitle("掼蛋 GUI · v0.8.0-beta.4")
         self.resize(1280, 860)
         self.setMinimumSize(1080, 760)
         self.stack = QStackedWidget()
@@ -990,23 +1273,61 @@ class GuandanMainWindow(QMainWindow):
         self._replace_page(self.game_page)
         self.game_page.schedule_ai()
 
-    def save_current_game(self) -> None:
+    def confirm_start_new_game(self) -> bool:
+        """Resolve the single-save conflict before replacing an unfinished round."""
+        try:
+            if not has_savegame():
+                return True
+        except OSError as exc:
+            QMessageBox.warning(self, "无法检查存档", str(exc))
+            return False
+        choice = QMessageBox.warning(
+            self,
+            "已有未完成存档",
+            "继续旧存档、覆盖并开始新局，或取消？",
+            QMessageBox.StandardButton.Open
+            | QMessageBox.StandardButton.Discard
+            | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Open,
+        )
+        if choice == QMessageBox.StandardButton.Open:
+            self.show_load()
+            return False
+        if choice == QMessageBox.StandardButton.Discard:
+            try:
+                delete_savegame()
+            except OSError as exc:
+                QMessageBox.warning(self, "无法覆盖存档", str(exc))
+                return False
+            return True
+        return False
+
+    def save_current_game(self) -> bool:
         if self.game_page is None:
-            return
+            return True
+        if self.game_page.is_ai_running():
+            QMessageBox.information(self, "AI 行动中", "请等待当前 AI 行动完成后再离开。")
+            return False
         state = self.game_page.session.ensure_started()
         if state.finished:
-            self.game_page.session.save_finished_if_needed()
-        else:
-            try:
-                self.game_page.session.save_unfinished()
-            except Exception as exc:
-                QMessageBox.warning(self, "保存失败", str(exc))
+            if self.game_page.session.save_finished_if_needed():
+                return True
+            QMessageBox.warning(self, "保存失败", self.game_page.session.last_action)
+            return False
+        try:
+            self.game_page.session.save_unfinished()
+        except Exception as exc:
+            QMessageBox.warning(self, "保存失败", str(exc))
+            return False
+        return True
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if self.game_page is not None:
             self.game_page.deactivate()
-        self.save_current_game()
-        event.accept()
+        if self.save_current_game():
+            event.accept()
+        else:
+            event.ignore()
 
 
 def run_gui() -> int:

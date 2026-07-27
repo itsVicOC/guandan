@@ -21,6 +21,7 @@ from ..engine.events import (
 )
 from ..engine.state import GameState
 from .jsonio import write_json_atomic
+from .locking import storage_lock
 from .paths import get_history_dir, validate_game_id
 from .serialization import deserialize_events, serialize_events
 
@@ -32,6 +33,8 @@ def save_history(
     ai_difficulties: list[Optional[int]],
     seed: int,
     duration_seconds: int,
+    match_id: str | None = None,
+    round_index: int = 1,
 ) -> None:
     """保存历史记录（对局结束后调用）。
 
@@ -47,6 +50,9 @@ def save_history(
         ValueError: 未找到 GameOver 事件
     """
     game_id = validate_game_id(game_id)
+    resolved_match_id = validate_game_id(match_id or game_id)
+    if round_index < 1:
+        raise ValueError("round_index must be positive")
 
     # 提取结果
     game_over_event = None
@@ -61,46 +67,54 @@ def save_history(
     # 玩家名次
     player_rank = game_over_event.finish_order.index(player_seat) + 1
 
-    existing_paths = list(get_history_dir().glob(f"*_{game_id}.json"))
-    existing_path = existing_paths[0] if existing_paths else None
-    played_at = datetime.now().isoformat()
-    if existing_path is not None:
-        try:
-            with open(existing_path, encoding="utf-8") as stream:
-                existing_data = json.load(stream)
-            if isinstance(existing_data, dict) and isinstance(existing_data.get("played_at"), str):
-                played_at = existing_data["played_at"]
-        except (OSError, TypeError, ValueError):
-            pass
+    history_dir = get_history_dir()
+    with storage_lock(history_dir):
+        existing_paths = list(history_dir.glob(f"*_{game_id}.json"))
+        existing_path = existing_paths[0] if existing_paths else None
+        played_at = datetime.now().isoformat()
+        if existing_path is not None:
+            try:
+                with open(existing_path, encoding="utf-8") as stream:
+                    existing_data = json.load(stream)
+                if isinstance(existing_data, dict) and isinstance(
+                    existing_data.get("played_at"), str
+                ):
+                    played_at = existing_data["played_at"]
+            except (OSError, TypeError, ValueError):
+                pass
 
-    data = {
-        "version": "1.0",
-        "game_id": game_id,
-        "played_at": played_at,
-        "duration_seconds": duration_seconds,
-        "metadata": {
-            "level": state.level,
-            "player_seat": player_seat,
-            "ai_difficulties": ai_difficulties,
-            "seed": seed,
-        },
-        "result": {
-            "finish_order": list(game_over_event.finish_order),
-            "final_levels": list(game_over_event.team_levels),
-            "drift": game_over_event.drift,
-            "guo_a": game_over_event.guo_a,
-            "winner_team": game_over_event.winner_team,
-            "player_rank": player_rank,
-        },
-        "statistics": _history_statistics(state),
-        "events": serialize_events(state.history),
-    }
+        data = {
+            "version": "1.0",
+            "game_id": game_id,
+            "match_id": resolved_match_id,
+            "round_index": round_index,
+            "played_at": played_at,
+            "duration_seconds": duration_seconds,
+            "metadata": {
+                "level": state.level,
+                "player_seat": player_seat,
+                "ai_difficulties": ai_difficulties,
+                "seed": seed,
+                "match_id": resolved_match_id,
+                "round_index": round_index,
+            },
+            "result": {
+                "finish_order": list(game_over_event.finish_order),
+                "final_levels": list(game_over_event.team_levels),
+                "drift": game_over_event.drift,
+                "guo_a": game_over_event.guo_a,
+                "winner_team": game_over_event.winner_team,
+                "player_rank": player_rank,
+            },
+            "statistics": _history_statistics(state),
+            "events": serialize_events(state.history),
+        }
 
-    # 文件名：时间戳_game_id.json
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    filename = f"{timestamp}_{game_id}.json"
-    path = existing_path or get_history_dir() / filename
-    write_json_atomic(path, data)
+        # 文件名：时间戳_game_id.json
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        filename = f"{timestamp}_{game_id}.json"
+        path = existing_path or history_dir / filename
+        write_json_atomic(path, data)
 
 
 def load_history_list(limit: int = 20) -> list[dict[str, Any]]:
@@ -115,8 +129,10 @@ def load_history_list(limit: int = 20) -> list[dict[str, Any]]:
     history_dir = get_history_dir()
     files = sorted(history_dir.glob("*.json"), reverse=True)
 
-    result = []
-    for file_path in files[:limit]:
+    result: list[dict[str, Any]] = []
+    for file_path in files:
+        if len(result) >= limit:
+            break
         try:
             with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
@@ -125,6 +141,13 @@ def load_history_list(limit: int = 20) -> list[dict[str, Any]]:
             result.append(
                 {
                     "game_id": data["game_id"],
+                    "match_id": data.get(
+                        "match_id",
+                        data.get("metadata", {}).get("match_id", data["game_id"]),
+                    ),
+                    "round_index": data.get(
+                        "round_index", data.get("metadata", {}).get("round_index", 1)
+                    ),
                     "played_at": data["played_at"],
                     "duration_seconds": data["duration_seconds"],
                     "result": data["result"],

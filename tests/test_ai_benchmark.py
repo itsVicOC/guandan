@@ -12,8 +12,10 @@ from guandan.ai.benchmark import (
     load_benchmark_payload,
     main,
     run_benchmark,
+    run_full_match,
     run_match,
 )
+from guandan.engine.state import team_of
 
 
 def test_run_match_returns_reusable_result() -> None:
@@ -47,6 +49,55 @@ def test_run_benchmark_summarizes_games() -> None:
     assert len(summary.results) == 2
     assert sum(summary.team_wins) == 2
     assert summary.average_turns > 0
+
+
+def test_run_full_match_from_two_through_successful_ace() -> None:
+    result = run_full_match(
+        314,
+        level=2,
+        difficulties=0,
+        max_rounds=64,
+        max_turns=2000,
+    )
+
+    assert result.finished is True
+    assert result.winner_team in (0, 1)
+    assert 2 <= result.rounds <= 64
+    assert result.turns > result.rounds
+    assert result.tribute_rounds > 0
+    assert len(result.round_results) == result.rounds
+    assert all(round_result.finished for round_result in result.round_results)
+    for previous, current in zip(result.round_results, result.round_results[1:]):
+        assert previous.final_levels is not None
+        head_team = team_of(previous.finish_order[0])
+        assert current.level == previous.final_levels[head_team]
+
+    payload = result.to_dict()
+    assert payload["finished"] is True
+    assert len(payload["round_results"]) == result.rounds
+    json.dumps(payload)
+
+
+def test_full_match_cli_reports_unfinished_limit_as_failure(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(
+        [
+            "--full-match",
+            "--seed-start",
+            "315",
+            "--difficulties",
+            "0",
+            "--max-rounds",
+            "1",
+            "--json",
+        ]
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 1
+    assert payload["finished"] is False
+    assert payload["rounds"] == 1
 
 
 def test_benchmark_summary_to_dict_is_json_friendly() -> None:
@@ -289,6 +340,12 @@ def test_main_compare_json_returns_failure_for_gate_regression(
 def test_run_benchmark_requires_positive_games() -> None:
     with pytest.raises(ValueError):
         run_benchmark(games=0)
+
+
+@pytest.mark.parametrize("max_rounds,max_turns", [(0, 2000), (64, 0)])
+def test_run_full_match_requires_positive_limits(max_rounds: int, max_turns: int) -> None:
+    with pytest.raises(ValueError):
+        run_full_match(1, difficulties=0, max_rounds=max_rounds, max_turns=max_turns)
 
 
 def test_checked_in_mixed_baseline_has_stable_configuration() -> None:

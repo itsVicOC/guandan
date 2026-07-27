@@ -5,6 +5,7 @@ import importlib.util
 import os
 import subprocess
 import sys
+from copy import deepcopy
 from unittest.mock import patch
 
 import pytest
@@ -27,7 +28,15 @@ from guandan.engine.card import (
 from guandan.engine.events import TributeReturned, TributeSent
 from guandan.engine.hand import Pattern, PatternType, sort_cards
 from guandan.engine.state import GameState
+from guandan.storage import DEFAULT_PROFILE
 from guandan.ui.session import GameSession
+
+
+def _profile_transaction(profile: dict):
+    def update(mutator):
+        return mutator(profile)
+
+    return update
 
 
 def test_session_selects_duplicate_jokers_by_position() -> None:
@@ -245,7 +254,7 @@ def test_session_game_ids_are_unique_and_filesystem_safe() -> None:
     assert first.game_id.replace("_", "").isalnum()
 
 
-def test_session_next_game_applies_tribute_swaps_and_records_events() -> None:
+def test_session_next_game_uses_selected_human_return_and_records_events() -> None:
     finished = GameState(
         level=2,
         wild_card=None,
@@ -276,7 +285,13 @@ def test_session_next_game_applies_tribute_swaps_and_records_events() -> None:
     session = GameSession(difficulty=0, existing_state=finished, human=0)
     session.game_saved = True
     with patch("guandan.ui.session.make_initial_state", fake_initial_state):
-        result = session.start_next_game()
+        prepared = session.prepare_next_game()
+        assert session.state is finished
+        choice = session.pending_next_game_choice()
+        assert choice is not None
+        assert choice.kind == "return"
+        assert Card(RANK_4, Suit.HEARTS) in choice.cards
+        result = session.finalize_next_game(Card(RANK_4, Suit.HEARTS))
 
     assert result.ok
     assert session.state is not None
@@ -284,9 +299,69 @@ def test_session_next_game_applies_tribute_swaps_and_records_events() -> None:
     assert session.state.turn_index == 3
     assert all(len(hand) == 2 for hand in session.state.hands)
     assert Card(RANK_BIG_JOKER, Suit.BIG_JOKER) in session.state.hands[0]
-    assert Card(RANK_3, Suit.HEARTS) in session.state.hands[3]
+    assert Card(RANK_4, Suit.HEARTS) in session.state.hands[3]
+    assert Card(RANK_3, Suit.HEARTS) in session.state.hands[0]
     assert any(isinstance(event, TributeSent) for event in session.state.history)
     assert any(isinstance(event, TributeReturned) for event in session.state.history)
+    assert prepared.ok
+
+
+def test_session_cancel_prepared_next_game_keeps_completed_round() -> None:
+    finished = GameState(
+        level=2,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=0,
+        leader=0,
+        finish_order=[0, 1, 2],
+        finished=True,
+        team_levels_final=[5, 2],
+    )
+    session = GameSession(
+        difficulty=0,
+        existing_state=finished,
+        human=0,
+        game_id="finished-round",
+        match_id="same-match",
+        round_index=2,
+    )
+    session.game_saved = True
+
+    assert session.prepare_next_game().ok
+    assert session.cancel_next_game().ok
+
+    assert session.state is finished
+    assert session.game_id == "finished-round"
+    assert session.match_id == "same-match"
+    assert session.round_index == 2
+
+
+def test_session_keeps_match_id_and_advances_round_and_game_ids() -> None:
+    finished = GameState(
+        level=2,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=0,
+        leader=0,
+        finish_order=[0, 1, 2],
+        finished=True,
+        team_levels_final=[5, 2],
+    )
+    session = GameSession(
+        difficulty=0,
+        existing_state=finished,
+        game_id="old-round",
+        match_id="same-match",
+        round_index=4,
+    )
+    session.game_saved = True
+
+    result = session.start_next_game()
+
+    assert result.ok
+    assert session.game_id != "old-round"
+    assert session.match_id == "same-match"
+    assert session.round_index == 5
 
 
 def test_session_keeps_finished_state_when_persistence_fails() -> None:
@@ -311,7 +386,7 @@ def test_session_keeps_finished_state_when_persistence_fails() -> None:
     assert session.state is finished
 
 
-def test_session_records_team_result_instead_of_personal_rank() -> None:
+def test_session_records_round_head_without_counting_a_match() -> None:
     finished = GameState(
         level=2,
         wild_card=None,
@@ -322,23 +397,47 @@ def test_session_records_team_result_instead_of_personal_rank() -> None:
         finished=True,
     )
     session = GameSession(difficulty=0, existing_state=finished, human=0, game_id="team-loss")
-    profile = {
-        "statistics": {
-            "total_games": 0,
-            "wins": 0,
-            "losses": 0,
-            "win_rate": 0.0,
-            "by_difficulty": {},
-            "recorded_game_ids": [],
-        }
-    }
+    profile = deepcopy(DEFAULT_PROFILE)
     with patch("guandan.ui.session.save_history"), patch(
-        "guandan.ui.session.load_profile", return_value=profile
-    ), patch("guandan.ui.session.save_profile"), patch("guandan.ui.session.delete_savegame"):
+        "guandan.ui.session.update_profile", side_effect=_profile_transaction(profile)
+    ), patch("guandan.ui.session.delete_savegame"):
         assert session.save_finished_if_needed() is True
 
-    assert profile["statistics"]["wins"] == 0
-    assert profile["statistics"]["losses"] == 1
+    assert profile["statistics"]["total_rounds"] == 1
+    assert profile["statistics"]["head_rounds"] == 0
+    assert profile["statistics"]["total_matches"] == 0
+
+
+def test_session_records_match_result_only_after_passing_ace() -> None:
+    finished = GameState(
+        level=RANK_A,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=0,
+        leader=0,
+        finish_order=[0, 1, 2, 3],
+        finished=True,
+        match_finished=True,
+        winner_team=0,
+    )
+    session = GameSession(
+        difficulty=0,
+        existing_state=finished,
+        human=0,
+        game_id="final-round",
+        match_id="completed-match",
+    )
+    profile = deepcopy(DEFAULT_PROFILE)
+    with patch("guandan.ui.session.save_history"), patch(
+        "guandan.ui.session.update_profile", side_effect=_profile_transaction(profile)
+    ), patch("guandan.ui.session.delete_savegame"):
+        assert session.save_finished_if_needed() is True
+
+    assert profile["statistics"]["total_rounds"] == 1
+    assert profile["statistics"]["head_rounds"] == 1
+    assert profile["statistics"]["total_matches"] == 1
+    assert profile["statistics"]["match_wins"] == 1
+    assert profile["statistics"]["recorded_match_ids"] == ["completed-match"]
 
 
 def test_session_retries_finished_save_without_double_counting() -> None:
@@ -352,27 +451,40 @@ def test_session_retries_finished_save_without_double_counting() -> None:
         finished=True,
     )
     session = GameSession(difficulty=0, existing_state=finished, human=0, game_id="retry-game")
-    profile = {
-        "statistics": {
-            "total_games": 0,
-            "wins": 0,
-            "losses": 0,
-            "win_rate": 0.0,
-            "by_difficulty": {},
-            "recorded_game_ids": [],
-        }
-    }
+    profile = deepcopy(DEFAULT_PROFILE)
     with patch("guandan.ui.session.save_history"), patch(
-        "guandan.ui.session.load_profile", return_value=profile
-    ), patch("guandan.ui.session.save_profile"), patch(
+        "guandan.ui.session.update_profile", side_effect=_profile_transaction(profile)
+    ), patch(
         "guandan.ui.session.delete_savegame", side_effect=[OSError("busy"), None]
     ):
         assert session.save_finished_if_needed() is False
         assert session.game_saved is False
         assert session.save_finished_if_needed() is True
 
-    assert profile["statistics"]["total_games"] == 1
+    assert profile["statistics"]["total_rounds"] == 1
     assert profile["statistics"]["recorded_game_ids"] == ["retry-game"]
+
+
+def test_session_restored_elapsed_time_is_accumulated_when_saving() -> None:
+    state = GameState(
+        level=2,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=0,
+        leader=0,
+    )
+    with patch("guandan.ui.session.time.time", return_value=100.0):
+        session = GameSession(
+            difficulty=0,
+            existing_state=state,
+            elapsed_seconds=75,
+        )
+    with patch("guandan.ui.session.time.time", return_value=125.9), patch(
+        "guandan.ui.session.save_game"
+    ) as save:
+        session.save_unfinished()
+
+    assert save.call_args.kwargs["elapsed_seconds"] == 100
 
 
 def test_gui_window_smoke_offscreen() -> None:
@@ -481,6 +593,86 @@ QTimer.singleShot(700, loop.quit)
 loop.exec()
 assert failed_session.step_ai.call_count == 1
 assert not window.game_page._ai_timer.isActive()
+
+window.game_page = None
+window.close()
+app.quit()
+print("ok")
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=os.getcwd(),
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
+def test_gui_empty_history_and_new_game_conflict_states() -> None:
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    env = dict(os.environ)
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    code = """
+from unittest.mock import patch
+from PySide6.QtWidgets import QApplication, QMessageBox
+from guandan.engine.state import make_initial_state
+from guandan.gui.window import GuandanMainWindow
+from guandan.ui.session import GameSession
+
+app = QApplication([])
+window = GuandanMainWindow()
+
+with patch("guandan.gui.window.load_history_list", return_value=[]):
+    window.show_history()
+    history = window.stack.currentWidget()
+    assert history.table.isVisible() is False
+    assert history.empty.isHidden() is False
+    assert history.replay_button.isEnabled() is False
+
+with patch("guandan.gui.window.load_history_list", side_effect=OSError("storage busy")):
+    history.refresh()
+    assert "无法读取历史记录" in history.empty.text()
+    assert "storage busy" in history.empty.text()
+
+with patch.object(
+    QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes
+), patch("guandan.gui.window.has_savegame", return_value=False), patch(
+    "guandan.gui.window.delete_savegame", side_effect=OSError("storage busy")
+), patch.object(
+    QMessageBox, "warning"
+) as delete_warning:
+    window.show_load()
+    load_page = window.stack.currentWidget()
+    load_page._delete_save()
+    delete_warning.assert_called_once()
+    assert window.stack.currentWidget() is load_page
+
+with patch("guandan.gui.window.has_savegame", return_value=True), patch.object(
+    QMessageBox, "warning", return_value=QMessageBox.StandardButton.Cancel
+):
+    assert window.confirm_start_new_game() is False
+
+with patch("guandan.gui.window.has_savegame", return_value=True), patch(
+    "guandan.gui.window.delete_savegame"
+) as delete, patch.object(
+    QMessageBox, "warning", return_value=QMessageBox.StandardButton.Discard
+):
+    assert window.confirm_start_new_game() is True
+    delete.assert_called_once_with()
+
+state = make_initial_state(level=2, first_player=0, seed=7)
+session = GameSession(difficulty=0, existing_state=state, human=0)
+window.start_game(session)
+with patch.object(session, "save_unfinished", side_effect=OSError("disk full")), patch.object(
+    QMessageBox, "warning"
+) as warning:
+    window.game_page.back_to_menu()
+    assert window.stack.currentWidget() is window.game_page
+    warning.assert_called_once()
 
 window.game_page = None
 window.close()

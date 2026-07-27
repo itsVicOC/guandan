@@ -14,10 +14,15 @@ from collections import Counter
 from typing import List, Optional
 
 from ..engine.card import RANK_A, Card
-from ..engine.hand import Pattern, PatternType, effective_rank
+from ..engine.hand import Pattern, PatternType, comparison_rank, effective_rank
+from ..engine.rules.comparator import bomb_strength
 from ..engine.rules.patterns import detect_patterns
 from ..engine.state import GameState
-from .candidates import enumerate_legal_patterns
+from .candidates import (
+    enumerate_legal_patterns,
+    is_bomb_pattern,
+    pattern_key,
+)
 from .context import opponent_min_cards as context_opponent_min_cards
 
 
@@ -236,3 +241,86 @@ def enumerate_candidate_plays(
         )
     )
     return candidates[:max_candidates]
+
+
+def enumerate_search_candidates(
+    state: GameState,
+    player: int,
+    *,
+    max_candidates: int = 12,
+) -> List[Pattern]:
+    """Build a diverse, ordered action set for tree search.
+
+    A pure top-N cost cut is fast but systematically hides control plays,
+    large shedding combinations and bombs.  This selector first reserves
+    strategic representatives, then fills the remaining budget with the
+    normal hand-cost ranking.  The returned order is a policy prior: earlier
+    actions should be expanded first, but every returned action remains legal.
+    """
+    if max_candidates <= 0 or not state.hands[player]:
+        return []
+
+    hand = state.hands[player]
+    candidates = enumerate_legal_patterns(state, player)
+    if not candidates:
+        return []
+
+    structure_cache: _StructureCache = {}
+    before_structure = _cached_structure_score(hand, state.wild_card, structure_cache)
+    min_opponent_cards = context_opponent_min_cards(state, player)
+
+    def cost(pattern: Pattern) -> float:
+        return _estimate_pattern_cost(
+            state,
+            player,
+            pattern,
+            before_structure=before_structure,
+            structure_cache=structure_cache,
+            opponent_min_cards=min_opponent_cards,
+        )
+
+    ranked = sorted(candidates, key=cost)
+    selected: dict[object, Pattern] = {}
+
+    def reserve(pattern: Pattern | None) -> None:
+        if pattern is not None and len(selected) < max_candidates:
+            selected.setdefault(pattern_key(pattern), pattern)
+
+    # Terminal actions must never be hidden by pruning.
+    reserve(next((p for p in ranked if len(p.cards) == len(hand)), None))
+    reserve(ranked[0])
+
+    non_bombs = [p for p in candidates if not is_bomb_pattern(p)]
+    bombs = [p for p in candidates if is_bomb_pattern(p)]
+
+    if non_bombs:
+        # Best immediate hand reduction and strongest legal control play.
+        reserve(min(non_bombs, key=lambda p: (-len(p.cards), cost(p))))
+        reserve(
+            max(
+                non_bombs,
+                key=lambda p: (
+                    p.weight,
+                    p.length,
+                    comparison_rank(p, state.level),
+                    -p.wild_used,
+                ),
+            )
+        )
+
+    if bombs:
+        reserve(min(bombs, key=lambda p: (*bomb_strength(p, level=state.level), p.wild_used)))
+        reserve(max(bombs, key=lambda p: (*bomb_strength(p, level=state.level), -p.wild_used)))
+
+    if non_bombs:
+        # Keep one low-cost representative per normal pattern family.
+        for pattern_type in PatternType:
+            same_type = [p for p in non_bombs if p.type == pattern_type]
+            if same_type:
+                reserve(min(same_type, key=cost))
+
+    for pattern in ranked:
+        reserve(pattern)
+        if len(selected) >= max_candidates:
+            break
+    return list(selected.values())

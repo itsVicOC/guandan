@@ -14,6 +14,37 @@ from .error import ErrorModal
 class HistoryScreen(Screen):
     """历史战绩屏（显示最近对局记录）。"""
 
+    CSS = """
+    HistoryScreen {
+        align: center middle;
+        background: #101512;
+        color: #eee8d9;
+    }
+    #hist-box {
+        width: 72;
+        height: 18;
+        padding: 2 4;
+        border: round #d6b35a;
+        background: #18211d;
+        align: center middle;
+    }
+    #hist-title, #hist-empty, #hist-hint, #hist-subtitle {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 1;
+    }
+    #hist-title { color: #ffd978; text-style: bold; }
+    #hist-empty { color: #eee8d9; }
+    #hist-hint, #hist-subtitle { color: #9fb7a6; }
+    #hist-scroll {
+        width: 96%;
+        height: 1fr;
+        padding: 1 2;
+    }
+    #hist-table { height: 1fr; }
+    #btn-replay, #btn-back { width: 28; margin: 1; }
+    """
+
     BINDINGS = [
         ("r", "replay", "查看回放"),
         ("escape", "back", "返回"),
@@ -48,7 +79,17 @@ class HistoryScreen(Screen):
         else:
             with VerticalScroll(id="hist-scroll"):
                 yield Static("📊 历史战绩", id="hist-title")
-                yield Static(f"最近 {len(self._history)} 场对局", id="hist-subtitle")
+                match_count = len(
+                    {
+                        entry.get("match_id")
+                        for entry in self._history
+                        if entry.get("match_id")
+                    }
+                )
+                yield Static(
+                    f"{match_count} 场比赛 · 最近 {len(self._history)} 局记录",
+                    id="hist-subtitle",
+                )
                 yield DataTable(id="hist-table")
             with Center():
                 yield Button("R  查看回放", id="btn-replay", variant="primary")

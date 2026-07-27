@@ -26,7 +26,8 @@ class MainMenuScreen(Screen):
     #home-shell {
         width: 90;
         max-width: 96;
-        height: auto;
+        height: 28;
+        max-height: 28;
         padding: 1 2;
         border: round #d6b35a;
         background: #18211d;
@@ -142,7 +143,7 @@ class MainMenuScreen(Screen):
                     yield Static("本地四人牌局", id="subtitle")
                     with Vertical(id="seat-card"):
                         yield Static("座位", id="seat-title")
-                        yield Static("        北\n\n西              东\n\n        南", id="seat-map")
+                        yield Static("        西\n\n南              北\n\n        东", id="seat-map")
                         yield Static("你默认坐东，队友在西", id="table-note")
                     yield Static("逆时针行牌 · 双副牌 · 逢人配", id="rule-strip")
                 with Vertical(id="action-panel"):
@@ -172,6 +173,48 @@ class MainMenuScreen(Screen):
             self.action_quit()
 
     def action_new_game(self) -> None:
+        from ...storage import has_savegame
+        from .confirm import ConfirmModal
+        from .error import ErrorModal
+
+        try:
+            has_save = has_savegame()
+        except OSError as exc:
+            self.app.push_screen(ErrorModal(str(exc), title="无法检查存档"))
+            return
+        if has_save:
+            self.app.push_screen(
+                ConfirmModal(
+                    "已有未完成存档",
+                    "继续旧存档、覆盖并开始新局，或取消？",
+                    (
+                        ("continue", "继续旧存档", "primary"),
+                        ("overwrite", "覆盖并开始新局", "error"),
+                        ("cancel", "取消", "default"),
+                    ),
+                ),
+                self._resolve_new_game_conflict,
+            )
+            return
+        self._open_difficulty()
+
+    def _resolve_new_game_conflict(self, action: str | None) -> None:
+        if action == "continue":
+            self.action_load_save()
+            return
+        if action != "overwrite":
+            return
+        from ...storage import delete_savegame
+        from .error import ErrorModal
+
+        try:
+            delete_savegame()
+        except OSError as exc:
+            self.app.push_screen(ErrorModal(str(exc), title="无法覆盖存档"))
+            return
+        self._open_difficulty()
+
+    def _open_difficulty(self) -> None:
         from .difficulty import DifficultySelectScreen
 
         self.app.push_screen(DifficultySelectScreen())

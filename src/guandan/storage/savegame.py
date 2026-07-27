@@ -20,10 +20,11 @@ from ..engine.hand import Pattern, PatternType
 from ..engine.replay import replay_events
 from ..engine.state import GameState, IllegalPlayError, TributeState
 from .jsonio import write_json_atomic
+from .locking import storage_lock
 from .paths import get_savegame_path, validate_game_id
 from .serialization import deserialize_events, serialize_events
 
-SAVEGAME_VERSION = "2.0"
+SAVEGAME_VERSION = "3.0"
 
 
 def save_game(
@@ -32,6 +33,9 @@ def save_game(
     player_seat: int,
     ai_difficulties: list[Optional[int]],
     seed: int,
+    match_id: str | None = None,
+    round_index: int = 1,
+    elapsed_seconds: int = 0,
 ) -> None:
     """保存当前对局。
 
@@ -43,15 +47,26 @@ def save_game(
         seed: 随机种子
     """
     game_id = validate_game_id(game_id)
+    match_id = validate_game_id(match_id or game_id)
+    if round_index < 1:
+        raise ValueError("round_index must be positive")
+    if elapsed_seconds < 0:
+        raise ValueError("elapsed_seconds must not be negative")
     data = {
         "version": SAVEGAME_VERSION,
         "saved_at": datetime.now().isoformat(),
         "game_id": game_id,
+        "match_id": match_id,
+        "round_index": round_index,
+        "elapsed_seconds": elapsed_seconds,
         "metadata": {
             "level": state.level,
             "player_seat": player_seat,
             "ai_difficulties": ai_difficulties,
             "seed": seed,
+            "match_id": match_id,
+            "round_index": round_index,
+            "elapsed_seconds": elapsed_seconds,
         },
         "events": serialize_events(state.history),
         "state": _state_to_dict(state),
@@ -64,7 +79,8 @@ def save_game(
     }
 
     path = get_savegame_path()
-    write_json_atomic(path, data)
+    with storage_lock(path):
+        write_json_atomic(path, data)
 
 
 def load_game() -> Optional[dict[str, Any]]:
@@ -74,24 +90,27 @@ def load_game() -> Optional[dict[str, Any]]:
         存档数据（包含反序列化的事件流），无存档时返回 None
     """
     path = get_savegame_path()
-    if not path.exists():
-        return None
+    with storage_lock(path):
+        if not path.exists():
+            return None
 
-    try:
-        with open(path, encoding="utf-8") as f:
-            data = json.load(f)
-        if not isinstance(data, dict):
-            raise ValueError("savegame must be an object")
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+            if not isinstance(data, dict):
+                raise ValueError("savegame must be an object")
 
-        # 反序列化事件流
-        data["events"] = deserialize_events(data["events"])
-        data = _migrate_savegame(data)
-        _validate_loaded_savegame(data)
+            # 反序列化事件流
+            data["events"] = deserialize_events(data["events"])
+            data = _migrate_savegame(data)
+            _validate_loaded_savegame(data)
 
-        return data
-    except (KeyError, OSError, TypeError, ValueError):
-        # 文件损坏
-        return None
+            return data
+        except FileNotFoundError:
+            return None
+        except (KeyError, TypeError, ValueError):
+            # 文件结构损坏
+            return None
 
 
 def restore_game_state(savegame: dict[str, Any]) -> GameState:
@@ -114,13 +133,30 @@ def _validate_loaded_savegame(savegame: dict[str, Any]) -> None:
     if not isinstance(savegame.get("saved_at"), str):
         raise ValueError("savegame has no valid timestamp")
     validate_game_id(savegame.get("game_id"))
+    validate_game_id(savegame.get("match_id"))
     if not isinstance(metadata, dict) or not isinstance(snapshot, dict):
         raise ValueError("savegame metadata or snapshot is invalid")
     player_seat = metadata.get("player_seat")
+    round_index = savegame.get("round_index")
+    elapsed_seconds = savegame.get("elapsed_seconds")
     turn_index = snapshot.get("turn_index")
     hand_sizes = snapshot.get("hand_sizes")
     if not isinstance(player_seat, int) or not 0 <= player_seat < 4:
         raise ValueError("savegame player seat is invalid")
+    if not isinstance(round_index, int) or isinstance(round_index, bool) or round_index < 1:
+        raise ValueError("savegame round index is invalid")
+    if (
+        not isinstance(elapsed_seconds, int)
+        or isinstance(elapsed_seconds, bool)
+        or elapsed_seconds < 0
+    ):
+        raise ValueError("savegame elapsed time is invalid")
+    if metadata.get("match_id") != savegame["match_id"]:
+        raise ValueError("savegame match id metadata is inconsistent")
+    if metadata.get("round_index") != round_index:
+        raise ValueError("savegame round index metadata is inconsistent")
+    if metadata.get("elapsed_seconds") != elapsed_seconds:
+        raise ValueError("savegame elapsed time metadata is inconsistent")
     if not isinstance(turn_index, int) or not 0 <= turn_index < 4:
         raise ValueError("savegame turn index is invalid")
     if (
@@ -185,7 +221,7 @@ def _validate_state_invariants(state: GameState) -> None:
 
 def _migrate_savegame(savegame: dict[str, Any]) -> dict[str, Any]:
     version = str(savegame.get("version", "1.0"))
-    if version not in {"1.0", SAVEGAME_VERSION}:
+    if version not in {"1.0", "2.0", SAVEGAME_VERSION}:
         raise ValueError(f"unsupported savegame version: {version}")
     if version == "1.0":
         restored = restore_game_state(savegame)
@@ -199,15 +235,47 @@ def _migrate_savegame(savegame: dict[str, Any]) -> dict[str, Any]:
                 "finished": restored.finished,
             },
         )
-        savegame["version"] = SAVEGAME_VERSION
+    metadata = savegame.setdefault("metadata", {})
+    if not isinstance(metadata, dict):
+        raise ValueError("savegame metadata is invalid")
+    game_id = validate_game_id(savegame.get("game_id"))
+    match_id = savegame.get("match_id", metadata.get("match_id", game_id))
+    round_index = savegame.get("round_index", metadata.get("round_index", 1))
+    elapsed_seconds = savegame.get(
+        "elapsed_seconds", metadata.get("elapsed_seconds", 0)
+    )
+    savegame["match_id"] = match_id
+    savegame["round_index"] = round_index
+    savegame["elapsed_seconds"] = elapsed_seconds
+    metadata["match_id"] = match_id
+    metadata["round_index"] = round_index
+    metadata["elapsed_seconds"] = elapsed_seconds
+    savegame["version"] = SAVEGAME_VERSION
     return savegame
 
 
-def delete_savegame() -> None:
-    """删除存档（对局结束后调用）。"""
+def delete_savegame(*, expected_game_id: str | None = None) -> bool:
+    """Delete the save, optionally only when it belongs to the expected round."""
     path = get_savegame_path()
-    if path.exists():
-        path.unlink()
+    with storage_lock(path):
+        if not path.exists():
+            return False
+        if expected_game_id is not None:
+            expected_game_id = validate_game_id(expected_game_id)
+            try:
+                with open(path, encoding="utf-8") as file:
+                    stored_game_id = json.load(file).get("game_id")
+            except FileNotFoundError:
+                return False
+            except (AttributeError, json.JSONDecodeError):
+                return False
+            if stored_game_id != expected_game_id:
+                return False
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            return False
+        return True
 
 
 def has_savegame() -> bool:
@@ -216,7 +284,9 @@ def has_savegame() -> bool:
     Returns:
         True 表示有存档
     """
-    return get_savegame_path().exists()
+    path = get_savegame_path()
+    with storage_lock(path):
+        return path.exists()
 
 
 __all__ = [

@@ -8,12 +8,26 @@
 """
 from __future__ import annotations
 
+import copy
 import random
+from collections import Counter
 
 import pytest
 
 from guandan.ai.mcts import MCTS_CONFIG
-from guandan.ai.mcts.determinize import _get_all_cards_in_game, determinize
+from guandan.ai.mcts.determinize import (
+    PassEvidence,
+    _get_all_cards_in_game,
+    card_owner_likelihood,
+    determinize,
+)
+from guandan.ai.mcts.information_set import (
+    PASS_ACTION,
+    InformationSetNode,
+    _has_expansion_capacity,
+    information_set_search,
+    team_selection_score,
+)
 from guandan.ai.mcts.node import MCTSNode
 from guandan.ai.mcts.search import (
     _evaluate_result,
@@ -23,10 +37,12 @@ from guandan.ai.mcts.search import (
     ucb1_score,
 )
 from guandan.ai.strategies.professional import ProfessionalStrategy
+from guandan.ai.valuation import enumerate_search_candidates
 from guandan.engine.card import RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
 from guandan.engine.deck import deal, make_deck, shuffle_deck
+from guandan.engine.events import TributeReturned, TributeSent, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
-from guandan.engine.state import GameState, play_pattern
+from guandan.engine.state import GameState, pass_turn, play_pattern
 
 
 def _make_test_state(level: int = 2, seed: int = 42) -> GameState:
@@ -80,6 +96,9 @@ class TestDeterminize:
         # 验证手牌数守恒
         new_sizes = [new_state.hand_size(p) for p in range(4)]
         assert new_sizes == original_sizes
+        assert Counter(card for hand in new_state.hands for card in hand) == Counter(
+            _get_all_cards_in_game()
+        )
 
     def test_determinize_preserves_player_hand(self):
         """确定化后当前玩家手牌不变。"""
@@ -117,6 +136,70 @@ class TestDeterminize:
                 break
 
         assert different, "两次确定化应该产生不同的手牌分配"
+
+    def test_determinize_preserves_public_tribute_card_owner(self):
+        state = _make_test_state()
+        tribute = state.hands[3][0]
+        returned = state.hands[0][0]
+        state.hands[3].remove(tribute)
+        state.hands[0].append(tribute)
+        state.history.append(TributeSent(3, 0, tribute, reason="single"))
+        state.hands[0].remove(returned)
+        state.hands[3].append(returned)
+        state.history.append(TributeReturned(0, 3, returned, reason="single"))
+
+        new_state = determinize(state, player=1, rng=random.Random(99))
+
+        assert tribute in new_state.hands[0]
+        assert returned in new_state.hands[3]
+
+    def test_determinize_releases_known_tribute_card_after_it_is_played(self):
+        state = _make_test_state()
+        tribute = state.hands[3][0]
+        state.hands[3].remove(tribute)
+        state.hands[0].append(tribute)
+        state.history.append(TributeSent(3, 0, tribute, reason="single"))
+        state.hands[0].remove(tribute)
+        state.history.append(
+            TurnPlayed(
+                player=0,
+                pattern=Pattern(PatternType.SINGLE, tribute.rank, 1, (tribute,)),
+                hand_remaining=len(state.hands[0]),
+            )
+        )
+
+        new_state = determinize(state, player=1, rng=random.Random(99))
+
+        assert len(new_state.hands[0]) == len(state.hands[0])
+
+    def test_determinize_does_not_read_opponents_real_hidden_cards(self):
+        state_a = _make_test_state()
+        state_b = copy.deepcopy(state_a)
+        state_b.hands[1], state_b.hands[2] = state_b.hands[2], state_b.hands[1]
+
+        sampled_a = determinize(state_a, player=0, rng=random.Random(1234))
+        sampled_b = determinize(state_b, player=0, rng=random.Random(1234))
+
+        assert sampled_a.hands == sampled_b.hands
+
+    def test_opponent_pass_is_soft_evidence_against_higher_single(self):
+        top = Pattern(PatternType.SINGLE, 8, 1, (Card(8, Suit.HEARTS),))
+        evidence = (PassEvidence(player=2, top_player=1, pattern=top),)
+
+        low = card_owner_likelihood(
+            Card(5, Suit.CLUBS),
+            owner=2,
+            evidence=evidence,
+            level=2,
+        )
+        high = card_owner_likelihood(
+            Card(14, Suit.CLUBS),
+            owner=2,
+            evidence=evidence,
+            level=2,
+        )
+
+        assert 0 < high < low
 
 
 class TestUCB1:
@@ -203,6 +286,118 @@ class TestMCTSSearch:
         assert actions[-1] is not None
         assert actions[-1].type == PatternType.FOUR_JOKERS
         assert len(actions[-1].cards) == len(state.hands[0])
+
+    def test_information_set_search_samples_each_simulation(self, monkeypatch):
+        state = _make_test_state()
+        calls = {"count": 0}
+
+        from guandan.ai.mcts import information_set as module
+
+        real_determinize = module.determinize
+
+        def counted_determinize(*args, **kwargs):
+            calls["count"] += 1
+            return real_determinize(*args, **kwargs)
+
+        monkeypatch.setattr(module, "determinize", counted_determinize)
+        result = information_set_search(
+            state,
+            player=0,
+            rng=random.Random(7),
+            iterations=4,
+            max_actions=3,
+            max_tree_depth=2,
+            rollout_strategy=1,
+            rollout_max_turns=2,
+        )
+
+        assert result.simulations == 4
+        assert result.sampled_worlds == 4
+        assert calls["count"] == 4
+        assert result.actions
+        assert all(action.availability >= action.visits for action in result.actions)
+
+    def test_team_selection_reverses_value_for_opponent_nodes(self):
+        strong_for_root = InformationSetNode(
+            visits=10,
+            value_sum=8.0,
+            availability=20,
+            prior=0.0,
+        )
+        weak_for_root = InformationSetNode(
+            visits=10,
+            value_sum=2.0,
+            availability=20,
+            prior=0.0,
+        )
+
+        own_strong = team_selection_score(
+            strong_for_root,
+            node_visits=20,
+            actor_team=0,
+            root_team=0,
+            exploration=0.0,
+            prior_weight=0.0,
+        )
+        own_weak = team_selection_score(
+            weak_for_root,
+            node_visits=20,
+            actor_team=0,
+            root_team=0,
+            exploration=0.0,
+            prior_weight=0.0,
+        )
+        opponent_strong = team_selection_score(
+            strong_for_root,
+            node_visits=20,
+            actor_team=1,
+            root_team=0,
+            exploration=0.0,
+            prior_weight=0.0,
+        )
+        opponent_weak = team_selection_score(
+            weak_for_root,
+            node_visits=20,
+            actor_team=1,
+            root_team=0,
+            exploration=0.0,
+            prior_weight=0.0,
+        )
+
+        assert own_strong > own_weak
+        assert opponent_weak > opponent_strong
+
+    def test_unavailable_children_do_not_consume_widening_capacity(self):
+        node = InformationSetNode(
+            children={
+                ("unavailable",): InformationSetNode(action_key=("unavailable",)),
+            }
+        )
+        actions = {PASS_ACTION: None}
+
+        assert _has_expansion_capacity(node, actions, widening_limit=1) is True
+
+    def test_stratified_candidates_keep_structure_and_bomb(self):
+        state = _make_test_state()
+        state.wild_card = None
+        state.table = []
+        state.hands[0] = [
+            Card(3, Suit.HEARTS),
+            Card(4, Suit.DIAMONDS),
+            Card(5, Suit.SPADES),
+            Card(6, Suit.CLUBS),
+            Card(7, Suit.HEARTS),
+            Card(9, Suit.SPADES),
+            Card(9, Suit.HEARTS),
+            Card(9, Suit.CLUBS),
+            Card(9, Suit.DIAMONDS),
+            Card(14, Suit.CLUBS),
+        ]
+
+        candidates = enumerate_search_candidates(state, player=0, max_candidates=5)
+
+        assert any(pattern.type == PatternType.STRAIGHT for pattern in candidates)
+        assert any(pattern.type == PatternType.BOMB for pattern in candidates)
 
 
 class TestMCTSEvaluation:
@@ -476,3 +671,60 @@ class TestProfessionalStrategy:
         strategy = ProfessionalStrategy(mcts_hand_threshold=3)
 
         assert strategy._should_use_mcts(state, player=0) is True
+
+    @pytest.mark.parametrize("seed", [733, 947])
+    def test_information_set_move_executes_in_real_reached_endgame(self, seed):
+        from guandan.ai.play import play_or_pass
+        from guandan.ai.strategy import make_strategy
+        from guandan.engine.state import make_initial_state
+
+        state = make_initial_state(seed=seed)
+        bots = [make_strategy(0) for _ in range(4)]
+        rng = random.Random(seed)
+        while not state.finished and min(
+            (state.hand_size(player) for player in range(4) if state.hand_size(player)),
+            default=99,
+        ) > 10:
+            player = state.turn_index
+            play_or_pass(state, player, bots[player], rng)
+
+        player = state.turn_index
+        strategy = ProfessionalStrategy(
+            iterations=8,
+            time_budget_ms=0,
+            max_tree_depth=4,
+            rollout_max_turns=8,
+            rng=random.Random(seed),
+        )
+        pattern = strategy.select_pattern(state, player)
+
+        if pattern is None:
+            pass_turn(state, player)
+        else:
+            play_pattern(state, player, pattern)
+        assert strategy.last_search is not None
+        assert strategy.last_search.simulations == 8
+
+    def test_fixed_iteration_search_is_seed_reproducible(self):
+        state = _make_test_state(seed=777)
+        first = information_set_search(
+            state,
+            player=0,
+            rng=random.Random(99),
+            iterations=6,
+            max_actions=4,
+            max_tree_depth=3,
+            rollout_max_turns=5,
+        )
+        second = information_set_search(
+            state,
+            player=0,
+            rng=random.Random(99),
+            iterations=6,
+            max_actions=4,
+            max_tree_depth=3,
+            rollout_max_turns=5,
+        )
+
+        assert first.pattern == second.pattern
+        assert first.actions == second.actions

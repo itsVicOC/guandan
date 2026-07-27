@@ -6,7 +6,7 @@ AI 不再手写各牌型枚举，而是复用规则层的 `detect_patterns()`：
 from __future__ import annotations
 
 from collections import Counter
-from typing import List, Optional
+from typing import List, Optional, TypeAlias
 
 from ..engine.card import Card
 from ..engine.hand import Pattern, comparison_rank
@@ -22,7 +22,23 @@ def _card_counter_key(cards: tuple[Card, ...]) -> tuple[tuple[int, int, int], ..
     )
 
 
-def _pattern_key(pattern: Pattern) -> tuple:
+PatternKey: TypeAlias = tuple[
+    object,
+    int,
+    int,
+    int,
+    int | None,
+    tuple[tuple[int, int, int], ...],
+]
+
+
+def pattern_key(pattern: Pattern) -> PatternKey:
+    """Return a stable public action key for information-set search.
+
+    Equal physical cards from the two decks deliberately collapse into the
+    same multiset representation.  The key therefore identifies the action a
+    player can observe, without leaking which hidden-deck copy was sampled.
+    """
     return (
         pattern.type,
         pattern.rank,
@@ -73,7 +89,7 @@ def enumerate_legal_patterns(
             table_top, level=state.level
         ):
             continue
-        key = _pattern_key(pattern)
+        key = pattern_key(pattern)
         if key in seen:
             continue
         seen.add(key)

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
-from textual.containers import Center, Vertical
+from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static
 
@@ -42,7 +42,7 @@ class ErrorModal(ModalScreen):
         self._title = title
 
     def compose(self) -> ComposeResult:
-        with Center(), Vertical(id="error-box"):
+        with Vertical(id="error-box"):
             yield Static(self._title, id="error-title")
             yield Static(self._message, id="error-body")
             yield Button("OK", id="error-ok", variant="primary")

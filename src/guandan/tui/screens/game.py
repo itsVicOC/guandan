@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import List, Optional, Sequence
 
 from rich.markup import escape
+from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Grid, Horizontal, Vertical
@@ -17,7 +18,6 @@ from ...engine.rules.tributes import apply_tribute_flow
 from ...engine.state import (
     SEAT_NAMES,
     GameState,
-    IllegalPlayError,
 )
 from ...engine.trick import (
     current_trick_actions,
@@ -64,10 +64,11 @@ class OpponentWidget(Static):
     def _do_render(self) -> None:
         marker = " [bold #ffd978]行动中[/bold #ffd978]" if self._is_turn else ""
         done = "[green]已出完[/green]" if self._finished else f"{self._hand_size:2d} 张"
+        claim = _claim_badge(self._hand_size) if not self._finished else ""
         text = (
             f"[bold #ffd978]{self._seat_name}家[/bold #ffd978] "
             f"[dim]{self._ai_label}[/dim]{marker}\n"
-            f"{done}"
+            f"{done}{claim}"
         )
         self.update(text)
 
@@ -133,6 +134,18 @@ def _rank_value_label(rank: int) -> str:
     if rank == 11:
         return "J"
     return str(rank)
+
+
+def _claim_badge(hand_size: int) -> str:
+    if hand_size == 1:
+        label = "报单"
+    elif hand_size == 2:
+        label = "报双"
+    elif 0 < hand_size <= 10:
+        label = f"报{hand_size}张"
+    else:
+        return ""
+    return f"  [bold #ffe89a on #604814] {label} [/bold #ffe89a on #604814]"
 
 
 def _pattern_type_label(pattern_type: PatternType) -> str:
@@ -202,7 +215,7 @@ class PlayerStatusWidget(Static):
         marker = " [bold #ffd978]行动中[/bold #ffd978]" if is_turn else ""
         self.update(
             f"[bold #ffd978]{seat_name}家[/bold #ffd978] [dim]你[/dim]{marker}\n"
-            f"{hand_size:2d} 张"
+            f"{hand_size:2d} 张{_claim_badge(hand_size)}"
         )
 
 
@@ -363,7 +376,6 @@ class GameScreen(Screen):
         Binding("enter", "play", "出牌", priority=True),
         Binding("p", "pass", "过牌", priority=True),
         Binding("t", "hint", "提示", priority=True),
-        Binding("b", "claim", "报牌", priority=True),
         Binding("n", "next_game", "下一局", priority=True),
         ("?", "rules", "规则"),
         ("escape", "back", "返回"),
@@ -377,6 +389,9 @@ class GameScreen(Screen):
         human: int = 0,
         existing_state: Optional[GameState] = None,
         game_id: Optional[str] = None,
+        match_id: Optional[str] = None,
+        round_index: int = 1,
+        elapsed_seconds: int = 0,
         seed: Optional[int] = None,
         **kwargs,
     ) -> None:
@@ -387,6 +402,9 @@ class GameScreen(Screen):
             human=human,
             existing_state=existing_state,
             game_id=game_id,
+            match_id=match_id,
+            round_index=round_index,
+            elapsed_seconds=elapsed_seconds,
             seed=seed,
         )
         self.message = ""
@@ -394,6 +412,7 @@ class GameScreen(Screen):
         self._hand_cards: List[Card] = []
         self._hand_selected_indices: set[int] = set()
         self._hand_cursor = 0
+        self._ai_running = False
 
     @property
     def difficulty(self) -> int:
@@ -620,6 +639,8 @@ class GameScreen(Screen):
     def _refresh_round_actions(self) -> None:
         s = self._state()
         next_button = self.query_one("#btn-next-game", Button)
+        back_button = self.query_one("#btn-game-back", Button)
+        back_button.disabled = self._ai_running
         next_button.disabled = not s.finished or s.match_finished
         if s.finished and s.match_finished:
             next_button.label = "比赛已结束"
@@ -705,7 +726,7 @@ class GameScreen(Screen):
 
     def action_play(self) -> None:
         s = self._state()
-        if s.finished or s.turn_index != self.human:
+        if self._ai_running or s.finished or s.turn_index != self.human:
             return
         sel = [
             self._hand_cards[i]
@@ -723,7 +744,7 @@ class GameScreen(Screen):
 
     def action_pass(self) -> None:
         s = self._state()
-        if s.finished or s.turn_index != self.human:
+        if self._ai_running or s.finished or s.turn_index != self.human:
             return
         result = self.session.pass_human()
         if result.ok:
@@ -735,7 +756,7 @@ class GameScreen(Screen):
 
     def action_hint(self) -> None:
         s = self._state()
-        if s.finished or s.turn_index != self.human:
+        if self._ai_running or s.finished or s.turn_index != self.human:
             return
         result = self.session.hint_for_human()
         self._hand_selected_indices = card_indices_for_selection(
@@ -745,23 +766,30 @@ class GameScreen(Screen):
         self.sub_title = result.message
         self._refresh_all()
 
-    def action_claim(self) -> None:
-        from ...engine.state import claim
-
-        s = self._state()
-        try:
-            claim(s, self.human, len(s.hands[self.human]))
-        except IllegalPlayError as e:
-            self.sub_title = f"报牌由系统自动执行：{e}"
-            self._last_action = f"报牌由系统自动执行：{e}"
+    def action_next_game(self) -> None:
+        if self._ai_running:
+            return
+        prepared = self.session.prepare_next_game()
+        if not prepared.ok:
             self._refresh_all()
             return
-        self.sub_title = f"你报了 {len(s.hands[self.human])} 张"
-        self._last_action = f"你报牌：{len(s.hands[self.human])} 张"
-        self._refresh_all()
+        choice = self.session.pending_next_game_choice()
+        if choice is not None:
+            from .confirm import TributeChoiceModal
 
-    def action_next_game(self) -> None:
-        result = self.session.start_next_game()
+            self.app.push_screen(
+                TributeChoiceModal(choice.kind, choice.cards),
+                self._finish_next_game,
+            )
+            return
+        self._finish_next_game(None)
+
+    def _finish_next_game(self, selected_card: Card | None) -> None:
+        if selected_card is None and self.session.pending_next_game_choice() is not None:
+            self.session.cancel_next_game()
+            self._refresh_all()
+            return
+        result = self.session.finalize_next_game(selected_card)
         if not result.ok:
             self._refresh_all()
             return
@@ -776,15 +804,23 @@ class GameScreen(Screen):
         self.app.push_screen(RuleScreen())
 
     def action_back(self) -> None:
+        if self._ai_running:
+            from .error import ErrorModal
+
+            self.app.push_screen(ErrorModal("请等待当前 AI 行动完成后再离开。", title="AI 行动中"))
+            return
         s = self._state()
         try:
             if s.finished:
-                self.session.save_finished_if_needed()
+                if not self.session.save_finished_if_needed():
+                    raise OSError(self.session.last_action)
             else:
                 self.session.save_unfinished()
-        except Exception:
-            # 保存失败不影响退出
-            pass
+        except Exception as exc:
+            from .error import ErrorModal
+
+            self.app.push_screen(ErrorModal(str(exc), title="保存失败"))
+            return
         self.app.pop_screen()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -796,24 +832,38 @@ class GameScreen(Screen):
             event.stop()
 
     def _maybe_ai_turn(self) -> None:
+        if self._ai_running:
+            return
         s = self._state()
         if s.finished:
             self._refresh_all()
             self.session.save_finished_if_needed()
             return
-        ai_action_limit = 12
-        ai_actions = self.session.run_ai_until_human(limit=ai_action_limit)
-        if ai_actions:
+        self._ai_running = True
+        self._refresh_all()
+        self._run_ai_worker()
+
+    @work(thread=True, exclusive=True, group="ai-turns")
+    def _run_ai_worker(self) -> None:
+        try:
+            ai_actions = self.session.run_ai_until_human(limit=12)
+            if not any("AI 错误" in message for message in ai_actions) and not self.session.autosave_after_ai():
+                raise OSError(self.session.last_action)
+            self.app.call_from_thread(self._finish_ai_turn, ai_actions, None)
+        except Exception as exc:
+            self.app.call_from_thread(self._finish_ai_turn, [], exc)
+
+    def _finish_ai_turn(self, ai_actions: list[str], error: Exception | None) -> None:
+        self._ai_running = False
+        if error is not None:
+            self._last_action = f"后台操作失败：{error}"
+        elif ai_actions:
             self._last_action = "；".join(ai_actions[-4:])
         self._refresh_all()
-        s = self._state()
-        if (
-            not s.finished
-            and s.turn_index != self.human
-            and len(ai_actions) >= ai_action_limit
-        ):
+        state = self._state()
+        if not state.finished and state.turn_index != self.human and len(ai_actions) >= 12:
             self.set_timer(0.1, self._maybe_ai_turn)
-        if s.finished:
+        if state.finished:
             self.session.save_finished_if_needed()
 
     def _describe_ai_action(self, state: GameState, player: int, history_len_before: int) -> str:

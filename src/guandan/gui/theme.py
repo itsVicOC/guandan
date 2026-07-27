@@ -26,6 +26,25 @@ QWidget {
 QMainWindow, QWidget#root, QWidget#page {
     background: #0b0f14;
 }
+QDialog {
+    background: #151b23;
+}
+QListWidget {
+    background: #0f151d;
+    color: #e9edf2;
+    border: 1px solid #3b4858;
+    border-radius: 6px;
+    padding: 4px;
+    outline: none;
+}
+QListWidget::item {
+    min-height: 30px;
+    padding: 2px 8px;
+}
+QListWidget::item:selected {
+    background: #256b75;
+    color: #ffffff;
+}
 QLabel#brandMark {
     background: #e2b854;
     color: #111820;
@@ -170,6 +189,20 @@ QLabel#seatMeta {
 QLabel#seatMeta[active="true"] {
     color: #f3cd6b;
     font-weight: 800;
+}
+QLabel#claimBadge {
+    min-width: 46px;
+    padding: 4px 6px;
+    background: #604814;
+    color: #ffe89a;
+    border: 1px solid #a9842f;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 900;
+}
+QLabel#replayCardsText {
+    color: #cfd7df;
+    font-size: 10px;
 }
 QPushButton {
     min-height: 42px;

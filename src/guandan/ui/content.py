@@ -6,10 +6,10 @@ DIFFICULTIES = (
     ("进阶", "贪心 + 简单估值"),
     ("高手", "贪心 + 记牌 + 协作分"),
     ("职业", "IS-MCTS + 完整估值"),
-    ("戴长胜", "IS-MCTS + 风格化参数（致敬）"),
+    ("戴长胜", "团队感知搜索 + 自对弈风格先验（致敬）"),
 )
 
-RULES_TEXT = """\
+GAME_RULES_TEXT = """\
 【基础】
 • 4 人 2 副牌 108 张
 • 固定搭档：东↔西 vs 南↔北
@@ -73,15 +73,32 @@ RULES_TEXT = """\
 • 单贡方手牌有 2 大王可抗贡；双贡方合计有 2 大王可抗贡
 • 抗贡后不换牌，由上一局头游先手
 
-【操作键】
-• ↑↓←→ 移动光标
-• Space 选择 / 取消选牌
-• Enter 出牌
-• P     过牌
-• T     提示（循环选择一组合法出牌）
-• B     报牌
-• ?     查看本规则
-• Escape 返回牌桌；从牌桌返回主菜单时会自动保存未完成对局
 """
 
-__all__ = ["DIFFICULTIES", "RULES_TEXT"]
+GUI_CONTROLS_TEXT = """\
+【GUI 操作】
+• 点击手牌选择 / 取消，回车出牌
+• P 过牌，T 循环提示，Backspace 清空选择
+• N 开始下一局，Escape 返回大厅
+• 离开未完成牌局前会自动保存；保存失败时会留在牌桌
+"""
+
+TUI_CONTROLS_TEXT = """\
+【TUI 操作】
+• ↑↓←→ 移动光标
+• Space 选择 / 取消选牌，Enter 出牌
+• P 过牌，T 循环提示，N 开始下一局
+• ? 查看本规则，Escape 返回
+• 离开未完成牌局前会自动保存；保存失败时会留在牌桌
+"""
+
+# Compatibility alias for third-party callers that imported the old combined text.
+RULES_TEXT = GAME_RULES_TEXT
+
+__all__ = [
+    "DIFFICULTIES",
+    "GAME_RULES_TEXT",
+    "GUI_CONTROLS_TEXT",
+    "RULES_TEXT",
+    "TUI_CONTROLS_TEXT",
+]

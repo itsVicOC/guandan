@@ -6,7 +6,7 @@ from textual.containers import Center, Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
-from ...ui.content import RULES_TEXT
+from ...ui.content import GAME_RULES_TEXT, TUI_CONTROLS_TEXT
 
 
 class RuleScreen(Screen):
@@ -21,7 +21,7 @@ class RuleScreen(Screen):
         with Center(), Vertical(id="rule-box"):
             yield Static("📜 掼蛋规则", id="rule-title")
             with VerticalScroll(id="rule-scroll"):
-                yield Static(RULES_TEXT)
+                yield Static(f"{GAME_RULES_TEXT}\n{TUI_CONTROLS_TEXT}")
             yield Button("← 返回", id="btn-back")
         yield Footer()
 

@@ -39,8 +39,10 @@ from guandan.tui.layout import (
     should_request_terminal_resize,
     terminal_resize_disabled,
 )
+from guandan.tui.screens.confirm import ConfirmModal, TributeChoiceModal
 from guandan.tui.screens.game import GameScreen, _tui_card
 from guandan.tui.screens.history import HistoryScreen
+from guandan.tui.screens.load_save import LoadSaveScreen
 from guandan.tui.screens.replay import ReplayScreen
 
 
@@ -61,6 +63,140 @@ def _triple_pair(triple_rank: int, pair_rank: int) -> Pattern:
         Card(pair_rank, Suit.DIAMONDS),
     )
     return Pattern(PatternType.TRIPLE_PAIR, triple_rank, 1, cards, 0)
+
+
+def test_tribute_choice_modal_renders_and_returns_selected_card() -> None:
+    async def run() -> None:
+        cards = (
+            Card(RANK_3, Suit.HEARTS),
+            Card(RANK_4, Suit.SPADES),
+        )
+        selected: list[Card | None] = []
+        app = GuandanApp()
+
+        async with app.run_test(size=(140, 48)) as pilot:
+            await pilot.pause()
+            modal = TributeChoiceModal("return", cards)
+            app.push_screen(modal, selected.append)
+            await pilot.pause()
+
+            assert modal.query_one("#tribute-choice-title").region.height > 0
+            assert modal.query_one("#tribute-card-0", Button).region.height > 0
+            assert modal.query_one("#tribute-cancel", Button).region.height > 0
+
+            await pilot.click("#tribute-card-1")
+            await pilot.pause()
+
+            assert selected == [cards[1]]
+
+    asyncio.run(run())
+
+
+def test_tui_new_game_conflict_can_overwrite_existing_save() -> None:
+    async def run() -> None:
+        app = GuandanApp()
+        with patch("guandan.storage.has_savegame", return_value=True), patch(
+            "guandan.storage.delete_savegame"
+        ) as delete:
+            async with app.run_test(size=(140, 48)) as pilot:
+                await pilot.pause()
+
+                await pilot.click("#btn-new")
+                await pilot.pause()
+                assert isinstance(app.screen, ConfirmModal)
+
+                await pilot.click("#confirm-overwrite")
+                await pilot.pause()
+
+                delete.assert_called_once_with()
+                assert app.screen.__class__.__name__ == "DifficultySelectScreen"
+
+    asyncio.run(run())
+
+
+def test_tui_can_delete_a_corrupt_save_after_confirmation() -> None:
+    async def run() -> None:
+        app = GuandanApp()
+        with patch("guandan.tui.screens.load_save.has_savegame", return_value=True), patch(
+            "guandan.tui.screens.load_save.load_game", return_value=None
+        ), patch("guandan.storage.delete_savegame") as delete:
+            async with app.run_test(size=(140, 48)) as pilot:
+                await pilot.pause()
+                app.push_screen(LoadSaveScreen())
+                await pilot.pause()
+
+                assert app.screen.query_one("#btn-delete", Button).region.height > 0
+                await pilot.click("#btn-delete")
+                await pilot.pause()
+                assert isinstance(app.screen, ConfirmModal)
+
+                await pilot.click("#confirm-delete")
+                await pilot.pause()
+
+                delete.assert_called_once_with()
+                assert app.screen.__class__.__name__ == "MainMenuScreen"
+
+    asyncio.run(run())
+
+
+def test_tui_load_error_stays_on_save_screen() -> None:
+    async def run() -> None:
+        summary = {
+            "saved_at": "2026-07-27T12:00:00",
+            "metadata": {
+                "level": 2,
+                "player_seat": 0,
+                "ai_difficulties": [None, 0, 0, 0],
+            },
+            "current_state_snapshot": {
+                "turn_index": 0,
+                "hand_sizes": [27, 27, 27, 27],
+            },
+            "events": [],
+        }
+        app = GuandanApp()
+        with patch("guandan.tui.screens.load_save.has_savegame", return_value=True), patch(
+            "guandan.tui.screens.load_save.load_game",
+            side_effect=[summary, OSError("storage busy")],
+        ):
+            async with app.run_test(size=(140, 48)) as pilot:
+                await pilot.pause()
+                screen = LoadSaveScreen()
+                app.push_screen(screen)
+                await pilot.pause()
+
+                await pilot.click("#btn-continue")
+                await pilot.pause()
+
+                assert app.screen.__class__.__name__ == "ErrorModal"
+                assert screen in app.screen_stack
+                assert app.screen.query_one("#error-box").region.height > 0
+
+    asyncio.run(run())
+
+
+def test_tui_save_failure_keeps_game_screen_open() -> None:
+    async def run() -> None:
+        state = make_initial_state(level=RANK_2, first_player=0, seed=7)
+        app = GuandanApp()
+
+        async with app.run_test(size=(140, 48)) as pilot:
+            await pilot.pause()
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            with patch.object(screen.session, "save_unfinished", side_effect=OSError("disk full")):
+                screen.action_back()
+                await pilot.pause()
+
+            assert app.screen.__class__.__name__ == "ErrorModal"
+            assert screen in app.screen_stack
+            app.pop_screen()
+            await pilot.pause()
+            assert app.screen is screen
+
+    asyncio.run(run())
 
 
 def test_tui_card_uses_chinese_suit_labels() -> None:
@@ -310,6 +446,11 @@ def test_ai_leader_continues_until_human_turn() -> None:
             await pilot.pause()
 
             screen._maybe_ai_turn()
+            for _ in range(20):
+                await asyncio.sleep(0.01)
+                await pilot.pause()
+                if not screen._ai_running:
+                    break
 
             assert state.turn_index == 0
             assert len(state.table) >= 3
@@ -346,6 +487,11 @@ def test_ai_turn_loop_uses_counterclockwise_order_for_every_human_seat() -> None
             await pilot.pause()
 
             screen._maybe_ai_turn()
+            for _ in range(20):
+                await asyncio.sleep(0.01)
+                await pilot.pause()
+                if not screen._ai_running:
+                    break
 
             played_players = [
                 ev.player for ev in state.history if isinstance(ev, TurnPlayed)
@@ -753,6 +899,9 @@ def test_finished_game_can_start_next_round_from_head_team_level() -> None:
 
                 screen.action_next_game()
                 await pilot.pause()
+                choice = screen.session.pending_next_game_choice()
+                if choice is not None:
+                    screen._finish_next_game(choice.cards[0])
 
                 assert screen.state is not state
                 assert screen.state is not None
@@ -761,7 +910,7 @@ def test_finished_game_can_start_next_round_from_head_team_level() -> None:
                 assert screen.state.finished is False
                 assert len(screen.state.hands[0]) == 27
                 assert screen._game_saved is False
-                assert "新一局开始" in screen._last_action
+                assert "局开始" in screen._last_action
 
     asyncio.run(run())
 
@@ -809,6 +958,9 @@ def test_next_round_applies_tribute_card_swaps_and_records_events() -> None:
                 with patch("guandan.ui.session.make_initial_state", fake_initial_state):
                     screen.action_next_game()
                     await pilot.pause()
+                    choice = screen.session.pending_next_game_choice()
+                    assert choice is not None
+                    screen._finish_next_game(choice.cards[0])
 
                 assert screen.state is not None
                 assert screen.state.turn_index == 3

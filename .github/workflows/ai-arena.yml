@@ -1,0 +1,72 @@
+name: AI Arena
+
+on:
+  schedule:
+    - cron: "17 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-arena-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  paired-strength:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install package
+        run: python -m pip install -e ".[dev]"
+      - name: Run deterministic paired arena
+        run: >-
+          python -m guandan.ai.arena
+          --candidate 4
+          --baseline 3
+          --deals 8
+          --seed-start 5000
+          --deterministic-search
+          --min-win-rate 0.45
+          --max-p95-seconds 1.50
+          --json
+          > ai-arena.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-arena
+          path: ai-arena.json
+          if-no-files-found: error
+
+  full-match-smoke:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install package
+        run: python -m pip install -e ".[dev]"
+      - name: Run paired matches through a successful pass of A
+        run: >-
+          python -m guandan.ai.arena
+          --candidate 4
+          --baseline 3
+          --deals 1
+          --seed-start 6100
+          --full-match
+          --max-p95-seconds 0.80
+          --json
+          > ai-full-match.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-full-match
+          path: ai-full-match.json
+          if-no-files-found: error

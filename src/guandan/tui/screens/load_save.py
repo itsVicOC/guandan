@@ -57,6 +57,8 @@ class LoadSaveScreen(Screen):
                 with Center(), Vertical(id="load-box"):
                     yield Static("💾 断点续局", id="load-title")
                     yield Static("存档文件损坏", id="load-error")
+                    yield Static("可以删除损坏存档后重新开始", id="load-hint")
+                    yield Button("删除损坏存档", id="btn-delete", variant="error")
                     yield Button("← 返回", id="btn-back")
 
         yield Footer()
@@ -67,13 +69,23 @@ class LoadSaveScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-continue":
-            savegame = load_game()
+            from .error import ErrorModal
+
+            try:
+                savegame = load_game()
+            except OSError as exc:
+                self.app.push_screen(ErrorModal(str(exc), title="无法读取存档"))
+                return
             if not savegame:
-                self.app.pop_screen()
+                self.app.push_screen(ErrorModal("存档已不存在或无法解析。", title="无法继续存档"))
                 return
             from .game import GameScreen
 
-            state = restore_game_state(savegame)
+            try:
+                state = restore_game_state(savegame)
+            except ValueError as exc:
+                self.app.push_screen(ErrorModal(str(exc), title="无法继续存档"))
+                return
             metadata = savegame.get("metadata", {})
             ai_difficulties = metadata.get("ai_difficulties", [None, 2, 2, 2])
             difficulty = next((d for d in ai_difficulties if d is not None), 2)
@@ -84,16 +96,38 @@ class LoadSaveScreen(Screen):
                     human=metadata.get("player_seat", 0),
                     existing_state=state,
                     game_id=savegame.get("game_id"),
+                    match_id=savegame.get("match_id"),
+                    round_index=savegame.get("round_index", 1),
+                    elapsed_seconds=savegame.get("elapsed_seconds", 0),
                     seed=metadata.get("seed"),
                 )
             )
         elif event.button.id == "btn-delete":
-            from ...storage import delete_savegame
+            from .confirm import ConfirmModal
 
-            delete_savegame()
-            self.app.pop_screen()
+            self.app.push_screen(
+                ConfirmModal(
+                    "删除存档",
+                    "确定删除当前存档？此操作不会删除历史战绩。",
+                    (("delete", "确认删除", "error"), ("cancel", "取消", "default")),
+                ),
+                self._resolve_delete,
+            )
         else:
             self.app.pop_screen()
+
+    def _resolve_delete(self, action: str | None) -> None:
+        if action != "delete":
+            return
+        from ...storage import delete_savegame
+        from .error import ErrorModal
+
+        try:
+            delete_savegame()
+        except OSError as exc:
+            self.app.push_screen(ErrorModal(str(exc), title="删除失败"))
+            return
+        self.app.pop_screen()
 
     def action_back(self) -> None:
         self.app.pop_screen()

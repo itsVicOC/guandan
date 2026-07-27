@@ -11,7 +11,7 @@ class GuandanApp(App):
     """掼蛋 TUI App。"""
 
     TITLE = "掼蛋"
-    SUB_TITLE = "v0.8.0-beta.3 · Public Beta"
+    SUB_TITLE = "v0.8.0-beta.4 · Public Beta"
 
     def on_mount(self) -> None:
         self.push_screen(MainMenuScreen())

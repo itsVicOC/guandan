@@ -11,15 +11,21 @@ import time
 import uuid
 from collections import Counter
 from dataclasses import dataclass
+from typing import Any, Literal
 
 from ..ai import AINotImplementedError, make_strategy, play_or_pass
 from ..ai.candidates import enumerate_legal_patterns, greedy_pattern_key
 from ..ai.strategy import AIStrategy
 from ..engine.card import Card, Suit
-from ..engine.events import Pass, ShuffleDeal, TurnPlayed
+from ..engine.events import Pass, ShuffleDeal, TributeSent, TurnPlayed
 from ..engine.hand import Pattern
 from ..engine.rules.patterns import find_complete_pattern
-from ..engine.rules.tributes import apply_tribute_flow
+from ..engine.rules.tributes import (
+    TributeFlowResult,
+    apply_tribute_flow,
+    legal_return_cards,
+    legal_tribute_cards,
+)
 from ..engine.state import (
     SEAT_NAMES,
     GameState,
@@ -36,11 +42,11 @@ from ..engine.trick import (
 )
 from ..storage import (
     delete_savegame,
-    load_profile,
+    record_match_statistics,
+    record_round_statistics,
     save_game,
     save_history,
-    save_profile,
-    update_statistics,
+    update_profile,
 )
 from .formatting import card_label, cards_text, pattern_type_label, play_rejection_message
 
@@ -52,6 +58,27 @@ class SessionAction:
     ok: bool
     message: str
     suggested_cards: tuple[Card, ...] = ()
+
+
+@dataclass(frozen=True)
+class PendingCardChoice:
+    """A human decision required before the next round can start."""
+
+    kind: Literal["tribute", "return"]
+    cards: tuple[Card, ...]
+
+
+@dataclass
+class PendingNextGame:
+    """Prepared next-round state that has not replaced the completed round yet."""
+
+    state: GameState
+    finish_order: tuple[int, ...]
+    game_id: str
+    seed: int
+    round_index: int
+    preview: TributeFlowResult
+    human_choice: PendingCardChoice | None = None
 
 
 def card_indices_for_selection(
@@ -88,6 +115,9 @@ class GameSession:
         human: int = 0,
         existing_state: GameState | None = None,
         game_id: str | None = None,
+        match_id: str | None = None,
+        round_index: int = 1,
+        elapsed_seconds: int = 0,
         seed: int | None = None,
         rng: random.Random | None = None,
     ) -> None:
@@ -102,8 +132,11 @@ class GameSession:
             self.difficulty = 1
         self.ai_rng = rng or random.Random()
         self.game_id = game_id or self._new_game_id()
+        self.match_id = match_id or self._new_match_id()
+        self.round_index = max(1, round_index)
         self.seed = seed if seed is not None else random.randint(1, 10000)
         self.start_time = time.time()
+        self._elapsed_before_start = max(0, elapsed_seconds)
         self.game_saved = False
         self.last_action = "准备开始"
         self.displayed_table_actions: dict[int, tuple[str, Pattern | None]] = {}
@@ -111,10 +144,19 @@ class GameSession:
         self._hint_state_key: tuple[object, ...] | None = None
         self._hint_candidates: tuple[Pattern, ...] = ()
         self._hint_index = 0
+        self._pending_next_game: PendingNextGame | None = None
 
     @staticmethod
     def _new_game_id() -> str:
         return f"game_{uuid.uuid4().hex}"
+
+    @staticmethod
+    def _new_match_id() -> str:
+        return f"match_{uuid.uuid4().hex}"
+
+    def current_elapsed_seconds(self) -> int:
+        """Return persisted and current-process elapsed time for this round."""
+        return self._elapsed_before_start + max(0, int(time.time() - self.start_time))
 
     def ensure_started(self) -> GameState:
         if self.state is None:
@@ -335,8 +377,19 @@ class GameSession:
             return list(state.team_levels_final)
         return list(state.team_levels)
 
-    def start_next_game(self) -> SessionAction:
+    def pending_next_game_choice(self) -> PendingCardChoice | None:
+        pending = self._pending_next_game
+        return pending.human_choice if pending is not None else None
+
+    def prepare_next_game(self) -> SessionAction:
+        """Prepare a round and expose any human tribute decision without committing it."""
         state = self.require_state()
+        if self._pending_next_game is not None:
+            choice = self._pending_next_game.human_choice
+            if choice is not None:
+                verb = "进贡" if choice.kind == "tribute" else "还贡"
+                return SessionAction(True, f"请选择一张牌{verb}", choice.cards)
+            return SessionAction(True, "下一局已经准备好")
         if not state.finished:
             self.last_action = "本局尚未结束，不能开始下一局"
             return SessionAction(False, self.last_action)
@@ -348,26 +401,91 @@ class GameSession:
 
         next_level = self.next_round_level(state)
         next_team_levels = self.next_round_team_levels(state)
-        self.level = next_level
-        self.seed = random.randint(1, 10000)
-        self.game_id = self._new_game_id()
-        self.start_time = time.time()
-        self.game_saved = False
-        self.displayed_table_actions.clear()
-        self.last_display_turn = None
+        next_seed = random.randint(1, 10000)
 
         next_state = make_initial_state(
             level=next_level,
             first_player=self.human,
-            seed=self.seed,
+            seed=next_seed,
             team_levels=next_team_levels,
         )
-        tribute_result = apply_tribute_flow(
+        preview_hands = [list(hand) for hand in next_state.hands]
+        preview = apply_tribute_flow(
             list(state.finish_order),
-            next_state.hands,
+            preview_hands,
             level=next_state.level,
             wild_card=next_state.wild_card,
         )
+        human_choice: PendingCardChoice | None = None
+        if any(exchange.from_player == self.human for exchange in preview.exchanges):
+            human_choice = PendingCardChoice(
+                "tribute",
+                tuple(legal_tribute_cards(next_state.hands[self.human], next_state.wild_card, next_level)),
+            )
+        elif any(exchange.to_player == self.human for exchange in preview.exchanges):
+            hands_after_tribute = [list(hand) for hand in next_state.hands]
+            for event in preview.events:
+                if isinstance(event, TributeSent):
+                    hands_after_tribute[event.from_player].remove(event.card)
+                    hands_after_tribute[event.to_player].append(event.card)
+            human_choice = PendingCardChoice(
+                "return",
+                tuple(legal_return_cards(hands_after_tribute[self.human], next_level)),
+            )
+        self._pending_next_game = PendingNextGame(
+            state=next_state,
+            finish_order=tuple(state.finish_order),
+            game_id=self._new_game_id(),
+            seed=next_seed,
+            round_index=self.round_index + 1,
+            preview=preview,
+            human_choice=human_choice,
+        )
+        if human_choice is not None:
+            verb = "进贡" if human_choice.kind == "tribute" else "还贡"
+            self.last_action = f"请选择一张牌{verb}"
+            return SessionAction(True, self.last_action, human_choice.cards)
+        self.last_action = "下一局已经准备好"
+        return SessionAction(True, self.last_action)
+
+    def cancel_next_game(self) -> SessionAction:
+        """Discard a prepared round and keep displaying the completed round."""
+        if self._pending_next_game is None:
+            return SessionAction(False, "没有待确认的下一局")
+        self._pending_next_game = None
+        self.last_action = "已取消开始下一局"
+        return SessionAction(True, self.last_action)
+
+    def finalize_next_game(self, selected_card: Card | None = None) -> SessionAction:
+        """Apply tribute choices and atomically replace the completed round."""
+        pending = self._pending_next_game
+        if pending is None:
+            self.last_action = "请先准备下一局"
+            return SessionAction(False, self.last_action)
+        choice = pending.human_choice
+        if selected_card is not None and (choice is None or selected_card not in choice.cards):
+            self.last_action = "所选牌不符合进贡规则"
+            return SessionAction(False, self.last_action)
+
+        tribute_choices: dict[int, Card] = {}
+        return_choices: dict[int, Card] = {}
+        if selected_card is not None and choice is not None:
+            target = tribute_choices if choice.kind == "tribute" else return_choices
+            target[self.human] = selected_card
+        try:
+            tribute_result = apply_tribute_flow(
+                list(pending.finish_order),
+                pending.state.hands,
+                level=pending.state.level,
+                wild_card=pending.state.wild_card,
+                tribute_choices=tribute_choices,
+                return_choices=return_choices,
+            )
+        except ValueError as exc:
+            self.last_action = f"进贡失败：{exc}"
+            return SessionAction(False, self.last_action)
+
+        next_state = pending.state
         next_state.history.extend(tribute_result.events)
         next_state.turn_index = tribute_result.first_player
         next_state.leader = tribute_result.first_player
@@ -382,13 +500,45 @@ class GameSession:
                 team_levels=shuffle.team_levels,
             )
 
+        self.level = next_state.level
+        self.seed = pending.seed
+        self.game_id = pending.game_id
+        self.round_index = pending.round_index
+        self.start_time = time.time()
+        self._elapsed_before_start = 0
+        self.game_saved = False
+        self.displayed_table_actions.clear()
+        self.last_display_turn = None
         self.state = next_state
-        tribute_note = "抗贡，" if tribute_result.resisted else ""
+        self._pending_next_game = None
+        tribute_note = self._tribute_summary(tribute_result)
         self.last_action = (
-            f"新一局开始：级牌 {next_level}，"
+            f"第 {self.round_index} 局开始：级牌 {next_state.level}，"
             f"{tribute_note}{SEAT_NAMES[tribute_result.first_player]}家先手"
         )
         return SessionAction(True, self.last_action)
+
+    def start_next_game(self) -> SessionAction:
+        """Compatibility entry point that automatically resolves human tribute choices."""
+        prepared = self.prepare_next_game()
+        if not prepared.ok:
+            return prepared
+        return self.finalize_next_game()
+
+    @staticmethod
+    def _tribute_summary(result: TributeFlowResult) -> str:
+        if result.resisted:
+            return "抗贡，"
+        if not result.exchanges:
+            return ""
+        exchanges = []
+        for exchange in result.exchanges:
+            returned = card_label(exchange.return_card) if exchange.return_card is not None else "-"
+            exchanges.append(
+                f"{SEAT_NAMES[exchange.from_player]}贡{card_label(exchange.tribute_card)}给"
+                f"{SEAT_NAMES[exchange.to_player]}，还{returned}"
+            )
+        return "；".join(exchanges) + "；"
 
     def save_finished_if_needed(self) -> bool:
         if self.game_saved:
@@ -397,7 +547,7 @@ class GameSession:
         if not state.finished:
             return False
         try:
-            duration = int(time.time() - self.start_time)
+            duration = self.current_elapsed_seconds()
             ai_difficulties = [
                 None if player == self.human else self.difficulty for player in range(4)
             ]
@@ -408,17 +558,26 @@ class GameSession:
                 ai_difficulties=ai_difficulties,
                 seed=self.seed,
                 duration_seconds=duration,
+                match_id=self.match_id,
+                round_index=self.round_index,
             )
-            won = team_of(state.finish_order[0]) == team_of(self.human)
-            profile = load_profile()
-            update_statistics(
-                profile,
-                won=won,
-                difficulty=self.difficulty,
-                game_id=self.game_id,
-            )
-            save_profile(profile)
-            delete_savegame()
+            def update_statistics(profile: dict[str, Any]) -> None:
+                record_round_statistics(
+                    profile,
+                    got_head=state.finish_order[0] == self.human,
+                    difficulty=self.difficulty,
+                    game_id=self.game_id,
+                )
+                if state.match_finished:
+                    record_match_statistics(
+                        profile,
+                        won=state.winner_team == team_of(self.human),
+                        difficulty=self.difficulty,
+                        match_id=self.match_id,
+                    )
+
+            update_profile(update_statistics)
+            delete_savegame(expected_game_id=self.game_id)
         except Exception as exc:
             self.game_saved = False
             self.last_action = f"保存失败：{exc}"
@@ -439,4 +598,21 @@ class GameSession:
             player_seat=self.human,
             ai_difficulties=ai_difficulties,
             seed=self.seed,
+            match_id=self.match_id,
+            round_index=self.round_index,
+            elapsed_seconds=self.current_elapsed_seconds(),
         )
+
+    def autosave_after_ai(self) -> bool:
+        """Persist a real dealt round after an AI batch while UI actions are locked."""
+        state = self.require_state()
+        if state.finished:
+            return self.save_finished_if_needed()
+        if not state.history or not isinstance(state.history[0], ShuffleDeal):
+            return True
+        try:
+            self.save_unfinished()
+        except Exception as exc:
+            self.last_action = f"自动保存失败：{exc}"
+            return False
+        return True

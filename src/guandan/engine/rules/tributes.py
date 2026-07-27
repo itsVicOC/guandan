@@ -9,6 +9,7 @@
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -46,6 +47,19 @@ def select_tribute_card(
     if not candidates:
         candidates = list(hand)
     return max(candidates, key=lambda card: _tribute_sort_key(card, level))
+
+
+def legal_tribute_cards(
+    hand: List[Card], wild_card: Card | None = None, level: int | None = None
+) -> list[Card]:
+    """Return every physically distinct maximum card that may be paid as tribute."""
+    candidates = [card for card in hand if not _is_wild(card, wild_card)]
+    if not candidates:
+        candidates = list(hand)
+    if not candidates:
+        return []
+    maximum = max(_tribute_strength(card, level) for card in candidates)
+    return [card for card in candidates if _tribute_strength(card, level) == maximum]
 
 
 def compare_tribute_cards(
@@ -86,6 +100,11 @@ def select_return_card(hand: List[Card], level: int | None = None) -> Card:
     if not candidates:
         raise ValueError("no legal return tribute card")
     return min(candidates)
+
+
+def legal_return_cards(hand: List[Card], level: int | None = None) -> list[Card]:
+    """Return all cards that may legally be used for the return tribute."""
+    return [card for card in hand if can_return_tribute(card, level)]
 
 
 @dataclass
@@ -176,6 +195,8 @@ def apply_tribute_flow(
     *,
     level: int,
     wild_card: Card | None,
+    tribute_choices: Mapping[int, Card] | None = None,
+    return_choices: Mapping[int, Card] | None = None,
 ) -> TributeFlowResult:
     """按上一局名次对新局手牌执行进贡/还贡，并返回本局先手。
 
@@ -191,26 +212,58 @@ def apply_tribute_flow(
             events=[],
         )
 
+    destination_hands = hands
+    hands = [list(hand) for hand in destination_hands]
+
+    def commit(result: TributeFlowResult) -> TributeFlowResult:
+        for destination, source in zip(destination_hands, hands):
+            destination[:] = source
+        return result
+
     head = finish_order[0]
     second = finish_order[1]
     third = finish_order[2]
     last = _last_player(finish_order)
     events: list[Event] = []
+    tribute_choices = tribute_choices or {}
+    return_choices = return_choices or {}
+
+    def choose_tribute(player: int) -> Card:
+        legal = legal_tribute_cards(hands[player], wild_card, level)
+        if not legal:
+            raise ValueError("no legal tribute card")
+        chosen = tribute_choices.get(player)
+        if chosen is None:
+            return select_tribute_card(hands[player], wild_card, level)
+        if chosen not in legal:
+            raise ValueError(f"illegal tribute card selected by player {player}")
+        return chosen
+
+    def choose_return(player: int) -> Card:
+        legal = legal_return_cards(hands[player], level)
+        if not legal:
+            raise ValueError("no legal return tribute card")
+        chosen = return_choices.get(player)
+        if chosen is None:
+            return select_return_card(hands[player], level)
+        if chosen not in legal:
+            raise ValueError(f"illegal return tribute card selected by player {player}")
+        return chosen
 
     if third % 2 != last % 2:
         if _tribute_team_has_two_big_jokers(hands, [last]):
             events.append(TributeResisted(player=last, team=last % 2, reason="single"))
             return TributeFlowResult(head, True, [], events)
-        tribute_card = select_tribute_card(hands[last], wild_card, level)
+        tribute_card = choose_tribute(last)
         hands[last].remove(tribute_card)
         hands[head].append(tribute_card)
         events.append(TributeSent(last, head, tribute_card, reason="single"))
-        return_card = select_return_card(hands[head], level)
+        return_card = choose_return(head)
         hands[head].remove(return_card)
         hands[last].append(return_card)
         events.append(TributeReturned(head, last, return_card, reason="single"))
         exchange = TributeExchange(last, head, tribute_card, return_card)
-        return TributeFlowResult(last, False, [exchange], events)
+        return commit(TributeFlowResult(last, False, [exchange], events))
 
     tribute_players = [third, last]
     if _tribute_team_has_two_big_jokers(hands, tribute_players):
@@ -220,10 +273,7 @@ def apply_tribute_flow(
             )
         return TributeFlowResult(head, True, [], events)
 
-    tribute_cards = {
-        player: select_tribute_card(hands[player], wild_card, level)
-        for player in tribute_players
-    }
+    tribute_cards = {player: choose_tribute(player) for player in tribute_players}
     comparison = compare_tribute_cards(
         tribute_cards[third],
         tribute_cards[last],
@@ -252,7 +302,7 @@ def apply_tribute_flow(
         exchanges.append(TributeExchange(from_player, to_player, tribute_card))
 
     for exchange in exchanges:
-        return_card = select_return_card(hands[exchange.to_player], level)
+        return_card = choose_return(exchange.to_player)
         hands[exchange.to_player].remove(return_card)
         hands[exchange.from_player].append(return_card)
         exchange.return_card = return_card
@@ -265,7 +315,7 @@ def apply_tribute_flow(
             )
         )
 
-    return TributeFlowResult(head_tributer, False, exchanges, events)
+    return commit(TributeFlowResult(head_tributer, False, exchanges, events))
 
 
 def resolve_tribute(

@@ -1,30 +1,29 @@
-"""档 4 戴长胜策略：IS-MCTS + 风格化参数。
+"""档 4 戴长胜策略：更高预算的团队感知 SO-ISMCTS。
 
 戴长胜风格特点：
-- 炸弹吝啬：不轻易出炸弹，保留控场能力
+- 炸弹审慎：综合紧迫度、终局价值与控场收益决定使用时机
 - 控场节奏：掌握出牌节奏，控制局势
 - 配合意识：与队友高度配合
 
 实现方式：
-- 继承 ProfessionalStrategy（IS-MCTS）
-- 加载 profile 配置风格参数
-- 在决策中应用风格化规则
+- 继承 ProfessionalStrategy 的团队对抗搜索
+- 加载经自对弈筛选的 profile 参数
+- 把风格参数作为搜索先验，不在搜索结束后否决首选动作
 """
 from __future__ import annotations
 
 import random
-from typing import Optional
+from typing import Mapping, Optional
 
-from ...engine.hand import Pattern, PatternType
-from ...engine.state import GameState, is_teammate, partner_of
-from ...engine.trick import current_top_player
-from ..context import opponent_min_cards
+from ...engine.hand import Pattern
+from ...engine.state import GameState
+from ..mcts.information_set import SearchStyle
 from ..profiles import load_profile
 from .professional import ProfessionalStrategy
 
 
 class DaiChangshengStrategy(ProfessionalStrategy):
-    """戴长胜风格 AI：IS-MCTS + 风格化参数。"""
+    """戴长胜风格 AI：高预算 SO-ISMCTS 与自对弈风格先验。"""
 
     name = "戴长胜"
     difficulty = 4
@@ -33,6 +32,8 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         self,
         profile_name: str = "dachangsheng",
         rng: Optional[random.Random] = None,
+        style_overrides: Mapping[str, float] | None = None,
+        mcts_overrides: Mapping[str, int | float] | None = None,
     ):
         """初始化戴长胜策略。
 
@@ -42,29 +43,38 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         """
         # 加载 profile
         self.profile = load_profile(profile_name)
-        self.style = self.profile["style"]
+        self.style = dict(self.profile["style"])
+        if style_overrides:
+            self.style.update(style_overrides)
         self.pass_probability_multiplier = self.style.get("pass_probability_multiplier", 1.0)
 
         # 初始化 MCTS（用 profile 的参数）
-        mcts_config = self.profile["mcts"]
+        mcts_config = dict(self.profile["mcts"])
+        if mcts_overrides:
+            mcts_config.update(mcts_overrides)
         super().__init__(
-            iterations=mcts_config.get("iterations", 150),
-            ucb_c=mcts_config.get("ucb_c", 1.41),
-            max_actions=mcts_config.get("top_actions", 5),
+            iterations=mcts_config.get("iterations", 96),
+            ucb_c=mcts_config.get("ucb_c", 1.15),
+            max_actions=mcts_config.get("top_actions", 12),
             rollout_strategy=mcts_config.get("rollout_strategy", 2),
             rng=rng,
             mcts_hand_threshold=mcts_config.get("hand_threshold", 10),
-            rollout_max_turns=mcts_config.get("rollout_max_turns", 80),
+            rollout_max_turns=mcts_config.get("rollout_max_turns", 48),
+            time_budget_ms=mcts_config.get("time_budget_ms", 420),
+            max_tree_depth=mcts_config.get("max_depth", 14),
+            prior_weight=mcts_config.get("prior_weight", 0.22),
+            widening_c=mcts_config.get("widening_c", 2.0),
+            widening_alpha=mcts_config.get("widening_alpha", 0.5),
         )
 
     def select_pattern(
         self, state: GameState, player: int
     ) -> Optional[Pattern]:
-        """用 IS-MCTS + 风格化选择最佳出牌。
+        """用高预算 SO-ISMCTS 和风格先验选择最佳出牌。
 
         流程：
-        1. 调用父类 MCTS 搜索
-        2. 应用风格化规则调整决策
+        1. 把 profile 参数转换为动作搜索先验
+        2. 调用父类的团队对抗搜索并直接采用搜索结果
 
         Args:
             state: 当前游戏状态
@@ -73,126 +83,18 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         Returns:
             最佳牌型（None 表示过牌）
         """
-        # 1. MCTS 搜索
-        pattern = super().select_pattern(state, player)
+        return super().select_pattern(state, player)
 
-        # 2. 应用风格化规则
-        return self._apply_style(state, player, pattern)
-
-    def _apply_style(
-        self, state: GameState, player: int, pattern: Optional[Pattern]
-    ) -> Optional[Pattern]:
-        """应用戴长胜风格化规则。
-
-        Args:
-            state: 当前游戏状态
-            player: 当前玩家
-            pattern: MCTS 选择的牌型
-
-        Returns:
-            调整后的牌型
-        """
-        if pattern is None:
-            return None
-
-        if len(pattern.cards) == state.hand_size(player):
-            return pattern
-
-        # 风格 1：炸弹吝啬
-        if self._is_bomb(pattern):
-            return pattern if self._should_use_bomb(state, player, pattern) else None
-
-        # 风格 2：配合意识（队友协作）
-        if (
-            self._should_let_teammate_play(state, player)
-            and self.rng.random() < self.style["teammate_awareness"]
-        ):
-            return None
-
-        return pattern
-
-    def _is_bomb(self, pattern: Pattern) -> bool:
-        """判断是否为炸弹。"""
-        return pattern.type in (
-            PatternType.BOMB,
-            PatternType.STRAIGHT_FLUSH,
-            PatternType.FOUR_JOKERS,
+    def _search_style(self) -> SearchStyle:
+        """Translate mutable profile values into search priors."""
+        return SearchStyle(
+            # A style prior should rank alternatives, not recreate the former
+            # hard veto.  Even the most bomb-conservative profile retains at
+            # least a meaningful fraction of the neutral prior.
+            bomb_willingness=max(
+                0.25,
+                1.25 - float(self.style["bomb_threshold"]),
+            ),
+            teammate_awareness=float(self.style["teammate_awareness"]),
+            control_priority=float(self.style["control_priority"]),
         )
-
-    def _should_use_bomb(
-        self, state: GameState, player: int, bomb_pattern: Pattern
-    ) -> bool:
-        """判断是否应该使用炸弹（炸弹吝啬策略）。
-
-        Args:
-            state: 当前状态
-            player: 当前玩家
-            bomb_pattern: 炸弹牌型
-
-        Returns:
-            True 表示应该用炸弹，False 表示保留
-        """
-        # 能直接出完时，终局收益高于炸弹保留价值。
-        if len(bomb_pattern.cards) == state.hand_size(player):
-            return True
-
-        # 如果队友已经头游，无需再出炸弹
-        if self._teammate_is_first(state, player):
-            return False
-
-        # 如果对手即将获胜（手牌<=3），必须用炸弹阻止
-        opponent_min_cards = self._get_opponent_min_cards(state, player)
-        if opponent_min_cards <= 3 and opponent_min_cards > 0:
-            return True
-
-        # 根据 bomb_threshold 决定
-        # 计算"紧迫度"：对手最少手牌数的倒数
-        urgency = 1.0 / opponent_min_cards if opponent_min_cards > 0 else 0.0
-
-        # threshold 越高，越不愿意用炸弹
-        return urgency > self.style["bomb_threshold"]
-
-    def _should_let_teammate_play(self, state: GameState, player: int) -> bool:
-        """判断是否应该让队友出牌（配合意识）。
-
-        Args:
-            state: 当前状态
-            player: 当前玩家
-
-        Returns:
-            True 表示应该让队友走
-        """
-        partner = partner_of(player)
-
-        # 队友已出完，无需让
-        if state.hand_size(partner) == 0:
-            return False
-
-        # 对手报单时优先护航，不用风格化让牌覆盖拦截。
-        if self._get_opponent_min_cards(state, player) == 1:
-            return False
-
-        # 队友手牌少且正在领先（是当前出牌者），让队友收这一轮
-        return (
-            state.hand_size(partner) <= 5
-            and bool(state.table)
-            and self._partner_is_leading(state, player)
-        )
-
-    def _teammate_is_first(self, state: GameState, player: int) -> bool:
-        """判断队友是否已经头游。"""
-        if not state.finish_order:
-            return False
-        first_player = state.finish_order[0]
-        return is_teammate(first_player, player)
-
-    def _get_opponent_min_cards(self, state: GameState, player: int) -> int:
-        """获取对手最少手牌数。"""
-        return opponent_min_cards(state, player)
-
-    def _partner_is_leading(self, state: GameState, player: int) -> bool:
-        """判断队友是否正在控场（是桌面上最后一个出牌的玩家）。"""
-        if not state.table:
-            return False
-        top_player = current_top_player(state)
-        return top_player is not None and is_teammate(top_player, player)

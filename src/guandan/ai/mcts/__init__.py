@@ -1,51 +1,50 @@
-"""MCTS (Monte Carlo Tree Search) 模块。
+"""Monte Carlo tree-search implementations used by the high-level AIs.
 
-M3 实现 IS-MCTS（Information Set Monte Carlo Tree Search）用于档 3 职业级 AI。
+The production path is team-aware SO-ISMCTS: every simulation samples a fresh
+hidden-card world, while all worlds share a tree keyed by public action history.
+The legacy perfect-information MCTS remains exported for compatibility and
+focused tests.
 
-核心组件：
-- node.py: MCTSNode 数据结构
-- determinize.py: 信息集确定化（隐藏信息推断）
-- search.py: MCTS 主循环（Selection/Expansion/Simulation/Backpropagation）
-
-算法概述：
-1. Determinization: 根据已出牌，随机生成其他玩家的可能手牌
-2. MCTS: 在确定化的世界中运行树搜索
-3. Selection: UCB1 选择最优节点
-4. Expansion: 扩展新子节点
-5. Simulation: 快速玩到游戏结束（rollout）
-6. Backpropagation: 回传结果更新胜率
-
-参数配置：
-- iterations: MCTS 迭代次数（默认 60）
-- ucb_c: UCB1 探索常数（默认 1.41）
-- max_depth: 最大搜索深度（默认 10）
-- rollout_strategy: Simulation 策略档位（默认 1）
-- top_actions: 每个节点考虑的候选动作数（默认 4）
-- rollout_max_turns: 单次 rollout 最大手数（默认 40）
-- hand_threshold: 手牌数不大于该值时启用 MCTS（默认 10）
+Professional defaults cap search at 64 simulations or 240 ms, use 10
+representative actions, depth 12, rollout level 2 and a 40-turn rollout limit.
+Progressive widening and PUCT-style priors control expansion within that budget.
 """
 from __future__ import annotations
 
 from typing import Dict
 
 from .determinize import determinize
+from .information_set import (
+    InformationSetNode,
+    SearchResult,
+    SearchStyle,
+    information_set_search,
+)
 from .node import MCTSNode
 from .search import mcts_search
 
 __all__ = [
     "MCTS_CONFIG",
+    "InformationSetNode",
     "MCTSNode",
+    "SearchResult",
+    "SearchStyle",
     "determinize",
+    "information_set_search",
     "mcts_search",
 ]
 
 # 默认配置
 MCTS_CONFIG: Dict[str, int | float] = {
-    "iterations": 60,  # 职业档默认预算：兼顾搜索质量与 TUI 响应
-    "ucb_c": 1.41,
-    "max_depth": 10,
-    "rollout_strategy": 1,
-    "top_actions": 4,
+    "iterations": 64,
+    "time_budget_ms": 240,
+    "ucb_c": 1.20,
+    "prior_weight": 0.18,
+    "max_depth": 12,
+    "rollout_strategy": 2,
+    "top_actions": 10,
     "rollout_max_turns": 40,
     "hand_threshold": 10,
+    "widening_c": 1.8,
+    "widening_alpha": 0.5,
 }

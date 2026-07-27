@@ -1,19 +1,24 @@
 {
   "name": "戴长胜",
   "difficulty": 4,
-  "description": "炸弹吝啬、控场节奏、配合意识",
+  "description": "炸弹审慎、控场节奏、配合意识",
   "mcts": {
-    "iterations": 40,
-    "ucb_c": 1.41,
+    "iterations": 96,
+    "time_budget_ms": 420,
+    "ucb_c": 1.15,
+    "prior_weight": 0.22,
     "rollout_strategy": 2,
-    "top_actions": 4,
+    "top_actions": 12,
+    "max_depth": 14,
     "hand_threshold": 10,
-    "rollout_max_turns": 40
+    "rollout_max_turns": 48,
+    "widening_c": 2.0,
+    "widening_alpha": 0.5
   },
   "style": {
-    "bomb_threshold": 0.80,
-    "control_priority": 0.90,
-    "teammate_awareness": 0.95,
+    "bomb_threshold": 0.25,
+    "control_priority": 0.5,
+    "teammate_awareness": 0.85,
     "pass_probability_multiplier": 1.2
   }
 }

@@ -1,0 +1,62 @@
+{
+  "algorithm": "team-aware-so-ismcts-v2",
+  "baseline_difficulty": 3,
+  "candidate_difficulty": 4,
+  "generated_at": "2026-07-27",
+  "selected_style": {
+    "bomb_threshold": 0.25,
+    "control_priority": 0.5,
+    "teammate_awareness": 0.85
+  },
+  "deterministic_style_selection": {
+    "candidate_count": 6,
+    "screening_deals_per_candidate": 3,
+    "screening_seed_start": 2400,
+    "finalists": 2,
+    "final_deals_per_candidate": 10,
+    "final_seed_start": 102400,
+    "professional_iterations": 28,
+    "dai_iterations": 48,
+    "selected_final_wins": 10,
+    "selected_final_games": 20,
+    "selected_final_win_rate": 0.5,
+    "selected_final_average_level_margin": -0.05,
+    "runner_up_wins": 7,
+    "runner_up_games": 20
+  },
+  "production_holdout": {
+    "deals": 20,
+    "seed_start": 5000,
+    "candidate_wins": 21,
+    "games": 40,
+    "candidate_win_rate": 0.525,
+    "confidence_95": [0.374971, 0.670648],
+    "elo_delta": 17.386,
+    "average_level_margin": 0.4,
+    "candidate_p95_seconds": 0.428975
+  },
+  "deterministic_regression": {
+    "deals": 8,
+    "seed_start": 5000,
+    "professional_iterations": 64,
+    "dai_iterations": 96,
+    "candidate_wins": 8,
+    "games": 16,
+    "candidate_win_rate": 0.5,
+    "confidence_95": [0.279992, 0.720008],
+    "average_level_margin": -0.125,
+    "candidate_p95_seconds": 0.996947
+  },
+  "full_match_smoke": {
+    "deals": 1,
+    "seed_start": 6100,
+    "games": 2,
+    "candidate_wins": 1,
+    "baseline_wins": 1,
+    "rounds_per_leg": [12, 10],
+    "tribute_rounds_per_leg": [11, 9],
+    "candidate_p95_seconds": 0.428628,
+    "passed": true
+  },
+  "interpretation": "The 40-game production result passes the release gate but its Wilson interval crosses 50%; it is evidence of non-regression and positive level margin, not statistical proof of superiority."
+}

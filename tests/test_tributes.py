@@ -1,6 +1,8 @@
 """进贡 / 还贡 / 抗贡测试。"""
 from __future__ import annotations
 
+import pytest
+
 from guandan.engine.card import (
     RANK_2,
     RANK_3,
@@ -65,6 +67,64 @@ class TestSelectTributeCard:
         hand = [wild, c(RANK_A), c(RANK_K)]
 
         assert select_tribute_card(hand, wild_card=wild, level=RANK_5) == c(RANK_A)
+
+
+class TestExplicitTributeChoices:
+    def test_selected_legal_return_card_changes_the_hand(self):
+        hands = [
+            [c(RANK_3), c(RANK_4)],
+            [c(RANK_8, "S")],
+            [c(RANK_8, "C")],
+            [c(RANK_A), c(RANK_9)],
+        ]
+
+        result = apply_tribute_flow(
+            [0, 1, 2],
+            hands,
+            level=RANK_5,
+            wild_card=None,
+            return_choices={0: c(RANK_4)},
+        )
+
+        assert result.exchanges[0].return_card == c(RANK_4)
+        assert c(RANK_4) in hands[3]
+        assert c(RANK_3) in hands[0]
+
+    def test_rejects_non_maximum_tribute_choice(self):
+        hands = [
+            [c(RANK_3)],
+            [c(RANK_8, "S")],
+            [c(RANK_8, "C")],
+            [c(RANK_A), c(RANK_9)],
+        ]
+
+        with pytest.raises(ValueError, match="illegal tribute"):
+            apply_tribute_flow(
+                [0, 1, 2],
+                hands,
+                level=RANK_5,
+                wild_card=None,
+                tribute_choices={3: c(RANK_9)},
+            )
+
+    def test_rejects_illegal_return_choice(self):
+        hands = [
+            [c(RANK_3), c(RANK_A)],
+            [c(RANK_8, "S")],
+            [c(RANK_8, "C")],
+            [c(RANK_A), c(RANK_9)],
+        ]
+        original = [list(hand) for hand in hands]
+
+        with pytest.raises(ValueError, match="illegal return"):
+            apply_tribute_flow(
+                [0, 1, 2],
+                hands,
+                level=RANK_5,
+                wild_card=None,
+                return_choices={0: c(RANK_A)},
+            )
+        assert hands == original
 
 
 class TestNextRoundFirstPlayer:

@@ -2,8 +2,12 @@
 from __future__ import annotations
 
 import json
+import os
 import random
+import subprocess
+import sys
 import tempfile
+from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
@@ -25,6 +29,7 @@ from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.rules.patterns import find_complete_pattern
 from guandan.engine.state import GameState, make_initial_state, pass_turn, play_pattern
 from guandan.storage import (
+    DEFAULT_PROFILE,
     delete_savegame,
     deserialize_events,
     has_savegame,
@@ -32,11 +37,14 @@ from guandan.storage import (
     load_history_detail,
     load_history_list,
     load_profile,
+    record_match_statistics,
+    record_round_statistics,
     restore_game_state,
     save_game,
     save_history,
     save_profile,
     serialize_events,
+    update_profile,
     update_statistics,
 )
 
@@ -193,7 +201,8 @@ class TestProfile:
 
                 assert profile["player_name"] == "玩家"
                 assert profile["preferences"]["default_difficulty"] == 2
-                assert profile["statistics"]["total_games"] == 0
+                assert profile["statistics"]["total_rounds"] == 0
+                assert profile["statistics"]["total_matches"] == 0
 
     def test_save_and_load_profile(self):
         """保存并加载配置。"""
@@ -225,7 +234,7 @@ class TestProfile:
                             "wins": 1,
                             "losses": 1,
                             "win_rate": 0.5,
-                            "by_difficulty": {},
+                            "by_difficulty": {"2": {"games": 2, "wins": 1}},
                         },
                     }
                 ),
@@ -234,9 +243,17 @@ class TestProfile:
             with patch("guandan.storage.profile.get_profile_path", return_value=path):
                 profile = load_profile()
 
-            assert profile["version"] == "2.0"
+            assert profile["version"] == "3.0"
             assert profile["player_name"] == "旧玩家"
+            assert profile["statistics"]["total_rounds"] == 2
+            assert profile["statistics"]["head_rounds"] == 1
+            assert profile["statistics"]["total_matches"] == 0
             assert profile["statistics"]["recorded_game_ids"] == []
+            assert profile["statistics"]["by_difficulty_rounds"]["2"] == {
+                "rounds": 2,
+                "heads": 1,
+            }
+            assert profile["statistics"]["by_difficulty"] == {}
 
     def test_update_statistics_win(self):
         """更新统计（获胜）。"""
@@ -247,12 +264,11 @@ class TestProfile:
 
                 update_statistics(profile, won=True, difficulty=2)
 
-                assert profile["statistics"]["total_games"] == 1
-                assert profile["statistics"]["wins"] == 1
-                assert profile["statistics"]["losses"] == 0
-                assert profile["statistics"]["win_rate"] == 1.0
-                assert profile["statistics"]["by_difficulty"]["2"]["games"] == 1
-                assert profile["statistics"]["by_difficulty"]["2"]["wins"] == 1
+                assert profile["statistics"]["total_rounds"] == 1
+                assert profile["statistics"]["head_rounds"] == 1
+                assert profile["statistics"]["head_rate"] == 1.0
+                assert profile["statistics"]["by_difficulty_rounds"]["2"]["rounds"] == 1
+                assert profile["statistics"]["by_difficulty_rounds"]["2"]["heads"] == 1
 
     def test_update_statistics_loss(self):
         """更新统计（失败）。"""
@@ -263,10 +279,9 @@ class TestProfile:
 
                 update_statistics(profile, won=False, difficulty=2)
 
-                assert profile["statistics"]["total_games"] == 1
-                assert profile["statistics"]["wins"] == 0
-                assert profile["statistics"]["losses"] == 1
-                assert profile["statistics"]["win_rate"] == 0.0
+                assert profile["statistics"]["total_rounds"] == 1
+                assert profile["statistics"]["head_rounds"] == 0
+                assert profile["statistics"]["head_rate"] == 0.0
 
     def test_update_statistics_multiple_games(self):
         """更新统计（多局）。"""
@@ -279,14 +294,105 @@ class TestProfile:
                 update_statistics(profile, won=False, difficulty=2)
                 update_statistics(profile, won=True, difficulty=3)
 
-                assert profile["statistics"]["total_games"] == 3
-                assert profile["statistics"]["wins"] == 2
-                assert profile["statistics"]["losses"] == 1
-                assert profile["statistics"]["win_rate"] == 2 / 3
-                assert profile["statistics"]["by_difficulty"]["2"]["games"] == 2
-                assert profile["statistics"]["by_difficulty"]["2"]["wins"] == 1
-                assert profile["statistics"]["by_difficulty"]["3"]["games"] == 1
-                assert profile["statistics"]["by_difficulty"]["3"]["wins"] == 1
+                assert profile["statistics"]["total_rounds"] == 3
+                assert profile["statistics"]["head_rounds"] == 2
+                assert profile["statistics"]["head_rate"] == 2 / 3
+                assert profile["statistics"]["by_difficulty_rounds"]["2"] == {
+                    "rounds": 2,
+                    "heads": 1,
+                }
+                assert profile["statistics"]["by_difficulty_rounds"]["3"] == {
+                    "rounds": 1,
+                    "heads": 1,
+                }
+
+    def test_round_and_match_statistics_are_distinct_and_idempotent(self):
+        profile = deepcopy(DEFAULT_PROFILE)
+
+        assert record_round_statistics(
+            profile, got_head=False, difficulty=2, game_id="round-1"
+        )
+        assert not record_round_statistics(
+            profile, got_head=True, difficulty=2, game_id="round-1"
+        )
+        assert profile["statistics"]["total_matches"] == 0
+
+        assert record_match_statistics(
+            profile, won=True, difficulty=2, match_id="match-1"
+        )
+        assert not record_match_statistics(
+            profile, won=False, difficulty=2, match_id="match-1"
+        )
+        assert profile["statistics"]["total_rounds"] == 1
+        assert profile["statistics"]["total_matches"] == 1
+        assert profile["statistics"]["match_wins"] == 1
+
+    def test_update_profile_serializes_cross_process_writers(self, tmp_path: Path):
+        path = tmp_path / "profile.json"
+        with patch("guandan.storage.profile.get_profile_path", return_value=path):
+            save_profile(deepcopy(DEFAULT_PROFILE))
+
+        script = """
+import sys
+import time
+from pathlib import Path
+import guandan.storage.profile as profile_module
+
+path = Path(sys.argv[1])
+profile_module.get_profile_path = lambda: path
+
+def mutate(profile):
+    current = profile["preferences"]["default_difficulty"]
+    time.sleep(0.25)
+    profile["preferences"]["default_difficulty"] = current + 1
+
+profile_module.update_profile(mutate)
+"""
+        env = dict(os.environ)
+        source = str(Path(__file__).parents[1] / "src")
+        env["PYTHONPATH"] = os.pathsep.join(
+            part for part in (source, env.get("PYTHONPATH", "")) if part
+        )
+        processes = [
+            subprocess.Popen(
+                [sys.executable, "-c", script, str(path)],
+                cwd=Path(__file__).parents[1],
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            for _ in range(2)
+        ]
+        failures = []
+        for process in processes:
+            stdout, stderr = process.communicate(timeout=10)
+            if process.returncode != 0:
+                failures.append(f"stdout={stdout}\nstderr={stderr}")
+        assert not failures, "\n".join(failures)
+
+        with patch("guandan.storage.profile.get_profile_path", return_value=path):
+            profile = load_profile()
+        assert profile["preferences"]["default_difficulty"] == 4
+
+    def test_update_profile_persists_mutator_result(self, tmp_path: Path):
+        path = tmp_path / "profile.json"
+
+        def rename(profile):
+            profile["player_name"] = "并发玩家"
+            return "updated"
+
+        with patch("guandan.storage.profile.get_profile_path", return_value=path):
+            assert update_profile(rename) == "updated"
+            assert load_profile()["player_name"] == "并发玩家"
+
+    def test_load_profile_propagates_io_errors(self, tmp_path: Path):
+        path = tmp_path / "profile.json"
+        path.write_text("{}", encoding="utf-8")
+        with patch("guandan.storage.profile.get_profile_path", return_value=path), patch(
+            "guandan.storage.profile.open", side_effect=PermissionError("denied")
+        ), pytest.raises(PermissionError, match="denied"):
+            load_profile()
 
 
 class TestSavegame:
@@ -407,8 +513,31 @@ class TestSavegame:
                 loaded = load_game()
 
             assert loaded is not None
-            assert loaded["version"] == "2.0"
+            assert loaded["version"] == "3.0"
+            assert loaded["match_id"] == "legacy"
+            assert loaded["round_index"] == 1
+            assert loaded["elapsed_seconds"] == 0
             assert "state" in loaded
+
+    def test_load_game_migrates_version_2_metadata(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "savegame.json"
+            state = make_initial_state(level=2, first_player=0, seed=42)
+            with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
+                save_game(state, "legacy-v2", 0, [None, 2, 2, 2], 42)
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["version"] = "2.0"
+            for key in ("match_id", "round_index", "elapsed_seconds"):
+                payload.pop(key)
+                payload["metadata"].pop(key)
+            path.write_text(json.dumps(payload), encoding="utf-8")
+
+            with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
+                loaded = load_game()
+
+            assert loaded is not None
+            assert loaded["version"] == "3.0"
+            assert loaded["match_id"] == "legacy-v2"
 
     def test_load_game_no_savegame(self):
         """无存档时返回 None。"""
@@ -418,6 +547,14 @@ class TestSavegame:
 
                 loaded = load_game()
                 assert loaded is None
+
+    def test_load_game_propagates_io_errors(self, tmp_path: Path):
+        path = tmp_path / "savegame.json"
+        path.write_text("{}", encoding="utf-8")
+        with patch("guandan.storage.savegame.get_savegame_path", return_value=path), patch(
+            "guandan.storage.savegame.open", side_effect=PermissionError("denied")
+        ), pytest.raises(PermissionError, match="denied"):
+            load_game()
 
     @pytest.mark.parametrize(
         "payload",
@@ -486,6 +623,40 @@ class TestSavegame:
                 delete_savegame()
                 assert has_savegame() is False
 
+    def test_delete_savegame_only_removes_expected_round(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "savegame.json"
+            state = make_initial_state(level=2, first_player=0, seed=42)
+            with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
+                save_game(state, "current-round", 0, [None, 2, 2, 2], 42)
+                assert delete_savegame(expected_game_id="other-round") is False
+                assert path.exists()
+                assert delete_savegame(expected_game_id="current-round") is True
+                assert not path.exists()
+
+    def test_savegame_persists_round_context_and_elapsed_time(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "savegame.json"
+            state = make_initial_state(level=5, first_player=0, seed=42)
+            with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
+                save_game(
+                    state,
+                    "round-3",
+                    0,
+                    [None, 2, 2, 2],
+                    42,
+                    match_id="match-7",
+                    round_index=3,
+                    elapsed_seconds=125,
+                )
+                loaded = load_game()
+
+            assert loaded is not None
+            assert loaded["match_id"] == "match-7"
+            assert loaded["round_index"] == 3
+            assert loaded["elapsed_seconds"] == 125
+            assert loaded["metadata"]["elapsed_seconds"] == 125
+
 
 class TestHistory:
     """测试 History 管理。"""
@@ -521,6 +692,8 @@ class TestHistory:
                 history_list = load_history_list()
                 assert len(history_list) == 1
                 assert history_list[0]["game_id"] == "game001"
+                assert history_list[0]["match_id"] == "game001"
+                assert history_list[0]["round_index"] == 1
                 assert history_list[0]["result"]["player_rank"] == 2  # 0 在 finish_order 中排第 2
                 assert history_list[0]["result"]["winner_team"] == 0
                 assert history_list[0]["duration_seconds"] == 180

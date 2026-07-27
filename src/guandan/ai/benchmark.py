@@ -7,15 +7,22 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import random
 import time
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Optional, Sequence
 
-from ..engine.state import make_initial_state, team_of
+from ..engine.events import ShuffleDeal, TributeSent
+from ..engine.replay import replay_events
+from ..engine.rules.tributes import apply_tribute_flow
+from ..engine.state import GameState, make_initial_state, team_of
 from .play import play_or_pass
 from .strategy import DIFFICULTY_NAMES, AIStrategy, make_strategy
+
+StrategyFactory = Callable[[int, int], AIStrategy]
 
 
 @dataclass(frozen=True)
@@ -33,6 +40,20 @@ class MatchResult:
     team_bomb_count: tuple[int, int]
     drift: bool
     duration_seconds: float
+    decision_seconds_by_player: tuple[
+        tuple[float, ...],
+        tuple[float, ...],
+        tuple[float, ...],
+        tuple[float, ...],
+    ] = ((), (), (), ())
+
+    @property
+    def decision_seconds(self) -> tuple[float, ...]:
+        return tuple(
+            duration
+            for seat_durations in self.decision_seconds_by_player
+            for duration in seat_durations
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """转换为稳定的 JSON 友好结构。"""
@@ -48,7 +69,43 @@ class MatchResult:
             "team_bomb_count": list(self.team_bomb_count),
             "drift": self.drift,
             "duration_seconds": round(self.duration_seconds, 6),
+            "decision_latency": _latency_payload(self.decision_seconds),
+            "seat_decision_latency": [
+                _latency_payload(durations)
+                for durations in self.decision_seconds_by_player
+            ],
         }
+
+
+def _percentile(values: Sequence[float], percentile: float) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    index = max(0, min(len(ordered) - 1, math.ceil(percentile * len(ordered)) - 1))
+    return ordered[index]
+
+
+def _latency_payload(values: Sequence[float]) -> dict[str, float | int]:
+    return {
+        "count": len(values),
+        "average_seconds": round(sum(values) / len(values), 6) if values else 0.0,
+        "p50_seconds": round(_percentile(values, 0.50), 6),
+        "p95_seconds": round(_percentile(values, 0.95), 6),
+        "max_seconds": round(max(values), 6) if values else 0.0,
+    }
+
+
+def _freeze_decision_seconds(
+    values: Sequence[Sequence[float]],
+) -> tuple[
+    tuple[float, ...],
+    tuple[float, ...],
+    tuple[float, ...],
+    tuple[float, ...],
+]:
+    if len(values) != 4:
+        raise ValueError("decision timings require exactly four seats")
+    return (tuple(values[0]), tuple(values[1]), tuple(values[2]), tuple(values[3]))
 
 
 @dataclass(frozen=True)
@@ -73,6 +130,36 @@ class BenchmarkSummary:
             "team_wins": list(self.team_wins),
             "average_bombs": list(self.average_bombs),
             "results": [result.to_dict() for result in self.results],
+        }
+
+
+@dataclass(frozen=True)
+class FullMatchResult:
+    """A continuous AI match spanning deals, tribute and the successful pass of A."""
+
+    seed: int
+    difficulties: tuple[int, int, int, int]
+    rounds: int
+    turns: int
+    finished: bool
+    winner_team: Optional[int]
+    final_levels: tuple[int, int]
+    tribute_rounds: int
+    round_results: tuple[MatchResult, ...]
+    duration_seconds: float
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "seed": self.seed,
+            "difficulties": list(self.difficulties),
+            "rounds": self.rounds,
+            "turns": self.turns,
+            "finished": self.finished,
+            "winner_team": self.winner_team,
+            "final_levels": list(self.final_levels),
+            "tribute_rounds": self.tribute_rounds,
+            "round_results": [result.to_dict() for result in self.round_results],
+            "duration_seconds": round(self.duration_seconds, 6),
         }
 
 
@@ -233,20 +320,28 @@ def run_match(
     level: int = 2,
     difficulties: Sequence[int] | int = (0, 1, 2, 3),
     max_turns: int = 2000,
+    strategy_factory: StrategyFactory | None = None,
 ) -> MatchResult:
     """运行一局 4 AI 对战。"""
     seat_difficulties = _normalize_difficulties(difficulties)
     state = make_initial_state(level=level, first_player=0, seed=seed)
-    strategies = [make_strategy(diff) for diff in seat_difficulties]
+    factory = strategy_factory or (lambda difficulty, _player: make_strategy(difficulty))
+    strategies = [
+        factory(difficulty, player)
+        for player, difficulty in enumerate(seat_difficulties)
+    ]
     for player, strategy in enumerate(strategies):
         _seed_strategy(strategy, seed, player)
 
     rng = random.Random(seed)
     start = time.perf_counter()
     turns = 0
+    decision_seconds: list[list[float]] = [[], [], [], []]
     while not state.finished and turns < max_turns:
         player = state.turn_index
+        decision_started = time.perf_counter()
         play_or_pass(state, player, strategies[player], rng)
+        decision_seconds[player].append(time.perf_counter() - decision_started)
         turns += 1
 
     duration = time.perf_counter() - start
@@ -267,6 +362,126 @@ def run_match(
         team_bomb_count=(state.team_bomb_count[0], state.team_bomb_count[1]),
         drift=state.drift,
         duration_seconds=duration,
+        decision_seconds_by_player=_freeze_decision_seconds(decision_seconds),
+    )
+
+
+def _prepare_next_round(previous: GameState, seed: int) -> GameState:
+    if not previous.finished or previous.match_finished:
+        raise ValueError("previous state must be a completed non-final round")
+    if previous.team_levels_final is None or len(previous.finish_order) != 3:
+        raise ValueError("previous round has no valid settlement")
+
+    levels = list(previous.team_levels_final)
+    head_team = team_of(previous.finish_order[0])
+    state = make_initial_state(
+        level=levels[head_team],
+        first_player=previous.finish_order[0],
+        seed=seed,
+        team_levels=levels,
+    )
+    tribute = apply_tribute_flow(
+        list(previous.finish_order),
+        state.hands,
+        level=state.level,
+        wild_card=state.wild_card,
+    )
+    state.history.extend(tribute.events)
+    state.turn_index = tribute.first_player
+    state.leader = tribute.first_player
+    shuffle = state.history[0]
+    if not isinstance(shuffle, ShuffleDeal):
+        raise ValueError("next round event stream has no deal")
+    state.history[0] = replace(shuffle, first_player=tribute.first_player)
+    return state
+
+
+def run_full_match(
+    seed: int,
+    *,
+    level: int = 2,
+    difficulties: Sequence[int] | int = (0, 1, 2, 3),
+    max_rounds: int = 64,
+    max_turns: int = 2000,
+    strategy_factory: StrategyFactory | None = None,
+) -> FullMatchResult:
+    """Run consecutive AI rounds, including tribute, until one team passes A."""
+    if max_rounds <= 0:
+        raise ValueError("max_rounds must be positive")
+    if max_turns <= 0:
+        raise ValueError("max_turns must be positive")
+
+    seat_difficulties = _normalize_difficulties(difficulties)
+    factory = strategy_factory or (lambda difficulty, _player: make_strategy(difficulty))
+    strategies = [
+        factory(difficulty, player)
+        for player, difficulty in enumerate(seat_difficulties)
+    ]
+    for player, strategy in enumerate(strategies):
+        _seed_strategy(strategy, seed, player)
+    rng = random.Random(seed)
+    state = make_initial_state(level=level, first_player=0, seed=seed)
+    round_results: list[MatchResult] = []
+    total_turns = 0
+    tribute_rounds = 0
+    match_started = time.perf_counter()
+
+    for round_offset in range(max_rounds):
+        round_started = time.perf_counter()
+        round_turns = 0
+        decision_seconds: list[list[float]] = [[], [], [], []]
+        while not state.finished and round_turns < max_turns:
+            player = state.turn_index
+            decision_started = time.perf_counter()
+            play_or_pass(state, player, strategies[player], rng)
+            decision_seconds[player].append(time.perf_counter() - decision_started)
+            round_turns += 1
+        total_turns += round_turns
+        round_duration = time.perf_counter() - round_started
+        final_levels = state.team_levels_final
+        normalized_levels = (
+            (int(final_levels[0]), int(final_levels[1]))
+            if final_levels is not None
+            else None
+        )
+        round_results.append(
+            MatchResult(
+                seed=seed + round_offset,
+                level=state.level,
+                difficulties=seat_difficulties,
+                turns=round_turns,
+                finished=state.finished,
+                finish_order=tuple(state.finish_order),
+                winner_team=team_of(state.finish_order[0]) if state.finish_order else None,
+                final_levels=normalized_levels,
+                team_bomb_count=(state.team_bomb_count[0], state.team_bomb_count[1]),
+                drift=state.drift,
+                duration_seconds=round_duration,
+                decision_seconds_by_player=_freeze_decision_seconds(decision_seconds),
+            )
+        )
+        if not state.finished:
+            break
+        if replay_events(state.history) != state:
+            raise RuntimeError(f"round {round_offset + 1} failed exact event replay")
+        if any(isinstance(event, TributeSent) for event in state.history):
+            tribute_rounds += 1
+        if state.match_finished:
+            break
+        state = _prepare_next_round(state, seed + round_offset + 1)
+
+    levels = state.team_levels_final or state.team_levels
+    return FullMatchResult(
+        seed=seed,
+        difficulties=seat_difficulties,
+        rounds=len(round_results),
+        turns=total_turns,
+        finished=state.match_finished,
+        winner_team=state.winner_team if state.match_finished else None,
+        final_levels=(int(levels[0]), int(levels[1])),
+        tribute_rounds=tribute_rounds,
+        round_results=tuple(round_results),
+        duration_seconds=time.perf_counter() - match_started,
     )
 
 
@@ -342,6 +557,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     parser.add_argument("--max-turns", type=int, default=2000, help="turn cap per game")
     parser.add_argument(
+        "--full-match",
+        action="store_true",
+        help="run one continuous match through the successful pass of A",
+    )
+    parser.add_argument("--max-rounds", type=int, default=64, help="round cap for --full-match")
+    parser.add_argument(
         "--json",
         action="store_true",
         help="print machine-readable JSON instead of text summary",
@@ -381,6 +602,27 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         else:
             _print_comparison(gate)
         return 0 if gate.passed else 1
+
+    if args.full_match:
+        full_result = run_full_match(
+            args.seed_start,
+            level=args.level,
+            difficulties=args.difficulties,
+            max_rounds=args.max_rounds,
+            max_turns=args.max_turns,
+        )
+        if args.json:
+            print(json.dumps(full_result.to_dict(), ensure_ascii=False, sort_keys=True))
+        else:
+            print(
+                "AI full match "
+                f"seed={full_result.seed} rounds={full_result.rounds} turns={full_result.turns} "
+                f"finished={full_result.finished} winner_team={full_result.winner_team} "
+                f"tribute_rounds={full_result.tribute_rounds} levels={full_result.final_levels} "
+                f"time={full_result.duration_seconds:.3f}s"
+            )
+            print(f"difficulties={_format_difficulties(args.difficulties)}")
+        return 0 if full_result.finished else 1
 
     summary = run_benchmark(
         games=args.games,
