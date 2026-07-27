@@ -237,7 +237,7 @@ class MenuPage(QWidget):
         masthead.addWidget(mark)
         masthead.addSpacing(12)
         masthead.addWidget(QLabel("LOCAL TABLE  ·  公测版"), 1)
-        version = QLabel("v0.8.0-beta.4")
+        version = QLabel("v0.8.0-beta.5")
         version.setObjectName("muted")
         masthead.addWidget(version)
         layout.addLayout(masthead)
@@ -321,7 +321,7 @@ class DifficultyPage(QWidget):
     def _start(self, window: "GuandanMainWindow", difficulty: int) -> None:
         try:
             make_strategy(difficulty)
-        except AINotImplementedError as exc:
+        except (AINotImplementedError, ImportError, OSError, ValueError) as exc:
             QMessageBox.warning(self, "AI 档位不可用", str(exc))
             return
         if not window.confirm_start_new_game():
@@ -1221,7 +1221,7 @@ class GamePage(QWidget):
 class GuandanMainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("掼蛋 GUI · v0.8.0-beta.4")
+        self.setWindowTitle("掼蛋 GUI · v0.8.0-beta.5")
         self.resize(1280, 860)
         self.setMinimumSize(1080, 760)
         self.stack = QStackedWidget()

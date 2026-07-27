@@ -56,6 +56,7 @@ jobs:
           --onedir
           --name Guandan
           --collect-data guandan.ai.profiles
+          --collect-submodules guandan.ai.strategies
           packaging/guandan_gui.py
       - name: Smoke test packaged application
         run: python packaging/smoke_desktop.py

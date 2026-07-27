@@ -557,6 +557,63 @@ def test_gui_window_smoke_offscreen() -> None:
     assert "ok" in result.stdout
 
 
+def test_gui_difficulty_click_starts_selected_game() -> None:
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    env = dict(os.environ)
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    code = """
+from unittest.mock import patch
+from PySide6.QtCore import Qt
+from PySide6.QtTest import QTest
+from PySide6.QtWidgets import QApplication, QPushButton
+from guandan.gui.window import GuandanMainWindow
+
+app = QApplication([])
+window = GuandanMainWindow()
+window.show_difficulty()
+window.show()
+app.processEvents()
+
+difficulty_buttons = window.stack.currentWidget().findChildren(
+    QPushButton, "difficultyCard"
+)
+assert len(difficulty_buttons) == 5
+with patch("guandan.gui.window.has_savegame", return_value=False):
+    QTest.mouseClick(difficulty_buttons[1], Qt.MouseButton.LeftButton)
+
+assert window.stack.currentWidget() is window.game_page
+assert window.game_page is not None
+assert window.game_page.session.difficulty == 1
+window.game_page.deactivate()
+window.game_page = None
+
+window.show_difficulty()
+error_page = window.stack.currentWidget()
+difficulty_buttons = error_page.findChildren(QPushButton, "difficultyCard")
+with patch(
+    "guandan.gui.window.make_strategy", side_effect=ImportError("strategy missing")
+), patch("guandan.gui.window.QMessageBox.warning") as warning:
+    QTest.mouseClick(difficulty_buttons[0], Qt.MouseButton.LeftButton)
+assert window.stack.currentWidget() is error_page
+warning.assert_called_once()
+
+window.close()
+app.quit()
+print("ok")
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=os.getcwd(),
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
 def test_gui_stops_ai_when_table_is_hidden_or_ai_fails() -> None:
     if importlib.util.find_spec("PySide6") is None:
         pytest.skip("PySide6 is not installed")

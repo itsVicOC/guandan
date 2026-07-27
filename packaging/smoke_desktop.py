@@ -25,6 +25,25 @@ def main() -> int:
 
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
+    verification_env = dict(env)
+    verification_env["GUANDAN_PACKAGE_SMOKE"] = "1"
+    verification = subprocess.run(
+        [str(executable.resolve())],
+        capture_output=True,
+        text=True,
+        env=verification_env,
+        timeout=30,
+        check=False,
+    )
+    if verification.returncode != 0:
+        print(verification.stdout, file=sys.stderr)
+        print(verification.stderr, file=sys.stderr)
+        print(
+            f"packaged AI verification failed: {verification.returncode}",
+            file=sys.stderr,
+        )
+        return 1
+
     process = subprocess.Popen(
         [str(executable.resolve())],
         stdout=subprocess.PIPE,
