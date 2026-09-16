@@ -49,16 +49,6 @@ def _is_normal(c: Card) -> bool:
     return RANK_2 <= c.rank <= RANK_A
 
 
-def _can_use_wild_for(cards: Sequence[Card], wild_count: int) -> list[tuple[list[Card], int]]:
-    """枚举"用 k 张 wild 替换为某种牌"的所有可能性。
-
-    返回 [(effective_cards, wild_used), ...]
-    """
-    # 这里先不展开具体替换，仅返回 (cards, wild_count) ——
-    # 真正的"替换成什么"在具体 pattern 识别时枚举
-    return [(list(cards), 0)]
-
-
 # ---- 单 / 对 / 三（基础） ----
 
 
@@ -375,11 +365,11 @@ def _try_straight(
                     actual.append(wild_card)
         return True, wild_needed, actual
 
-    # 1. 非 wrap 情形：顺子 / 同花顺固定 5 张
-    for start in range(RANK_3, RANK_A - 3):
+    # 1. 非 wrap 情形：顺子 / 同花顺固定 5 张。
+    # 2 按自然点数参与连牌，所以 23456 合法；不能把级牌的
+    # 单张牌力顺序带入连牌。
+    for start in range(RANK_2, RANK_A - 3):
         window = list(range(start, start + 5))
-        if RANK_2 in window:
-            continue
         valid, w, used = _window_uses(window)
         if not valid:
             continue
@@ -413,33 +403,17 @@ def _try_straight(
     return patterns
 
 
-def _is_valid_straight_window(window: list[int]) -> bool:
-    """判断一组连续 rank 是否构成合法顺子窗口。
-
-    规则：
-    - 长度 = 5
-    - 全部在 [RANK_2..RANK_A] 内
-    - 不能含 RANK_2（除非是 wrap A2345，但 wrap 单独处理）
-    - A 只能作最大或最小
-    """
-    if len(window) != 5:
-        return False
-    if any(r < RANK_2 or r > RANK_A for r in window):
-        return False
-    if RANK_2 in window:
-        # wrap A2345 的情形
-        return window == [RANK_A, RANK_2, RANK_3, RANK_4, RANK_5]
-    # A 只能出现在最大位置。
-    return not (RANK_A in window and window[-1] != RANK_A)
-
-
 # ---- 连对 ----
 
 
 def _try_pair_sequence(
     normal: Sequence[Card], wild_count: int, wild_card: Card | None
 ) -> list[Pattern]:
-    """连对：3+ 对连续对子。"""
+    """三连对：固定 3 对连续对子。
+
+    2 和普通级牌均按自然点数参与；A 可在 AA2233 中作最小牌，
+    也可在 QQKKAA 中作最大牌。
+    """
     # 按 rank 统计
     by_rank: dict[int, list[Card]] = {}
     for c in normal:
@@ -449,35 +423,37 @@ def _try_pair_sequence(
 
     patterns: list[Pattern] = []
 
-    ranks = list(range(RANK_3, RANK_A + 1))
-    for start_idx in range(len(ranks)):
-        for end_idx in range(start_idx + 2, len(ranks)):
-            window = ranks[start_idx : end_idx + 1]
-            used_cards: list[Card] = []
-            wild_needed = 0
-            valid = True
-            for rank in window:
-                cards = by_rank.get(rank, [])
-                normal_used = min(2, len(cards))
-                used_cards.extend(cards[:normal_used])
-                missing = 2 - normal_used
-                if missing:
-                    if wild_card is None or wild_needed + missing > wild_count:
-                        valid = False
-                        break
-                    used_cards.extend([wild_card] * missing)
-                    wild_needed += missing
-            if not valid:
-                continue
-            patterns.append(
-                Pattern(
-                    type=PatternType.PAIR_SEQUENCE,
-                    rank=window[-1],
-                    length=len(window),
-                    cards=tuple(used_cards),
-                    wild_used=wild_needed,
-                )
+    windows = [[RANK_A, RANK_2, RANK_3]]
+    windows.extend(
+        list(range(start, start + 3))
+        for start in range(RANK_2, RANK_A - 1)
+    )
+    for window in windows:
+        used_cards: list[Card] = []
+        wild_needed = 0
+        valid = True
+        for rank in window:
+            cards = by_rank.get(rank, [])
+            normal_used = min(2, len(cards))
+            used_cards.extend(cards[:normal_used])
+            missing = 2 - normal_used
+            if missing:
+                if wild_card is None or wild_needed + missing > wild_count:
+                    valid = False
+                    break
+                used_cards.extend([wild_card] * missing)
+                wild_needed += missing
+        if not valid:
+            continue
+        patterns.append(
+            Pattern(
+                type=PatternType.PAIR_SEQUENCE,
+                rank=window[-1],
+                length=3,
+                cards=tuple(used_cards),
+                wild_used=wild_needed,
             )
+        )
 
     return patterns
 
@@ -488,7 +464,11 @@ def _try_pair_sequence(
 def _try_triple_sequence(
     normal: Sequence[Card], wild_count: int, wild_card: Card | None
 ) -> list[Pattern]:
-    """钢板：2+ 组连续三张。"""
+    """钢板：固定 2 组连续三张。
+
+    2 和普通级牌均按自然点数参与；A 可在 AAA222 中作最小牌，
+    也可在 KKKAAA 中作最大牌。
+    """
     by_rank: dict[int, list[Card]] = {}
     for c in normal:
         if not _is_normal(c):
@@ -497,35 +477,37 @@ def _try_triple_sequence(
 
     patterns: list[Pattern] = []
 
-    ranks = list(range(RANK_3, RANK_A + 1))
-    for start_idx in range(len(ranks)):
-        for end_idx in range(start_idx + 1, len(ranks)):
-            window = ranks[start_idx : end_idx + 1]
-            used_cards: list[Card] = []
-            wild_needed = 0
-            valid = True
-            for rank in window:
-                cards = by_rank.get(rank, [])
-                normal_used = min(3, len(cards))
-                used_cards.extend(cards[:normal_used])
-                missing = 3 - normal_used
-                if missing:
-                    if wild_card is None or wild_needed + missing > wild_count:
-                        valid = False
-                        break
-                    used_cards.extend([wild_card] * missing)
-                    wild_needed += missing
-            if not valid:
-                continue
-            patterns.append(
-                Pattern(
-                    type=PatternType.TRIPLE_SEQUENCE,
-                    rank=window[-1],
-                    length=len(window),
-                    cards=tuple(used_cards),
-                    wild_used=wild_needed,
-                )
+    windows = [[RANK_A, RANK_2]]
+    windows.extend(
+        [start, start + 1]
+        for start in range(RANK_2, RANK_A)
+    )
+    for window in windows:
+        used_cards: list[Card] = []
+        wild_needed = 0
+        valid = True
+        for rank in window:
+            cards = by_rank.get(rank, [])
+            normal_used = min(3, len(cards))
+            used_cards.extend(cards[:normal_used])
+            missing = 3 - normal_used
+            if missing:
+                if wild_card is None or wild_needed + missing > wild_count:
+                    valid = False
+                    break
+                used_cards.extend([wild_card] * missing)
+                wild_needed += missing
+        if not valid:
+            continue
+        patterns.append(
+            Pattern(
+                type=PatternType.TRIPLE_SEQUENCE,
+                rank=window[-1],
+                length=2,
+                cards=tuple(used_cards),
+                wild_used=wild_needed,
             )
+        )
 
     return patterns
 

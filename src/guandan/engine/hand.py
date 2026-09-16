@@ -24,8 +24,8 @@ class PatternType(str, Enum):
     TRIPLE = "triple"
     TRIPLE_PAIR = "triple_pair"  # 三带二（三张 + 一对子）
     STRAIGHT = "straight"  # 固定 5 张连续单张
-    PAIR_SEQUENCE = "pair_sequence"  # 3+ 对连续对子
-    TRIPLE_SEQUENCE = "triple_sequence"  # 2+ 组连续三张（钢板）
+    PAIR_SEQUENCE = "pair_sequence"  # 固定 3 对连续对子
+    TRIPLE_SEQUENCE = "triple_sequence"  # 固定 2 组连续三张（钢板）
     BOMB = "bomb"  # 4+ 张同点
     STRAIGHT_FLUSH = "straight_flush"  # 固定 5 张同花色顺子
     FOUR_JOKERS = "four_jokers"  # 四王炸弹

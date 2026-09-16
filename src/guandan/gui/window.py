@@ -10,9 +10,11 @@ from PySide6.QtGui import (
     QColor,
     QFont,
     QKeySequence,
+    QLinearGradient,
     QPainter,
     QPaintEvent,
     QPen,
+    QRadialGradient,
     QShortcut,
 )
 from PySide6.QtWidgets import (
@@ -57,7 +59,7 @@ from ..ui.history import HISTORY_COLUMNS, history_entry_cells, history_statistic
 from ..ui.replay import ReplayCursor, replay_event_text, replay_state_text
 from ..ui.session import GameSession, card_indices_for_selection
 from .cards import CardBackWidget, HandWidget, MiniCardStrip, sort_cards_for_display
-from .theme import APP_QSS, CYAN, FELT, FELT_DARK, FELT_LINE, GOLD_BRIGHT, TEXT_MUTED
+from .theme import APP_QSS, CYAN, GOLD_BRIGHT, TEXT_MUTED
 
 
 def button(
@@ -173,53 +175,107 @@ class AIWorker(QRunnable):
 
 
 class LobbyTableWidget(QWidget):
-    """Painted table preview used by the landing page."""
+    """Cinematic, vector-painted table preview for the landing page."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.setMinimumSize(520, 420)
+        self.setMinimumSize(560, 410)
         self.setObjectName("lobbyTable")
 
     def paintEvent(self, event: QPaintEvent) -> None:
         del event
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        outer = self.rect().adjusted(8, 8, -8, -8)
-        painter.setPen(QPen(FELT_LINE, 2))
-        painter.setBrush(FELT)
-        painter.drawRoundedRect(outer, 22, 22)
-        inner = outer.adjusted(16, 16, -16, -16)
-        painter.setPen(QPen(QColor(117, 197, 174, 115), 1, Qt.PenStyle.DashLine))
+        outer = self.rect().adjusted(10, 10, -10, -12)
+
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(0, 0, 0, 105))
+        painter.drawRoundedRect(outer.translated(0, 7), 30, 30)
+        rim = QLinearGradient(outer.topLeft(), outer.bottomRight())
+        rim.setColorAt(0.0, QColor("#caa044"))
+        rim.setColorAt(0.45, QColor("#5d5837"))
+        rim.setColorAt(1.0, QColor("#d3ae55"))
+        painter.setBrush(rim)
+        painter.drawRoundedRect(outer, 30, 30)
+
+        inner = outer.adjusted(5, 5, -5, -5)
+        felt = QRadialGradient(inner.center(), max(inner.width(), inner.height()) * 0.72)
+        felt.setColorAt(0.0, QColor("#0b7255"))
+        felt.setColorAt(0.68, QColor("#07523f"))
+        felt.setColorAt(1.0, QColor("#03372c"))
+        painter.setBrush(felt)
+        painter.setPen(QPen(QColor("#194d3c"), 1))
+        painter.drawRoundedRect(inner, 26, 26)
+
+        field = inner.adjusted(16, 16, -16, -16)
+        painter.setPen(QPen(QColor(196, 230, 206, 58), 1, Qt.PenStyle.DashLine))
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawRoundedRect(inner, 18, 18)
+        painter.drawRoundedRect(field, 19, 19)
         center = outer.center()
-        painter.setPen(QPen(QColor(117, 197, 174, 125), 1))
-        painter.drawEllipse(center, 84, 44)
-        painter.setPen(GOLD_BRIGHT)
-        painter.setFont(QFont("PingFang SC", 26, QFont.Weight.Black))
-        painter.drawText(QRect(center.x() - 90, center.y() - 24, 180, 38), Qt.AlignmentFlag.AlignCenter, "掼蛋")
-        painter.setPen(QColor(183, 221, 207))
-        painter.setFont(QFont("Arial", 11, QFont.Weight.Bold))
-        painter.drawText(QRect(center.x() - 90, center.y() + 15, 180, 22), Qt.AlignmentFlag.AlignCenter, "108 张 · 四人搭档")
+        painter.setPen(QPen(QColor(202, 173, 100, 70), 1))
+        painter.drawEllipse(center, 112, 61)
+        painter.drawEllipse(center, 95, 49)
+        painter.setPen(QColor("#f3d788"))
+        painter.setFont(QFont("Songti SC", 31, QFont.Weight.Black))
+        painter.drawText(
+            QRect(center.x() - 104, center.y() - 30, 208, 45),
+            Qt.AlignmentFlag.AlignCenter,
+            "掼 蛋",
+        )
+        painter.setPen(QColor(206, 226, 215, 185))
+        painter.setFont(QFont("PingFang SC", 10, QFont.Weight.DemiBold))
+        painter.drawText(
+            QRect(center.x() - 100, center.y() + 18, 200, 22),
+            Qt.AlignmentFlag.AlignCenter,
+            "双 副 竞 技 · 默 契 搭 档",
+        )
+
+        self._paint_preview_cards(painter, center.x() - 62, inner.bottom() - 116, face_up=True)
+        self._paint_preview_cards(painter, center.x() - 62, inner.top() + 89, face_up=False)
 
         seats = (
-            (center.x(), outer.top() + 58, "西", False, "gold"),
-            (outer.left() + 96, center.y(), "南", False, "cyan"),
-            (outer.right() - 96, center.y(), "北", False, "cyan"),
-            (center.x(), outer.bottom() - 58, "东", True, "gold"),
+            (center.x(), inner.top() + 41, "西", False, "gold"),
+            (inner.left() + 68, center.y(), "南", False, "cyan"),
+            (inner.right() - 68, center.y(), "北", False, "cyan"),
+            (center.x(), inner.bottom() - 38, "东", True, "gold"),
         )
         for x, y, label, human, team in seats:
             color = GOLD_BRIGHT if team == "gold" else CYAN
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(0, 0, 0, 75))
+            painter.drawEllipse(x - 25, y - 22, 50, 50)
             painter.setPen(QPen(color, 2))
-            painter.setBrush(QColor("#18372f"))
-            painter.drawEllipse(x - 28, y - 28, 56, 56)
+            painter.setBrush(QColor("#0c332a"))
+            painter.drawEllipse(x - 25, y - 25, 50, 50)
             painter.setPen(color)
-            painter.setFont(QFont("PingFang SC", 20, QFont.Weight.Black))
-            painter.drawText(QRect(x - 27, y - 15, 54, 30), Qt.AlignmentFlag.AlignCenter, label)
-            painter.setPen(QColor(205, 226, 218))
-            painter.setFont(QFont("PingFang SC", 10, QFont.Weight.DemiBold))
-            painter.drawText(QRect(x - 60, y + 32, 120, 18), Qt.AlignmentFlag.AlignCenter, "你" if human else "AI")
+            painter.setFont(QFont("PingFang SC", 18, QFont.Weight.Black))
+            painter.drawText(QRect(x - 25, y - 14, 50, 28), Qt.AlignmentFlag.AlignCenter, label)
+            painter.setPen(QColor(211, 230, 219, 205))
+            painter.setFont(QFont("PingFang SC", 9, QFont.Weight.DemiBold))
+            painter.drawText(
+                QRect(x - 55, y + 28, 110, 17),
+                Qt.AlignmentFlag.AlignCenter,
+                "你 · 东家" if human else "智能牌手",
+            )
         painter.end()
+
+    @staticmethod
+    def _paint_preview_cards(painter: QPainter, x: int, y: int, *, face_up: bool) -> None:
+        labels = (("A", "♠"), ("K", "♥"), ("Q", "♣"), ("J", "♦"), ("10", "♠"))
+        for index, (rank, suit) in enumerate(labels):
+            rect = QRect(x + index * 25, y, 38, 54)
+            painter.setPen(QPen(QColor("#c8bfae") if face_up else QColor("#79b7a5"), 1))
+            painter.setBrush(QColor("#fffaf0") if face_up else QColor("#123e36"))
+            painter.drawRoundedRect(rect, 5, 5)
+            if face_up:
+                painter.setPen(QColor("#cb3b45") if suit in ("♥", "♦") else QColor("#17201d"))
+                painter.setFont(QFont("Arial", 10, QFont.Weight.Black))
+                painter.drawText(rect.adjusted(5, 3, -2, -2), Qt.AlignmentFlag.AlignTop, rank)
+                painter.setFont(QFont("Times New Roman", 14, QFont.Weight.Bold))
+                painter.drawText(rect.adjusted(5, 18, -2, -2), Qt.AlignmentFlag.AlignTop, suit)
+            else:
+                painter.setPen(QPen(QColor(112, 190, 164, 145), 1, Qt.PenStyle.DotLine))
+                painter.drawRoundedRect(rect.adjusted(5, 5, -5, -5), 3, 3)
 
 
 class MenuPage(QWidget):
@@ -228,48 +284,80 @@ class MenuPage(QWidget):
         self._main_window = window
         self.setObjectName("page")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(52, 38, 52, 34)
-        layout.setSpacing(22)
+        layout.setContentsMargins(44, 28, 44, 28)
+        layout.setSpacing(16)
 
         masthead = QHBoxLayout()
-        mark = QLabel("GD")
+        mark = QLabel("掼")
         mark.setObjectName("brandMark")
         masthead.addWidget(mark)
         masthead.addSpacing(12)
-        masthead.addWidget(QLabel("LOCAL TABLE  ·  公测版"), 1)
-        version = QLabel("v0.8.0-beta.6")
-        version.setObjectName("muted")
+        masthead_title = QLabel("掼蛋 · 国风竞技牌局")
+        masthead_title.setObjectName("mastheadTitle")
+        masthead.addWidget(masthead_title)
+        masthead.addWidget(QLabel("  本地单机 · 无需联网"), 1)
+        version = QLabel("BETA  0.8.1")
+        version.setObjectName("versionBadge")
         masthead.addWidget(version)
         layout.addLayout(masthead)
 
-        layout.addWidget(page_header("四人搭档牌局", "掼蛋", "一张桌、两副牌。选择难度，坐到东家，开始一局完整的本地对战。"))
+        hero = QHBoxLayout()
+        hero.setSpacing(20)
+        hero_copy = QVBoxLayout()
+        hero_copy.setSpacing(3)
+        kicker = QLabel("四 人 搭 档 · 双 副 竞 技")
+        kicker.setObjectName("eyebrow")
+        title = QLabel("今晚，开一桌")
+        title.setObjectName("heroTitle")
+        copy = QLabel("和默契并肩，与好牌相逢。坐到东家，打一局完整的本地掼蛋。")
+        copy.setObjectName("heroCopy")
+        hero_copy.addWidget(kicker)
+        hero_copy.addWidget(title)
+        hero_copy.addWidget(copy)
+        hero.addLayout(hero_copy, 1)
+        for text in ("108 张", "四人搭档", "五档 AI"):
+            chip = QLabel(text)
+            chip.setObjectName("featureChip")
+            hero.addWidget(chip, 0, Qt.AlignmentFlag.AlignBottom)
+        layout.addLayout(hero)
 
         body = QHBoxLayout()
-        body.setSpacing(18)
+        body.setSpacing(20)
         layout.addLayout(body, 1)
-
-        body.addWidget(LobbyTableWidget(), 3)
+        body.addWidget(LobbyTableWidget(), 7)
 
         action_panel = make_panel("actionPanel")
+        action_panel.setMinimumWidth(286)
+        action_panel.setMaximumWidth(340)
         action_layout = QVBoxLayout(action_panel)
-        action_layout.setContentsMargins(24, 24, 24, 24)
-        action_layout.setSpacing(11)
-        action_title = QLabel("牌局大厅")
+        action_layout.setContentsMargins(22, 22, 22, 20)
+        action_layout.setSpacing(10)
+        eyebrow = QLabel("QUICK MATCH")
+        eyebrow.setObjectName("eyebrow")
+        action_layout.addWidget(eyebrow)
+        action_title = QLabel("准备开局")
         action_title.setObjectName("sectionTitle")
         action_layout.addWidget(action_title, 0, Qt.AlignmentFlag.AlignLeft)
-        intro = QLabel("从这里开始一局本地掼蛋。\n你的对家是西家。")
+        intro = QLabel("你坐东家，与西家并肩。\n选好难度，牌局即刻开始。")
         intro.setObjectName("muted")
         intro.setWordWrap(True)
         action_layout.addWidget(intro)
-        action_layout.addSpacing(8)
-        action_layout.addWidget(button("开始新局", window.show_difficulty, primary=True))
-        action_layout.addWidget(button("继续存档", window.show_load, role="quietButton"))
-        action_layout.addWidget(button("历史战绩", window.show_history, role="quietButton"))
-        action_layout.addWidget(button("规则说明", window.show_rules, role="quietButton"))
+        action_layout.addSpacing(7)
+        action_layout.addWidget(button("立即开局  ›", window.show_difficulty, role="menuPrimary"))
+        action_layout.addWidget(button("继续上次牌局", window.show_load, role="infoButton"))
+
+        utilities = QGridLayout()
+        utilities.setHorizontalSpacing(8)
+        utilities.setVerticalSpacing(8)
+        utilities.addWidget(button("战绩回放", window.show_history, role="quietButton"), 0, 0)
+        utilities.addWidget(button("玩法规则", window.show_rules, role="quietButton"), 0, 1)
+        action_layout.addLayout(utilities)
         action_layout.addStretch(1)
-        action_layout.addWidget(QLabel("东 ↔ 西  ·  南 ↔ 北"), 0, Qt.AlignmentFlag.AlignCenter)
-        action_layout.addWidget(button("退出", window.close, role="quietButton"))
-        body.addWidget(action_panel, 1)
+        team_note = QLabel("东西一队  ·  南北一队")
+        team_note.setObjectName("menuNote")
+        action_layout.addWidget(team_note, 0, Qt.AlignmentFlag.AlignCenter)
+        action_layout.addWidget(button("退出游戏", window.close, role="quietButton"))
+        body.addWidget(action_panel, 3)
 
 
 class DifficultyPage(QWidget):
@@ -733,20 +821,42 @@ class GameArena(QFrame):
         del event
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        outer = self.rect().adjusted(1, 1, -1, -1)
-        painter.setPen(QPen(FELT_LINE, 1))
-        painter.setBrush(FELT_DARK)
-        painter.drawRoundedRect(outer, 18, 18)
-        inner = outer.adjusted(12, 12, -12, -12)
-        painter.setPen(QPen(QColor(71, 151, 126, 150), 1, Qt.PenStyle.DashLine))
-        painter.setBrush(FELT)
-        painter.drawRoundedRect(inner, 14, 14)
-        center = inner.center()
-        painter.setPen(QPen(QColor(126, 205, 181, 95), 1))
+        outer = self.rect().adjusted(1, 1, -1, -2)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(0, 0, 0, 125))
+        painter.drawRoundedRect(outer.translated(0, 3), 23, 23)
+
+        rim = QLinearGradient(outer.topLeft(), outer.bottomRight())
+        rim.setColorAt(0.0, QColor("#5b724f"))
+        rim.setColorAt(0.45, QColor("#af8d43"))
+        rim.setColorAt(1.0, QColor("#2c5c49"))
+        painter.setBrush(rim)
+        painter.drawRoundedRect(outer, 23, 23)
+
+        inner = outer.adjusted(4, 4, -4, -4)
+        felt = QRadialGradient(inner.center(), max(inner.width(), inner.height()) * 0.68)
+        felt.setColorAt(0.0, QColor("#09654c"))
+        felt.setColorAt(0.7, QColor("#064633"))
+        felt.setColorAt(1.0, QColor("#032c23"))
+        painter.setPen(QPen(QColor("#174c3c"), 1))
+        painter.setBrush(felt)
+        painter.drawRoundedRect(inner, 20, 20)
+
+        field = inner.adjusted(12, 12, -12, -12)
+        painter.setPen(QPen(QColor(147, 203, 179, 58), 1, Qt.PenStyle.DashLine))
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawEllipse(center, min(150, inner.width() // 5), min(82, inner.height() // 4))
-        painter.setPen(QPen(QColor(126, 205, 181, 50), 1, Qt.PenStyle.DotLine))
-        painter.drawLine(center.x(), inner.top() + 24, center.x(), inner.bottom() - 24)
+        painter.drawRoundedRect(field, 15, 15)
+        center = inner.center()
+        painter.setPen(QPen(QColor(224, 196, 123, 42), 1))
+        painter.drawEllipse(center, min(190, inner.width() // 4), min(105, inner.height() // 3))
+        painter.drawEllipse(center, min(168, inner.width() // 5), min(84, inner.height() // 4))
+        painter.setPen(QColor(235, 216, 166, 28))
+        painter.setFont(QFont("Songti SC", 52, QFont.Weight.Black))
+        painter.drawText(
+            QRect(center.x() - 100, center.y() - 38, 200, 76),
+            Qt.AlignmentFlag.AlignCenter,
+            "掼",
+        )
         painter.end()
 
 
@@ -755,8 +865,8 @@ class SeatPanel(QFrame):
         super().__init__()
         self._human = human
         self.setObjectName("seatPanel")
-        self.setMinimumSize(170, 72)
-        self.setMaximumHeight(80)
+        self.setMinimumSize(174, 70)
+        self.setMaximumHeight(78)
         set_property(self, "human", human)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 8, 10, 8)
@@ -860,7 +970,7 @@ class TablePanel(QFrame):
     def __init__(self) -> None:
         super().__init__()
         self.setObjectName("trickPanel")
-        self.setMinimumSize(430, 248)
+        self.setMinimumSize(430, 226)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 10, 12, 10)
         layout.setSpacing(4)
@@ -933,6 +1043,7 @@ class TablePanel(QFrame):
 class GamePage(QWidget):
     def __init__(self, window: "GuandanMainWindow", session: GameSession) -> None:
         super().__init__()
+        self.setObjectName("page")
         self._main_window = window
         self.session = session
         self.selected_indices: set[int] = set()
@@ -953,14 +1064,14 @@ class GamePage(QWidget):
 
     def _build(self) -> None:
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 14, 16, 12)
-        layout.setSpacing(10)
+        layout.setContentsMargins(14, 12, 14, 10)
+        layout.setSpacing(8)
 
         hud = make_panel("hud")
         hud_layout = QHBoxLayout(hud)
-        hud_layout.setContentsMargins(14, 9, 14, 9)
+        hud_layout.setContentsMargins(12, 7, 12, 7)
         hud_layout.setSpacing(12)
-        brand = QLabel("牌桌")
+        brand = QLabel("掼")
         brand.setObjectName("brandMark")
         hud_layout.addWidget(brand)
         self.status = QLabel()
@@ -978,8 +1089,9 @@ class GamePage(QWidget):
         arena = GameArena()
         self.arena = arena
         table_grid = QGridLayout(arena)
-        table_grid.setContentsMargins(24, 18, 24, 18)
-        table_grid.setSpacing(10)
+        table_grid.setContentsMargins(22, 16, 22, 16)
+        table_grid.setHorizontalSpacing(12)
+        table_grid.setVerticalSpacing(8)
         self.opposite = SeatPanel()
         self.left = SeatPanel()
         self.right = SeatPanel()
@@ -998,10 +1110,10 @@ class GamePage(QWidget):
 
         hand_panel = make_panel("handDock")
         hand_layout = QVBoxLayout(hand_panel)
-        hand_layout.setContentsMargins(12, 10, 12, 10)
-        hand_layout.setSpacing(7)
+        hand_layout.setContentsMargins(12, 8, 12, 8)
+        hand_layout.setSpacing(5)
         hand_head = QHBoxLayout()
-        self.hand_title = QLabel("你的手牌")
+        self.hand_title = QLabel("我的手牌")
         self.hand_title.setObjectName("accentTitle")
         self.hand_counter = QLabel("")
         self.hand_counter.setObjectName("muted")
@@ -1016,10 +1128,11 @@ class GamePage(QWidget):
 
         actions = QHBoxLayout()
         actions.setSpacing(8)
-        self.play_button = button("出牌", self.play_selected, primary=True)
-        self.pass_button = button("过牌", self.pass_turn)
-        self.hint_button = button("提示", self.hint, role="infoButton")
-        self.clear_button = button("清空选择", self.clear_selection, role="quietButton")
+        self.play_button = button("出  牌", self.play_selected, primary=True)
+        self.play_button.setMinimumWidth(145)
+        self.pass_button = button("过  牌", self.pass_turn)
+        self.hint_button = button("智能提示", self.hint, role="infoButton")
+        self.clear_button = button("取消选择", self.clear_selection, role="quietButton")
         self.next_button = button("下一局", self.next_game, primary=True)
         self.back_button = button("返回大厅", self.back_to_menu, role="quietButton")
         for item in (
@@ -1034,7 +1147,7 @@ class GamePage(QWidget):
         layout.addLayout(actions)
 
         self.log = QLabel("准备开始")
-        self.log.setObjectName("muted")
+        self.log.setObjectName("menuNote")
         self.log.setWordWrap(True)
         layout.addWidget(self.log)
         self._install_shortcuts()
@@ -1318,7 +1431,7 @@ class GamePage(QWidget):
 class GuandanMainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("掼蛋 GUI · v0.8.0-beta.6")
+        self.setWindowTitle("掼蛋 GUI · v0.8.1-beta.1")
         self.resize(1280, 860)
         self.setMinimumSize(1080, 760)
         self.stack = QStackedWidget()

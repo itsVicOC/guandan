@@ -67,6 +67,35 @@ def test_session_selects_duplicate_jokers_by_position() -> None:
     assert len(state.table[-1].cards) == 2
 
 
+def test_session_accepts_natural_level_card_in_two_to_six_straight() -> None:
+    wild = Card(RANK_5, Suit.HEARTS)
+    selected = [
+        Card(RANK_5, Suit.CLUBS),
+        Card(RANK_6, Suit.HEARTS),
+        Card(RANK_4, Suit.SPADES),
+        Card(RANK_3, Suit.HEARTS),
+        Card(RANK_2, Suit.CLUBS),
+    ]
+    state = GameState(
+        level=RANK_5,
+        wild_card=wild,
+        hands=[list(selected), [], [], []],
+        turn_index=0,
+        leader=0,
+    )
+
+    result = GameSession(
+        difficulty=0,
+        existing_state=state,
+        human=0,
+    ).play_human_cards(selected)
+
+    assert result.ok
+    assert state.table[-1].type == PatternType.STRAIGHT
+    assert state.table[-1].rank == RANK_6
+    assert state.table[-1].wild_used == 0
+
+
 def test_gui_display_sort_places_level_between_jokers_and_ace() -> None:
     if importlib.util.find_spec("PySide6") is None:
         pytest.skip("PySide6 is not installed")

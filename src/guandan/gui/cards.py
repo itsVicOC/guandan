@@ -4,13 +4,21 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from PySide6.QtCore import QRect, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPaintEvent, QPen, QResizeEvent
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QLinearGradient,
+    QPainter,
+    QPaintEvent,
+    QPen,
+    QResizeEvent,
+)
 from PySide6.QtWidgets import QPushButton, QSizePolicy, QWidget
 
 from ..engine.card import Card, Suit
 from ..engine.hand import sort_cards
 from ..ui.formatting import rank_label, suit_symbol_plain
-from .theme import CYAN, GOLD, GOLD_BRIGHT
+from .theme import GOLD, GOLD_BRIGHT
 
 CARD_WIDTH = 72
 CARD_HEIGHT = 104
@@ -19,9 +27,9 @@ CARD_OVERLAP_MIN = 32
 SELECT_LIFT = 14
 HAND_HEIGHT = CARD_HEIGHT + SELECT_LIFT + 6
 NORMAL_SUIT_FONT_SIZE = 44
-RED_SUIT_COLOR = "#c93643"
-BLACK_SUIT_COLOR = "#111820"
-CARD_BACKGROUND = "#f8f6ef"
+RED_SUIT_COLOR = "#c72f3e"
+BLACK_SUIT_COLOR = "#15201c"
+CARD_BACKGROUND = "#fbf8ef"
 
 
 def sort_cards_for_display(cards: Sequence[Card], *, level: int) -> list[Card]:
@@ -109,15 +117,24 @@ class CardButton(QPushButton):
             border = GOLD_BRIGHT.name()
             bg = "#fff4c8"
 
-        shadow = self.rect().adjusted(5, 6, -1, -1)
+        shadow = self.rect().adjusted(5, 7, -1, -1)
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(0, 0, 0, 74))
-        painter.drawRoundedRect(shadow, 7, 7)
+        painter.setBrush(QColor(0, 0, 0, 92))
+        painter.drawRoundedRect(shadow, 9, 9)
 
         rect = self.rect().adjusted(2, 2, -4, -5)
+        surface = QLinearGradient(rect.topLeft(), rect.bottomRight())
+        surface.setColorAt(0.0, QColor("#ffffff") if not self.selected else QColor("#fff9d7"))
+        surface.setColorAt(1.0, QColor(bg))
+        if self.selected:
+            painter.setPen(QPen(QColor(246, 207, 103, 90), 5))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRoundedRect(rect.adjusted(-1, -1, 1, 1), 9, 9)
         painter.setPen(QPen(QColor(border), 3 if self.selected else 1))
-        painter.setBrush(QColor(bg))
-        painter.drawRoundedRect(rect, 7, 7)
+        painter.setBrush(surface)
+        painter.drawRoundedRect(rect, 8, 8)
+        painter.setPen(QPen(QColor(255, 255, 255, 175), 1))
+        painter.drawLine(rect.left() + 8, rect.top() + 2, rect.right() - 8, rect.top() + 2)
 
         if self.card.is_joker:
             self._paint_joker(painter, rect, fg)
@@ -146,6 +163,12 @@ class CardButton(QPushButton):
         painter.setFont(QFont("Times New Roman", NORMAL_SUIT_FONT_SIZE, QFont.Weight.Black))
         painter.drawText(
             QRect(rect.left() + 16, rect.top() + 29, rect.width() - 22, 50),
+            Qt.AlignmentFlag.AlignCenter,
+            suit_symbol_plain(self.card.suit),
+        )
+        painter.setFont(QFont("Times New Roman", 14, QFont.Weight.Black))
+        painter.drawText(
+            QRect(rect.right() - 25, rect.bottom() - 25, 18, 18),
             Qt.AlignmentFlag.AlignCenter,
             suit_symbol_plain(self.card.suit),
         )
@@ -306,12 +329,19 @@ class CardBackWidget(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         for offset in (6, 3, 0):
             rect = QRect(3 + offset, 2 + offset // 2, 34, 50)
-            painter.setPen(QPen(QColor("#9ccfd5"), 1))
-            painter.setBrush(QColor("#173a49"))
+            painter.setPen(QPen(QColor("#79bca9"), 1))
+            back = QLinearGradient(rect.topLeft(), rect.bottomRight())
+            back.setColorAt(0.0, QColor("#1a5a4c"))
+            back.setColorAt(1.0, QColor("#0b2925"))
+            painter.setBrush(back)
             painter.drawRoundedRect(rect, 5, 5)
             inner = rect.adjusted(4, 4, -4, -4)
-            painter.setPen(QPen(CYAN, 1, Qt.PenStyle.DotLine))
+            painter.setPen(QPen(QColor(169, 217, 196, 150), 1, Qt.PenStyle.DotLine))
             painter.drawRoundedRect(inner, 3, 3)
+            painter.drawLine(inner.left(), inner.center().y(), inner.center().x(), inner.top())
+            painter.drawLine(inner.center().x(), inner.top(), inner.right(), inner.center().y())
+            painter.drawLine(inner.right(), inner.center().y(), inner.center().x(), inner.bottom())
+            painter.drawLine(inner.center().x(), inner.bottom(), inner.left(), inner.center().y())
         painter.end()
 
 
@@ -338,8 +368,10 @@ class MiniCardStrip(QWidget):
         card_width = 26
         card_height = 34
         step = min(20, max(11, (self.width() - card_width) // max(1, len(self._cards) - 1)))
+        total_width = card_width + step * (len(self._cards) - 1)
+        start_x = max(0, (self.width() - total_width) // 2)
         for index, card in enumerate(self._cards):
-            x = index * step
+            x = start_x + index * step
             rect = QRect(x, 2, card_width, card_height)
             fg, _, bg = card_palette(card)
             painter.setPen(QPen(QColor("#cbc5b9"), 1))

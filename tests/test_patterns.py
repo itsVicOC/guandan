@@ -145,10 +145,24 @@ class TestStraight:
         ps = detect_patterns(cards("AH", "2H", "3H", "4H", "5H"))
         assert any(p.type == PatternType.STRAIGHT and p.rank == RANK_5 and p.length == 5 for p in ps)
 
-    def test_straight_2_no_wrap(self):
-        # 2-3-4-5-6 非法（2 不在普通顺子中）
-        ps = detect_patterns(cards("2H", "3H", "4H", "5H", "6H"))
-        assert not any(p.type == PatternType.STRAIGHT for p in ps)
+    def test_straight_2_to_6(self):
+        # 2 按自然点数参与连牌。
+        p = find_complete_pattern(cards("2C", "3H", "4S", "5C", "6H"))
+        assert p is not None
+        assert p.type == PatternType.STRAIGHT
+        assert p.rank == RANK_6
+
+    def test_natural_level_card_in_straight(self):
+        # 截图回归：打 5 时，非红心 5 仍按自然点数组成 23456。
+        wild = c(RANK_5, "H")
+        p = find_complete_pattern(
+            cards("5C", "6H", "4S", "3H", "2C"),
+            wild,
+        )
+        assert p is not None
+        assert p.type == PatternType.STRAIGHT
+        assert p.rank == RANK_6
+        assert p.wild_used == 0
 
     def test_straight_with_joker(self):
         # 含王非法
@@ -200,6 +214,23 @@ class TestPairSequence:
         assert p.rank == RANK_5
         assert p.wild_used == 1
 
+    def test_pair_sequence_2_to_4(self):
+        p = find_complete_pattern(cards("2H", "2D", "3H", "3D", "4H", "4D"))
+        assert p is not None
+        assert p.type == PatternType.PAIR_SEQUENCE
+        assert p.rank == RANK_4
+
+    def test_pair_sequence_ace_low(self):
+        p = find_complete_pattern(cards("AH", "AD", "2H", "2D", "3H", "3D"))
+        assert p is not None
+        assert p.type == PatternType.PAIR_SEQUENCE
+        assert p.rank == RANK_3
+
+    def test_pair_sequence_rejects_four_pairs(self):
+        assert find_complete_pattern(
+            cards("2H", "2D", "3H", "3D", "4H", "4D", "5H", "5D")
+        ) is None
+
 
 class TestTripleSequence:
     def test_triple_sequence_2(self):
@@ -218,6 +249,23 @@ class TestTripleSequence:
         assert p.length == 2
         assert p.rank == RANK_4
         assert p.wild_used == 1
+
+    def test_triple_sequence_2_to_3(self):
+        p = find_complete_pattern(cards("2H", "2D", "2S", "3H", "3D", "3S"))
+        assert p is not None
+        assert p.type == PatternType.TRIPLE_SEQUENCE
+        assert p.rank == RANK_3
+
+    def test_triple_sequence_ace_low(self):
+        p = find_complete_pattern(cards("AH", "AD", "AS", "2H", "2D", "2S"))
+        assert p is not None
+        assert p.type == PatternType.TRIPLE_SEQUENCE
+        assert p.rank == RANK_2
+
+    def test_triple_sequence_rejects_three_groups(self):
+        assert find_complete_pattern(
+            cards("2H", "2D", "2S", "3H", "3D", "3S", "4H", "4D", "4S")
+        ) is None
 
 
 class TestBomb:
