@@ -184,9 +184,53 @@ QFrame#tributeBanner {
 QLabel#tributeText { color: #ffe59d; font-size: 11px; font-weight: 850; }
 QFrame#trickRow {
     background: rgba(5, 61, 47, 175);
-    border: 0;
+    border: 1px solid rgba(104, 167, 143, 42);
     border-radius: 8px;
 }
+QFrame#trickRow[top="true"] {
+    background: rgba(93, 70, 21, 210);
+    border: 1px solid #cda548;
+}
+QFrame#trickRow[turn="true"] { border-right: 3px solid #72d8c1; }
+QLabel#trickPhase {
+    color: #aab7b0;
+    background: rgba(28, 47, 40, 210);
+    border: 1px solid #3a584c;
+    border-radius: 8px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 850;
+}
+QLabel#trickPhase[phase="active"] {
+    color: #8fe8d4;
+    background: rgba(18, 75, 63, 220);
+    border-color: #3c9a83;
+}
+QLabel#trickPhase[phase="cleared"] {
+    color: #ffe49a;
+    background: rgba(91, 66, 20, 220);
+    border-color: #b38b37;
+}
+QFrame#activityRail {
+    background: rgba(5, 29, 24, 188);
+    border: 1px solid rgba(94, 143, 123, 72);
+    border-radius: 10px;
+}
+QLabel#activityTitle { color: #a9c8bc; font-size: 11px; font-weight: 850; }
+QLabel#activityLine {
+    color: #899b92;
+    background: transparent;
+    border: 0;
+    border-radius: 5px;
+    padding: 2px 4px;
+    font-size: 10px;
+}
+QLabel#activityLine[latest="true"] {
+    color: #fff0bc;
+    background: rgba(112, 82, 24, 150);
+    font-weight: 850;
+}
+QLabel#activityCounter { color: #70847a; font-size: 9px; }
 QFrame#seatPanel {
     background: rgba(10, 25, 21, 225);
     border: 1px solid rgba(119, 153, 137, 100);

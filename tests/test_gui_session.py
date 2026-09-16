@@ -27,7 +27,7 @@ from guandan.engine.card import (
 )
 from guandan.engine.events import TributeReturned, TributeSent
 from guandan.engine.hand import Pattern, PatternType, sort_cards
-from guandan.engine.state import GameState
+from guandan.engine.state import GameState, pass_turn, play_pattern
 from guandan.storage import DEFAULT_PROFILE
 from guandan.ui.session import GameSession
 
@@ -159,6 +159,61 @@ def test_session_visual_seats_match_east_perspective() -> None:
         "opposite": 2,
         "right": 3,
     }
+
+
+def test_completed_trick_stays_visible_until_the_next_lead() -> None:
+    cards = [
+        Card(RANK_4, Suit.HEARTS),
+        Card(RANK_5, Suit.HEARTS),
+        Card(RANK_6, Suit.HEARTS),
+        Card(RANK_7, Suit.HEARTS),
+    ]
+    state = GameState(
+        level=RANK_2,
+        wild_card=None,
+        hands=[
+            [cards[0], Card(RANK_8, Suit.CLUBS)],
+            [cards[1], Card(RANK_8, Suit.DIAMONDS)],
+            [cards[2], Card(RANK_8, Suit.SPADES)],
+            [cards[3], Card(RANK_8, Suit.HEARTS)],
+        ],
+        turn_index=0,
+        leader=0,
+    )
+    session = GameSession(difficulty=0, existing_state=state, human=0)
+
+    play_pattern(
+        state,
+        0,
+        Pattern(PatternType.SINGLE, rank=RANK_4, length=1, cards=(cards[0],)),
+    )
+    session.table_display_actions(preserve_completed_trick=True)
+    for player in (3, 2):
+        pass_turn(state, player)
+        session.table_display_actions(preserve_completed_trick=True)
+    pass_turn(state, 1)
+
+    visible = session.table_display_actions(preserve_completed_trick=True)
+
+    assert state.table == []
+    assert state.trick_number == 1
+    assert visible[0][0] == "play"
+    assert visible[3] == ("pass", None)
+    assert visible[2] == ("pass", None)
+    assert visible[1] == ("pass", None)
+
+    next_card = state.hands[0][0]
+    next_pattern = Pattern(
+        PatternType.SINGLE,
+        rank=next_card.rank,
+        length=1,
+        cards=(next_card,),
+    )
+    play_pattern(state, 0, next_pattern)
+    next_visible = session.table_display_actions(preserve_completed_trick=True)
+
+    assert next_visible[0] == ("play", next_pattern)
+    assert 3 not in next_visible
 
 
 def test_session_hint_cycles_through_distinct_legal_responses() -> None:

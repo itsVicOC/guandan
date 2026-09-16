@@ -348,11 +348,19 @@ class CardBackWidget(QWidget):
 class MiniCardStrip(QWidget):
     """Small overlapping cards for the center trick history."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        card_width: int = 26,
+        card_height: int = 34,
+        minimum_width: int = 110,
+    ) -> None:
         super().__init__()
         self._cards: tuple[Card, ...] = ()
-        self.setMinimumWidth(110)
-        self.setFixedHeight(38)
+        self._card_width = card_width
+        self._card_height = card_height
+        self.setMinimumWidth(minimum_width)
+        self.setFixedHeight(card_height + 4)
 
     def set_cards(self, cards: tuple[Card, ...] | list[Card]) -> None:
         self._cards = tuple(cards)
@@ -365,9 +373,12 @@ class MiniCardStrip(QWidget):
         if not self._cards:
             painter.end()
             return
-        card_width = 26
-        card_height = 34
-        step = min(20, max(11, (self.width() - card_width) // max(1, len(self._cards) - 1)))
+        card_width = self._card_width
+        card_height = self._card_height
+        step = min(
+            max(20, card_width - 7),
+            max(11, (self.width() - card_width) // max(1, len(self._cards) - 1)),
+        )
         total_width = card_width + step * (len(self._cards) - 1)
         start_x = max(0, (self.width() - total_width) // 2)
         for index, card in enumerate(self._cards):
@@ -378,17 +389,19 @@ class MiniCardStrip(QWidget):
             painter.setBrush(QColor(bg))
             painter.drawRoundedRect(rect, 4, 4)
             painter.setPen(QColor(fg))
-            painter.setFont(QFont("Arial", 10, QFont.Weight.Black))
+            painter.setFont(QFont("Arial", 11 if card_width >= 30 else 10, QFont.Weight.Black))
             label = "王" if card.is_joker else rank_label(card)
             painter.drawText(
-                QRect(x + 3, 2, card_width - 6, 16),
+                QRect(x + 3, 2, card_width - 6, max(16, card_height // 2 - 1)),
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
                 label,
             )
-            painter.setFont(QFont("Times New Roman", 13, QFont.Weight.Black))
+            painter.setFont(
+                QFont("Times New Roman", 15 if card_width >= 30 else 13, QFont.Weight.Black)
+            )
             symbol = "★" if card.is_joker else suit_symbol_plain(card.suit)
             painter.drawText(
-                QRect(x + 3, 17, card_width - 6, 15),
+                QRect(x + 3, card_height // 2, card_width - 6, card_height // 2 - 2),
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
                 symbol,
             )

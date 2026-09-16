@@ -214,17 +214,30 @@ class GameSession:
             if isinstance(event, (TributeSent, TributeReturned, TributeResisted))
         )
 
-    def table_display_actions(self) -> dict[int, tuple[str, Pattern | None]]:
-        """Keep each seat's last visible action until that seat is asked to act again."""
+    def table_display_actions(
+        self,
+        *,
+        preserve_completed_trick: bool = False,
+    ) -> dict[int, tuple[str, Pattern | None]]:
+        """Keep each seat's last visible action until that seat is asked to act again.
+
+        The desktop GUI opts into ``preserve_completed_trick`` so a collected
+        trick remains readable during the pause before the next lead.  The TUI
+        keeps its compact, immediate-clearing behavior.
+        """
         if self.is_next_game_pending():
             return {}
         state = self.display_state()
-        if state.finished:
+        if state.finished and not preserve_completed_trick:
             self.displayed_table_actions.clear()
             self.last_display_turn = None
             return {}
 
-        if self.last_display_turn != state.turn_index:
+        # In the GUI, a completed trick is intentionally kept on the table
+        # until the next lead is actually played.  Clearing it as soon as the
+        # engine advances makes the winning play impossible to see.
+        should_advance_display = bool(state.table) or not preserve_completed_trick
+        if should_advance_display and self.last_display_turn != state.turn_index:
             self.displayed_table_actions.pop(state.turn_index, None)
             self.last_display_turn = state.turn_index
 
@@ -232,6 +245,21 @@ class GameSession:
             self.displayed_table_actions[player] = ("play", pattern)
         for player in self.locked_passed_players():
             self.displayed_table_actions[player] = ("pass", None)
+
+        # The pass that closes a trick is followed immediately by the engine
+        # clearing ``table`` and ``passed_players``.  Recover that final public
+        # action from the event stream so the GUI can show a complete snapshot.
+        if preserve_completed_trick and not state.table:
+            last_public_action = next(
+                (
+                    event
+                    for event in reversed(state.history)
+                    if isinstance(event, (TurnPlayed, Pass))
+                ),
+                None,
+            )
+            if isinstance(last_public_action, Pass):
+                self.displayed_table_actions[last_public_action.player] = ("pass", None)
 
         return dict(self.displayed_table_actions)
 

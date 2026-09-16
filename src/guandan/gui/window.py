@@ -42,7 +42,7 @@ from PySide6.QtWidgets import (
 
 from ..ai import AINotImplementedError, make_strategy
 from ..engine.card import Card
-from ..engine.events import Event, TributeResisted, TributeReturned, TributeSent
+from ..engine.events import Event, Pass, TributeResisted, TributeReturned, TributeSent, TurnPlayed
 from ..engine.hand import Pattern
 from ..engine.state import SEAT_NAMES, GameState, IllegalPlayError
 from ..storage import (
@@ -156,9 +156,9 @@ class AIWorkerSignals(QObject):
 
 
 class AIWorker(QRunnable):
-    """Run a bounded batch of AI turns outside the Qt event thread."""
+    """Run one visible AI turn outside the Qt event thread."""
 
-    def __init__(self, session: GameSession, limit: int = 12) -> None:
+    def __init__(self, session: GameSession, limit: int = 1) -> None:
         super().__init__()
         self.session = session
         self.limit = limit
@@ -931,7 +931,7 @@ class TrickRow(QFrame):
         super().__init__()
         self.seat = seat
         self.setObjectName("trickRow")
-        self.setFixedHeight(38)
+        self.setFixedHeight(48)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(8, 0, 7, 0)
         layout.setSpacing(8)
@@ -939,13 +939,19 @@ class TrickRow(QFrame):
         self.seat_label.setFixedWidth(26)
         self.seat_label.setObjectName("muted")
         self.action_label = QLabel("等待")
-        self.action_label.setMinimumWidth(78)
-        self.cards = MiniCardStrip()
+        self.action_label.setFixedWidth(82)
+        self.cards = MiniCardStrip(card_width=30, card_height=40, minimum_width=126)
         layout.addWidget(self.seat_label)
         layout.addWidget(self.action_label)
         layout.addWidget(self.cards, 1)
 
-    def update_action(self, action: tuple[str, Pattern | None] | None, *, is_top: bool) -> None:
+    def update_action(
+        self,
+        action: tuple[str, Pattern | None] | None,
+        *,
+        is_top: bool,
+        is_turn: bool,
+    ) -> None:
         prefix = "最大 · " if is_top else ""
         if action is None:
             self.action_label.setText("等待")
@@ -964,22 +970,85 @@ class TrickRow(QFrame):
         color = GOLD_BRIGHT.name() if is_top else TEXT_MUTED.name()
         self.seat_label.setStyleSheet(f"color: {color}; font-weight: 800;")
         self.action_label.setStyleSheet(f"color: {color}; font-weight: 750;")
+        set_property(self, "top", is_top)
+        set_property(self, "turn", is_turn)
+
+
+class ActivityRail(QFrame):
+    """Compact public action trail that keeps the flow of play readable."""
+
+    _MAX_VISIBLE = 5
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setObjectName("activityRail")
+        self.setMinimumWidth(164)
+        self.setMaximumWidth(190)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(9, 7, 9, 7)
+        layout.setSpacing(3)
+        title = QLabel("最近行动")
+        title.setObjectName("activityTitle")
+        layout.addWidget(title)
+        self.lines: list[QLabel] = []
+        for _ in range(self._MAX_VISIBLE):
+            line = QLabel("—")
+            line.setObjectName("activityLine")
+            line.setMinimumHeight(25)
+            line.setWordWrap(False)
+            layout.addWidget(line)
+            self.lines.append(line)
+        layout.addStretch(1)
+        self.counter = QLabel("尚未出牌")
+        self.counter.setObjectName("activityCounter")
+        layout.addWidget(self.counter)
+
+    def update_events(self, events: list[Event]) -> None:
+        public_actions = [
+            event for event in events if isinstance(event, (TurnPlayed, Pass))
+        ]
+        recent = public_actions[-self._MAX_VISIBLE :]
+        empty_count = self._MAX_VISIBLE - len(recent)
+        rows: list[tuple[str, bool]] = [("—", False)] * empty_count
+        first_number = len(public_actions) - len(recent) + 1
+        for offset, event in enumerate(recent):
+            number = first_number + offset
+            if isinstance(event, Pass):
+                text = f"{number:02}  {SEAT_NAMES[event.player]}家 · 过牌"
+            else:
+                cards = " ".join(card_label(card) for card in event.pattern.cards)
+                if len(cards) > 12:
+                    cards = cards[:11] + "…"
+                text = (
+                    f"{number:02}  {SEAT_NAMES[event.player]}家 · "
+                    f"{pattern_type_label(event.pattern.type)} {cards}"
+                )
+            rows.append((text, offset == len(recent) - 1))
+
+        for label, (text, latest) in zip(self.lines, rows):
+            label.setText(text)
+            label.setToolTip(text if text != "—" else "")
+            set_property(label, "latest", latest)
+        self.counter.setText(f"本局共 {len(public_actions)} 次公开行动" if public_actions else "尚未出牌")
 
 
 class TablePanel(QFrame):
     def __init__(self) -> None:
         super().__init__()
         self.setObjectName("trickPanel")
-        self.setMinimumSize(430, 226)
+        self.setMinimumSize(530, 260)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 10, 12, 10)
         layout.setSpacing(4)
         header = QHBoxLayout()
         self.title = QLabel("当前牌墩")
         self.title.setObjectName("accentTitle")
+        self.phase_badge = QLabel("等待")
+        self.phase_badge.setObjectName("trickPhase")
         self.trick_meta = QLabel("等待先手")
         self.trick_meta.setObjectName("muted")
         header.addWidget(self.title)
+        header.addWidget(self.phase_badge)
         header.addStretch(1)
         header.addWidget(self.trick_meta)
         layout.addLayout(header)
@@ -996,13 +1065,23 @@ class TablePanel(QFrame):
         tribute_layout.addWidget(self.tribute_cards)
         self.tribute_banner.hide()
         layout.addWidget(self.tribute_banner)
+        body = QHBoxLayout()
+        body.setContentsMargins(0, 0, 0, 0)
+        body.setSpacing(8)
+        rows_layout = QVBoxLayout()
+        rows_layout.setContentsMargins(0, 0, 0, 0)
+        rows_layout.setSpacing(3)
         self.trick_rows: dict[int, TrickRow] = {}
         self.rows: dict[int, QLabel] = {}
         for seat in (0, 3, 2, 1):
             row = TrickRow(seat)
             self.trick_rows[seat] = row
             self.rows[seat] = row.action_label
-            layout.addWidget(row)
+            rows_layout.addWidget(row)
+        body.addLayout(rows_layout, 1)
+        self.activity = ActivityRail()
+        body.addWidget(self.activity)
+        layout.addLayout(body, 1)
 
     def update_table(
         self,
@@ -1012,12 +1091,44 @@ class TablePanel(QFrame):
         tribute_events: tuple[Event, ...],
     ) -> None:
         self._update_tribute(tribute_events)
-        top_player = table_players[-1] if state.table and table_players else None
-        self.trick_meta.setText(
-            f"最大：{SEAT_NAMES[top_player]}家" if top_player is not None else "等待先手"
-        )
+        top_player = table_players[-1] if state.table and table_players else self._last_top_player(state)
+        if state.table:
+            self.title.setText(f"第 {state.trick_number + 1} 墩")
+            self.phase_badge.setText("进行中")
+            set_property(self.phase_badge, "phase", "active")
+            self.trick_meta.setText(
+                f"最大：{SEAT_NAMES[top_player]}家" if top_player is not None else "等待先手"
+            )
+        elif actions and top_player is not None:
+            self.title.setText(f"第 {max(1, state.trick_number)} 墩")
+            self.phase_badge.setText("已收牌")
+            set_property(self.phase_badge, "phase", "cleared")
+            starter = state.next_trick_starter if state.next_trick_starter is not None else state.turn_index
+            if starter == top_player:
+                self.trick_meta.setText(f"{SEAT_NAMES[top_player]}家收牌并先手")
+            else:
+                self.trick_meta.setText(
+                    f"{SEAT_NAMES[top_player]}家收牌 · {SEAT_NAMES[starter]}家接风"
+                )
+        else:
+            self.title.setText(f"第 {state.trick_number + 1} 墩")
+            self.phase_badge.setText("等待")
+            set_property(self.phase_badge, "phase", "waiting")
+            self.trick_meta.setText(f"等待 {SEAT_NAMES[state.turn_index]}家先手")
         for seat, row in self.trick_rows.items():
-            row.update_action(actions.get(seat), is_top=seat == top_player)
+            row.update_action(
+                actions.get(seat),
+                is_top=seat == top_player and actions.get(seat, (None,))[0] == "play",
+                is_turn=not state.finished and seat == state.turn_index,
+            )
+        self.activity.update_events(state.history)
+
+    @staticmethod
+    def _last_top_player(state: GameState) -> int | None:
+        for event in reversed(state.history):
+            if isinstance(event, TurnPlayed):
+                return event.player
+        return None
 
     def _update_tribute(self, events: tuple[Event, ...]) -> None:
         descriptions: list[str] = []
@@ -1050,7 +1161,9 @@ class GamePage(QWidget):
         self.hand_cards: list[Card] = []
         self._ai_timer = QTimer(self)
         self._ai_timer.setSingleShot(True)
-        self._ai_timer.setInterval(180)
+        # Give every public action enough dwell time to be perceived before the
+        # next AI starts thinking.  The worker itself performs exactly one turn.
+        self._ai_timer.setInterval(650)
         self._ai_timer.timeout.connect(self._start_ai_worker)
         self._tribute_timer = QTimer(self)
         self._tribute_timer.setSingleShot(True)
@@ -1194,7 +1307,7 @@ class GamePage(QWidget):
         self._refresh_hand(state)
         self.table.update_table(
             state,
-            self.session.table_display_actions(),
+            self.session.table_display_actions(preserve_completed_trick=True),
             self.session.current_table_players(),
             self.session.tribute_events(),
         )
@@ -1431,7 +1544,7 @@ class GamePage(QWidget):
 class GuandanMainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("掼蛋 GUI · v0.8.1-beta.1")
+        self.setWindowTitle("掼蛋 GUI · v0.8.1-beta.2")
         self.resize(1280, 860)
         self.setMinimumSize(1080, 760)
         self.stack = QStackedWidget()

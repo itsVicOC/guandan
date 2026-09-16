@@ -117,6 +117,17 @@ def capture_gui(output: Path) -> list[dict]:
     for size in ((1280, 860), (1080, 760)):
         capture("game-claims", *size)
 
+    opening = find_complete_pattern([state.hands[0][0]], state.wild_card)
+    if opening is None:
+        raise RuntimeError("visual game seed did not produce a legal opening")
+    play_pattern(state, 0, opening)
+    window.game_page.refresh()
+    capture("game-active-trick", 1080, 760)
+    for player in (3, 2, 1):
+        pass_turn(state, player)
+        window.game_page.refresh()
+    capture("game-collected-trick", 1080, 760)
+
     history = _replay_history()
     window.show_replay(history)
     replay = window.stack.currentWidget()
