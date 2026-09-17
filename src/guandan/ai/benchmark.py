@@ -264,8 +264,13 @@ def evaluate_benchmark_gate(
     max_completion_drop: Optional[float] = None,
     max_duration_increase: Optional[float] = None,
     max_turn_increase: Optional[float] = None,
+    max_bomb_drift: Optional[float] = None,
 ) -> BenchmarkGateResult:
-    """按阈值判断 benchmark 对比是否通过。"""
+    """按阈值判断 benchmark 对比是否通过。
+
+    ``max_bomb_drift`` guards the metric that silently moved ~3-4x between the
+    checked-in baseline and current play while turns and completion stayed flat.
+    """
     failures: list[str] = []
     if (
         max_completion_drop is not None
@@ -291,6 +296,13 @@ def evaluate_benchmark_gate(
             "average_turns_increase "
             f"{comparison.average_turns_delta:.3f} > {max_turn_increase:.3f}"
         )
+    if max_bomb_drift is not None:
+        for team, delta in enumerate(comparison.average_bombs_delta):
+            if abs(delta) > max_bomb_drift:
+                failures.append(
+                    f"average_bombs_drift_team{team} "
+                    f"{delta:+.2f} exceeds {max_bomb_drift:.2f}"
+                )
     return BenchmarkGateResult(
         comparison=comparison,
         passed=not failures,
@@ -585,6 +597,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         default=None,
         help="with --compare, fail if average turns increase by more than this value",
     )
+    parser.add_argument(
+        "--fail-bomb-drift",
+        type=float,
+        default=None,
+        help="with --compare, fail if the average bomb count moves by more than this",
+    )
     args = parser.parse_args(argv)
 
     if args.compare:
@@ -596,6 +614,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             max_completion_drop=args.fail_completion_drop,
             max_duration_increase=args.fail_duration_increase,
             max_turn_increase=args.fail_turn_increase,
+            max_bomb_drift=args.fail_bomb_drift,
         )
         if args.json:
             print(json.dumps(gate.to_dict(), ensure_ascii=False, sort_keys=True))
