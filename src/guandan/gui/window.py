@@ -40,6 +40,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .. import version_label
 from ..ai import AINotImplementedError, make_strategy
 from ..engine.card import Card
 from ..engine.events import Event, Pass, TributeResisted, TributeReturned, TributeSent, TurnPlayed
@@ -299,7 +300,7 @@ class MenuPage(QWidget):
         masthead_title.setObjectName("mastheadTitle")
         masthead.addWidget(masthead_title)
         masthead.addWidget(QLabel("  本地单机 · 无需联网"), 1)
-        version = QLabel("BETA  0.8.1")
+        version = QLabel(version_label("BETA  "))
         version.setObjectName("versionBadge")
         masthead.addWidget(version)
         layout.addLayout(masthead)
@@ -1563,7 +1564,7 @@ class GamePage(QWidget):
 class GuandanMainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("掼蛋 GUI · v0.8.1-beta.2")
+        self.setWindowTitle(f"掼蛋 GUI · {version_label()}")
         self.resize(1280, 860)
         self.setMinimumSize(1080, 760)
         self.stack = QStackedWidget()

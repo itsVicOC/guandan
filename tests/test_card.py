@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 import random
+import sys
+from dataclasses import FrozenInstanceError
+
+import pytest
 
 from guandan.engine.card import (
     RANK_2,
@@ -23,12 +27,16 @@ from guandan.engine.hand import Hand, sort_cards, sort_hand
 
 class TestCard:
     def test_card_immutable(self):
+        # Previously this wrapped its own assertion in `except Exception: pass`,
+        # so it also passed with frozen=True removed.
         c = Card(RANK_5, Suit.HEARTS)
-        try:
+        with pytest.raises(FrozenInstanceError):
             c.rank = 99  # type: ignore[misc]
-            raise AssertionError("should be frozen")
-        except Exception:
-            pass
+
+    def test_card_is_hashable_and_usable_in_sets(self):
+        """Pattern detection and search key cards in sets and dicts."""
+        assert Card(RANK_5, Suit.HEARTS) == Card(RANK_5, Suit.HEARTS)
+        assert len({Card(RANK_5, Suit.HEARTS), Card(RANK_5, Suit.HEARTS)}) == 1
 
     def test_card_short(self):
         assert Card(RANK_5, Suit.HEARTS).short == "红桃5"
@@ -195,3 +203,35 @@ class TestDeck:
         for h in hands:
             all_cards.extend(h)
         assert sorted(all_cards) == sorted(deck)
+
+
+class TestVersionLabel:
+    """Release strings are derived, not hardcoded in each frontend."""
+
+    def test_version_label_renders_pep440_beta(self):
+        from guandan import __version__, version_label
+
+        assert __version__ == "0.8.1b2"
+        assert version_label() == "v0.8.1-beta.2"
+
+    def test_version_label_accepts_a_prefix(self):
+        from guandan import version_label
+
+        assert version_label("BETA  ") == "BETA  0.8.1-beta.2"
+
+    def test_version_label_handles_stages_and_finals(self):
+        from guandan import version_label
+
+        module = sys.modules["guandan"]
+        original = module.__version__
+        try:
+            for raw, expected in (
+                ("1.0.0", "v1.0.0"),
+                ("1.0.0a1", "v1.0.0-alpha.1"),
+                ("2.3.4rc5", "v2.3.4-rc.5"),
+                ("weird", "vweird"),
+            ):
+                module.__version__ = raw
+                assert version_label() == expected, raw
+        finally:
+            module.__version__ = original

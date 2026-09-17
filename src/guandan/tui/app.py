@@ -5,6 +5,7 @@ from contextlib import suppress
 
 from textual.app import App
 
+from .. import version_label
 from ..storage import history_exists, reconcile_settlements
 from .layout import request_terminal_resize
 from .screens.main_menu import MainMenuScreen
@@ -14,7 +15,7 @@ class GuandanApp(App):
     """掼蛋 TUI App。"""
 
     TITLE = "掼蛋"
-    SUB_TITLE = "v0.8.1-beta.2 · Public Beta"
+    SUB_TITLE = f"{version_label()} · Public Beta"
 
     def on_mount(self) -> None:
         # Finish any settlement a previous run could not complete, so history

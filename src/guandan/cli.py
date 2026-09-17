@@ -5,6 +5,7 @@ import argparse
 import random
 import sys
 
+from . import version_label
 from .ai import AINotImplementedError, make_strategy, play_or_pass
 from .engine.card import RANK_2, RANK_A, Card
 from .engine.events import TurnPlayed
@@ -72,7 +73,7 @@ def _parse_selection(user_input: str, max_idx: int) -> list[int]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="掼蛋 CLI (v0.8.1-beta.2 / Public Beta)")
+    parser = argparse.ArgumentParser(description=f"掼蛋 CLI ({version_label()} / Public Beta)")
     parser.add_argument("--level", type=int, default=2, help="本局级牌 (2-14, 14=A)")
     parser.add_argument(
         "--first", type=int, choices=range(4), default=None, help="首发起家 (0-3，默认随机)"
