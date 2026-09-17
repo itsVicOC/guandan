@@ -672,21 +672,45 @@ class GameSession:
         self.game_saved = True
         return True
 
+    def resumable_round(self) -> tuple[GameState, str, int, int]:
+        """Return the round that should be persisted for resume.
+
+        Once `prepare_next_game()` deals a new round we delete the finished
+        round's save. Until `finalize_next_game()` runs, `self.state` is still
+        that finished round, so saving only ``self.state`` silently dropped the
+        freshly dealt round (and its tribute phase) on exit.
+        """
+        pending = self._pending_next_game
+        if pending is not None:
+            return pending.state, pending.game_id, pending.round_index, pending.seed
+        return self.require_state(), self.game_id, self.round_index, self.seed
+
+    def _round_is_already_saved(self, state: GameState) -> bool:
+        """Whether the round to persist was already settled.
+
+        `game_saved` describes the round in ``self.state``. A freshly dealt
+        pending round reuses the session but has not been saved yet, so the
+        flag must not suppress its first save.
+        """
+        if self._pending_next_game is not None:
+            return False
+        return self.game_saved or state.finished
+
     def save_unfinished(self) -> None:
-        state = self.require_state()
-        if state.finished or self.game_saved:
+        state, game_id, round_index, seed = self.resumable_round()
+        if self._round_is_already_saved(state):
             return
         ai_difficulties = [
             None if player == self.human else self.difficulty for player in range(4)
         ]
         save_game(
             state=state,
-            game_id=self.game_id,
+            game_id=game_id,
             player_seat=self.human,
             ai_difficulties=ai_difficulties,
-            seed=self.seed,
+            seed=seed,
             match_id=self.match_id,
-            round_index=self.round_index,
+            round_index=round_index,
             elapsed_seconds=self.current_elapsed_seconds(),
         )
 

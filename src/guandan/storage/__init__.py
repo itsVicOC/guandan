@@ -19,6 +19,7 @@ from .paths import (
 )
 from .profile import (
     DEFAULT_PROFILE,
+    consume_profile_error,
     load_profile,
     record_match_statistics,
     record_round_statistics,
@@ -32,6 +33,7 @@ from .serialization import deserialize_events, serialize_events
 __all__ = [
     "DEFAULT_PROFILE",
     "StorageBusyError",
+    "consume_profile_error",
     "delete_savegame",
     "deserialize_events",
     "get_history_dir",

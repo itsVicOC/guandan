@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
+from threading import Lock
 from typing import Any, TypeVar
 
 from .jsonio import write_json_atomic
@@ -19,6 +21,20 @@ from .paths import get_profile_path
 
 PROFILE_VERSION = "3.0"
 _ResultT = TypeVar("_ResultT")
+
+_profile_error_guard = Lock()
+_last_profile_error: str | None = None
+
+# Integer counters the settlement path increments with int(...) arithmetic.
+_COUNTED_STAT_KEYS = (
+    "total_rounds",
+    "head_rounds",
+    "total_matches",
+    "match_wins",
+    "match_losses",
+    "total_games",
+    "wins",
+)
 
 # 默认配置
 DEFAULT_PROFILE: dict[str, Any] = {
@@ -59,18 +75,101 @@ def load_profile() -> dict[str, Any]:
         return _load_profile_unlocked(path)
 
 
+def _quarantine_corrupt_profile(path: Path, reason: str) -> Path | None:
+    """Move an unreadable profile aside so the next write cannot destroy it.
+
+    The old behaviour returned defaults and let the following write overwrite
+    the user's statistics in place — a silent, unrecoverable data loss. Keeping
+    the bytes on disk lets a user (or support) recover the history by hand.
+    """
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    for attempt in range(100):
+        suffix = "" if attempt == 0 else f"-{attempt}"
+        target = path.with_name(f"{path.name}.corrupt-{timestamp}{suffix}")
+        if target.exists():
+            continue
+        try:
+            os.replace(path, target)
+        except OSError:
+            return None
+        _report_profile_error(f"{reason}；原文件已备份为 {target.name}")
+        return target
+    return None
+
+
+def _report_profile_error(message: str) -> None:
+    """Record the last load problem so a frontend can surface it once."""
+    global _last_profile_error
+    with _profile_error_guard:
+        _last_profile_error = message
+
+
+def consume_profile_error() -> str | None:
+    """Return and clear the last profile load error, if any."""
+    global _last_profile_error
+    with _profile_error_guard:
+        message = _last_profile_error
+        _last_profile_error = None
+    return message
+
+
 def _load_profile_unlocked(path: Path) -> dict[str, Any]:
     if not path.exists():
         return copy.deepcopy(DEFAULT_PROFILE)
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
-        return _migrate_profile(data)
     except FileNotFoundError:
         return copy.deepcopy(DEFAULT_PROFILE)
-    except (KeyError, TypeError, ValueError):
-        # 文件损坏，返回默认值
+    except OSError:
+        raise
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        # Unparseable file: preserve it instead of overwriting it later.
+        _quarantine_corrupt_profile(path, "配置文件无法解析")
         return copy.deepcopy(DEFAULT_PROFILE)
+
+    try:
+        profile = _migrate_profile(data)
+    except (KeyError, TypeError, ValueError) as exc:
+        # Parseable but structurally wrong (e.g. hand-edited statistics). The
+        # values are recoverable per field, so keep the file and fall back to
+        # defaults without quarantining.
+        _report_profile_error(f"配置内容异常（{exc}），已使用默认统计")
+        return copy.deepcopy(DEFAULT_PROFILE)
+    _validate_profile_statistics(profile)
+    return profile
+
+
+def _validate_profile_statistics(profile: dict[str, Any]) -> None:
+    """Guarantee the statistics shape callers index into without checks.
+
+    ``record_round_statistics`` and friends do ``profile["statistics"][...]``
+    and ``int(stats.get(...))`` directly, so a malformed nested value must
+    never escape this module — otherwise a hand-edited profile would abort the
+    whole settlement transaction instead of just losing one counter.
+    """
+    statistics = profile.get("statistics")
+    if not isinstance(statistics, dict):
+        raise ValueError("statistics must be an object")
+    for key in ("by_difficulty", "by_difficulty_rounds"):
+        bucket = statistics.get(key)
+        if not isinstance(bucket, dict):
+            statistics[key] = {}
+            continue
+        for bucket_key, value in list(bucket.items()):
+            if not isinstance(value, dict):
+                bucket[bucket_key] = {"matches": 0, "wins": 0, "rounds": 0}
+    for key in ("recorded_game_ids", "recorded_match_ids"):
+        if not isinstance(statistics.get(key), list):
+            statistics[key] = []
+    for key in _COUNTED_STAT_KEYS:
+        value = statistics.get(key, 0)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            try:
+                value = int(value)
+            except (TypeError, ValueError):
+                value = 0
+        statistics[key] = max(0, int(value))
 
 
 def save_profile(profile: dict[str, Any]) -> None:

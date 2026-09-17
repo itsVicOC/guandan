@@ -30,6 +30,7 @@ from guandan.engine.rules.patterns import find_complete_pattern
 from guandan.engine.state import GameState, make_initial_state, pass_turn, play_pattern
 from guandan.storage import (
     DEFAULT_PROFILE,
+    consume_profile_error,
     delete_savegame,
     deserialize_events,
     has_savegame,
@@ -393,6 +394,89 @@ profile_module.update_profile(mutate)
             "guandan.storage.profile.open", side_effect=PermissionError("denied")
         ), pytest.raises(PermissionError, match="denied"):
             load_profile()
+
+    def test_truncated_profile_is_quarantined_not_overwritten(self, tmp_path: Path):
+        """A crash-truncated profile must survive the next settlement write."""
+        path = tmp_path / "profile.json"
+
+        def seed(profile):
+            profile["statistics"]["total_rounds"] = 5
+            profile["statistics"]["head_rounds"] = 2
+
+        with patch("guandan.storage.profile.get_profile_path", return_value=path):
+            update_profile(seed)
+            original = path.read_text(encoding="utf-8")
+            # Simulate a torn write / power loss.
+            path.write_text(original[: len(original) // 2], encoding="utf-8")
+
+            assert load_profile()["statistics"]["total_rounds"] == 0
+
+            quarantined = list(tmp_path.glob("profile.json.corrupt-*"))
+            assert len(quarantined) == 1
+            # The user's bytes are still recoverable.
+            assert "total_rounds" in quarantined[0].read_text(encoding="utf-8")
+
+            error = consume_profile_error()
+            assert error is not None and "无法解析" in error
+            # The report is consumed once.
+            assert consume_profile_error() is None
+
+            def record(profile):
+                record_round_statistics(profile, got_head=True, difficulty=2, game_id="g1")
+
+            update_profile(record)
+            # Recording still works, and the quarantined copy is untouched.
+            assert load_profile()["statistics"]["total_rounds"] == 1
+            assert quarantined[0].read_text(encoding="utf-8") == original[: len(original) // 2]
+
+    def test_hand_edited_profile_is_normalized_without_quarantine(self, tmp_path: Path):
+        """Wrong types degrade per field instead of aborting the transaction."""
+        path = tmp_path / "profile.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "player_name": "手改玩家",
+                    "preferences": {"default_difficulty": "high"},
+                    "statistics": {
+                        "total_rounds": "abc",
+                        "head_rounds": None,
+                        "by_difficulty": {"2": 5},
+                        "recorded_game_ids": "nope",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        with patch("guandan.storage.profile.get_profile_path", return_value=path):
+            profile = load_profile()
+            assert profile["statistics"]["total_rounds"] == 0
+            assert profile["statistics"]["head_rounds"] == 0
+            assert profile["statistics"]["recorded_game_ids"] == []
+            assert profile["statistics"]["by_difficulty"] == {}
+            # A parseable-but-wrong file is repaired in place, not moved aside.
+            assert not list(tmp_path.glob("profile.json.corrupt-*"))
+
+            def record(profile):
+                record_round_statistics(profile, got_head=True, difficulty=2, game_id="g1")
+
+            update_profile(record)
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            assert saved["statistics"]["total_rounds"] == 1
+            assert saved["player_name"] == "手改玩家"
+
+    def test_quarantine_only_happens_once_per_corrupt_file(self, tmp_path: Path):
+        path = tmp_path / "profile.json"
+        path.write_text("{not json", encoding="utf-8")
+
+        with patch("guandan.storage.profile.get_profile_path", return_value=path):
+            consume_profile_error()  # clear any error left by an earlier test
+            load_profile()
+            assert consume_profile_error() is not None
+            # The corrupt file was moved aside, so the next load is clean.
+            load_profile()
+            assert consume_profile_error() is None
+            assert len(list(tmp_path.glob("profile.json.corrupt-*"))) == 1
 
 
 class TestSavegame:

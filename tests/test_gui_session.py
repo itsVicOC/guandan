@@ -485,6 +485,70 @@ def test_session_keeps_finished_state_when_persistence_fails() -> None:
     assert session.state is finished
 
 
+def _finished_round_state() -> GameState:
+    return GameState(
+        level=2,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=0,
+        leader=0,
+        finish_order=[0, 1, 2],
+        finished=True,
+        team_levels_final=[5, 2],
+    )
+
+
+def test_pending_next_round_is_saved_so_an_exit_does_not_lose_it() -> None:
+    """The freshly dealt round must reach disk while its tribute phase pends.
+
+    `prepare_next_game()` deletes the finished round's save and keeps the new
+    round in memory only, so `save_unfinished()` has to persist the pending
+    state instead of the finished one it is still pointing at.
+    """
+    session = GameSession(difficulty=0, existing_state=_finished_round_state(), human=0)
+    session.game_saved = True  # the finished round was already settled
+
+    with patch.object(session, "save_finished_if_needed", return_value=True):
+        assert session.prepare_next_game().ok is True
+    assert session.is_next_game_pending() is True
+    pending_game_id = session._pending_next_game.game_id
+
+    with patch("guandan.ui.session.save_game") as save_game_mock:
+        session.save_unfinished()
+
+    assert save_game_mock.call_count == 1
+    kwargs = save_game_mock.call_args.kwargs
+    assert kwargs["game_id"] == pending_game_id
+    assert kwargs["round_index"] == 2
+    assert kwargs["state"].finished is False
+    assert [len(hand) for hand in kwargs["state"].hands] == [27, 27, 27, 27]
+
+
+def test_save_unfinished_skips_an_already_settled_round() -> None:
+    """Without a pending round the original guard still applies."""
+    session = GameSession(difficulty=0, existing_state=_finished_round_state(), human=0)
+    session.game_saved = True
+
+    with patch("guandan.ui.session.save_game") as save_game_mock:
+        session.save_unfinished()
+
+    assert save_game_mock.call_count == 0
+
+
+def test_save_unfinished_persists_a_live_round() -> None:
+    session = GameSession(difficulty=0, human=0, seed=99)
+    session.ensure_started()
+
+    with patch("guandan.ui.session.save_game") as save_game_mock:
+        session.save_unfinished()
+
+    assert save_game_mock.call_count == 1
+    kwargs = save_game_mock.call_args.kwargs
+    assert kwargs["game_id"] == session.game_id
+    assert kwargs["round_index"] == session.round_index
+    assert kwargs["state"] is session.state
+
+
 def test_session_records_round_head_without_counting_a_match() -> None:
     finished = GameState(
         level=2,
