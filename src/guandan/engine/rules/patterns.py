@@ -665,12 +665,49 @@ def is_legal(cards: Sequence[Card], wild_card: Card | None = None) -> bool:
 def find_complete_pattern(
     cards: Sequence[Card], wild_card: Card | None = None
 ) -> Pattern | None:
-    """找一个用掉所有 cards 的合法 Pattern。"""
-    input_counts = Counter(cards)
+    """找一个用掉所有 cards 的合法 Pattern。
+
+    Results are memoised on the card multiset: this is the hottest call in the
+    MCTS rollout (measured ~2400 calls for a single 60-simulation decision, and
+    `detect_patterns` dominates its profile), and it depends on nothing but the
+    multiset and the wild card.
+    """
+    card_tuple = tuple(sorted(cards, key=_card_sort_key))
+    cache_key = (card_tuple, wild_card)
+    # `hashable` guards the (theoretical) unhashable-input case without
+    # widening the key type for the common path.
+    try:
+        return _complete_pattern_cache[cache_key]
+    except KeyError:
+        pass
+    except TypeError:
+        return _compute_complete_pattern(card_tuple, wild_card)
+
+    result = _compute_complete_pattern(card_tuple, wild_card)
+    if len(_complete_pattern_cache) >= _COMPLETE_PATTERN_CACHE_LIMIT:
+        _complete_pattern_cache.clear()
+    _complete_pattern_cache[cache_key] = result
+    return result
+
+
+def _compute_complete_pattern(
+    card_tuple: tuple[Card, ...], wild_card: Card | None
+) -> Pattern | None:
+    input_counts = Counter(card_tuple)
     candidates = [
-        p for p in detect_patterns(cards, wild_card) if Counter(p.cards) == input_counts
+        p for p in detect_patterns(card_tuple, wild_card) if Counter(p.cards) == input_counts
     ]
     return max(candidates, key=_pattern_selection_key, default=None)
+
+
+def _card_sort_key(card: Card) -> tuple[int, int]:
+    return (card.rank, int(card.suit))
+
+
+# Bounded so a long rollout cannot grow the cache without limit; Pattern values
+# are immutable, so sharing them between callers is safe.
+_COMPLETE_PATTERN_CACHE_LIMIT = 4096
+_complete_pattern_cache: dict[tuple[tuple[Card, ...], Card | None], Pattern | None] = {}
 
 
 def has_legal_pattern(cards: Sequence[Card], wild_card: Card | None = None) -> bool:

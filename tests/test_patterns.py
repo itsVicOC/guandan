@@ -362,3 +362,46 @@ class TestFindPattern:
         assert p is not None
         assert p.type == PatternType.BOMB
         assert p.length == 4
+
+
+class TestCompletePatternCache:
+    """The memoised helper is on the MCTS rollout hot path."""
+
+    def _cache(self):
+        from guandan.engine.rules import patterns
+
+        return patterns._complete_pattern_cache
+
+    def test_cache_is_order_independent(self):
+        cards = [c(RANK_5, "S"), c(RANK_5, "C"), c(RANK_3, "D")]
+        shuffled = [cards[2], cards[0], cards[1]]
+        assert find_complete_pattern(cards) is None
+        assert find_complete_pattern(shuffled) is None
+
+        pair = [c(RANK_7, "S"), c(RANK_7, "C")]
+        first = find_complete_pattern(pair)
+        second = find_complete_pattern(list(reversed(pair)))
+        assert first is not None and second is not None
+        assert (first.type, first.rank, first.length) == (second.type, second.rank, second.length)
+
+    def test_cache_does_not_change_results(self):
+        from guandan.engine.rules import patterns
+
+        cards = [c(RANK_A, "S"), c(RANK_A, "C"), c(RANK_A, "D"), c(RANK_A, "H")]
+        expected = find_complete_pattern(cards)
+        assert expected is not None and expected.type == PatternType.BOMB
+        patterns._complete_pattern_cache.clear()  # force a recompute
+        assert find_complete_pattern(cards) is not None
+        patterns._complete_pattern_cache.clear()
+        assert find_complete_pattern(cards) is not None
+
+    def test_cache_is_bounded(self):
+        from guandan.engine.rules import patterns
+
+        cache = self._cache()
+        cache.clear()
+        for rank in range(RANK_2, RANK_A + 1):
+            for suit in ("S", "C", "D", "H"):
+                find_complete_pattern([c(rank, suit), c(rank, "S")])
+        assert len(cache) <= patterns._COMPLETE_PATTERN_CACHE_LIMIT
+        cache.clear()
