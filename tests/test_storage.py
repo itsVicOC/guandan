@@ -7,11 +7,13 @@ import random
 import subprocess
 import sys
 import tempfile
+import threading
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from filelock import FileLock
 
 from guandan.engine.card import Card, Suit
 from guandan.engine.deck import deal, make_deck, shuffle_deck
@@ -30,6 +32,7 @@ from guandan.engine.rules.patterns import find_complete_pattern
 from guandan.engine.state import GameState, make_initial_state, pass_turn, play_pattern
 from guandan.storage import (
     DEFAULT_PROFILE,
+    StorageBusyError,
     consume_profile_error,
     delete_savegame,
     deserialize_events,
@@ -48,6 +51,8 @@ from guandan.storage import (
     update_profile,
     update_statistics,
 )
+from guandan.storage.jsonio import write_json_atomic
+from guandan.storage.locking import storage_lock
 
 
 def _make_test_state(level: int = 2, seed: int = 42) -> GameState:
@@ -944,3 +949,68 @@ class TestHistory:
             with patch("guandan.storage.history.get_history_dir", return_value=history_dir):
                 assert load_history_list() == []
                 assert load_history_detail("bad-events") is None
+
+
+class TestStoragePrimitives:
+    """Direct coverage for the lock/atomic-write layer the README advertises."""
+
+    def test_write_json_atomic_preserves_symlink_target(self, tmp_path: Path):
+        """Writing through a symlinked path must update the real file.
+
+        Replacing the link itself detaches a user's synced/backed-up copy and
+        silently stops updating it.
+        """
+        real = tmp_path / "real.json"
+        real.write_text('{"v": 1}', encoding="utf-8")
+        link = tmp_path / "link.json"
+        link.symlink_to(real)
+
+        write_json_atomic(link, {"v": 2})
+
+        assert link.is_symlink()
+        assert json.loads(real.read_text(encoding="utf-8")) == {"v": 2}
+
+    def test_write_json_atomic_keeps_old_file_when_serialisation_fails(self, tmp_path: Path):
+        path = tmp_path / "data.json"
+        path.write_text('{"keep": true}', encoding="utf-8")
+
+        with pytest.raises(TypeError):
+            write_json_atomic(path, {"bad": object()})
+
+        assert json.loads(path.read_text(encoding="utf-8")) == {"keep": True}
+        # The temporary file must not be left behind.
+        assert list(tmp_path.glob(".data.json.*.tmp")) == []
+
+    def test_storage_lock_is_reentrant_within_a_thread(self, tmp_path: Path):
+        resource = tmp_path / "resource.json"
+        with storage_lock(resource), storage_lock(resource):
+            assert resource.parent.exists()
+
+    def test_storage_lock_reports_cross_thread_contention(self, tmp_path: Path):
+        """A same-process holder must not be reported as 'another process'."""
+        resource = tmp_path / "contended.json"
+        holding = threading.Event()
+        release = threading.Event()
+
+        def holder() -> None:
+            with storage_lock(resource):
+                holding.set()
+                release.wait(10.0)
+
+        thread = threading.Thread(target=holder, name="storage-holder", daemon=True)
+        thread.start()
+        assert holding.wait(5.0)
+
+        # A short-timeout lock for the same path, so the wait is bounded.
+        lock = FileLock(resource.with_name(f".{resource.name}.lock"), timeout=0.2)
+        try:
+            with patch("guandan.storage.locking._lock_for", return_value=lock):
+                with pytest.raises(StorageBusyError) as excinfo:
+                    with storage_lock(resource):
+                        pass
+            message = str(excinfo.value)
+            assert "本程序内其他线程" in message
+            assert "另一个掼蛋进程" not in message
+        finally:
+            release.set()
+            thread.join(timeout=5.0)
