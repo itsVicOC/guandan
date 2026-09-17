@@ -1614,13 +1614,14 @@ class GuandanMainWindow(QMainWindow):
             evicted = self.stack.widget(0)
             if evicted is None or evicted is page:
                 break
-            if evicted is self.game_page:
-                # Never keep a pointer to an evicted table: save_current_game()
-                # and closeEvent() both call into self.game_page, and an evicted
-                # page's Qt objects can already be gone.
-                self.game_page = None
+            # Never keep a pointer to an evicted table: save_current_game()
+            # and closeEvent() both call into self.game_page, and an evicted
+            # page's Qt objects can already be gone.
+            evicts_game_page = evicted is self.game_page
             self.stack.removeWidget(evicted)
             evicted.deleteLater()
+            if evicts_game_page:
+                self.game_page = None
 
     def show_menu(self) -> None:
         self._replace_page(MenuPage(self))
