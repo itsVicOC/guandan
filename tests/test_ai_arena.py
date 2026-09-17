@@ -148,3 +148,51 @@ def test_arena_cli_json_is_parseable(capsys: pytest.CaptureFixture[str]) -> None
     assert exit_code == 0
     assert payload["games"] == 2
     assert payload["passed"] is True
+
+
+class TestActionValueBaselineTool:
+    """The baseline tool's statistics must be right, since every measurement
+    below it depends on the interval being honest."""
+
+    def test_wilson_interval_brackets_the_point_estimate(self):
+        from scripts.action_value_baseline import wilson_interval
+
+        for wins, n in ((0, 400), (100, 400), (200, 400), (399, 400), (400, 400)):
+            low, high = wilson_interval(wins, n)
+            assert 0.0 <= low <= wins / n <= high <= 1.0
+
+    def test_wilson_interval_narrows_with_more_samples(self):
+        from scripts.action_value_baseline import wilson_interval
+
+        narrow = wilson_interval(200, 400)
+        wide = wilson_interval(20, 40)
+        assert (narrow[1] - narrow[0]) < (wide[1] - wide[0])
+
+    def test_wilson_interval_handles_zero_samples(self):
+        from scripts.action_value_baseline import wilson_interval
+
+        assert wilson_interval(0, 0) == (0.0, 1.0)
+
+    def test_playout_is_reproducible_for_a_fixed_seed(self):
+        """Ground-truth labels must be reproducible, or the baseline is useless."""
+        from guandan.ai.mcts import information_set as IS
+        from scripts.action_value_baseline import (
+            _init_worker,
+            _playout,
+            sample_positions,
+        )
+
+        sampled = sample_positions(1, min_cards=10, max_cards=16)
+        assert sampled, "no position sampled"
+        seed, state = sampled[0]
+        positions = {seed: state}
+        candidates = {
+            seed: IS.enumerate_search_candidates(state, 0, max_candidates=3)
+        }
+        assert candidates[seed], "no candidates"
+        _init_worker(positions, candidates)
+
+        first = [_playout((seed, 0, k)) for k in range(5)]
+        second = [_playout((seed, 0, k)) for k in range(5)]
+        assert first == second
+        assert all(r[2] in (0, 1, None) for r in first)
