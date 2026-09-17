@@ -672,6 +672,34 @@ class TestSavegame:
 
                 assert load_game() is None
 
+    def test_load_game_accepts_legacy_tribute_state_field(self):
+        """A field the event stream cannot rebuild must not void the save.
+
+        Older builds serialised `tribute_state`; replay never assigns it, so a
+        whole-dataclass comparison marked every such save as corrupt and the UI
+        only offered to delete it.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "savegame.json"
+            state = make_initial_state(level=2, first_player=0, seed=42)
+            with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
+                save_game(state, "legacy-tribute", 0, [None, 2, 2, 2], 42)
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                payload["state"]["tribute_state"] = {
+                    "pending": True,
+                    "from_player": 3,
+                    "to_player": 0,
+                    "tribute_card": None,
+                    "resisted": False,
+                }
+                path.write_text(json.dumps(payload), encoding="utf-8")
+
+                loaded = load_game()
+                assert loaded is not None
+                restored = restore_game_state(loaded)
+                assert restored.turn_index == state.turn_index
+                assert [len(hand) for hand in restored.hands] == [27, 27, 27, 27]
+
     def test_save_game_rejects_unsafe_game_id(self):
         state = make_initial_state(level=2, first_player=0, seed=42)
 

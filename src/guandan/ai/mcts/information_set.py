@@ -74,6 +74,11 @@ class SearchResult:
     sampled_worlds: int
     elapsed_seconds: float
     actions: tuple[ActionStatistics, ...]
+    # True when the clock budget stopped the search before `iterations`.
+    # The production path is usually budget-limited (roughly 20-60 of the
+    # nominal 64/96 simulations), so `iterations` alone does not describe the
+    # search that actually ran and must not be used as a strength claim.
+    budget_limited: bool = False
 
 
 def _legal_action_map(
@@ -277,6 +282,12 @@ def information_set_search(
         raise ValueError("max_actions must be positive")
     if max_tree_depth <= 0 or rollout_max_turns <= 0:
         raise ValueError("search depth and rollout limit must be positive")
+    if player != state.current_player():
+        # Without this the search silently returns a plausible-looking action
+        # chosen from nodes whose actions could never be applied.
+        raise ValueError(
+            f"player {player} is not to act (current player is {state.current_player()})"
+        )
 
     search_style = style or SearchStyle()
     root = InformationSetNode(availability=iterations)
@@ -341,6 +352,11 @@ def information_set_search(
                 break
             child, pattern = chosen
             if not _apply_action(sampled_state, actor, pattern):
+                # `_expand_action` inserted the child before the action was
+                # proven applicable in this world. Leaving it behind would let
+                # a 0-visit action be selected as "best".
+                if child.action_key is not None:
+                    node.children.pop(child.action_key, None)
                 break
             node = child
             path.append(node)
@@ -375,7 +391,8 @@ def information_set_search(
     return SearchResult(
         pattern=best.pattern if best is not None else None,
         simulations=simulations,
-        sampled_worlds=simulations if simulations else 0,
+        sampled_worlds=simulations,
         elapsed_seconds=time.perf_counter() - started,
         actions=action_stats,
+        budget_limited=deadline is not None and simulations < iterations,
     )

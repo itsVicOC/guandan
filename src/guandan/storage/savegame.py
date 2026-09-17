@@ -178,8 +178,26 @@ def _validate_loaded_savegame(savegame: dict[str, Any]) -> None:
 
     events = savegame.get("events", [])
     replayed = replay_events(events)
-    if replayed != restored:
+    if not _replayable_state_matches(replayed, restored):
         raise ValueError("savegame state does not match its event stream")
+
+
+# Fields the event stream cannot reconstruct. A legacy `tribute_state` payload
+# (written by older builds, never populated by the engine) must not mark an
+# otherwise perfectly valid save as corrupt.
+_UNREPLAYABLE_STATE_FIELDS = ("tribute_state",)
+
+
+def _replayable_state_matches(replayed: GameState, restored: GameState) -> bool:
+    """Compare only the fields a replay is expected to reproduce.
+
+    Comparing whole dataclasses turned any future ``GameState`` field that
+    replay.py does not assign into an instant "corrupt save" for every
+    existing save file.
+    """
+    for field_name in _UNREPLAYABLE_STATE_FIELDS:
+        setattr(replayed, field_name, getattr(restored, field_name))
+    return replayed == restored
 
 
 def _validate_state_invariants(state: GameState) -> None:

@@ -140,6 +140,10 @@ class HistoryScreen(Screen):
             self.app.push_screen(ReplayScreen(detail))
         except ValueError as exc:
             self.app.push_screen(ErrorModal(str(exc), title="回放数据无效"))
+        except Exception as exc:  # pragma: no cover - defensive: never kill the app
+            # An exception escaping a Textual message handler exits the whole
+            # app, so a single bad history record must not propagate.
+            self.app.push_screen(ErrorModal(f"回放打开失败：{exc}", title="回放数据无效"))
 
     def action_back(self) -> None:
         self.app.pop_screen()

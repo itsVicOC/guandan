@@ -884,6 +884,22 @@ from guandan.ui.session import GameSession, SessionAction
 app = QApplication([])
 window = GuandanMainWindow()
 
+
+def wait_until(predicate, timeout_ms=5000, interval_ms=20):
+    \"\"\"Pump the event loop until `predicate()` holds or the timeout expires.
+
+    A fixed singleShot(timeout) silently races the AI worker's thread-pool
+    scheduling; polling makes a slow machine fail loudly instead of flakily.
+    \"\"\"
+    waited = 0
+    while not predicate() and waited < timeout_ms:
+        loop = QEventLoop()
+        QTimer.singleShot(interval_ms, loop.quit)
+        loop.exec()
+        waited += interval_ms
+    return predicate()
+
+
 state = make_initial_state(level=2, first_player=3, seed=9)
 session = GameSession(difficulty=0, existing_state=state, human=0)
 session.save_unfinished = Mock()
@@ -899,9 +915,8 @@ failed_state = make_initial_state(level=2, first_player=3, seed=10)
 failed_session = GameSession(difficulty=0, existing_state=failed_state, human=0)
 failed_session.step_ai = Mock(return_value=SessionAction(False, "AI 错误：invalid"))
 window.start_game(failed_session)
-loop = QEventLoop()
-QTimer.singleShot(700, loop.quit)
-loop.exec()
+assert wait_until(lambda: failed_session.step_ai.call_count >= 1), "AI worker never ran"
+assert wait_until(lambda: not window.game_page._ai_running), "AI worker never finished"
 assert failed_session.step_ai.call_count == 1
 assert not window.game_page._ai_timer.isActive()
 
