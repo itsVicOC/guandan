@@ -14,6 +14,7 @@ from collections import Counter
 
 import pytest
 
+from guandan.ai.candidates import observable_key, pattern_key
 from guandan.ai.mcts import MCTS_CONFIG
 from guandan.ai.mcts.determinize import (
     PassEvidence,
@@ -38,11 +39,22 @@ from guandan.ai.mcts.search import (
 )
 from guandan.ai.strategies.professional import ProfessionalStrategy
 from guandan.ai.valuation import enumerate_search_candidates
-from guandan.engine.card import RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
+from guandan.engine.card import RANK_5, RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
 from guandan.engine.deck import deal, make_deck, shuffle_deck
 from guandan.engine.events import TributeReturned, TributeSent, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.state import GameState, clone_state_for_search, pass_turn, play_pattern
+
+_SUIT_BY_LETTER = {
+    "S": Suit.SPADES,
+    "H": Suit.HEARTS,
+    "C": Suit.CLUBS,
+    "D": Suit.DIAMONDS,
+}
+
+
+def c(rank, suit="H"):
+    return Card(rank, _SUIT_BY_LETTER[suit])
 
 
 def _make_test_state(level: int = 2, seed: int = 42) -> GameState:
@@ -787,3 +799,106 @@ class TestSearchStateClone:
             rollout_max_turns=3,
         )
         assert state == before
+
+
+class TestTreeDepth:
+    """The shared tree must actually deepen.
+
+    Regression: tree nodes were keyed by the exact card multiset, so no world
+    ever revisited a child and the descent broke at every freshly created node.
+    64 simulations produced exactly 64 non-root nodes — a one-layer search where
+    `max_tree_depth`, progressive widening and priors were all inert.
+    """
+
+    def test_observable_key_ignores_which_physical_cards_were_used(self):
+        low_pair = Pattern(
+            type=PatternType.PAIR, rank=RANK_5, length=1, cards=(c(RANK_5, "S"), c(RANK_5, "C"))
+        )
+        other_pair = Pattern(
+            type=PatternType.PAIR, rank=RANK_5, length=1, cards=(c(RANK_5, "D"), c(RANK_5, "H"))
+        )
+        assert observable_key(low_pair) == observable_key(other_pair)
+        # The precise key still distinguishes them, which is what the root needs.
+        assert pattern_key(low_pair) != pattern_key(other_pair)
+
+    def test_observable_key_separates_different_plays(self):
+        pair = Pattern(
+            type=PatternType.PAIR, rank=RANK_5, length=1, cards=(c(RANK_5, "S"), c(RANK_5, "C"))
+        )
+        triple = Pattern(
+            type=PatternType.TRIPLE,
+            rank=RANK_5,
+            length=1,
+            cards=(c(RANK_5, "S"), c(RANK_5, "C"), c(RANK_5, "D")),
+        )
+        longer_bomb = Pattern(
+            type=PatternType.BOMB,
+            rank=RANK_5,
+            length=5,
+            cards=tuple(c(RANK_5, s) for s in ("S", "C", "D", "H", "S")),
+        )
+        longer_bomb_4 = Pattern(
+            type=PatternType.BOMB,
+            rank=RANK_5,
+            length=4,
+            cards=tuple(c(RANK_5, s) for s in ("S", "C", "D", "H")),
+        )
+        assert observable_key(pair) != observable_key(triple)
+        assert observable_key(longer_bomb) != observable_key(longer_bomb_4)
+
+    def test_search_builds_a_tree_deeper_than_one_layer(self):
+        state = _make_test_state()
+        created = {"count": 0}
+        original_init = InformationSetNode.__init__
+
+        def counting_init(self, *args, **kwargs):
+            original_init(self, *args, **kwargs)
+            created["count"] += 1
+
+        InformationSetNode.__init__ = counting_init
+        try:
+            result = information_set_search(
+                state,
+                player=0,
+                rng=random.Random(3),
+                iterations=48,
+                max_actions=6,
+                max_tree_depth=8,
+                rollout_strategy=1,
+                rollout_max_turns=4,
+            )
+        finally:
+            InformationSetNode.__init__ = original_init
+
+        # A one-layer search creates exactly one node per simulation.
+        assert created["count"] > result.simulations * 2, (
+            f"tree degenerated to one layer: {created['count']} nodes "
+            f"for {result.simulations} simulations"
+        )
+
+    def test_information_boundary_holds_with_the_shared_tree(self):
+        """Hidden hands must not change the search's statistics."""
+        state = _make_test_state()
+        signatures = set()
+        for offset in range(3):
+            variant = copy.deepcopy(state)
+            rng = random.Random(900 + offset)
+            for opponent in (1, 2, 3):
+                rng.shuffle(variant.hands[opponent])
+            result = information_set_search(
+                variant,
+                player=0,
+                rng=random.Random(4242),
+                iterations=32,
+                max_actions=5,
+                max_tree_depth=4,
+                rollout_strategy=1,
+                rollout_max_turns=3,
+            )
+            signatures.add(
+                tuple(
+                    (str(a.action_key), a.visits, round(a.mean_value, 6))
+                    for a in result.actions
+                )
+            )
+        assert len(signatures) == 1

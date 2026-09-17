@@ -10,7 +10,7 @@ import argparse
 import json
 import math
 from dataclasses import dataclass
-from typing import Any, Optional, Sequence
+from typing import Any, Callable, Optional, Sequence
 
 from .benchmark import (
     FullMatchResult,
@@ -186,6 +186,162 @@ def fixed_iteration_strategy_factory(difficulty: int, _player: int) -> AIStrateg
     return make_strategy(difficulty)
 
 
+def _paired_legs(
+    *,
+    deals: int,
+    seed_start: int,
+    candidate_difficulty: int,
+    baseline_difficulty: int,
+    level: int,
+    max_turns: int,
+    strategy_factory: StrategyFactory | None,
+    full_match: bool,
+    max_rounds: int,
+) -> list[ArenaLegResult]:
+    """Play every seed twice with the two arms swapping the fixed teams."""
+    runner = run_full_match if full_match else run_match
+    legs: list[ArenaLegResult] = []
+    for seed in range(seed_start, seed_start + deals):
+        common_kwargs: dict[str, Any] = {
+            "level": level,
+            "max_turns": max_turns,
+            "strategy_factory": strategy_factory,
+        }
+        if full_match:
+            common_kwargs["max_rounds"] = max_rounds
+        legs.append(
+            ArenaLegResult(
+                seed,
+                0,
+                runner(
+                    seed,
+                    difficulties=(
+                        candidate_difficulty,
+                        baseline_difficulty,
+                        candidate_difficulty,
+                        baseline_difficulty,
+                    ),
+                    **common_kwargs,
+                ),
+            )
+        )
+        legs.append(
+            ArenaLegResult(
+                seed,
+                1,
+                runner(
+                    seed,
+                    difficulties=(
+                        baseline_difficulty,
+                        candidate_difficulty,
+                        baseline_difficulty,
+                        candidate_difficulty,
+                    ),
+                    **common_kwargs,
+                ),
+            )
+        )
+    return legs
+
+
+def _summarize_legs(
+    legs: list[ArenaLegResult],
+    *,
+    candidate_difficulty: int,
+    baseline_difficulty: int,
+    deals: int,
+    full_match: bool,
+    deterministic_search: bool,
+) -> ArenaSummary:
+    completed = [leg for leg in legs if leg.match.finished]
+    candidate_wins = sum(leg.candidate_won for leg in completed)
+    baseline_wins = len(completed) - candidate_wins
+    win_rate = candidate_wins / len(completed) if completed else 0.0
+    confidence_low, confidence_high = wilson_interval(candidate_wins, len(completed))
+    decision_seconds = tuple(
+        duration for leg in legs for duration in leg.candidate_decision_seconds
+    )
+    return ArenaSummary(
+        candidate_difficulty=candidate_difficulty,
+        baseline_difficulty=baseline_difficulty,
+        deals=deals,
+        legs=tuple(legs),
+        candidate_wins=candidate_wins,
+        baseline_wins=baseline_wins,
+        incomplete=len(legs) - len(completed),
+        candidate_win_rate=win_rate,
+        confidence_low=confidence_low,
+        confidence_high=confidence_high,
+        elo_delta=elo_from_win_rate(win_rate) if completed else 0.0,
+        average_level_margin=(
+            sum(leg.level_margin for leg in completed) / len(completed)
+            if completed
+            else 0.0
+        ),
+        candidate_decision_seconds=decision_seconds,
+        full_match=full_match,
+        deterministic_search=deterministic_search,
+    )
+
+
+def run_paired_comparison(
+    *,
+    deals: int,
+    seed_start: int,
+    candidate_factory: Callable[[int], AIStrategy],
+    baseline_factory: Callable[[int], AIStrategy],
+    level: int = 2,
+    max_turns: int = 2000,
+    full_match: bool = False,
+    max_rounds: int = 64,
+) -> ArenaSummary:
+    """Pair any two strategy factories on identical deals.
+
+    `run_arena` varies the *difficulty*; this varies the *implementation* while
+    holding difficulty fixed, which is what an A/B of a search-policy change
+    needs. The candidate holds seats 0/2 and the baseline seats 1/3 in the first
+    leg, then they swap — so deal luck and fixed-team advantage cancel exactly
+    as in `run_arena`.
+
+    Each factory receives the seat index alone: the implementation is the
+    variable under test, so a nominal "difficulty" would be meaningless.
+
+    Example::
+
+        run_paired_comparison(
+            deals=20, seed_start=7300,
+            candidate_factory=lambda seat: ungated(seat),
+            baseline_factory=lambda seat: gated(seat),
+        )
+    """
+    if deals <= 0:
+        raise ValueError("deals must be positive")
+
+    def seat_factory(_difficulty: int, player: int) -> AIStrategy:
+        return (candidate_factory if player % 2 == 0 else baseline_factory)(player)
+
+    # Seat tags: 0 marks the candidate's team, 1 the baseline's.
+    legs = _paired_legs(
+        deals=deals,
+        seed_start=seed_start,
+        candidate_difficulty=0,
+        baseline_difficulty=1,
+        level=level,
+        max_turns=max_turns,
+        strategy_factory=seat_factory,
+        full_match=full_match,
+        max_rounds=max_rounds,
+    )
+    return _summarize_legs(
+        legs,
+        candidate_difficulty=0,
+        baseline_difficulty=1,
+        deals=deals,
+        full_match=full_match,
+        deterministic_search=False,
+    )
+
+
 def run_arena(
     *,
     deals: int,
@@ -210,68 +366,22 @@ def run_arena(
     if deterministic_search:
         strategy_factory = fixed_iteration_strategy_factory
 
-    legs: list[ArenaLegResult] = []
-    match_runner = run_full_match if full_match else run_match
-    for seed in range(seed_start, seed_start + deals):
-        common_kwargs: dict[str, Any] = {
-            "level": level,
-            "max_turns": max_turns,
-            "strategy_factory": strategy_factory,
-        }
-        if full_match:
-            common_kwargs["max_rounds"] = max_rounds
-        candidate_team0 = match_runner(
-            seed,
-            difficulties=(
-                candidate_difficulty,
-                baseline_difficulty,
-                candidate_difficulty,
-                baseline_difficulty,
-            ),
-            **common_kwargs,
-        )
-        legs.append(ArenaLegResult(seed, 0, candidate_team0))
-
-        candidate_team1 = match_runner(
-            seed,
-            difficulties=(
-                baseline_difficulty,
-                candidate_difficulty,
-                baseline_difficulty,
-                candidate_difficulty,
-            ),
-            **common_kwargs,
-        )
-        legs.append(ArenaLegResult(seed, 1, candidate_team1))
-
-    completed = [leg for leg in legs if leg.match.finished]
-    candidate_wins = sum(leg.candidate_won for leg in completed)
-    baseline_wins = len(completed) - candidate_wins
-    win_rate = candidate_wins / len(completed) if completed else 0.0
-    confidence_low, confidence_high = wilson_interval(candidate_wins, len(completed))
-    decision_seconds = tuple(
-        duration
-        for leg in legs
-        for duration in leg.candidate_decision_seconds
+    legs = _paired_legs(
+        deals=deals,
+        seed_start=seed_start,
+        candidate_difficulty=candidate_difficulty,
+        baseline_difficulty=baseline_difficulty,
+        level=level,
+        max_turns=max_turns,
+        strategy_factory=strategy_factory,
+        full_match=full_match,
+        max_rounds=max_rounds,
     )
-    return ArenaSummary(
+    return _summarize_legs(
+        legs,
         candidate_difficulty=candidate_difficulty,
         baseline_difficulty=baseline_difficulty,
         deals=deals,
-        legs=tuple(legs),
-        candidate_wins=candidate_wins,
-        baseline_wins=baseline_wins,
-        incomplete=len(legs) - len(completed),
-        candidate_win_rate=win_rate,
-        confidence_low=confidence_low,
-        confidence_high=confidence_high,
-        elo_delta=elo_from_win_rate(win_rate) if completed else 0.0,
-        average_level_margin=(
-            sum(leg.level_margin for leg in completed) / len(completed)
-            if completed
-            else 0.0
-        ),
-        candidate_decision_seconds=decision_seconds,
         full_match=full_match,
         deterministic_search=deterministic_search,
     )
