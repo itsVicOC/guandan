@@ -983,12 +983,13 @@ with patch("guandan.gui.window.has_savegame", return_value=True), patch.object(
     assert window.confirm_start_new_game() is False
 
 with patch("guandan.gui.window.has_savegame", return_value=True), patch(
-    "guandan.gui.window.delete_savegame"
-) as delete, patch.object(
+    "guandan.gui.window.load_game", return_value={"game_id": "game_current"}
+), patch("guandan.gui.window.delete_savegame") as delete, patch.object(
     QMessageBox, "warning", return_value=QMessageBox.StandardButton.Discard
 ):
     assert window.confirm_start_new_game() is True
-    delete.assert_called_once_with()
+    # Overwrite must only discard the save the user was shown.
+    delete.assert_called_once_with(expected_game_id="game_current")
 
 state = make_initial_state(level=2, first_player=0, seed=7)
 session = GameSession(difficulty=0, existing_state=state, human=0)

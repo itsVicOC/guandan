@@ -96,8 +96,8 @@ def test_tui_new_game_conflict_can_overwrite_existing_save() -> None:
     async def run() -> None:
         app = GuandanApp()
         with patch("guandan.storage.has_savegame", return_value=True), patch(
-            "guandan.storage.delete_savegame"
-        ) as delete:
+            "guandan.storage.load_game", return_value={"game_id": "game_shown"}
+        ), patch("guandan.storage.delete_savegame") as delete:
             async with app.run_test(size=(140, 48)) as pilot:
                 await pilot.pause()
 
@@ -108,7 +108,9 @@ def test_tui_new_game_conflict_can_overwrite_existing_save() -> None:
                 await pilot.click("#confirm-overwrite")
                 await pilot.pause()
 
-                delete.assert_called_once_with()
+                # Overwrite must not delete a save written after this dialog
+                # was opened (GUI/TUI may run in parallel).
+                delete.assert_called_once_with(expected_game_id="game_shown")
                 assert app.screen.__class__.__name__ == "DifficultySelectScreen"
 
     asyncio.run(run())
@@ -133,7 +135,8 @@ def test_tui_can_delete_a_corrupt_save_after_confirmation() -> None:
                 await pilot.click("#confirm-delete")
                 await pilot.pause()
 
-                delete.assert_called_once_with()
+                # A corrupt save has no game_id, so the delete stays unscoped.
+                delete.assert_called_once_with(expected_game_id=None)
                 assert app.screen.__class__.__name__ == "MainMenuScreen"
 
     asyncio.run(run())

@@ -421,6 +421,9 @@ class LoadPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
         self._main_window = window
+        # Identity of the save currently rendered, so "删除存档" cannot remove a
+        # save another process wrote after this page was built.
+        self._displayed_savegame_id: str | None = None
         self.setObjectName("page")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(60, 44, 60, 36)
@@ -444,7 +447,9 @@ class LoadPage(QWidget):
         try:
             has_save = has_savegame()
             savegame = load_game() if has_save else None
+            self._displayed_savegame_id = savegame.get("game_id") if savegame else None
         except OSError as exc:
+            self._displayed_savegame_id = None
             self.content.addWidget(self._message_panel("无法读取存档", str(exc)))
             return
         if not has_save:
@@ -528,7 +533,9 @@ class LoadPage(QWidget):
         if answer != QMessageBox.StandardButton.Yes:
             return
         try:
-            delete_savegame()
+            # Delete only the save this page is displaying: a parallel TUI may
+            # have written a newer one since the page was built.
+            delete_savegame(expected_game_id=self._displayed_savegame_id)
         except OSError as exc:
             QMessageBox.warning(self, "删除失败", str(exc))
             return
@@ -1599,11 +1606,12 @@ class GuandanMainWindow(QMainWindow):
     def confirm_start_new_game(self) -> bool:
         """Resolve the single-save conflict before replacing an unfinished round."""
         try:
-            if not has_savegame():
-                return True
+            existing = load_game() if has_savegame() else None
         except OSError as exc:
             QMessageBox.warning(self, "无法检查存档", str(exc))
             return False
+        if existing is None and not has_savegame():
+            return True
         choice = QMessageBox.warning(
             self,
             "已有未完成存档",
@@ -1618,7 +1626,11 @@ class GuandanMainWindow(QMainWindow):
             return False
         if choice == QMessageBox.StandardButton.Discard:
             try:
-                delete_savegame()
+                # Only discard the save the user was just shown; a parallel
+                # process may have written a newer one.
+                delete_savegame(
+                    expected_game_id=existing.get("game_id") if existing else None
+                )
             except OSError as exc:
                 QMessageBox.warning(self, "无法覆盖存档", str(exc))
                 return False

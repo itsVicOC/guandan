@@ -134,6 +134,11 @@ class MainMenuScreen(Screen):
         ("q", "quit", "退出"),
     ]
 
+    def __init__(self) -> None:
+        super().__init__()
+        # Identity of the save shown in the overwrite confirmation dialog.
+        self._conflict_savegame_id: str | None = None
+
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
         with Center(id="home-center"):
@@ -173,16 +178,21 @@ class MainMenuScreen(Screen):
             self.action_quit()
 
     def action_new_game(self) -> None:
-        from ...storage import has_savegame
+        from ...storage import has_savegame, load_game
         from .confirm import ConfirmModal
         from .error import ErrorModal
 
         try:
             has_save = has_savegame()
+            savegame = load_game() if has_save else None
         except OSError as exc:
             self.app.push_screen(ErrorModal(str(exc), title="无法检查存档"))
             return
         if has_save:
+            # Remember which save the user is looking at: the destructive
+            # branch must not remove a save another process wrote in the
+            # meantime (parallel GUI/TUI is a documented feature).
+            self._conflict_savegame_id = savegame.get("game_id") if savegame else None
             self.app.push_screen(
                 ConfirmModal(
                     "已有未完成存档",
@@ -208,7 +218,7 @@ class MainMenuScreen(Screen):
         from .error import ErrorModal
 
         try:
-            delete_savegame()
+            delete_savegame(expected_game_id=self._conflict_savegame_id)
         except OSError as exc:
             self.app.push_screen(ErrorModal(str(exc), title="无法覆盖存档"))
             return

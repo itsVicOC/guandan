@@ -17,12 +17,19 @@ class LoadSaveScreen(Screen):
         ("escape", "back", "返回"),
     ]
 
+    def __init__(self) -> None:
+        super().__init__()
+        # Identity of the save currently displayed, so deleting cannot remove a
+        # save another process wrote after this screen was built.
+        self._savegame_id: str | None = None
+
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
 
         try:
             has_save = has_savegame()
             savegame = load_game() if has_save else None
+            self._savegame_id = savegame.get("game_id") if savegame else None
         except OSError as exc:
             with Center(), Vertical(id="load-box"):
                 yield Static("💾 断点续局", id="load-title")
@@ -123,7 +130,10 @@ class LoadSaveScreen(Screen):
         from .error import ErrorModal
 
         try:
-            delete_savegame()
+            # Only remove the save this screen is actually showing: another
+            # Guandan process may have written a fresh one while the confirm
+            # dialog was open, and that progress must not be deleted.
+            delete_savegame(expected_game_id=self._savegame_id)
         except OSError as exc:
             self.app.push_screen(ErrorModal(str(exc), title="删除失败"))
             return
