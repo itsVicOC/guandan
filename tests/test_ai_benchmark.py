@@ -410,3 +410,42 @@ def test_checked_in_mixed_baseline_has_stable_configuration() -> None:
     assert payload["completion_rate"] == 1.0
     assert [result["seed"] for result in payload["results"]] == list(range(800, 820))
     assert all(result["difficulties"] == [0, 1, 2, 3] for result in payload["results"])
+
+
+def test_bomb_drift_gate_detects_the_documented_regression(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`average_bombs` drifted ~4x unnoticed; the gate must now catch it.
+
+    The two checked-in baselines are the real evidence for this: completion and
+    average turns are flat between them while the bomb count nearly quadruples.
+    """
+    from pathlib import Path as _Path
+
+    repo_benchmarks = _Path(__file__).resolve().parent.parent / "benchmarks"
+    old = repo_benchmarks / "v0.8.0b1-mixed-20.json"
+    new = repo_benchmarks / "v0.8.1b2-mixed-20.json"
+    if not old.exists() or not new.exists():
+        pytest.skip("checked-in baselines are unavailable")
+
+    exit_code = main(
+        [
+            "--compare",
+            str(old),
+            str(new),
+            "--fail-bomb-drift",
+            "0.4",
+            "--json",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 1
+    assert payload["passed"] is False
+    assert any("average_bombs_drift" in failure for failure in payload["failures"])
+
+    # Without a bomb threshold the same comparison passes, which is exactly why
+    # the drift went unnoticed before.
+    exit_code = main(["--compare", str(old), str(new), "--json"])
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 0
+    assert payload["passed"] is True

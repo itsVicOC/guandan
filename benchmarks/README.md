@@ -37,7 +37,7 @@ python -m guandan.ai.benchmark \
   --compare benchmarks/v0.8.1b2-mixed-20.json current.json \
   --fail-completion-drop 0.05 \
   --fail-turn-increase 20 \
-  --fail-bomb-drift 0.5
+  --fail-bomb-drift 0.4
 ```
 
 Duration is reported for diagnosis but is not used as a default gate because it
@@ -46,13 +46,21 @@ varies with CPU load and MCTS scheduling.
 `--fail-bomb-drift` exists because `average_bombs` is the metric that drifted
 without any gate noticing: between `v0.8.0b1-mixed-20.json` and the current
 baseline the average bomb count moved from `[0.25, 0.45]` to `[0.95, 1.0]`
-while completion and average turns stayed flat. Comparing the two checked-in
-baselines reproduces that finding:
+while completion and average turns stayed flat.
+
+Measured rerun variance (same machine, same seeds, two consecutive runs):
+`completion_rate` and both `average_bombs` values were **identical**, while
+`average_turns` moved by 3.6 and `team_wins` by 2. That is why bomb drift gets a
+tight threshold and turn drift gets a loose one — the benchmark is not
+reproducible for outcomes because production AI runs on a clock budget, but the
+bomb statistic is stable enough to gate at ±0.4.
+
+Comparing the two checked-in baselines reproduces the original finding:
 
 ```bash
 python -m guandan.ai.benchmark \
   --compare benchmarks/v0.8.0b1-mixed-20.json benchmarks/v0.8.1b2-mixed-20.json \
-  --fail-completion-drop 0.05 --fail-turn-increase 20 --fail-bomb-drift 0.5
+  --fail-completion-drop 0.05 --fail-turn-increase 20 --fail-bomb-drift 0.4
 # gate=fail — average_bombs_drift_team0 +0.70 / team1 +0.55
 ```
 
