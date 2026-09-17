@@ -1098,3 +1098,51 @@ print("ok")
     )
     assert result.returncode == 0, result.stderr
     assert "ok" in result.stdout
+
+
+def test_evicting_the_game_page_clears_the_window_reference(tmp_path: Path) -> None:
+    """The window must not keep a pointer to an evicted table.
+
+    `_replace_page` drops the oldest page once the stack exceeds its limit;
+    leaving `game_page` pointing at it means `save_current_game()` and
+    `closeEvent()` dereference off-screen Qt objects.
+    """
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    env = dict(os.environ)
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    code = """
+import sys
+from PySide6.QtWidgets import QApplication
+from guandan.gui.window import GuandanMainWindow
+from guandan.ui.session import GameSession
+
+app = QApplication([])
+window = GuandanMainWindow()
+window.show_difficulty()
+window.start_game(GameSession(difficulty=0, human=0))
+assert window.game_page is not None
+
+# Push past the 3-page limit so the table gets evicted.
+window.show_menu()
+window.show_history()
+window.show_menu()
+app.processEvents()
+
+assert window.game_page is None, "evicted table is still referenced"
+# Tearing the window down must therefore be safe.
+window.close()
+app.quit()
+print("ok")
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=os.getcwd(),
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout

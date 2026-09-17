@@ -16,6 +16,7 @@ from PySide6.QtGui import (
     QPen,
     QRadialGradient,
     QShortcut,
+    QTextCursor,
 )
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -748,7 +749,7 @@ class ReplayPage(QWidget):
         layout.addWidget(self.state_summary)
         self.progress = QSlider(Qt.Orientation.Horizontal)
         self.progress.setRange(0, len(self.events) - 1)
-        self.progress.valueChanged.connect(self.set_event_index)
+        self.progress.valueChanged.connect(self._on_progress_changed)
         layout.addWidget(self.progress)
 
         controls = QHBoxLayout()
@@ -768,6 +769,10 @@ class ReplayPage(QWidget):
         layout.addLayout(controls)
         layout.addWidget(button("返回战绩", self.back_to_history, role="quietButton"))
         self.refresh()
+
+    def _on_progress_changed(self, value: int) -> None:
+        if value != self.event_index:
+            self.set_event_index(value)
 
     def set_event_index(self, index: int) -> None:
         self._replay_cursor.set_index(index)
@@ -808,17 +813,39 @@ class ReplayPage(QWidget):
         for seat, panel in self.replay_hands.items():
             panel.update_hand(state.hands[seat], seat in state.finish_order)
         self.replay_center.update_state(state)
-        lines = []
-        for index, event in enumerate(self.events):
-            marker = "▶" if index == self.event_index else " "
-            lines.append(f"{marker} {index + 1:>3}. {replay_event_text(event)}")
-        self.timeline.setPlainText("\n".join(lines))
+        self._refresh_timeline()
+        # Block the signal so writing the slider back does not re-enter
+        # set_event_index (an infinite refresh loop on every step).
+        self.progress.blockSignals(True)
         self.progress.setValue(self.event_index)
+        self.progress.blockSignals(False)
         self.first_button.setEnabled(self.event_index > 0)
         self.previous_button.setEnabled(self.event_index > 0)
         self.next_button.setEnabled(self.event_index < len(self.events) - 1)
         self.last_button.setEnabled(self.event_index < len(self.events) - 1)
         self.auto_button.setText("暂停" if self._auto_timer.isActive() else "自动播放")
+
+    def _refresh_timeline(self) -> None:
+        """Rebuild the event list and keep the current step visible.
+
+        ``setPlainText`` scrolls back to the top, so the "▶" marker scrolled out
+        of view during auto-play and the user could not see where they were.
+        """
+        lines = []
+        for index, event in enumerate(self.events):
+            marker = "▶" if index == self.event_index else " "
+            lines.append(f"{marker} {index + 1:>3}. {replay_event_text(event)}")
+        self.timeline.setPlainText("\n".join(lines))
+
+        cursor = self.timeline.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
+        cursor.movePosition(
+            QTextCursor.MoveOperation.Down,
+            QTextCursor.MoveMode.MoveAnchor,
+            self.event_index,
+        )
+        self.timeline.setTextCursor(cursor)
+        self.timeline.ensureCursorVisible()
 
 class RulesPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
@@ -1588,6 +1615,11 @@ class GuandanMainWindow(QMainWindow):
             if old is None or old is page:
                 break
             self.stack.removeWidget(old)
+            if old is self.game_page:
+                # Never keep a pointer to an evicted table: save_current_game()
+                # and closeEvent() both call into self.game_page, and an evicted
+                # page's Qt objects can already be gone.
+                self.game_page = None
             old.deleteLater()
 
     def show_menu(self) -> None:
