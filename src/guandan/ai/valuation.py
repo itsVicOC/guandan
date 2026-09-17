@@ -54,6 +54,13 @@ _STRUCTURE_TYPES = {
 _CardKey = tuple[tuple[int, int, int], ...]
 _StructureCache = dict[_CardKey, float]
 
+# Structure scores only depend on the card multiset and the wild card, so they
+# are worth remembering between calls: candidate enumeration evaluates one
+# score per candidate, and the same hands recur across simulations and even
+# across decisions.
+_STRUCTURE_SCORE_LIMIT = 8192
+_structure_score_memo: dict[tuple[_CardKey, Card | None], float] = {}
+
 
 def _cards_key(cards: list[Card]) -> _CardKey:
     counts = Counter(cards)
@@ -83,7 +90,14 @@ def _cached_structure_score(
         return _best_structure_score(cards, wild)
     key = _cards_key(cards)
     if key not in cache:
-        cache[key] = _best_structure_score(cards, wild)
+        memo_key = (key, wild)
+        memo = _structure_score_memo.get(memo_key)
+        if memo is None:
+            memo = _best_structure_score(cards, wild)
+            if len(_structure_score_memo) >= _STRUCTURE_SCORE_LIMIT:
+                _structure_score_memo.clear()
+            _structure_score_memo[memo_key] = memo
+        cache[key] = memo
     return cache[key]
 
 
