@@ -9,7 +9,7 @@ M5 实现完整的存储系统：
 """
 from __future__ import annotations
 
-from .history import load_history_detail, load_history_list, save_history
+from .history import history_exists, load_history_detail, load_history_list, save_history
 from .locking import StorageBusyError
 from .paths import (
     get_history_dir,
@@ -19,8 +19,11 @@ from .paths import (
 )
 from .profile import (
     DEFAULT_PROFILE,
+    begin_settlement,
     consume_profile_error,
+    end_settlement,
     load_profile,
+    reconcile_settlements,
     record_match_statistics,
     record_round_statistics,
     save_profile,
@@ -33,18 +36,22 @@ from .serialization import deserialize_events, serialize_events
 __all__ = [
     "DEFAULT_PROFILE",
     "StorageBusyError",
+    "begin_settlement",
     "consume_profile_error",
     "delete_savegame",
     "deserialize_events",
+    "end_settlement",
     "get_history_dir",
     "get_profile_path",
     "get_savegame_path",
     "get_storage_dir",
     "has_savegame",
+    "history_exists",
     "load_game",
     "load_history_detail",
     "load_history_list",
     "load_profile",
+    "reconcile_settlements",
     "record_match_statistics",
     "record_round_statistics",
     "restore_game_state",

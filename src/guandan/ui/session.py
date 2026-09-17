@@ -50,7 +50,9 @@ from ..engine.trick import (
     locked_passed_players,
 )
 from ..storage import (
+    begin_settlement,
     delete_savegame,
+    end_settlement,
     record_match_statistics,
     record_round_statistics,
     save_game,
@@ -633,11 +635,24 @@ class GameSession:
         state = self.require_state()
         if not state.finished:
             return False
+        got_head = state.finish_order[0] == self.human
+        match_won = state.winner_team == team_of(self.human) if state.match_finished else None
         try:
             duration = self.current_elapsed_seconds()
             ai_difficulties = [
                 None if player == self.human else self.difficulty for player in range(4)
             ]
+            # Settlement is three independent durable writes (history,
+            # statistics, delete save). Log the intent first so a crash in
+            # between can be repaired on the next start instead of leaving a
+            # history entry that no statistic ever counted.
+            begin_settlement(
+                game_id=self.game_id,
+                got_head=got_head,
+                difficulty=self.difficulty,
+                match_id=self.match_id if state.match_finished else None,
+                match_won=match_won,
+            )
             save_history(
                 state=state,
                 game_id=self.game_id,
@@ -651,20 +666,21 @@ class GameSession:
             def update_statistics(profile: dict[str, Any]) -> None:
                 record_round_statistics(
                     profile,
-                    got_head=state.finish_order[0] == self.human,
+                    got_head=got_head,
                     difficulty=self.difficulty,
                     game_id=self.game_id,
                 )
                 if state.match_finished:
                     record_match_statistics(
                         profile,
-                        won=state.winner_team == team_of(self.human),
+                        won=bool(match_won),
                         difficulty=self.difficulty,
                         match_id=self.match_id,
                     )
 
             update_profile(update_statistics)
             delete_savegame(expected_game_id=self.game_id)
+            end_settlement(self.game_id)
         except Exception as exc:
             self.game_saved = False
             self.last_action = f"保存失败：{exc}"

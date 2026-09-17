@@ -6,6 +6,8 @@ from textual.containers import Center, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
+from ...storage import consume_profile_error
+
 
 class MainMenuScreen(Screen):
     """主菜单。"""
@@ -153,6 +155,9 @@ class MainMenuScreen(Screen):
                     yield Static("逆时针行牌 · 双副牌 · 逢人配", id="rule-strip")
                 with Vertical(id="action-panel"):
                     yield Static("牌局大厅", id="action-title")
+                    notice = consume_profile_error()
+                    if notice:
+                        yield Static(f"⚠ 玩家数据异常：{notice}", id="storage-warning")
                     yield Button("1  开始新局", id="btn-new", variant="primary", classes="menu-button")
                     yield Button("2  继续上次的牌局", id="btn-load", classes="menu-button")
                     yield Button("3  历史战绩", id="btn-history", classes="menu-button")

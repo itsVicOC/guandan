@@ -22,7 +22,10 @@ _locks: dict[str, FileLock] = {}
 
 def _lock_for(resource: Path) -> FileLock:
     lock_path = resource.with_name(f".{resource.name}.lock")
-    key = str(lock_path.resolve())
+    # Keyed on the literal path, not `resolve()`: resolving made the cache
+    # survive a change of storage root, so a lock opened for one directory
+    # would keep guarding a different file after the path was reconfigured.
+    key = str(lock_path)
     with _registry_guard:
         lock = _locks.get(key)
         if lock is None:

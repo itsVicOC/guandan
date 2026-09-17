@@ -46,11 +46,14 @@ from ..engine.events import Event, Pass, TributeResisted, TributeReturned, Tribu
 from ..engine.hand import Pattern
 from ..engine.state import SEAT_NAMES, GameState, IllegalPlayError
 from ..storage import (
+    consume_profile_error,
     delete_savegame,
     has_savegame,
+    history_exists,
     load_game,
     load_history_detail,
     load_history_list,
+    reconcile_settlements,
     restore_game_state,
 )
 from ..ui.content import DIFFICULTIES, GAME_RULES_TEXT, GUI_CONTROLS_TEXT
@@ -358,6 +361,15 @@ class MenuPage(QWidget):
         action_layout.addWidget(team_note, 0, Qt.AlignmentFlag.AlignCenter)
         action_layout.addWidget(button("退出游戏", window.close, role="quietButton"))
         body.addWidget(action_panel, 3)
+
+        notice = consume_profile_error()
+        if notice:
+            # A profile that could not be parsed must not be a silent event:
+            # its statistics were reset and the original file was set aside.
+            banner = QLabel(f"⚠ 玩家数据异常：{notice}")
+            banner.setObjectName("storageWarning")
+            banner.setWordWrap(True)
+            layout.addWidget(banner)
 
 
 class DifficultyPage(QWidget):
@@ -1665,6 +1677,20 @@ class GuandanMainWindow(QMainWindow):
             event.ignore()
 
 
+def repair_interrupted_settlements() -> int:
+    """Finish settlements a previous run could not complete.
+
+    Settling a round writes history, then statistics, then removes the save.
+    A crash in between used to leave a history entry that no statistic ever
+    counted; the pending marker makes it repairable at startup. Returns how
+    many settlements were closed.
+    """
+    try:
+        return int(reconcile_settlements(history_has_game=history_exists))
+    except (OSError, ValueError):
+        return 0
+
+
 def run_gui() -> int:
     app = QApplication.instance()
     owns_app = app is None
@@ -1672,6 +1698,7 @@ def run_gui() -> int:
         app = QApplication(sys.argv)
     assert isinstance(app, QApplication)
     app.setStyleSheet(APP_QSS)
+    repair_interrupted_settlements()
     window = GuandanMainWindow()
     window.show()
     if owns_app:
