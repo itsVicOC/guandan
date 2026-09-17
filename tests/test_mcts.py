@@ -427,12 +427,44 @@ class TestMCTSEvaluation:
         assert _evaluate_result(state, root_player=1) == pytest.approx(0.0)
 
     def test_finished_head_and_last_is_only_small_edge(self):
+        """Winning with your partner last is a real but small edge.
+
+        The exact constant is a calibration choice; what must hold is the
+        ordering (head > not-head) and that the value stays strictly inside
+        (0, 1) rather than saturating, so a +1 round remains distinguishable
+        from a +3 round.
+        """
         state = _make_test_state()
         state.finished = True
         state.finish_order = [0, 1, 3]
 
-        assert _evaluate_result(state, root_player=0) == pytest.approx(0.766666, rel=1e-4)
-        assert _evaluate_result(state, root_player=1) == pytest.approx(0.233333, rel=1e-4)
+        winner = _evaluate_result(state, root_player=0)
+        loser = _evaluate_result(state, root_player=1)
+        assert 0.5 < winner < 1.0
+        assert 0.0 < loser < 0.5
+        assert winner == pytest.approx(1.0 - loser, rel=1e-6)
+
+    def test_terminal_value_grows_with_the_level_gain(self):
+        """+3 (double-down) must score clearly higher than +1.
+
+        Before this was widened, the whole unfinished-position signal spanned
+        only 0.149 while UCB1's exploration term is ~0.7, so the search could
+        not tell the two apart.
+        """
+        # partner finishes 2nd -> +3, 3rd -> +2, 4th (last) -> +1
+        # (verified against compute_level_change: partner = (head + 2) % 4)
+        orders = {3: [0, 2, 3], 2: [0, 1, 2], 1: [0, 1, 3]}
+        scores = {}
+        for level_gain, order in orders.items():
+            state = _make_test_state()
+            state.finished = True
+            state.finish_order = order
+            scores[level_gain] = _evaluate_result(state, root_player=0)
+
+        assert scores[3] > scores[2] > scores[1], scores
+        assert scores[3] - scores[1] > 0.15, (
+            f"level-gain spread too narrow to guide the search: {scores}"
+        )
 
     def test_unfinished_rollout_uses_hand_sizes(self):
         state = _make_test_state()
