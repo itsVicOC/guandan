@@ -278,7 +278,60 @@ def test_main_compare_json_outputs_parseable_payload(
     assert payload["baseline_games"] == 1
     assert payload["current_games"] == 1
     assert "average_duration_delta" in payload
+    # Without --fail-* flags the gate has no thresholds, so it must report that
+    # explicitly rather than being trivially True.
     assert payload["passed"] is True
+    assert payload["failures"] == []
+
+
+def test_main_compare_gate_passes_only_when_thresholds_are_met(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A reachable threshold must actually be evaluated, not just the failure path."""
+    baseline = run_benchmark(
+        games=1, seed_start=241, level=2, difficulties=0, max_turns=2000
+    ).to_dict()
+    current = run_benchmark(
+        games=1, seed_start=241, level=2, difficulties=0, max_turns=2000
+    ).to_dict()
+    baseline_path = tmp_path / "baseline.json"
+    current_path = tmp_path / "current.json"
+    baseline_path.write_text(json.dumps(baseline), encoding="utf-8")
+    current_path.write_text(json.dumps(current), encoding="utf-8")
+
+    # Identical payloads with generous thresholds must pass...
+    exit_code = main(
+        [
+            "--compare",
+            str(baseline_path),
+            str(current_path),
+            "--fail-completion-drop",
+            "0.5",
+            "--fail-turn-increase",
+            "1000",
+            "--json",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 0
+    assert payload["passed"] is True
+    assert payload["failures"] == []
+
+    # ...and an impossible threshold must fail, proving the gate reads the input.
+    exit_code = main(
+        [
+            "--compare",
+            str(baseline_path),
+            str(current_path),
+            "--fail-turn-increase",
+            "-1",
+            "--json",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 1
+    assert payload["passed"] is False
+    assert payload["failures"]
 
 
 def test_main_compare_json_returns_failure_for_gate_regression(

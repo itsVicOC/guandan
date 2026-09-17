@@ -249,8 +249,11 @@ class TestMCTSSearch:
             rollout_strategy=1,
         )
 
-        # 应该返回一个子节点
-        assert best_child is None or isinstance(best_child, MCTSNode)
+        # 根节点必须有子节点被扩展，否则搜索没有产生任何可用动作
+        assert root.children, "search expanded no action"
+        assert best_child is not None, "search returned no action despite legal moves"
+        assert best_child in root.children
+        assert best_child.action is not None or root.player is not None
 
     def test_mcts_search_updates_visits(self):
         """MCTS 搜索正确更新访问次数。"""
@@ -529,14 +532,14 @@ class TestProfessionalStrategy:
         pattern = strategy.select_pattern(state, player)
 
         if pattern is not None:
-            # 验证可以合法出牌
+            # 验证可以合法出牌：合法意味着牌确实离开了手牌
             from guandan.engine.state import IllegalPlayError
+            before = len(state.hands[player])
             try:
                 play_pattern(state, player, pattern)
-                # 如果没有抛异常，说明是合法出牌
-                assert True
             except IllegalPlayError:
                 pytest.fail(f"Strategy returned illegal pattern: {pattern}")
+            assert len(state.hands[player]) == before - len(pattern.cards)
 
     def test_professional_strategy_attributes(self):
         """职业策略有正确的属性。"""

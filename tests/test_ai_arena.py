@@ -68,6 +68,44 @@ def test_deterministic_arena_marks_fixed_iteration_mode() -> None:
     assert summary.deterministic_search is True
 
 
+def test_fixed_iteration_factory_uses_the_documented_ceilings() -> None:
+    """The 64/96 branch was never executed by the tests.
+
+    docs/ai.md advertises 64 simulations for Professional and 96 for Dai
+    Changsheng in `--deterministic-search` mode; without an assertion the
+    branch could be deleted and the whole suite stayed green.
+    """
+    from guandan.ai.arena import CALIBRATED_ITERATIONS, fixed_iteration_strategy_factory
+
+    assert CALIBRATED_ITERATIONS == {3: 64, 4: 96}
+
+    professional = fixed_iteration_strategy_factory(3, 0)
+    assert professional.iterations == 64
+    assert professional.time_budget_ms == 0
+
+    dai = fixed_iteration_strategy_factory(4, 0)
+    assert dai.iterations == 96
+    assert dai.time_budget_ms == 0
+
+    # Lower tiers fall through to the production factory unchanged.
+    novice = fixed_iteration_strategy_factory(0, 0)
+    assert novice.difficulty == 0
+
+
+def test_production_budgets_match_the_documented_values() -> None:
+    """docs/ai.md claims 240ms for level 3 and 420ms for level 4."""
+    from guandan.ai.mcts import MCTS_CONFIG
+    from guandan.ai.profiles import load_profile
+
+    assert MCTS_CONFIG["time_budget_ms"] == 240
+    assert MCTS_CONFIG["iterations"] == 64
+
+    profile = load_profile("dachangsheng")
+    assert profile["mcts"]["time_budget_ms"] == 420
+    assert profile["mcts"]["iterations"] == 96
+    assert profile["mcts"]["max_depth"] == 14
+
+
 def test_arena_gate_checks_completion_strength_and_latency() -> None:
     summary = run_arena(
         deals=1,
@@ -81,6 +119,14 @@ def test_arena_gate_checks_completion_strength_and_latency() -> None:
     assert gate.passed is False
     assert any("candidate_win_rate" in failure for failure in gate.failures)
     assert any("candidate_p95_seconds" in failure for failure in gate.failures)
+
+    # A reachable threshold must be evaluated too, otherwise the assertions
+    # above only prove that "impossible" always fails.
+    reachable = evaluate_arena_gate(
+        summary, min_win_rate=0.0, min_confidence_low=0.0, max_p95_seconds=float("inf")
+    )
+    assert reachable.passed is True
+    assert reachable.failures == ()
 
 
 def test_arena_cli_json_is_parseable(capsys: pytest.CaptureFixture[str]) -> None:
