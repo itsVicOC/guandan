@@ -9,17 +9,10 @@ from typing import Optional
 
 from ..engine.card import RANK_A
 from ..engine.hand import Pattern, PatternType, comparison_rank
+from ..engine.rules.comparator import is_bomb_type
 from ..engine.state import GameState, is_teammate
 from ..engine.trick import current_top_player
 from .context import opponent_has_one_card, opponent_min_cards
-
-
-def _is_bomb(pattern: Pattern) -> bool:
-    return pattern.type in (
-        PatternType.BOMB,
-        PatternType.STRAIGHT_FLUSH,
-        PatternType.FOUR_JOKERS,
-    )
 
 
 def should_pass(
@@ -66,7 +59,7 @@ def should_pass(
         p *= 0.60
 
     # 炸弹类响应更昂贵，默认更谨慎；非炸弹结构牌略微鼓励打出去整理手牌。
-    if _is_bomb(pattern):
+    if is_bomb_type(pattern.type):
         p += 0.20
     elif pattern.type in (
         PatternType.STRAIGHT,

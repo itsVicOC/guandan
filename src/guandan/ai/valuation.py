@@ -15,7 +15,7 @@ from typing import List, Optional
 
 from ..engine.card import RANK_A, Card
 from ..engine.hand import Pattern, PatternType, comparison_rank, effective_rank
-from ..engine.rules.comparator import bomb_strength
+from ..engine.rules.comparator import bomb_strength, is_bomb_type
 from ..engine.rules.patterns import detect_patterns
 from ..engine.state import GameState
 from .candidates import (
@@ -32,10 +32,6 @@ def _hand_breakdown(cards: list) -> dict:
     for c in cards:
         d[c.rank] = d.get(c.rank, 0) + 1
     return d
-
-
-def _is_bomb(t: PatternType) -> bool:
-    return t in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH, PatternType.FOUR_JOKERS)
 
 
 def _count_wild_in_pattern(p: Pattern, wild: Optional[object]) -> int:
@@ -167,7 +163,7 @@ def _estimate_pattern_cost(
 
     # ---- 5. 炸弹特别贵 ----
     bomb_premium = 0.0
-    if _is_bomb(pattern.type):
+    if is_bomb_type(pattern.type):
         bomb_premium = 5.0
         if pattern.type == PatternType.STRAIGHT_FLUSH:
             bomb_premium += 3.0
@@ -176,7 +172,7 @@ def _estimate_pattern_cost(
 
     # ---- 6. 保留顺子/连对/钢板等结构 ----
     structure_penalty = 0.0
-    if pattern.type not in _STRUCTURE_TYPES and not _is_bomb(pattern.type):
+    if pattern.type not in _STRUCTURE_TYPES and not is_bomb_type(pattern.type):
         before_score = (
             _cached_structure_score(hand, wild, structure_cache)
             if before_structure is None
@@ -192,7 +188,7 @@ def _estimate_pattern_cost(
 
     # ---- 8. 领牌整理：自然结构牌能显著减少手牌轮次 ----
     lead_shedding_bonus = 0.0
-    if not state.table and pattern.type in _STRUCTURE_TYPES and not _is_bomb(pattern.type):
+    if not state.table and pattern.type in _STRUCTURE_TYPES and not is_bomb_type(pattern.type):
         lead_shedding_bonus = -min(8.0, len(pattern.cards) * 1.3)
 
     # ---- 9. 对手报单时避免用单张领牌 ----
