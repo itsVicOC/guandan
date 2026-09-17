@@ -2,10 +2,14 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
+import random
 import subprocess
 import sys
-from copy import deepcopy
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -28,7 +32,11 @@ from guandan.engine.card import (
 from guandan.engine.events import TributeReturned, TributeSent
 from guandan.engine.hand import Pattern, PatternType, sort_cards
 from guandan.engine.state import GameState, pass_turn, play_pattern
-from guandan.storage import DEFAULT_PROFILE
+from guandan.storage import (
+    begin_settlement,
+    history_exists,
+    reconcile_settlements,
+)
 from guandan.ui.session import GameSession
 
 
@@ -485,83 +493,221 @@ def test_session_keeps_finished_state_when_persistence_fails() -> None:
     assert session.state is finished
 
 
-def test_session_records_round_head_without_counting_a_match() -> None:
-    finished = GameState(
+def _finished_round_state() -> GameState:
+    return GameState(
         level=2,
         wild_card=None,
         hands=[[], [], [], []],
         turn_index=0,
-        leader=1,
-        finish_order=[1, 0, 3],
+        leader=0,
+        finish_order=[0, 1, 2],
         finished=True,
+        team_levels_final=[5, 2],
     )
-    session = GameSession(difficulty=0, existing_state=finished, human=0, game_id="team-loss")
-    profile = deepcopy(DEFAULT_PROFILE)
-    with patch("guandan.ui.session.save_history"), patch(
-        "guandan.ui.session.update_profile", side_effect=_profile_transaction(profile)
-    ), patch("guandan.ui.session.delete_savegame"):
+
+
+def test_pending_next_round_is_saved_so_an_exit_does_not_lose_it() -> None:
+    """The freshly dealt round must reach disk while its tribute phase pends.
+
+    `prepare_next_game()` deletes the finished round's save and keeps the new
+    round in memory only, so `save_unfinished()` has to persist the pending
+    state instead of the finished one it is still pointing at.
+    """
+    session = GameSession(difficulty=0, existing_state=_finished_round_state(), human=0)
+    session.game_saved = True  # the finished round was already settled
+
+    with patch.object(session, "save_finished_if_needed", return_value=True):
+        assert session.prepare_next_game().ok is True
+    assert session.is_next_game_pending() is True
+    pending_game_id = session._pending_next_game.game_id
+
+    with patch("guandan.ui.session.save_game") as save_game_mock:
+        session.save_unfinished()
+
+    assert save_game_mock.call_count == 1
+    kwargs = save_game_mock.call_args.kwargs
+    assert kwargs["game_id"] == pending_game_id
+    assert kwargs["round_index"] == 2
+    assert kwargs["state"].finished is False
+    assert [len(hand) for hand in kwargs["state"].hands] == [27, 27, 27, 27]
+
+
+def test_save_unfinished_skips_an_already_settled_round() -> None:
+    """Without a pending round the original guard still applies."""
+    session = GameSession(difficulty=0, existing_state=_finished_round_state(), human=0)
+    session.game_saved = True
+
+    with patch("guandan.ui.session.save_game") as save_game_mock:
+        session.save_unfinished()
+
+    assert save_game_mock.call_count == 0
+
+
+def test_save_unfinished_persists_a_live_round() -> None:
+    session = GameSession(difficulty=0, human=0, seed=99)
+    session.ensure_started()
+
+    with patch("guandan.ui.session.save_game") as save_game_mock:
+        session.save_unfinished()
+
+    assert save_game_mock.call_count == 1
+    kwargs = save_game_mock.call_args.kwargs
+    assert kwargs["game_id"] == session.game_id
+    assert kwargs["round_index"] == session.round_index
+    assert kwargs["state"] is session.state
+
+
+@contextmanager
+def _real_storage(tmp_path: Path):
+    """Point every storage path at `tmp_path` so settlement does real I/O.
+
+    These tests used to stub `update_profile` with an in-memory dict, which
+    meant the locking transaction and the settlement bookkeeping were never
+    actually executed.
+    """
+    profile_path = tmp_path / "profile.json"
+    savegame_path = tmp_path / "savegame.json"
+    history_dir = tmp_path / "history"
+    history_dir.mkdir(parents=True, exist_ok=True)
+    with patch("guandan.storage.profile.get_profile_path", return_value=profile_path), patch(
+        "guandan.storage.savegame.get_savegame_path", return_value=savegame_path
+    ), patch("guandan.storage.history.get_history_dir", return_value=history_dir):
+        yield profile_path
+
+
+def _load_profile_from(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _played_round(seed: int = 5) -> GameState:
+    """Play one real round so the finished state has a genuine event stream.
+
+    save_history() requires a GameOver event, so a hand-built GameState cannot
+    drive the settlement path.
+    """
+    from guandan.ai.play import play_or_pass
+    from guandan.ai.strategies.novice import NoviceStrategy
+
+    session = GameSession(difficulty=0, human=0, seed=seed)
+    state = session.ensure_started()
+    strategy = NoviceStrategy()
+    rng = random.Random(seed)
+    turns = 0
+    while not state.finished and turns < 3000:
+        play_or_pass(state, state.current_player(), strategy, rng)
+        turns += 1
+    assert state.finished and len(state.finish_order) == 3
+    return state
+
+
+def test_session_records_round_head_without_counting_a_match(tmp_path: Path) -> None:
+    finished = _played_round(seed=5)
+    # 末游 is never 头游, so this human records no round head.
+    human = next(player for player in range(4) if player not in finished.finish_order)
+    session = GameSession(
+        difficulty=0, existing_state=finished, human=human, game_id="team-loss"
+    )
+
+    with _real_storage(tmp_path):
         assert session.save_finished_if_needed() is True
 
-    assert profile["statistics"]["total_rounds"] == 1
-    assert profile["statistics"]["head_rounds"] == 0
-    assert profile["statistics"]["total_matches"] == 0
+    statistics = _load_profile_from(tmp_path / "profile.json")["statistics"]
+    assert statistics["total_rounds"] == 1
+    assert statistics["head_rounds"] == 0
+    assert statistics["total_matches"] == 0
+    # The settlement marker must be cleared once every write completed.
+    assert statistics["pending_settlements"] == []
 
 
-def test_session_records_match_result_only_after_passing_ace() -> None:
-    finished = GameState(
-        level=RANK_A,
-        wild_card=None,
-        hands=[[], [], [], []],
-        turn_index=0,
-        leader=0,
-        finish_order=[0, 1, 2, 3],
-        finished=True,
-        match_finished=True,
-        winner_team=0,
-    )
+def test_session_records_match_result_only_after_passing_ace(tmp_path: Path) -> None:
+    finished = _played_round(seed=11)
+    human = finished.finish_order[0]  # head, so the round head is recorded
+    # Force the pass-of-A settlement: the winning team is the human's own.
+    finished.match_finished = True
+    finished.winner_team = human % 2
     session = GameSession(
         difficulty=0,
         existing_state=finished,
-        human=0,
+        human=human,
         game_id="final-round",
         match_id="completed-match",
     )
-    profile = deepcopy(DEFAULT_PROFILE)
-    with patch("guandan.ui.session.save_history"), patch(
-        "guandan.ui.session.update_profile", side_effect=_profile_transaction(profile)
-    ), patch("guandan.ui.session.delete_savegame"):
+
+    with _real_storage(tmp_path):
         assert session.save_finished_if_needed() is True
 
-    assert profile["statistics"]["total_rounds"] == 1
-    assert profile["statistics"]["head_rounds"] == 1
-    assert profile["statistics"]["total_matches"] == 1
-    assert profile["statistics"]["match_wins"] == 1
-    assert profile["statistics"]["recorded_match_ids"] == ["completed-match"]
+    statistics = _load_profile_from(tmp_path / "profile.json")["statistics"]
+    assert statistics["total_rounds"] == 1
+    assert statistics["head_rounds"] == 1
+    assert statistics["total_matches"] == 1
+    assert statistics["match_wins"] == 1
+    assert statistics["recorded_match_ids"] == ["completed-match"]
 
 
-def test_session_retries_finished_save_without_double_counting() -> None:
-    finished = GameState(
-        level=2,
-        wild_card=None,
-        hands=[[], [], [], []],
-        turn_index=0,
-        leader=0,
-        finish_order=[0, 1, 2, 3],
-        finished=True,
+def test_session_retries_finished_save_without_double_counting(tmp_path: Path) -> None:
+    finished = _played_round(seed=17)
+    session = GameSession(
+        difficulty=0, existing_state=finished, human=finished.finish_order[0], game_id="retry-game"
     )
-    session = GameSession(difficulty=0, existing_state=finished, human=0, game_id="retry-game")
-    profile = deepcopy(DEFAULT_PROFILE)
-    with patch("guandan.ui.session.save_history"), patch(
-        "guandan.ui.session.update_profile", side_effect=_profile_transaction(profile)
-    ), patch(
+
+    with _real_storage(tmp_path), patch(
         "guandan.ui.session.delete_savegame", side_effect=[OSError("busy"), None]
     ):
         assert session.save_finished_if_needed() is False
         assert session.game_saved is False
         assert session.save_finished_if_needed() is True
 
-    assert profile["statistics"]["total_rounds"] == 1
-    assert profile["statistics"]["recorded_game_ids"] == ["retry-game"]
+    statistics = _load_profile_from(tmp_path / "profile.json")["statistics"]
+    assert statistics["total_rounds"] == 1
+    assert statistics["recorded_game_ids"] == ["retry-game"]
+    assert statistics["pending_settlements"] == []
+
+
+def test_interrupted_settlement_is_repaired_on_next_start(tmp_path: Path) -> None:
+    """A crash between the history write and the statistics update self-heals."""
+    finished = _played_round(seed=23)
+    session = GameSession(
+        difficulty=0, existing_state=finished, human=finished.finish_order[0], game_id="crash-game"
+    )
+
+    def explode(*args: Any, **kwargs: Any) -> None:
+        raise OSError("power loss")
+
+    with _real_storage(tmp_path):
+        # The intent marker is persisted for real; only the statistics update
+        # dies, which is exactly the crash window this protocol must survive.
+        with patch("guandan.ui.session.record_round_statistics", side_effect=explode):
+            assert session.save_finished_if_needed() is False
+
+        statistics = _load_profile_from(tmp_path / "profile.json")["statistics"]
+        assert statistics["total_rounds"] == 0
+        # The marker survived, so the next start knows a settlement is open.
+        assert [item["game_id"] for item in statistics["pending_settlements"]] == ["crash-game"]
+
+        # Simulate the next start: reconciliation must count the round.
+        repaired = reconcile_settlements(
+            history_has_game=lambda game_id: history_exists(game_id)
+        )
+
+    assert repaired == 1
+    statistics = _load_profile_from(tmp_path / "profile.json")["statistics"]
+    assert statistics["total_rounds"] == 1
+    assert statistics["recorded_game_ids"] == ["crash-game"]
+    assert statistics["pending_settlements"] == []
+
+
+def test_reconciliation_drops_a_round_whose_history_was_never_written(tmp_path: Path) -> None:
+    """No history entry means the user never saw the round; do not invent it."""
+    with _real_storage(tmp_path):
+        begin_settlement(game_id="never-shown", got_head=True, difficulty=2)
+        repaired = reconcile_settlements(
+            history_has_game=lambda game_id: history_exists(game_id)
+        )
+
+    assert repaired == 0
+    statistics = _load_profile_from(tmp_path / "profile.json")["statistics"]
+    assert statistics["total_rounds"] == 0
+    assert statistics["pending_settlements"] == []
 
 
 def test_session_restored_elapsed_time_is_accumulated_when_saving() -> None:
@@ -820,6 +966,22 @@ from guandan.ui.session import GameSession, SessionAction
 app = QApplication([])
 window = GuandanMainWindow()
 
+
+def wait_until(predicate, timeout_ms=5000, interval_ms=20):
+    \"\"\"Pump the event loop until `predicate()` holds or the timeout expires.
+
+    A fixed singleShot(timeout) silently races the AI worker's thread-pool
+    scheduling; polling makes a slow machine fail loudly instead of flakily.
+    \"\"\"
+    waited = 0
+    while not predicate() and waited < timeout_ms:
+        loop = QEventLoop()
+        QTimer.singleShot(interval_ms, loop.quit)
+        loop.exec()
+        waited += interval_ms
+    return predicate()
+
+
 state = make_initial_state(level=2, first_player=3, seed=9)
 session = GameSession(difficulty=0, existing_state=state, human=0)
 session.save_unfinished = Mock()
@@ -835,9 +997,8 @@ failed_state = make_initial_state(level=2, first_player=3, seed=10)
 failed_session = GameSession(difficulty=0, existing_state=failed_state, human=0)
 failed_session.step_ai = Mock(return_value=SessionAction(False, "AI 错误：invalid"))
 window.start_game(failed_session)
-loop = QEventLoop()
-QTimer.singleShot(700, loop.quit)
-loop.exec()
+assert wait_until(lambda: failed_session.step_ai.call_count >= 1), "AI worker never ran"
+assert wait_until(lambda: not window.game_page._ai_running), "AI worker never finished"
 assert failed_session.step_ai.call_count == 1
 assert not window.game_page._ai_timer.isActive()
 
@@ -904,12 +1065,13 @@ with patch("guandan.gui.window.has_savegame", return_value=True), patch.object(
     assert window.confirm_start_new_game() is False
 
 with patch("guandan.gui.window.has_savegame", return_value=True), patch(
-    "guandan.gui.window.delete_savegame"
-) as delete, patch.object(
+    "guandan.gui.window.load_game", return_value={"game_id": "game_current"}
+), patch("guandan.gui.window.delete_savegame") as delete, patch.object(
     QMessageBox, "warning", return_value=QMessageBox.StandardButton.Discard
 ):
     assert window.confirm_start_new_game() is True
-    delete.assert_called_once_with()
+    # Overwrite must only discard the save the user was shown.
+    delete.assert_called_once_with(expected_game_id="game_current")
 
 state = make_initial_state(level=2, first_player=0, seed=7)
 session = GameSession(difficulty=0, existing_state=state, human=0)
@@ -933,6 +1095,54 @@ print("ok")
         capture_output=True,
         text=True,
         check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
+def test_evicting_the_game_page_clears_the_window_reference(tmp_path: Path) -> None:
+    """The window must not keep a pointer to an evicted table.
+
+    `_replace_page` drops the oldest page once the stack exceeds its limit;
+    leaving `game_page` pointing at it means `save_current_game()` and
+    `closeEvent()` dereference off-screen Qt objects.
+    """
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    env = dict(os.environ)
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    code = """
+import sys
+from PySide6.QtWidgets import QApplication
+from guandan.gui.window import GuandanMainWindow
+from guandan.ui.session import GameSession
+
+app = QApplication([])
+window = GuandanMainWindow()
+window.show_difficulty()
+window.start_game(GameSession(difficulty=0, human=0))
+assert window.game_page is not None
+
+# Push past the 3-page limit so the table gets evicted.
+window.show_menu()
+window.show_history()
+window.show_menu()
+app.processEvents()
+
+assert window.game_page is None, "evicted table is still referenced"
+# Tearing the window down must therefore be safe.
+window.close()
+app.quit()
+print("ok")
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=os.getcwd(),
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=60,
     )
     assert result.returncode == 0, result.stderr
     assert "ok" in result.stdout

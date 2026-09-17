@@ -20,6 +20,7 @@ State 组成：
 """
 from __future__ import annotations
 
+import copy
 import random
 from collections import Counter
 from dataclasses import dataclass, field
@@ -570,6 +571,48 @@ def make_initial_state(
         )
     )
     return state
+
+
+def clone_state_for_search(state: GameState) -> GameState:
+    """Copy a state cheaply for simulation.
+
+    `copy.deepcopy` is the single most expensive operation in the IS-MCTS inner
+    loop, and it copies far more than the search mutates: `Card`, `Pattern` and
+    the event objects are frozen and safe to share, and the event history is
+    append-only (and never rewritten by simulation), so its list can be copied
+    shallowly.
+
+    Every mutable container is rebuilt one level deep — `hands` is a list of
+    lists, so copying only the outer list would leave the search mutating the
+    caller's hands.
+    """
+    shallow = copy.copy(state)
+    for field_name in _SEARCH_MUTATED_CONTAINERS:
+        value = getattr(shallow, field_name, None)
+        if isinstance(value, list):
+            setattr(
+                shallow,
+                field_name,
+                [list(item) if isinstance(item, list) else item for item in value],
+            )
+        elif isinstance(value, set):
+            setattr(shallow, field_name, set(value))
+    if isinstance(shallow.tribute_state, TributeState):
+        shallow.tribute_state = copy.copy(shallow.tribute_state)
+    return shallow
+
+
+# Containers `play_pattern` / `pass_turn` mutate in place.
+_SEARCH_MUTATED_CONTAINERS = (
+    "hands",
+    "table",
+    "passed_players",
+    "history",
+    "finish_order",
+    "team_bomb_count",
+    "has_played_ace",
+    "team_levels",
+)
 
 
 def sort_hand_cards(cards: list[Card]) -> list[Card]:

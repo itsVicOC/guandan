@@ -125,8 +125,10 @@ class TestDaiChangshengStrategy:
 
         pattern = strategy.select_pattern(state, player=0)
 
-        # 应该返回 None 或有效牌型
-        assert pattern is None or pattern.cards
+        # 返回的牌型必须真的能用掉这些牌
+        if pattern is not None:
+            assert pattern.cards
+            assert all(card in state.hands[0] for card in pattern.cards)
 
     def test_strategy_attributes(self):
         """策略有正确的属性。"""

@@ -197,6 +197,19 @@ def load_history_detail(game_id: str) -> Optional[dict[str, Any]]:
     return None
 
 
+def history_exists(game_id: str) -> bool:
+    """Whether a history record exists for ``game_id``.
+
+    Used by settlement reconciliation: a round whose history was never written
+    must not be counted into statistics.
+    """
+    try:
+        game_id = validate_game_id(game_id)
+    except ValueError:
+        return False
+    return any(get_history_dir().glob(f"*_{game_id}.json"))
+
+
 def _history_statistics(state: GameState) -> dict[str, Any]:
     plays = sum(isinstance(event, TurnPlayed) for event in state.history)
     passes = sum(isinstance(event, Pass) for event in state.history)
@@ -215,6 +228,7 @@ def _history_statistics(state: GameState) -> dict[str, Any]:
 
 
 __all__ = [
+    "history_exists",
     "load_history_detail",
     "load_history_list",
     "save_history",

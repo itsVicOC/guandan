@@ -11,7 +11,6 @@ MCTS 将在这个确定化的世界中进行搜索。
 """
 from __future__ import annotations
 
-import copy
 import random
 from dataclasses import dataclass
 from typing import List
@@ -19,7 +18,7 @@ from typing import List
 from ...engine.card import RANK_2, RANK_A, RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
 from ...engine.events import Pass, TributeReturned, TributeSent, TurnPlayed
 from ...engine.hand import Pattern, PatternType, comparison_rank, effective_rank
-from ...engine.state import GameState, is_teammate
+from ...engine.state import GameState, clone_state_for_search, is_teammate
 
 
 @dataclass(frozen=True)
@@ -95,25 +94,35 @@ def _weighted_owner(
     return owners[-1]
 
 
+_ALL_CARDS_IN_GAME: tuple[Card, ...] | None = None
+
+
 def _get_all_cards_in_game() -> List[Card]:
-    """获取游戏中所有的牌（2副牌共108张）。"""
-    cards: List[Card] = []
+    """获取游戏中所有的牌（2副牌共108张）。
 
-    # 普通牌：2-A，每种4张（2副×2张）
-    for rank in range(RANK_2, RANK_A + 1):
-        for suit in [Suit.SPADES, Suit.HEARTS, Suit.CLUBS, Suit.DIAMONDS]:
-            cards.append(Card(rank, suit))
-            cards.append(Card(rank, suit))  # 第二副
+    The deck is constant, so it is built once and copied per call instead of
+    being reconstructed (and re-allocated) for every simulation.
+    """
+    global _ALL_CARDS_IN_GAME
+    if _ALL_CARDS_IN_GAME is None:
+        cards: List[Card] = []
 
-    # 王牌：各2张
-    cards.extend([
-        Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
-        Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
-        Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
-        Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
-    ])
+        # 普通牌：2-A，每种4张（2副×2张）
+        for rank in range(RANK_2, RANK_A + 1):
+            for suit in [Suit.SPADES, Suit.HEARTS, Suit.CLUBS, Suit.DIAMONDS]:
+                cards.append(Card(rank, suit))
+                cards.append(Card(rank, suit))  # 第二副
 
-    return cards
+        # 王牌：各2张
+        cards.extend([
+            Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+            Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER),
+            Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+            Card(RANK_BIG_JOKER, Suit.BIG_JOKER),
+        ])
+        _ALL_CARDS_IN_GAME = tuple(cards)
+
+    return list(_ALL_CARDS_IN_GAME)
 
 
 def determinize(state: GameState, player: int, rng: random.Random) -> GameState:
@@ -175,8 +184,8 @@ def determinize(state: GameState, player: int, rng: random.Random) -> GameState:
     # assign cards with contextual pass evidence as a soft likelihood.
     rng.shuffle(unplayed_cards)
 
-    # 6. 创建新状态（深拷贝）
-    new_state = copy.deepcopy(state)
+    # 6. 创建新状态（只复制搜索会改写的容器，见 clone_state_for_search）
+    new_state = clone_state_for_search(state)
 
     # 7. 为其他3家重新分配手牌。按 card 选择 owner，避免固定按座位切片
     # 带来的分配顺序偏差，同时严格满足每家的公开剩余张数。

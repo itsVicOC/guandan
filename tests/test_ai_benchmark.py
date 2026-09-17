@@ -278,7 +278,60 @@ def test_main_compare_json_outputs_parseable_payload(
     assert payload["baseline_games"] == 1
     assert payload["current_games"] == 1
     assert "average_duration_delta" in payload
+    # Without --fail-* flags the gate has no thresholds, so it must report that
+    # explicitly rather than being trivially True.
     assert payload["passed"] is True
+    assert payload["failures"] == []
+
+
+def test_main_compare_gate_passes_only_when_thresholds_are_met(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A reachable threshold must actually be evaluated, not just the failure path."""
+    baseline = run_benchmark(
+        games=1, seed_start=241, level=2, difficulties=0, max_turns=2000
+    ).to_dict()
+    current = run_benchmark(
+        games=1, seed_start=241, level=2, difficulties=0, max_turns=2000
+    ).to_dict()
+    baseline_path = tmp_path / "baseline.json"
+    current_path = tmp_path / "current.json"
+    baseline_path.write_text(json.dumps(baseline), encoding="utf-8")
+    current_path.write_text(json.dumps(current), encoding="utf-8")
+
+    # Identical payloads with generous thresholds must pass...
+    exit_code = main(
+        [
+            "--compare",
+            str(baseline_path),
+            str(current_path),
+            "--fail-completion-drop",
+            "0.5",
+            "--fail-turn-increase",
+            "1000",
+            "--json",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 0
+    assert payload["passed"] is True
+    assert payload["failures"] == []
+
+    # ...and an impossible threshold must fail, proving the gate reads the input.
+    exit_code = main(
+        [
+            "--compare",
+            str(baseline_path),
+            str(current_path),
+            "--fail-turn-increase",
+            "-1",
+            "--json",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 1
+    assert payload["passed"] is False
+    assert payload["failures"]
 
 
 def test_main_compare_json_returns_failure_for_gate_regression(
@@ -357,3 +410,42 @@ def test_checked_in_mixed_baseline_has_stable_configuration() -> None:
     assert payload["completion_rate"] == 1.0
     assert [result["seed"] for result in payload["results"]] == list(range(800, 820))
     assert all(result["difficulties"] == [0, 1, 2, 3] for result in payload["results"])
+
+
+def test_bomb_drift_gate_detects_the_documented_regression(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`average_bombs` drifted ~4x unnoticed; the gate must now catch it.
+
+    The two checked-in baselines are the real evidence for this: completion and
+    average turns are flat between them while the bomb count nearly quadruples.
+    """
+    from pathlib import Path as _Path
+
+    repo_benchmarks = _Path(__file__).resolve().parent.parent / "benchmarks"
+    old = repo_benchmarks / "v0.8.0b1-mixed-20.json"
+    new = repo_benchmarks / "v0.8.1b2-mixed-20.json"
+    if not old.exists() or not new.exists():
+        pytest.skip("checked-in baselines are unavailable")
+
+    exit_code = main(
+        [
+            "--compare",
+            str(old),
+            str(new),
+            "--fail-bomb-drift",
+            "0.4",
+            "--json",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 1
+    assert payload["passed"] is False
+    assert any("average_bombs_drift" in failure for failure in payload["failures"])
+
+    # Without a bomb threshold the same comparison passes, which is exactly why
+    # the drift went unnoticed before.
+    exit_code = main(["--compare", str(old), str(new), "--json"])
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 0
+    assert payload["passed"] is True

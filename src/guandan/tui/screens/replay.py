@@ -7,7 +7,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
 from ...engine.events import Event
-from ...engine.state import SEAT_NAMES
+from ...engine.state import SEAT_NAMES, IllegalPlayError
 from ...ui.formatting import card_label
 from ...ui.history import history_statistics_text
 from ...ui.replay import ReplayCursor, replay_event_text, replay_state_text
@@ -72,7 +72,13 @@ class ReplayScreen(Screen):
         self._events: list[Event] = list(history.get("events", []))
         if not self._events:
             raise ValueError("history has no events")
-        self._cursor = ReplayCursor(self._events)
+        try:
+            self._cursor = ReplayCursor(self._events)
+        except (IllegalPlayError, ValueError) as exc:
+            # Normalise engine errors to ValueError so screen constructors only
+            # ever signal "unusable history" one way. Without this an
+            # IllegalPlayError escapes the message handler and Textual exits.
+            raise ValueError("history event stream cannot be replayed") from exc
         self._autoplay = False
 
     def compose(self) -> ComposeResult:

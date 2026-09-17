@@ -906,19 +906,27 @@ class GameScreen(Screen):
             )
             self.app.push_screen(ErrorModal(message, title="暂时无法离开"))
             return
-        s = self._state()
+        # Storage I/O can block for up to LOCK_TIMEOUT_SECONDS when another
+        # Guandan process holds the lock, so it must not run on the event loop.
+        self._save_then_leave()
+
+    @work(thread=True, exclusive=True, group="leave-save")
+    def _save_then_leave(self) -> None:
         try:
-            if s.finished:
+            if self._state().finished:
                 if not self.session.save_finished_if_needed():
                     raise OSError(self.session.last_action)
             else:
                 self.session.save_unfinished()
         except Exception as exc:
-            from .error import ErrorModal
-
-            self.app.push_screen(ErrorModal(str(exc), title="保存失败"))
+            self.app.call_from_thread(self._leave_failed, exc)
             return
-        self.app.pop_screen()
+        self.app.call_from_thread(self.app.pop_screen)
+
+    def _leave_failed(self, error: Exception) -> None:
+        from .error import ErrorModal
+
+        self.app.push_screen(ErrorModal(str(error), title="保存失败"))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-next-game":

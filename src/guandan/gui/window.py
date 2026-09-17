@@ -16,6 +16,7 @@ from PySide6.QtGui import (
     QPen,
     QRadialGradient,
     QShortcut,
+    QTextCursor,
 )
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -40,17 +41,21 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .. import version_label
 from ..ai import AINotImplementedError, make_strategy
 from ..engine.card import Card
 from ..engine.events import Event, Pass, TributeResisted, TributeReturned, TributeSent, TurnPlayed
 from ..engine.hand import Pattern
 from ..engine.state import SEAT_NAMES, GameState, IllegalPlayError
 from ..storage import (
+    consume_profile_error,
     delete_savegame,
     has_savegame,
+    history_exists,
     load_game,
     load_history_detail,
     load_history_list,
+    reconcile_settlements,
     restore_game_state,
 )
 from ..ui.content import DIFFICULTIES, GAME_RULES_TEXT, GUI_CONTROLS_TEXT
@@ -296,7 +301,7 @@ class MenuPage(QWidget):
         masthead_title.setObjectName("mastheadTitle")
         masthead.addWidget(masthead_title)
         masthead.addWidget(QLabel("  本地单机 · 无需联网"), 1)
-        version = QLabel("BETA  0.8.1")
+        version = QLabel(version_label("BETA  "))
         version.setObjectName("versionBadge")
         masthead.addWidget(version)
         layout.addLayout(masthead)
@@ -358,6 +363,15 @@ class MenuPage(QWidget):
         action_layout.addWidget(team_note, 0, Qt.AlignmentFlag.AlignCenter)
         action_layout.addWidget(button("退出游戏", window.close, role="quietButton"))
         body.addWidget(action_panel, 3)
+
+        notice = consume_profile_error()
+        if notice:
+            # A profile that could not be parsed must not be a silent event:
+            # its statistics were reset and the original file was set aside.
+            banner = QLabel(f"⚠ 玩家数据异常：{notice}")
+            banner.setObjectName("storageWarning")
+            banner.setWordWrap(True)
+            layout.addWidget(banner)
 
 
 class DifficultyPage(QWidget):
@@ -421,6 +435,9 @@ class LoadPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
         self._main_window = window
+        # Identity of the save currently rendered, so "删除存档" cannot remove a
+        # save another process wrote after this page was built.
+        self._displayed_savegame_id: str | None = None
         self.setObjectName("page")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(60, 44, 60, 36)
@@ -444,7 +461,9 @@ class LoadPage(QWidget):
         try:
             has_save = has_savegame()
             savegame = load_game() if has_save else None
+            self._displayed_savegame_id = savegame.get("game_id") if savegame else None
         except OSError as exc:
+            self._displayed_savegame_id = None
             self.content.addWidget(self._message_panel("无法读取存档", str(exc)))
             return
         if not has_save:
@@ -528,7 +547,9 @@ class LoadPage(QWidget):
         if answer != QMessageBox.StandardButton.Yes:
             return
         try:
-            delete_savegame()
+            # Delete only the save this page is displaying: a parallel TUI may
+            # have written a newer one since the page was built.
+            delete_savegame(expected_game_id=self._displayed_savegame_id)
         except OSError as exc:
             QMessageBox.warning(self, "删除失败", str(exc))
             return
@@ -728,7 +749,7 @@ class ReplayPage(QWidget):
         layout.addWidget(self.state_summary)
         self.progress = QSlider(Qt.Orientation.Horizontal)
         self.progress.setRange(0, len(self.events) - 1)
-        self.progress.valueChanged.connect(self.set_event_index)
+        self.progress.valueChanged.connect(self._on_progress_changed)
         layout.addWidget(self.progress)
 
         controls = QHBoxLayout()
@@ -748,6 +769,10 @@ class ReplayPage(QWidget):
         layout.addLayout(controls)
         layout.addWidget(button("返回战绩", self.back_to_history, role="quietButton"))
         self.refresh()
+
+    def _on_progress_changed(self, value: int) -> None:
+        if value != self.event_index:
+            self.set_event_index(value)
 
     def set_event_index(self, index: int) -> None:
         self._replay_cursor.set_index(index)
@@ -788,17 +813,39 @@ class ReplayPage(QWidget):
         for seat, panel in self.replay_hands.items():
             panel.update_hand(state.hands[seat], seat in state.finish_order)
         self.replay_center.update_state(state)
-        lines = []
-        for index, event in enumerate(self.events):
-            marker = "▶" if index == self.event_index else " "
-            lines.append(f"{marker} {index + 1:>3}. {replay_event_text(event)}")
-        self.timeline.setPlainText("\n".join(lines))
+        self._refresh_timeline()
+        # Block the signal so writing the slider back does not re-enter
+        # set_event_index (an infinite refresh loop on every step).
+        self.progress.blockSignals(True)
         self.progress.setValue(self.event_index)
+        self.progress.blockSignals(False)
         self.first_button.setEnabled(self.event_index > 0)
         self.previous_button.setEnabled(self.event_index > 0)
         self.next_button.setEnabled(self.event_index < len(self.events) - 1)
         self.last_button.setEnabled(self.event_index < len(self.events) - 1)
         self.auto_button.setText("暂停" if self._auto_timer.isActive() else "自动播放")
+
+    def _refresh_timeline(self) -> None:
+        """Rebuild the event list and keep the current step visible.
+
+        ``setPlainText`` scrolls back to the top, so the "▶" marker scrolled out
+        of view during auto-play and the user could not see where they were.
+        """
+        lines = []
+        for index, event in enumerate(self.events):
+            marker = "▶" if index == self.event_index else " "
+            lines.append(f"{marker} {index + 1:>3}. {replay_event_text(event)}")
+        self.timeline.setPlainText("\n".join(lines))
+
+        cursor = self.timeline.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
+        cursor.movePosition(
+            QTextCursor.MoveOperation.Down,
+            QTextCursor.MoveMode.MoveAnchor,
+            self.event_index,
+        )
+        self.timeline.setTextCursor(cursor)
+        self.timeline.ensureCursorVisible()
 
 class RulesPage(QWidget):
     def __init__(self, window: "GuandanMainWindow") -> None:
@@ -1544,7 +1591,7 @@ class GamePage(QWidget):
 class GuandanMainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("掼蛋 GUI · v0.8.1-beta.2")
+        self.setWindowTitle(f"掼蛋 GUI · {version_label()}")
         self.resize(1280, 860)
         self.setMinimumSize(1080, 760)
         self.stack = QStackedWidget()
@@ -1564,11 +1611,17 @@ class GuandanMainWindow(QMainWindow):
         self.stack.addWidget(page)
         self.stack.setCurrentWidget(page)
         while self.stack.count() > 3:
-            old = self.stack.widget(0)
-            if old is None or old is page:
+            evicted = self.stack.widget(0)
+            if evicted is None or evicted is page:
                 break
-            self.stack.removeWidget(old)
-            old.deleteLater()
+            # Never keep a pointer to an evicted table: save_current_game()
+            # and closeEvent() both call into self.game_page, and an evicted
+            # page's Qt objects can already be gone.
+            evicts_game_page = evicted is self.game_page
+            self.stack.removeWidget(evicted)
+            evicted.deleteLater()
+            if evicts_game_page:
+                self.game_page = None
 
     def show_menu(self) -> None:
         self._replace_page(MenuPage(self))
@@ -1599,11 +1652,12 @@ class GuandanMainWindow(QMainWindow):
     def confirm_start_new_game(self) -> bool:
         """Resolve the single-save conflict before replacing an unfinished round."""
         try:
-            if not has_savegame():
-                return True
+            existing = load_game() if has_savegame() else None
         except OSError as exc:
             QMessageBox.warning(self, "无法检查存档", str(exc))
             return False
+        if existing is None and not has_savegame():
+            return True
         choice = QMessageBox.warning(
             self,
             "已有未完成存档",
@@ -1618,7 +1672,11 @@ class GuandanMainWindow(QMainWindow):
             return False
         if choice == QMessageBox.StandardButton.Discard:
             try:
-                delete_savegame()
+                # Only discard the save the user was just shown; a parallel
+                # process may have written a newer one.
+                delete_savegame(
+                    expected_game_id=existing.get("game_id") if existing else None
+                )
             except OSError as exc:
                 QMessageBox.warning(self, "无法覆盖存档", str(exc))
                 return False
@@ -1653,6 +1711,20 @@ class GuandanMainWindow(QMainWindow):
             event.ignore()
 
 
+def repair_interrupted_settlements() -> int:
+    """Finish settlements a previous run could not complete.
+
+    Settling a round writes history, then statistics, then removes the save.
+    A crash in between used to leave a history entry that no statistic ever
+    counted; the pending marker makes it repairable at startup. Returns how
+    many settlements were closed.
+    """
+    try:
+        return int(reconcile_settlements(history_has_game=history_exists))
+    except (OSError, ValueError):
+        return 0
+
+
 def run_gui() -> int:
     app = QApplication.instance()
     owns_app = app is None
@@ -1660,6 +1732,7 @@ def run_gui() -> int:
         app = QApplication(sys.argv)
     assert isinstance(app, QApplication)
     app.setStyleSheet(APP_QSS)
+    repair_interrupted_settlements()
     window = GuandanMainWindow()
     window.show()
     if owns_app:

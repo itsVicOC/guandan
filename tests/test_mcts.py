@@ -14,6 +14,7 @@ from collections import Counter
 
 import pytest
 
+from guandan.ai.candidates import observable_key, pattern_key
 from guandan.ai.mcts import MCTS_CONFIG
 from guandan.ai.mcts.determinize import (
     PassEvidence,
@@ -38,11 +39,22 @@ from guandan.ai.mcts.search import (
 )
 from guandan.ai.strategies.professional import ProfessionalStrategy
 from guandan.ai.valuation import enumerate_search_candidates
-from guandan.engine.card import RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
+from guandan.engine.card import RANK_5, RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
 from guandan.engine.deck import deal, make_deck, shuffle_deck
 from guandan.engine.events import TributeReturned, TributeSent, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
-from guandan.engine.state import GameState, pass_turn, play_pattern
+from guandan.engine.state import GameState, clone_state_for_search, pass_turn, play_pattern
+
+_SUIT_BY_LETTER = {
+    "S": Suit.SPADES,
+    "H": Suit.HEARTS,
+    "C": Suit.CLUBS,
+    "D": Suit.DIAMONDS,
+}
+
+
+def c(rank, suit="H"):
+    return Card(rank, _SUIT_BY_LETTER[suit])
 
 
 def _make_test_state(level: int = 2, seed: int = 42) -> GameState:
@@ -249,8 +261,11 @@ class TestMCTSSearch:
             rollout_strategy=1,
         )
 
-        # 应该返回一个子节点
-        assert best_child is None or isinstance(best_child, MCTSNode)
+        # 根节点必须有子节点被扩展，否则搜索没有产生任何可用动作
+        assert root.children, "search expanded no action"
+        assert best_child is not None, "search returned no action despite legal moves"
+        assert best_child in root.children
+        assert best_child.action is not None or root.player is not None
 
     def test_mcts_search_updates_visits(self):
         """MCTS 搜索正确更新访问次数。"""
@@ -529,14 +544,14 @@ class TestProfessionalStrategy:
         pattern = strategy.select_pattern(state, player)
 
         if pattern is not None:
-            # 验证可以合法出牌
+            # 验证可以合法出牌：合法意味着牌确实离开了手牌
             from guandan.engine.state import IllegalPlayError
+            before = len(state.hands[player])
             try:
                 play_pattern(state, player, pattern)
-                # 如果没有抛异常，说明是合法出牌
-                assert True
             except IllegalPlayError:
                 pytest.fail(f"Strategy returned illegal pattern: {pattern}")
+            assert len(state.hands[player]) == before - len(pattern.cards)
 
     def test_professional_strategy_attributes(self):
         """职业策略有正确的属性。"""
@@ -728,3 +743,162 @@ class TestProfessionalStrategy:
 
         assert first.pattern == second.pattern
         assert first.actions == second.actions
+
+
+class TestSearchStateClone:
+    """`clone_state_for_search` replaces deepcopy in the IS-MCTS inner loop."""
+
+    def test_clone_is_value_equal_to_deepcopy(self):
+        state = _make_test_state()
+        clone = clone_state_for_search(state)
+        assert clone == copy.deepcopy(state)
+
+    def test_clone_shares_no_mutable_container(self):
+        state = _make_test_state()
+        clone = clone_state_for_search(state)
+
+        # `hands` is a list of lists: copying only the outer list would let the
+        # search mutate the caller's hands (this regressed once already).
+        assert clone.hands is not state.hands
+        for index in range(4):
+            assert clone.hands[index] is not state.hands[index]
+        assert clone.table is not state.table
+        assert clone.history is not state.history
+        assert clone.finish_order is not state.finish_order
+        assert clone.team_bomb_count is not state.team_bomb_count
+        assert clone.passed_players is not state.passed_players
+
+        clone.hands[0].pop()
+        clone.passed_players.add(1)
+        clone.table.append("sentinel")
+        clone.history.append("sentinel")
+        assert len(state.hands[0]) == 27
+        assert state.passed_players == set()
+        assert state.table == []
+        assert state.history == []
+
+    def test_determinize_does_not_mutate_the_root_hand(self):
+        """Search must never shrink the root player's own hand."""
+        state = _make_test_state()
+        before = [len(hand) for hand in state.hands]
+        for seed in range(3):
+            determinize(state, 0, random.Random(seed))
+        assert [len(hand) for hand in state.hands] == before
+
+    def test_search_leaves_the_root_state_untouched(self):
+        state = _make_test_state()
+        before = copy.deepcopy(state)
+        information_set_search(
+            state,
+            player=0,
+            rng=random.Random(11),
+            iterations=6,
+            max_actions=3,
+            max_tree_depth=2,
+            rollout_strategy=1,
+            rollout_max_turns=3,
+        )
+        assert state == before
+
+
+class TestTreeDepth:
+    """The shared tree must actually deepen.
+
+    Regression: tree nodes were keyed by the exact card multiset, so no world
+    ever revisited a child and the descent broke at every freshly created node.
+    64 simulations produced exactly 64 non-root nodes — a one-layer search where
+    `max_tree_depth`, progressive widening and priors were all inert.
+    """
+
+    def test_observable_key_ignores_which_physical_cards_were_used(self):
+        low_pair = Pattern(
+            type=PatternType.PAIR, rank=RANK_5, length=1, cards=(c(RANK_5, "S"), c(RANK_5, "C"))
+        )
+        other_pair = Pattern(
+            type=PatternType.PAIR, rank=RANK_5, length=1, cards=(c(RANK_5, "D"), c(RANK_5, "H"))
+        )
+        assert observable_key(low_pair) == observable_key(other_pair)
+        # The precise key still distinguishes them, which is what the root needs.
+        assert pattern_key(low_pair) != pattern_key(other_pair)
+
+    def test_observable_key_separates_different_plays(self):
+        pair = Pattern(
+            type=PatternType.PAIR, rank=RANK_5, length=1, cards=(c(RANK_5, "S"), c(RANK_5, "C"))
+        )
+        triple = Pattern(
+            type=PatternType.TRIPLE,
+            rank=RANK_5,
+            length=1,
+            cards=(c(RANK_5, "S"), c(RANK_5, "C"), c(RANK_5, "D")),
+        )
+        longer_bomb = Pattern(
+            type=PatternType.BOMB,
+            rank=RANK_5,
+            length=5,
+            cards=tuple(c(RANK_5, s) for s in ("S", "C", "D", "H", "S")),
+        )
+        longer_bomb_4 = Pattern(
+            type=PatternType.BOMB,
+            rank=RANK_5,
+            length=4,
+            cards=tuple(c(RANK_5, s) for s in ("S", "C", "D", "H")),
+        )
+        assert observable_key(pair) != observable_key(triple)
+        assert observable_key(longer_bomb) != observable_key(longer_bomb_4)
+
+    def test_search_builds_a_tree_deeper_than_one_layer(self):
+        state = _make_test_state()
+        created = {"count": 0}
+        original_init = InformationSetNode.__init__
+
+        def counting_init(self, *args, **kwargs):
+            original_init(self, *args, **kwargs)
+            created["count"] += 1
+
+        InformationSetNode.__init__ = counting_init
+        try:
+            result = information_set_search(
+                state,
+                player=0,
+                rng=random.Random(3),
+                iterations=48,
+                max_actions=6,
+                max_tree_depth=8,
+                rollout_strategy=1,
+                rollout_max_turns=4,
+            )
+        finally:
+            InformationSetNode.__init__ = original_init
+
+        # A one-layer search creates exactly one node per simulation.
+        assert created["count"] > result.simulations * 2, (
+            f"tree degenerated to one layer: {created['count']} nodes "
+            f"for {result.simulations} simulations"
+        )
+
+    def test_information_boundary_holds_with_the_shared_tree(self):
+        """Hidden hands must not change the search's statistics."""
+        state = _make_test_state()
+        signatures = set()
+        for offset in range(3):
+            variant = copy.deepcopy(state)
+            rng = random.Random(900 + offset)
+            for opponent in (1, 2, 3):
+                rng.shuffle(variant.hands[opponent])
+            result = information_set_search(
+                variant,
+                player=0,
+                rng=random.Random(4242),
+                iterations=32,
+                max_actions=5,
+                max_tree_depth=4,
+                rollout_strategy=1,
+                rollout_max_turns=3,
+            )
+            signatures.add(
+                tuple(
+                    (str(a.action_key), a.visits, round(a.mean_value, 6))
+                    for a in result.actions
+                )
+            )
+        assert len(signatures) == 1

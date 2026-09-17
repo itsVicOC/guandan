@@ -7,11 +7,13 @@ import random
 import subprocess
 import sys
 import tempfile
+import threading
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from filelock import FileLock
 
 from guandan.engine.card import Card, Suit
 from guandan.engine.deck import deal, make_deck, shuffle_deck
@@ -30,6 +32,8 @@ from guandan.engine.rules.patterns import find_complete_pattern
 from guandan.engine.state import GameState, make_initial_state, pass_turn, play_pattern
 from guandan.storage import (
     DEFAULT_PROFILE,
+    StorageBusyError,
+    consume_profile_error,
     delete_savegame,
     deserialize_events,
     has_savegame,
@@ -47,6 +51,8 @@ from guandan.storage import (
     update_profile,
     update_statistics,
 )
+from guandan.storage.jsonio import write_json_atomic
+from guandan.storage.locking import storage_lock
 
 
 def _make_test_state(level: int = 2, seed: int = 42) -> GameState:
@@ -394,6 +400,89 @@ profile_module.update_profile(mutate)
         ), pytest.raises(PermissionError, match="denied"):
             load_profile()
 
+    def test_truncated_profile_is_quarantined_not_overwritten(self, tmp_path: Path):
+        """A crash-truncated profile must survive the next settlement write."""
+        path = tmp_path / "profile.json"
+
+        def seed(profile):
+            profile["statistics"]["total_rounds"] = 5
+            profile["statistics"]["head_rounds"] = 2
+
+        with patch("guandan.storage.profile.get_profile_path", return_value=path):
+            update_profile(seed)
+            original = path.read_text(encoding="utf-8")
+            # Simulate a torn write / power loss.
+            path.write_text(original[: len(original) // 2], encoding="utf-8")
+
+            assert load_profile()["statistics"]["total_rounds"] == 0
+
+            quarantined = list(tmp_path.glob("profile.json.corrupt-*"))
+            assert len(quarantined) == 1
+            # The user's bytes are still recoverable.
+            assert "total_rounds" in quarantined[0].read_text(encoding="utf-8")
+
+            error = consume_profile_error()
+            assert error is not None and "无法解析" in error
+            # The report is consumed once.
+            assert consume_profile_error() is None
+
+            def record(profile):
+                record_round_statistics(profile, got_head=True, difficulty=2, game_id="g1")
+
+            update_profile(record)
+            # Recording still works, and the quarantined copy is untouched.
+            assert load_profile()["statistics"]["total_rounds"] == 1
+            assert quarantined[0].read_text(encoding="utf-8") == original[: len(original) // 2]
+
+    def test_hand_edited_profile_is_normalized_without_quarantine(self, tmp_path: Path):
+        """Wrong types degrade per field instead of aborting the transaction."""
+        path = tmp_path / "profile.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "player_name": "手改玩家",
+                    "preferences": {"default_difficulty": "high"},
+                    "statistics": {
+                        "total_rounds": "abc",
+                        "head_rounds": None,
+                        "by_difficulty": {"2": 5},
+                        "recorded_game_ids": "nope",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        with patch("guandan.storage.profile.get_profile_path", return_value=path):
+            profile = load_profile()
+            assert profile["statistics"]["total_rounds"] == 0
+            assert profile["statistics"]["head_rounds"] == 0
+            assert profile["statistics"]["recorded_game_ids"] == []
+            assert profile["statistics"]["by_difficulty"] == {}
+            # A parseable-but-wrong file is repaired in place, not moved aside.
+            assert not list(tmp_path.glob("profile.json.corrupt-*"))
+
+            def record(profile):
+                record_round_statistics(profile, got_head=True, difficulty=2, game_id="g1")
+
+            update_profile(record)
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            assert saved["statistics"]["total_rounds"] == 1
+            assert saved["player_name"] == "手改玩家"
+
+    def test_quarantine_only_happens_once_per_corrupt_file(self, tmp_path: Path):
+        path = tmp_path / "profile.json"
+        path.write_text("{not json", encoding="utf-8")
+
+        with patch("guandan.storage.profile.get_profile_path", return_value=path):
+            consume_profile_error()  # clear any error left by an earlier test
+            load_profile()
+            assert consume_profile_error() is not None
+            # The corrupt file was moved aside, so the next load is clean.
+            load_profile()
+            assert consume_profile_error() is None
+            assert len(list(tmp_path.glob("profile.json.corrupt-*"))) == 1
+
 
 class TestSavegame:
     """测试 Savegame 管理。"""
@@ -587,6 +676,34 @@ class TestSavegame:
                 path.write_text(json.dumps(payload), encoding="utf-8")
 
                 assert load_game() is None
+
+    def test_load_game_accepts_legacy_tribute_state_field(self):
+        """A field the event stream cannot rebuild must not void the save.
+
+        Older builds serialised `tribute_state`; replay never assigns it, so a
+        whole-dataclass comparison marked every such save as corrupt and the UI
+        only offered to delete it.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "savegame.json"
+            state = make_initial_state(level=2, first_player=0, seed=42)
+            with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
+                save_game(state, "legacy-tribute", 0, [None, 2, 2, 2], 42)
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                payload["state"]["tribute_state"] = {
+                    "pending": True,
+                    "from_player": 3,
+                    "to_player": 0,
+                    "tribute_card": None,
+                    "resisted": False,
+                }
+                path.write_text(json.dumps(payload), encoding="utf-8")
+
+                loaded = load_game()
+                assert loaded is not None
+                restored = restore_game_state(loaded)
+                assert restored.turn_index == state.turn_index
+                assert [len(hand) for hand in restored.hands] == [27, 27, 27, 27]
 
     def test_save_game_rejects_unsafe_game_id(self):
         state = make_initial_state(level=2, first_player=0, seed=42)
@@ -832,3 +949,68 @@ class TestHistory:
             with patch("guandan.storage.history.get_history_dir", return_value=history_dir):
                 assert load_history_list() == []
                 assert load_history_detail("bad-events") is None
+
+
+class TestStoragePrimitives:
+    """Direct coverage for the lock/atomic-write layer the README advertises."""
+
+    def test_write_json_atomic_preserves_symlink_target(self, tmp_path: Path):
+        """Writing through a symlinked path must update the real file.
+
+        Replacing the link itself detaches a user's synced/backed-up copy and
+        silently stops updating it.
+        """
+        real = tmp_path / "real.json"
+        real.write_text('{"v": 1}', encoding="utf-8")
+        link = tmp_path / "link.json"
+        link.symlink_to(real)
+
+        write_json_atomic(link, {"v": 2})
+
+        assert link.is_symlink()
+        assert json.loads(real.read_text(encoding="utf-8")) == {"v": 2}
+
+    def test_write_json_atomic_keeps_old_file_when_serialisation_fails(self, tmp_path: Path):
+        path = tmp_path / "data.json"
+        path.write_text('{"keep": true}', encoding="utf-8")
+
+        with pytest.raises(TypeError):
+            write_json_atomic(path, {"bad": object()})
+
+        assert json.loads(path.read_text(encoding="utf-8")) == {"keep": True}
+        # The temporary file must not be left behind.
+        assert list(tmp_path.glob(".data.json.*.tmp")) == []
+
+    def test_storage_lock_is_reentrant_within_a_thread(self, tmp_path: Path):
+        resource = tmp_path / "resource.json"
+        with storage_lock(resource), storage_lock(resource):
+            assert resource.parent.exists()
+
+    def test_storage_lock_reports_cross_thread_contention(self, tmp_path: Path):
+        """A same-process holder must not be reported as 'another process'."""
+        resource = tmp_path / "contended.json"
+        holding = threading.Event()
+        release = threading.Event()
+
+        def holder() -> None:
+            with storage_lock(resource):
+                holding.set()
+                release.wait(10.0)
+
+        thread = threading.Thread(target=holder, name="storage-holder", daemon=True)
+        thread.start()
+        assert holding.wait(5.0)
+
+        # A short-timeout lock for the same path, so the wait is bounded.
+        lock = FileLock(resource.with_name(f".{resource.name}.lock"), timeout=0.2)
+        try:
+            with patch("guandan.storage.locking._lock_for", return_value=lock):
+                with pytest.raises(StorageBusyError) as excinfo:
+                    with storage_lock(resource):
+                        pass
+            message = str(excinfo.value)
+            assert "本程序内其他线程" in message
+            assert "另一个掼蛋进程" not in message
+        finally:
+            release.set()
+            thread.join(timeout=5.0)

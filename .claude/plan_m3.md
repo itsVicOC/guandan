@@ -1,5 +1,7 @@
 # M3 实施计划：AI 档 3 职业级（IS-MCTS）
 
+> ⚠️ 历史计划：M3 阶段的计划，已过期。 仅供追溯设计取舍，不代表当前实现。
+
 ## 目标
 
 实现档 3"职业"AI，使用 IS-MCTS（Information Set Monte Carlo Tree Search，信息集蒙特卡洛树搜索）算法。

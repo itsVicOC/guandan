@@ -11,5 +11,26 @@
 """
 from __future__ import annotations
 
+import re
+
 __version__ = "0.8.1b2"
-__all__ = ["__version__"]
+
+
+def version_label(prefix: str = "v") -> str:
+    """Human-readable release label derived from the packaging version.
+
+    PEP 440 spells the beta as ``0.8.1b2``; users see ``v0.8.1-beta.2``.
+    Deriving one from the other keeps the GUI title, TUI subtitle and CLI
+    banner from drifting apart from pyproject.toml at release time.
+    """
+    match = re.fullmatch(r"(\d+\.\d+\.\d+)(?:(a|b|rc)(\d+))?", __version__)
+    if match is None:
+        return f"{prefix}{__version__}"
+    base, stage, number = match.groups()
+    if stage is None:
+        return f"{prefix}{base}"
+    stage_name = {"a": "alpha", "b": "beta", "rc": "rc"}[stage]
+    return f"{prefix}{base}-{stage_name}.{number}"
+
+
+__all__ = ["__version__", "version_label"]

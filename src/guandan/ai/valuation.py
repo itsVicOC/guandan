@@ -15,7 +15,7 @@ from typing import List, Optional
 
 from ..engine.card import RANK_A, Card
 from ..engine.hand import Pattern, PatternType, comparison_rank, effective_rank
-from ..engine.rules.comparator import bomb_strength
+from ..engine.rules.comparator import bomb_strength, is_bomb_type
 from ..engine.rules.patterns import detect_patterns
 from ..engine.state import GameState
 from .candidates import (
@@ -34,10 +34,6 @@ def _hand_breakdown(cards: list) -> dict:
     return d
 
 
-def _is_bomb(t: PatternType) -> bool:
-    return t in (PatternType.BOMB, PatternType.STRAIGHT_FLUSH, PatternType.FOUR_JOKERS)
-
-
 def _count_wild_in_pattern(p: Pattern, wild: Optional[object]) -> int:
     if wild is None:
         return 0
@@ -53,6 +49,13 @@ _STRUCTURE_TYPES = {
 
 _CardKey = tuple[tuple[int, int, int], ...]
 _StructureCache = dict[_CardKey, float]
+
+# Structure scores only depend on the card multiset and the wild card, so they
+# are worth remembering between calls: candidate enumeration evaluates one
+# score per candidate, and the same hands recur across simulations and even
+# across decisions.
+_STRUCTURE_SCORE_LIMIT = 8192
+_structure_score_memo: dict[tuple[_CardKey, Card | None], float] = {}
 
 
 def _cards_key(cards: list[Card]) -> _CardKey:
@@ -83,7 +86,14 @@ def _cached_structure_score(
         return _best_structure_score(cards, wild)
     key = _cards_key(cards)
     if key not in cache:
-        cache[key] = _best_structure_score(cards, wild)
+        memo_key = (key, wild)
+        memo = _structure_score_memo.get(memo_key)
+        if memo is None:
+            memo = _best_structure_score(cards, wild)
+            if len(_structure_score_memo) >= _STRUCTURE_SCORE_LIMIT:
+                _structure_score_memo.clear()
+            _structure_score_memo[memo_key] = memo
+        cache[key] = memo
     return cache[key]
 
 
@@ -153,7 +163,7 @@ def _estimate_pattern_cost(
 
     # ---- 5. 炸弹特别贵 ----
     bomb_premium = 0.0
-    if _is_bomb(pattern.type):
+    if is_bomb_type(pattern.type):
         bomb_premium = 5.0
         if pattern.type == PatternType.STRAIGHT_FLUSH:
             bomb_premium += 3.0
@@ -162,7 +172,7 @@ def _estimate_pattern_cost(
 
     # ---- 6. 保留顺子/连对/钢板等结构 ----
     structure_penalty = 0.0
-    if pattern.type not in _STRUCTURE_TYPES and not _is_bomb(pattern.type):
+    if pattern.type not in _STRUCTURE_TYPES and not is_bomb_type(pattern.type):
         before_score = (
             _cached_structure_score(hand, wild, structure_cache)
             if before_structure is None
@@ -178,7 +188,7 @@ def _estimate_pattern_cost(
 
     # ---- 8. 领牌整理：自然结构牌能显著减少手牌轮次 ----
     lead_shedding_bonus = 0.0
-    if not state.table and pattern.type in _STRUCTURE_TYPES and not _is_bomb(pattern.type):
+    if not state.table and pattern.type in _STRUCTURE_TYPES and not is_bomb_type(pattern.type):
         lead_shedding_bonus = -min(8.0, len(pattern.cards) * 1.3)
 
     # ---- 9. 对手报单时避免用单张领牌 ----

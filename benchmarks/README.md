@@ -11,24 +11,61 @@ python -m guandan.ai.benchmark \
   --json
 ```
 
-`v0.8.0b1-mixed-20.json` records the reference run:
+## Current baseline
+
+`v0.8.1b2-mixed-20.json` records the reference run for the current code:
 
 - completion: `20/20` (`1.0`)
-- average turns: `92.9`
-- team wins: East-West `3`, South-North `17`
-- average bombs: East-West `0.25`, South-North `0.45`
+- average turns: `91.95`
+- team wins: East-West `4`, South-North `16`
+- average bombs: East-West `0.95`, South-North `1.0`
 
-Compare a new run with:
+This benchmark mixes four difficulties across fixed seats (seat 0 novice, seat 1
+intermediate, seat 2 advanced, seat 3 professional), so `team_wins` reflects the
+seat/difficulty assignment, **not** a fair strength comparison. Use the arena for
+strength claims.
+
+Note that only the **fixed-iteration** arena mode is reproducible across
+machines; the production clock budget makes simulation counts machine-dependent,
+so a benchmark rerun on different hardware can shift `average_turns` and even
+`team_wins` without any code change.
+
+## Comparing a new run
 
 ```bash
 python -m guandan.ai.benchmark \
-  --compare benchmarks/v0.8.0b1-mixed-20.json current.json \
+  --compare benchmarks/v0.8.1b2-mixed-20.json current.json \
   --fail-completion-drop 0.05 \
-  --fail-turn-increase 20
+  --fail-turn-increase 20 \
+  --fail-bomb-drift 0.4
 ```
 
 Duration is reported for diagnosis but is not used as a default gate because it
 varies with CPU load and MCTS scheduling.
+
+`--fail-bomb-drift` exists because `average_bombs` is the metric that drifted
+without any gate noticing: between `v0.8.0b1-mixed-20.json` and the current
+baseline the average bomb count moved from `[0.25, 0.45]` to `[0.95, 1.0]`
+while completion and average turns stayed flat.
+
+Measured rerun variance (same machine, same seeds, two consecutive runs):
+`completion_rate` and both `average_bombs` values were **identical**, while
+`average_turns` moved by 3.6 and `team_wins` by 2. That is why bomb drift gets a
+tight threshold and turn drift gets a loose one — the benchmark is not
+reproducible for outcomes because production AI runs on a clock budget, but the
+bomb statistic is stable enough to gate at ±0.4.
+
+Comparing the two checked-in baselines reproduces the original finding:
+
+```bash
+python -m guandan.ai.benchmark \
+  --compare benchmarks/v0.8.0b1-mixed-20.json benchmarks/v0.8.1b2-mixed-20.json \
+  --fail-completion-drop 0.05 --fail-turn-increase 20 --fail-bomb-drift 0.4
+# gate=fail — average_bombs_drift_team0 +0.70 / team1 +0.55
+```
+
+The `v0.8.0b1` file is kept as a historical record and is **not** comparable
+with current code: it predates the M9 search rewrite.
 
 ## Paired strength arena
 
@@ -53,8 +90,15 @@ independent holdout used for the current Dai Changsheng profile.
 
 `--deterministic-search` disables wall-clock cutoffs and uses calibrated fixed
 counts (64 simulations for Professional, 96 for Dai Changsheng). It is intended
-for cross-machine regression and exercises the full search-work ceiling; its
-latency is deliberately not compared with the bounded production holdout.
+for cross-machine regression and exercises the full search-work ceiling.
+
+**Production runs a different search than this mode.** The 240/420ms clock
+budget stops production at roughly 40-80 simulations, and the two modes pick
+different actions for a substantial share of decisions, so neither mode's win
+rate can stand in for the other. Production decisions report this through
+`SearchResult.budget_limited`. A latency gate must be set above the budget
+rather than equal to it, because the deadline is only observed between
+simulations.
 
 Profile search is reproducible through:
 

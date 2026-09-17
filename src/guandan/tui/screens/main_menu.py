@@ -6,6 +6,8 @@ from textual.containers import Center, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
+from ...storage import consume_profile_error
+
 
 class MainMenuScreen(Screen):
     """主菜单。"""
@@ -134,6 +136,11 @@ class MainMenuScreen(Screen):
         ("q", "quit", "退出"),
     ]
 
+    def __init__(self) -> None:
+        super().__init__()
+        # Identity of the save shown in the overwrite confirmation dialog.
+        self._conflict_savegame_id: str | None = None
+
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
         with Center(id="home-center"):
@@ -148,6 +155,9 @@ class MainMenuScreen(Screen):
                     yield Static("逆时针行牌 · 双副牌 · 逢人配", id="rule-strip")
                 with Vertical(id="action-panel"):
                     yield Static("牌局大厅", id="action-title")
+                    notice = consume_profile_error()
+                    if notice:
+                        yield Static(f"⚠ 玩家数据异常：{notice}", id="storage-warning")
                     yield Button("1  开始新局", id="btn-new", variant="primary", classes="menu-button")
                     yield Button("2  继续上次的牌局", id="btn-load", classes="menu-button")
                     yield Button("3  历史战绩", id="btn-history", classes="menu-button")
@@ -173,16 +183,21 @@ class MainMenuScreen(Screen):
             self.action_quit()
 
     def action_new_game(self) -> None:
-        from ...storage import has_savegame
+        from ...storage import has_savegame, load_game
         from .confirm import ConfirmModal
         from .error import ErrorModal
 
         try:
             has_save = has_savegame()
+            savegame = load_game() if has_save else None
         except OSError as exc:
             self.app.push_screen(ErrorModal(str(exc), title="无法检查存档"))
             return
         if has_save:
+            # Remember which save the user is looking at: the destructive
+            # branch must not remove a save another process wrote in the
+            # meantime (parallel GUI/TUI is a documented feature).
+            self._conflict_savegame_id = savegame.get("game_id") if savegame else None
             self.app.push_screen(
                 ConfirmModal(
                     "已有未完成存档",
@@ -208,7 +223,7 @@ class MainMenuScreen(Screen):
         from .error import ErrorModal
 
         try:
-            delete_savegame()
+            delete_savegame(expected_game_id=self._conflict_savegame_id)
         except OSError as exc:
             self.app.push_screen(ErrorModal(str(exc), title="无法覆盖存档"))
             return

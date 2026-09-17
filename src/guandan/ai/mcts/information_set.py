@@ -16,14 +16,14 @@ from ...engine.hand import Pattern, PatternType, comparison_rank
 from ...engine.rules.comparator import is_bomb_type
 from ...engine.state import GameState, IllegalPlayError, pass_turn, play_pattern, team_of
 from ...engine.trick import current_top_player
-from ..candidates import PatternKey, pattern_key
+from ..candidates import ObservableKey, PatternKey, observable_key, pattern_key
 from ..context import opponent_min_cards
 from ..valuation import enumerate_search_candidates
 from .determinize import determinize
 from .search import simulate_state
 
 PassKey: TypeAlias = tuple[str]
-ActionKey: TypeAlias = PatternKey | PassKey
+ActionKey: TypeAlias = PatternKey | ObservableKey | PassKey
 PASS_ACTION: PassKey = ("pass",)
 
 
@@ -74,6 +74,11 @@ class SearchResult:
     sampled_worlds: int
     elapsed_seconds: float
     actions: tuple[ActionStatistics, ...]
+    # True when the clock budget stopped the search before `iterations`.
+    # The production path is usually budget-limited (roughly 20-60 of the
+    # nominal 64/96 simulations), so `iterations` alone does not describe the
+    # search that actually ran and must not be used as a strength claim.
+    budget_limited: bool = False
 
 
 def _legal_action_map(
@@ -81,14 +86,21 @@ def _legal_action_map(
     player: int,
     *,
     max_actions: int,
+    node_keyed: bool = False,
 ) -> dict[ActionKey, Pattern | None]:
+    """Legal actions for one actor, keyed for either the root or a tree node.
+
+    The root keys by exact cards (it must return real plays); tree nodes key by
+    the observable play so statistics can be shared across sampled worlds.
+    """
     actions: dict[ActionKey, Pattern | None] = {}
     for pattern in enumerate_search_candidates(
         state,
         player,
         max_candidates=max_actions,
     ):
-        actions.setdefault(pattern_key(pattern), pattern)
+        key = observable_key(pattern) if node_keyed else pattern_key(pattern)
+        actions.setdefault(key, pattern)
     if state.table:
         actions[PASS_ACTION] = None
     return actions
@@ -277,11 +289,22 @@ def information_set_search(
         raise ValueError("max_actions must be positive")
     if max_tree_depth <= 0 or rollout_max_turns <= 0:
         raise ValueError("search depth and rollout limit must be positive")
+    if player != state.current_player():
+        # Without this the search silently returns a plausible-looking action
+        # chosen from nodes whose actions could never be applied.
+        raise ValueError(
+            f"player {player} is not to act (current player is {state.current_player()})"
+        )
 
     search_style = style or SearchStyle()
     root = InformationSetNode(availability=iterations)
     root_team = team_of(player)
-    root_actions = _legal_action_map(state, player, max_actions=max_actions)
+    # Keyed by the observable play so the root shares the tree's key space; the
+    # concrete Pattern comes from the child that produced it (the root player's
+    # own hand is exact, so any representative of that play is playable).
+    root_actions = _legal_action_map(
+        state, player, max_actions=max_actions, node_keyed=True
+    )
     started = time.perf_counter()
     deadline = started + time_budget_ms / 1000.0 if time_budget_ms > 0 else None
     simulations = 0
@@ -297,14 +320,16 @@ def information_set_search(
             if sampled_state.finished:
                 break
             actor = sampled_state.current_player()
-            actions = (
-                root_actions
-                if node is root
-                else _legal_action_map(
-                    sampled_state,
-                    actor,
-                    max_actions=max_actions,
-                )
+            # Actions always come from the sampled world, including at the root:
+            # the root player's hand is identical there, but keying by the
+            # observable play is what lets root- and deeper-node statistics be
+            # shared across worlds (the old exact-card root key made every node
+            # unique, so the tree never grew past one layer).
+            actions = _legal_action_map(
+                sampled_state,
+                actor,
+                max_actions=max_actions,
+                node_keyed=True,
             )
             if not actions:
                 break
@@ -341,11 +366,19 @@ def information_set_search(
                 break
             child, pattern = chosen
             if not _apply_action(sampled_state, actor, pattern):
+                # `_expand_action` inserted the child before the action was
+                # proven applicable in this world. Leaving it behind would let
+                # a 0-visit action be selected as "best".
+                if child.action_key is not None:
+                    node.children.pop(child.action_key, None)
                 break
             node = child
             path.append(node)
-            if node.visits == 0:
-                break
+            # Keep descending. A freshly created child has no statistics yet,
+            # but the next iteration can only reach past it if we do not stop
+            # here -- and stopping here is exactly what pinned the tree to a
+            # single layer under the root (64 simulations produced 64 nodes).
+            # `max_tree_depth` now bounds the descent instead.
 
         value = simulate_state(
             sampled_state,
@@ -375,7 +408,8 @@ def information_set_search(
     return SearchResult(
         pattern=best.pattern if best is not None else None,
         simulations=simulations,
-        sampled_worlds=simulations if simulations else 0,
+        sampled_worlds=simulations,
         elapsed_seconds=time.perf_counter() - started,
         actions=action_stats,
+        budget_limited=deadline is not None and simulations < iterations,
     )

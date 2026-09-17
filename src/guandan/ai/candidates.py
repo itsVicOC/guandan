@@ -31,6 +31,9 @@ PatternKey: TypeAlias = tuple[
     tuple[tuple[int, int, int], ...],
 ]
 
+# A "play" key describes what observers see, not which physical cards were used.
+ObservableKey: TypeAlias = tuple[object, int, int, int, int | None, int]
+
 
 def pattern_key(pattern: Pattern) -> PatternKey:
     """Return a stable public action key for information-set search.
@@ -46,6 +49,29 @@ def pattern_key(pattern: Pattern) -> PatternKey:
         pattern.wild_used,
         pattern.suit,
         _card_counter_key(tuple(pattern.cards)),
+    )
+
+
+def observable_key(pattern: Pattern) -> ObservableKey:
+    """Key a *tree node* by the play an observer can see.
+
+    `pattern_key` includes the exact card multiset, which is right for the root
+    action list (the root must act on real cards) but wrong for the shared tree:
+    every simulation samples fresh hidden hands, so the same play arrives as a
+    different multiset and never matches an existing child. Measured effect of
+    the exact-card key: 64 simulations produced exactly 64 non-root nodes, so
+    no statistic was ever shared and `max_depth` / widening / priors were inert.
+
+    Dropping the card multiset lets two worlds that play "the same pair" share
+    one node, which is what makes the search a tree rather than a single layer.
+    """
+    return (
+        pattern.type,
+        pattern.rank,
+        pattern.length,
+        pattern.wild_used,
+        pattern.suit,
+        len(pattern.cards),
     )
 
 
