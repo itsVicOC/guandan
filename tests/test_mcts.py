@@ -42,7 +42,7 @@ from guandan.engine.card import RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
 from guandan.engine.deck import deal, make_deck, shuffle_deck
 from guandan.engine.events import TributeReturned, TributeSent, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
-from guandan.engine.state import GameState, pass_turn, play_pattern
+from guandan.engine.state import GameState, clone_state_for_search, pass_turn, play_pattern
 
 
 def _make_test_state(level: int = 2, seed: int = 42) -> GameState:
@@ -728,3 +728,59 @@ class TestProfessionalStrategy:
 
         assert first.pattern == second.pattern
         assert first.actions == second.actions
+
+
+class TestSearchStateClone:
+    """`clone_state_for_search` replaces deepcopy in the IS-MCTS inner loop."""
+
+    def test_clone_is_value_equal_to_deepcopy(self):
+        state = _make_test_state()
+        clone = clone_state_for_search(state)
+        assert clone == copy.deepcopy(state)
+
+    def test_clone_shares_no_mutable_container(self):
+        state = _make_test_state()
+        clone = clone_state_for_search(state)
+
+        # `hands` is a list of lists: copying only the outer list would let the
+        # search mutate the caller's hands (this regressed once already).
+        assert clone.hands is not state.hands
+        for index in range(4):
+            assert clone.hands[index] is not state.hands[index]
+        assert clone.table is not state.table
+        assert clone.history is not state.history
+        assert clone.finish_order is not state.finish_order
+        assert clone.team_bomb_count is not state.team_bomb_count
+        assert clone.passed_players is not state.passed_players
+
+        clone.hands[0].pop()
+        clone.passed_players.add(1)
+        clone.table.append("sentinel")
+        clone.history.append("sentinel")
+        assert len(state.hands[0]) == 27
+        assert state.passed_players == set()
+        assert state.table == []
+        assert state.history == []
+
+    def test_determinize_does_not_mutate_the_root_hand(self):
+        """Search must never shrink the root player's own hand."""
+        state = _make_test_state()
+        before = [len(hand) for hand in state.hands]
+        for seed in range(3):
+            determinize(state, 0, random.Random(seed))
+        assert [len(hand) for hand in state.hands] == before
+
+    def test_search_leaves_the_root_state_untouched(self):
+        state = _make_test_state()
+        before = copy.deepcopy(state)
+        information_set_search(
+            state,
+            player=0,
+            rng=random.Random(11),
+            iterations=6,
+            max_actions=3,
+            max_tree_depth=2,
+            rollout_strategy=1,
+            rollout_max_turns=3,
+        )
+        assert state == before
