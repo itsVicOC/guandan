@@ -75,9 +75,9 @@ class SearchResult:
     elapsed_seconds: float
     actions: tuple[ActionStatistics, ...]
     # True when the clock budget stopped the search before `iterations`.
-    # The production path is usually budget-limited (roughly 20-60 of the
-    # nominal 64/96 simulations), so `iterations` alone does not describe the
-    # search that actually ran and must not be used as a strength claim.
+    # Production may stop before the nominal 32/96 root-action evaluations, so
+    # `iterations` alone does not describe the search that actually ran and
+    # must not be used as a strength claim.
     budget_limited: bool = False
 
 

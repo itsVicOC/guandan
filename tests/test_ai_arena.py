@@ -69,19 +69,20 @@ def test_deterministic_arena_marks_fixed_iteration_mode() -> None:
 
 
 def test_fixed_iteration_factory_uses_the_documented_ceilings() -> None:
-    """The 64/96 branch was never executed by the tests.
+    """The 32/96 branch must exercise both production root-search ceilings.
 
-    docs/ai.md advertises 64 simulations for Professional and 96 for Dai
+    docs/ai.md advertises 32 evaluations for Professional and 96 for Dai
     Changsheng in `--deterministic-search` mode; without an assertion the
     branch could be deleted and the whole suite stayed green.
     """
     from guandan.ai.arena import CALIBRATED_ITERATIONS, fixed_iteration_strategy_factory
 
-    assert CALIBRATED_ITERATIONS == {3: 64, 4: 96}
+    assert CALIBRATED_ITERATIONS == {3: 32, 4: 96}
 
     professional = fixed_iteration_strategy_factory(3, 0)
-    assert professional.iterations == 64
+    assert professional.iterations == 32
     assert professional.time_budget_ms == 0
+    assert professional.search_mode == "root"
 
     dai = fixed_iteration_strategy_factory(4, 0)
     assert dai.iterations == 96
@@ -98,11 +99,17 @@ def test_production_budgets_match_the_documented_values() -> None:
     from guandan.ai.profiles import load_profile
 
     assert MCTS_CONFIG["time_budget_ms"] == 240
-    assert MCTS_CONFIG["iterations"] == 64
+    assert MCTS_CONFIG["iterations"] == 32
+    assert MCTS_CONFIG["search_mode"] == "root"
+    assert MCTS_CONFIG["rollout_strategy"] == 1
+    assert MCTS_CONFIG["top_actions"] == 6
 
     profile = load_profile("dachangsheng")
     assert profile["mcts"]["time_budget_ms"] == 420
     assert profile["mcts"]["iterations"] == 96
+    assert profile["mcts"]["search_mode"] == "root"
+    assert profile["mcts"]["rollout_strategy"] == 1
+    assert profile["mcts"]["top_actions"] == 6
     assert profile["mcts"]["max_depth"] == 14
 
 
@@ -196,3 +203,27 @@ class TestActionValueBaselineTool:
         second = [_playout((seed, 0, k)) for k in range(5)]
         assert first == second
         assert all(r[2] in (0, 1, None) for r in first)
+
+    def test_baseline_candidates_cover_pass_and_greedy(self):
+        """Paired evaluation must not drop actions a measured policy can choose."""
+        from guandan.ai.candidates import smallest_legal_pattern
+        from scripts.action_value_baseline import (
+            _action_key,
+            _baseline_candidates,
+            sample_positions,
+        )
+
+        _, state = sample_positions(
+            1,
+            min_candidates=3,
+            max_candidates=6,
+        )[0]
+        candidates = _baseline_candidates(state, 0, max_candidates=6)
+        keys = [_action_key(candidate) for candidate in candidates]
+
+        assert len(keys) == len(set(keys))
+        if state.table:
+            assert _action_key(None) in keys
+        greedy = smallest_legal_pattern(state, 0)
+        assert greedy is not None
+        assert _action_key(greedy) in keys

@@ -5,10 +5,11 @@
   "mcts": {
     "iterations": 96,
     "time_budget_ms": 420,
+    "search_mode": "root",
     "ucb_c": 1.15,
     "prior_weight": 0.22,
-    "rollout_strategy": 2,
-    "top_actions": 12,
+    "rollout_strategy": 1,
+    "top_actions": 6,
     "max_depth": 14,
     "hand_threshold": 10,
     "rollout_max_turns": 48,

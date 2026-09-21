@@ -16,15 +16,16 @@
 ## 用法
 
 ```bash
-# 建立基线（约 8 分钟，9 进程；产物可长期复用）
+# 建立基线（200 个局面约 28 分钟，9 进程；产物可长期复用）
 python scripts/action_value_baseline.py build \
-    --positions 56 --actions 6 --playouts 400 --out /tmp/baseline.json
+    --positions 200 --actions 6 --playouts 400 --out /tmp/baseline.json
 
 # 查看基线的动作价值分布与置信区间
 python scripts/action_value_baseline.py show --file /tmp/baseline.json
 
-# 用基线评估若干选牌方法（top-1 命中率与 regret）
-python scripts/action_value_baseline.py evaluate --file /tmp/baseline.json
+# 用基线评估若干选牌方法（top-1、regret、置信区间和配对 t）
+python scripts/action_value_baseline.py evaluate --file /tmp/baseline.json \
+    --methods greedy,argmax32,search32,search64 --out /tmp/evaluation.json
 ```
 
 `regret = 基线最佳动作的价值 − 方法所选动作的价值`，0 为完美。regret 比 top-1
@@ -46,9 +47,11 @@ import sys
 import time
 from pathlib import Path
 
-from guandan.ai.candidates import observable_key
+from guandan.ai.candidates import observable_key, smallest_legal_pattern
 from guandan.ai.context import opponent_min_cards
 from guandan.ai.mcts import information_set as IS
+from guandan.ai.mcts.information_set import SearchStyle
+from guandan.ai.mcts.root_search import root_action_candidates, root_action_search
 from guandan.ai.mcts.search import simulate_state
 from guandan.ai.play import play_or_pass
 from guandan.ai.strategies.novice import NoviceStrategy
@@ -62,12 +65,23 @@ _POSITIONS: dict[int, object] = {}
 _CANDIDATES: dict[int, list] = {}
 
 
+def _action_key(pattern) -> tuple:
+    return ("pass",) if pattern is None else observable_key(pattern)
+
+
+def _baseline_candidates(state, player: int, *, max_candidates: int) -> list:
+    """覆盖搜索、过牌和 greedy 实际可能选择的动作。"""
+    return root_action_candidates(state, player, max_actions=max_candidates)
+
+
 def sample_positions(
     count: int,
     *,
     min_cards: int = 8,
     max_cards: int = 16,
     seed_start: int = 1,
+    min_candidates: int = 0,
+    max_candidates: int = 6,
 ):
     """可复现的局面集合：根玩家待行动，`min_cards..max_cards` 张手牌。"""
     out = []
@@ -82,7 +96,16 @@ def sample_positions(
                 and min_cards <= len(state.hands[0]) <= max_cards
                 and 0 < opponent_min_cards(state, 0) <= 12
             ):
-                out.append((seed, copy.deepcopy(state)))
+                sampled = copy.deepcopy(state)
+                if min_candidates:
+                    candidates = IS.enumerate_search_candidates(
+                        sampled, 0, max_candidates=max_candidates
+                    )
+                    if len(candidates) < min_candidates:
+                        play_or_pass(state, state.current_player(), novice, rng)
+                        turns += 1
+                        continue
+                out.append((seed, sampled))
                 break
             play_or_pass(state, state.current_player(), novice, rng)
             turns += 1
@@ -136,15 +159,26 @@ def build_baseline(
     workers: int,
 ) -> dict:
     started = time.perf_counter()
-    sampled = sample_positions(positions, min_cards=min_cards, max_cards=max_cards)
+    sampled = sample_positions(
+        positions,
+        min_cards=min_cards,
+        max_cards=max_cards,
+        min_candidates=3,
+        max_candidates=actions,
+    )
+    if len(sampled) < positions:
+        raise RuntimeError(
+            f"only found {len(sampled)} eligible positions; requested {positions}"
+        )
     state_by_seed = {seed: state for seed, state in sampled}
     candidates = {
-        seed: IS.enumerate_search_candidates(state, 0, max_candidates=actions)
+        seed: _baseline_candidates(state, 0, max_candidates=actions)
         for seed, state in sampled
     }
-    seeds = [seed for seed, _ in sampled if len(candidates[seed]) >= 3]
+    seeds = [seed for seed, _ in sampled]
     print(
-        f"positions: {len(seeds)} | actions each: {actions} | playouts each: {playouts}",
+        f"positions: {len(seeds)} | search actions: {actions} + pass/greedy "
+        f"| playouts each: {playouts}",
         flush=True,
     )
 
@@ -178,6 +212,8 @@ def build_baseline(
         "meta": {
             "positions": len(seeds),
             "actions": actions,
+            "min_candidates": 3,
+            "candidate_policy": "search+pass+greedy",
             "playouts_per_action": playouts,
             "min_cards": min_cards,
             "max_cards": max_cards,
@@ -196,11 +232,11 @@ def build_baseline(
             entries.append(
                 {
                     "action_index": action_index,
-                    "type": pattern.type.value,
-                    "rank": pattern.rank,
-                    "length": pattern.length,
-                    "cards": len(pattern.cards),
-                    "wild_used": pattern.wild_used,
+                    "type": "pass" if pattern is None else pattern.type.value,
+                    "rank": None if pattern is None else pattern.rank,
+                    "length": 0 if pattern is None else pattern.length,
+                    "cards": 0 if pattern is None else len(pattern.cards),
+                    "wild_used": 0 if pattern is None else pattern.wild_used,
                     "playouts": n,
                     "wins": w,
                     "win_rate": round(w / n, 4) if n else None,
@@ -211,7 +247,14 @@ def build_baseline(
     return payload
 
 
-def _rebuild_position(seed: int, *, min_cards: int, max_cards: int):
+def _rebuild_position(
+    seed: int,
+    *,
+    min_cards: int,
+    max_cards: int,
+    min_candidates: int = 3,
+    max_candidates: int = 6,
+):
     state = make_initial_state(level=2, first_player=0, seed=seed)
     rng = random.Random(seed)
     novice = NoviceStrategy()
@@ -222,7 +265,12 @@ def _rebuild_position(seed: int, *, min_cards: int, max_cards: int):
             and min_cards <= len(state.hands[0]) <= max_cards
             and 0 < opponent_min_cards(state, 0) <= 12
         ):
-            return copy.deepcopy(state)
+            sampled = copy.deepcopy(state)
+            candidates = IS.enumerate_search_candidates(
+                sampled, 0, max_candidates=max_candidates
+            )
+            if len(candidates) >= min_candidates:
+                return sampled
         play_or_pass(state, state.current_player(), novice, rng)
         turns += 1
     return copy.deepcopy(state)
@@ -240,12 +288,7 @@ def _method_search(state, candidates, iterations: int):
         rollout_strategy=1,
         rollout_max_turns=40,
     )
-    if result.pattern is None:
-        return None
-    key = observable_key(result.pattern)
-    return next(
-        (i for i, c in enumerate(candidates) if observable_key(c) == key), None
-    )
+    return result.pattern
 
 
 def _method_argmax(state, candidates, simulations: int):
@@ -268,17 +311,44 @@ def _method_argmax(state, candidates, simulations: int):
                 )
             )
         means.append(statistics.mean(values) if values else -1.0)
-    return max(range(len(means)), key=lambda i: means[i])
+    return candidates[max(range(len(means)), key=lambda i: means[i])]
 
 
 def _method_greedy(state, candidates):
-    from guandan.ai.candidates import smallest_legal_pattern
+    return smallest_legal_pattern(state, 0)
 
-    pick = smallest_legal_pattern(state, 0)
-    if pick is None:
-        return None
-    key = observable_key(pick)
-    return next((i for i, c in enumerate(candidates) if observable_key(c) == key), None)
+
+def _method_root(
+    state,
+    candidates,
+    simulations: int,
+    *,
+    adaptive: bool,
+    rollout_strategy: int = 1,
+    rollout_max_turns: int = 40,
+    prior_weight: float = 0.0,
+):
+    result = root_action_search(
+        state,
+        0,
+        rng=random.Random(11),
+        iterations=simulations,
+        time_budget_ms=0,
+        max_actions=len(candidates),
+        rollout_strategy=rollout_strategy,
+        rollout_max_turns=rollout_max_turns,
+        prior_weight=prior_weight,
+        style=SearchStyle(),
+        adaptive=adaptive,
+    )
+    return result.pattern
+
+
+def mean_ci95(values: list[float]) -> tuple[float, float, float, float]:
+    """返回均值、样本标准误和正态近似 95% 置信区间。"""
+    mean = statistics.mean(values)
+    se = statistics.stdev(values) / math.sqrt(len(values)) if len(values) > 1 else 0.0
+    return mean, se, mean - 1.96 * se, mean + 1.96 * se
 
 
 METHODS = {
@@ -288,17 +358,62 @@ METHODS = {
     "search32": lambda s, c: _method_search(s, c, 32),
     "search64": lambda s, c: _method_search(s, c, 64),
     "search128": lambda s, c: _method_search(s, c, 128),
+    "flat32": lambda s, c: _method_root(s, c, 32, adaptive=False),
+    "flat64": lambda s, c: _method_root(s, c, 64, adaptive=False),
+    "flat96": lambda s, c: _method_root(s, c, 96, adaptive=False),
+    "race32": lambda s, c: _method_root(s, c, 32, adaptive=True),
+    "race64": lambda s, c: _method_root(s, c, 64, adaptive=True),
+    "root32": lambda s, c: _method_root(
+        s,
+        c,
+        32,
+        adaptive=False,
+        prior_weight=0.18,
+    ),
+    "flat32prior": lambda s, c: _method_root(
+        s,
+        c,
+        32,
+        adaptive=False,
+        prior_weight=0.18,
+    ),
+    "flat96prior": lambda s, c: _method_root(
+        s,
+        c,
+        96,
+        adaptive=False,
+        prior_weight=0.22,
+    ),
+    "flat32rollout2": lambda s, c: _method_root(
+        s,
+        c,
+        32,
+        adaptive=False,
+        rollout_strategy=2,
+    ),
+    "root96": lambda s, c: _method_root(
+        s,
+        c,
+        96,
+        adaptive=False,
+        rollout_max_turns=48,
+        prior_weight=0.22,
+    ),
 }
 
 
 def evaluate(payload: dict, method_names: list[str], *, pairwise: bool) -> dict:
+    evaluation_started = time.perf_counter()
     meta = payload["meta"]
     rows = [
         (
+            entry["seed"],
             _rebuild_position(
                 entry["seed"],
                 min_cards=meta.get("min_cards", 8),
                 max_cards=meta.get("max_cards", 16),
+                min_candidates=meta.get("min_candidates", 3),
+                max_candidates=meta.get("actions", 6),
             ),
             entry["actions"],
         )
@@ -315,46 +430,57 @@ def evaluate(payload: dict, method_names: list[str], *, pairwise: bool) -> dict:
         regrets: list[float] = []
         per_position: dict[str, float] = {}
         seconds: list[float] = []
-        for index, (state, actions) in enumerate(rows):
-            candidates = IS.enumerate_search_candidates(
-                state, 0, max_candidates=len(actions)
+        for seed, state, actions in rows:
+            search_candidates = IS.enumerate_search_candidates(
+                state, 0, max_candidates=meta.get("actions", 6)
             )
-            if len(candidates) < 3:
+            if len(search_candidates) < 3:
                 continue
             rates = [a["win_rate"] for a in actions if a["win_rate"] is not None]
-            if len(rates) < 3:
+            baseline_candidates = _baseline_candidates(
+                state, 0, max_candidates=meta.get("actions", 6)
+            )
+            if len(rates) != len(baseline_candidates):
                 continue
             started = time.perf_counter()
-            pick = method(state, candidates)
+            pick = method(state, search_candidates)
             seconds.append(time.perf_counter() - started)
-            if pick is None or pick >= len(rates):
+            if pick is None and not state.table:
+                continue
+            baseline_index = {
+                _action_key(candidate): index
+                for index, candidate in enumerate(baseline_candidates)
+            }.get(_action_key(pick))
+            if baseline_index is None:
                 continue
             n += 1
             best = max(rates)
-            chosen = rates[pick]
+            chosen = rates[baseline_index]
             regrets.append(best - chosen)
-            per_position[str(index)] = best - chosen
+            per_position[str(seed)] = best - chosen
             if abs(chosen - best) < 1e-9:
                 hits += 1
         if n == 0:
             continue
-        mean_regret = statistics.mean(regrets)
-        se = statistics.pstdev(regrets) / math.sqrt(n) if n > 1 else 0.0
+        mean_regret, se, ci_low, ci_high = mean_ci95(regrets)
         results[name] = {
             "n": n,
             "top1": hits / n,
             "mean_regret": mean_regret,
-            "regret_ci95": [mean_regret - 1.96 * se, mean_regret + 1.96 * se],
+            "regret_se": se,
+            "regret_ci95": [ci_low, ci_high],
             "ms_per_decision": round(statistics.mean(seconds) * 1000, 1),
+            "total_seconds": round(sum(seconds), 3),
             "per_position": per_position,
         }
         print(
             f"{name:>12}: top1 {hits / n:.3f}  regret {mean_regret:.4f}  "
-            f"CI[{mean_regret - 1.96 * se:.3f},{mean_regret + 1.96 * se:.3f}]  "
+            f"CI[{ci_low:.3f},{ci_high:.3f}]  "
             f"{results[name]['ms_per_decision']:>8.1f} ms",
             flush=True,
         )
 
+    comparisons = []
     if pairwise:
         names = list(results)
         print("\n配对 regret 差（负值表示前者更好）：")
@@ -371,15 +497,40 @@ def evaluate(payload: dict, method_names: list[str], *, pairwise: bool) -> dict:
                     results[a]["per_position"][k] - results[b]["per_position"][k]
                     for k in shared
                 ]
-                mean_diff = statistics.mean(diffs)
-                diff_se = statistics.pstdev(diffs) / math.sqrt(len(diffs))
+                mean_diff, diff_se, ci_low, ci_high = mean_ci95(diffs)
                 t_value = mean_diff / diff_se if diff_se else 0.0
-                verdict = "显著" if abs(t_value) > 2.05 else "不显著"
+                significant = ci_low > 0.0 or ci_high < 0.0
+                verdict = "显著" if significant else "不显著"
+                comparisons.append(
+                    {
+                        "first": a,
+                        "second": b,
+                        "n": len(shared),
+                        "mean_regret_diff": mean_diff,
+                        "diff_se": diff_se,
+                        "diff_ci95": [ci_low, ci_high],
+                        "paired_t": t_value,
+                        "significant_95": significant,
+                    }
+                )
                 print(
                     f"  {a:>12} - {b:<12} = {mean_diff:+.4f}  se {diff_se:.4f}  "
+                    f"CI[{ci_low:+.4f},{ci_high:+.4f}]  "
                     f"t {t_value:+.2f}  n={len(shared)}  {verdict}"
                 )
-    return results
+    return {
+        "meta": {
+            "positions": len(rows),
+            "methods": list(results),
+            "pairwise": pairwise,
+            "ci_level": 0.95,
+            "ci_method": "normal approximation with sample standard error",
+            "baseline_meta": meta,
+            "total_seconds": round(time.perf_counter() - evaluation_started, 3),
+        },
+        "methods": results,
+        "pairwise_comparisons": comparisons,
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -430,8 +581,10 @@ def main(argv: list[str] | None = None) -> int:
         meta = payload["meta"]
         se = math.sqrt(0.25 / meta["playouts_per_action"])
         print(
-            f"baseline: {meta['positions']} positions x {meta['actions']} actions "
-            f"x {meta['playouts_per_action']} playouts (每动作 se ±{se:.3f})"
+            f"baseline: {meta['positions']} positions, up to {meta['actions']} search "
+            f"actions + pass/greedy, {sum(len(p['actions']) for p in payload['positions'])} "
+            f"labeled actions x {meta['playouts_per_action']} playouts "
+            f"(每动作 se ±{se:.3f})"
         )
         spreads = []
         for entry in payload["positions"]:

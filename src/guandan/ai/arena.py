@@ -24,7 +24,7 @@ from .strategies.dachangsheng import DaiChangshengStrategy
 from .strategies.professional import ProfessionalStrategy
 from .strategy import DIFFICULTY_NAMES, AIStrategy, make_strategy
 
-CALIBRATED_ITERATIONS = {3: 64, 4: 96}
+CALIBRATED_ITERATIONS = {3: 32, 4: 96}
 
 
 @dataclass(frozen=True)

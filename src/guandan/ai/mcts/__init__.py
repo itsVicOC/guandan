@@ -1,13 +1,10 @@
-"""Monte Carlo tree-search implementations used by the high-level AIs.
+"""Imperfect-information search implementations used by the high-level AIs.
 
-The production path is team-aware SO-ISMCTS: every simulation samples a fresh
-hidden-card world, while all worlds share a tree keyed by public action history.
-The legacy perfect-information MCTS remains exported for compatibility and
-focused tests.
-
-Professional defaults cap search at 64 simulations or 240 ms, use 10
-representative actions, depth 12, rollout level 2 and a 40-turn rollout limit.
-Progressive widening and PUCT-style priors control expansion within that budget.
+Professional defaults to paired root-action evaluation: every round samples one
+hidden-card world and applies all root actions to copies of it.  The budget is
+32 evaluations or 240 ms over six representative search actions plus pass and
+greedy coverage.  SO-ISMCTS and perfect-information MCTS remain available for
+controlled comparisons and focused tests.
 """
 from __future__ import annotations
 
@@ -21,6 +18,7 @@ from .information_set import (
     information_set_search,
 )
 from .node import MCTSNode
+from .root_search import root_action_candidates, root_action_search
 from .search import mcts_search
 
 __all__ = [
@@ -32,17 +30,20 @@ __all__ = [
     "determinize",
     "information_set_search",
     "mcts_search",
+    "root_action_candidates",
+    "root_action_search",
 ]
 
 # 默认配置
-MCTS_CONFIG: Dict[str, int | float] = {
-    "iterations": 64,
+MCTS_CONFIG: Dict[str, int | float | str] = {
+    "iterations": 32,
     "time_budget_ms": 240,
+    "search_mode": "root",
     "ucb_c": 1.20,
     "prior_weight": 0.18,
     "max_depth": 12,
-    "rollout_strategy": 2,
-    "top_actions": 10,
+    "rollout_strategy": 1,
+    "top_actions": 6,
     "rollout_max_turns": 40,
     "hand_threshold": 10,
     "widening_c": 1.8,

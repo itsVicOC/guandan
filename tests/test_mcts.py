@@ -14,7 +14,7 @@ from collections import Counter
 
 import pytest
 
-from guandan.ai.candidates import observable_key, pattern_key
+from guandan.ai.candidates import observable_key, pattern_key, smallest_legal_pattern
 from guandan.ai.mcts import MCTS_CONFIG
 from guandan.ai.mcts.determinize import (
     PassEvidence,
@@ -30,6 +30,7 @@ from guandan.ai.mcts.information_set import (
     team_selection_score,
 )
 from guandan.ai.mcts.node import MCTSNode
+from guandan.ai.mcts.root_search import root_action_candidates, root_action_search
 from guandan.ai.mcts.search import (
     _evaluate_result,
     _get_legal_actions,
@@ -553,6 +554,66 @@ class TestMCTSRolloutPolicy:
         assert pattern.rank == 9
 
 
+class TestRootActionSearch:
+    """根动作竞速应覆盖真实动作并严格遵守总评估预算。"""
+
+    def test_candidates_include_pass_and_greedy(self):
+        state = _make_test_state()
+        state.table = [
+            Pattern(PatternType.SINGLE, 3, 1, (Card(3, Suit.CLUBS),), 0)
+        ]
+
+        candidates = root_action_candidates(state, 0, max_actions=4)
+        keys = [None if pattern is None else observable_key(pattern) for pattern in candidates]
+        greedy = smallest_legal_pattern(state, 0)
+
+        assert None in candidates
+        assert len(keys) == len(set(keys))
+        assert greedy is not None
+        assert observable_key(greedy) in keys
+
+    def test_fixed_budget_is_reproducible_and_fully_accounted(self):
+        state = _make_test_state(seed=777)
+        kwargs = {
+            "iterations": 16,
+            "time_budget_ms": 0,
+            "max_actions": 4,
+            "rollout_strategy": 1,
+            "rollout_max_turns": 4,
+            "prior_weight": 0.0,
+        }
+
+        first = root_action_search(state, 0, rng=random.Random(99), **kwargs)
+        second = root_action_search(state, 0, rng=random.Random(99), **kwargs)
+
+        assert first.pattern == second.pattern
+        assert first.actions == second.actions
+        assert first.simulations == 16
+        assert sum(action.visits for action in first.actions) == 16
+        assert first.sampled_worlds < first.simulations
+
+    def test_adaptive_search_concentrates_on_survivors(self):
+        state = _make_test_state(seed=778)
+
+        result = root_action_search(
+            state,
+            0,
+            rng=random.Random(100),
+            iterations=24,
+            time_budget_ms=0,
+            max_actions=6,
+            rollout_strategy=1,
+            rollout_max_turns=4,
+            prior_weight=0.0,
+            adaptive=True,
+        )
+
+        visits = [action.visits for action in result.actions]
+        assert result.simulations == 24
+        assert sum(visits) == 24
+        assert max(visits) > min(visits)
+
+
 class TestProfessionalStrategy:
     """测试职业策略集成。"""
 
@@ -601,6 +662,16 @@ class TestProfessionalStrategy:
         assert strategy.rollout_strategy == MCTS_CONFIG["rollout_strategy"]
         assert strategy.mcts_hand_threshold == MCTS_CONFIG["hand_threshold"]
         assert strategy.rollout_max_turns == MCTS_CONFIG["rollout_max_turns"]
+        assert strategy.search_mode == "root"
+
+    def test_professional_can_retain_legacy_tree_search(self):
+        strategy = ProfessionalStrategy(search_mode="tree")
+
+        assert strategy.search_mode == "tree"
+
+    def test_professional_rejects_unknown_search_mode(self):
+        with pytest.raises(ValueError, match="search_mode"):
+            ProfessionalStrategy(search_mode="unknown")
 
     def test_professional_finishes_with_complete_straight(self):
         """职业档应能识别顺子一手出完，不被候选 Top-N 漏掉。"""
@@ -627,10 +698,13 @@ class TestProfessionalStrategy:
         state = _make_test_state()
         strategy = ProfessionalStrategy(iterations=10, rng=random.Random(42))
 
-        def fail_mcts(*args, **kwargs):
-            raise AssertionError("MCTS should not run before endgame")
+        def fail_search(*args, **kwargs):
+            raise AssertionError("root search should not run before endgame")
 
-        monkeypatch.setattr("guandan.ai.strategies.professional.mcts_search", fail_mcts)
+        monkeypatch.setattr(
+            "guandan.ai.strategies.professional.root_action_search",
+            fail_search,
+        )
 
         pattern = strategy.select_pattern(state, player=0)
 
@@ -654,11 +728,14 @@ class TestProfessionalStrategy:
         strategy = ProfessionalStrategy(iterations=1, rng=random.Random(42))
         calls = {"count": 0}
 
-        def fake_mcts(*args, **kwargs):
+        def fake_search(*args, **kwargs):
             calls["count"] += 1
             return None
 
-        monkeypatch.setattr("guandan.ai.strategies.professional.mcts_search", fake_mcts)
+        monkeypatch.setattr(
+            "guandan.ai.strategies.professional.root_action_search",
+            fake_search,
+        )
 
         assert strategy.select_pattern(state, player=0) is None
         assert calls["count"] == 1

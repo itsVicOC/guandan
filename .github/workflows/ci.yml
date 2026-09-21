@@ -48,7 +48,7 @@ jobs:
             --max-turns 2000 \
             --json > current.json
           python -m guandan.ai.benchmark \
-            --compare benchmarks/v0.8.1b2-mixed-20.json current.json \
+            --compare benchmarks/v0.8.2b1-mixed-20.json current.json \
             --fail-completion-drop 0.05 \
             --fail-bomb-drift 0.4 \
             --json

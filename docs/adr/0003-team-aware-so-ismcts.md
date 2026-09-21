@@ -2,7 +2,8 @@
 
 ## 状态
 
-已采纳（2026-07-27），取代 [ADR-0002](0002-is-mcts.md) 的生产搜索设计。
+已被 [ADR-0004](0004-paired-root-action-search.md) 取代（2026-09-21）。本 ADR
+保留旧 SO-ISMCTS 的设计背景；实现仍可用 `search_mode="tree"` 启用作对照。
 
 ## 背景
 

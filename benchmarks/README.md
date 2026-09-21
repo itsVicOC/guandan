@@ -13,12 +13,12 @@ python -m guandan.ai.benchmark \
 
 ## Current baseline
 
-`v0.8.1b2-mixed-20.json` records the reference run for the current code:
+`v0.8.2b1-mixed-20.json` records the reference run for the current code:
 
 - completion: `20/20` (`1.0`)
-- average turns: `91.95`
-- team wins: East-West `4`, South-North `16`
-- average bombs: East-West `0.95`, South-North `1.0`
+- average turns: `91.1`
+- team wins: East-West `2`, South-North `18`
+- average bombs: East-West `0.95`, South-North `1.15`
 
 This benchmark mixes four difficulties across fixed seats (seat 0 novice, seat 1
 intermediate, seat 2 advanced, seat 3 professional), so `team_wins` reflects the
@@ -34,7 +34,7 @@ so a benchmark rerun on different hardware can shift `average_turns` and even
 
 ```bash
 python -m guandan.ai.benchmark \
-  --compare benchmarks/v0.8.1b2-mixed-20.json current.json \
+  --compare benchmarks/v0.8.2b1-mixed-20.json current.json \
   --fail-completion-drop 0.05 \
   --fail-turn-increase 20 \
   --fail-bomb-drift 0.4
@@ -114,3 +114,39 @@ python -m guandan.ai.tuning \
 The tuner uses cost-controlled fixed counts (28/48) so CPU scheduling cannot
 change candidate ranking. Selected parameters are then validated with Arena's
 full 64/96 work ceilings and the latency-bounded production budgets.
+
+## Action-value baseline
+
+`action-value-baseline-200.json` caches high-precision action labels for 200
+reproducible mid/late-game positions. Each of its 1,137 actions has 400 fixed-seed
+playouts; the candidate union includes up to six search candidates, legal pass,
+and the greedy policy's actual pick. This keeps paired evaluations at `n=200`
+instead of silently dropping decisions that search or greedy can make.
+
+`action-value-evaluation-200.json` records the paired `greedy`, `argmax32`,
+`search32`, and `search64` run, including per-position regret, method confidence
+intervals, paired confidence intervals and t values, and decision/runtime totals.
+The root-search optimization adds five reusable experiment files:
+
+- `action-value-evaluation-root-search-200.json`: uniform `flat32` versus failed
+  early-elimination `race32/race64` variants;
+- `action-value-evaluation-flat-budget-200.json`: the 32/64/96 uniform budget sweep;
+- `action-value-evaluation-production-root-200.json`: the exact selected
+  Professional/Dai settings, including their 40/48-turn rollout limits;
+- `action-value-evaluation-root-ablation-200.json`: rollout-level and prior ablation;
+- `action-value-evaluation-root-prior-200.json`: a weak-prior ablation holding
+  the rollout cap at 40 turns for direct comparison with `flat96`.
+
+The selected production settings are uniform root allocation, rollout level 1,
+32 evaluations for Professional and 96 for Dai Changsheng. `race32/race64` are
+kept only as negative results so the aggressive early-elimination experiment is
+not repeated.
+
+Re-evaluate new methods against the cached labels without rebuilding them:
+
+```bash
+python scripts/action_value_baseline.py evaluate \
+  --file benchmarks/action-value-baseline-200.json \
+  --methods greedy,argmax32,search32,search64 \
+  --out benchmarks/action-value-evaluation-200.json
+```
