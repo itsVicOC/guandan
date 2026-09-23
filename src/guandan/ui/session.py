@@ -59,7 +59,13 @@ from ..storage import (
     save_history,
     update_profile,
 )
-from .formatting import card_label, cards_text, pattern_type_label, play_rejection_message
+from .formatting import (
+    card_label,
+    cards_text,
+    pattern_type_label,
+    play_rejection_message,
+    rank_value_label,
+)
 
 
 @dataclass(frozen=True)
@@ -178,6 +184,10 @@ class GameSession:
                 first_player=first_player,
                 seed=self.seed,
             )
+            self.last_action = (
+                f"第 {self.round_index} 局开始：本局级牌 {rank_value_label(self.state.level)}，"
+                f"{self.tribute_notice()}；{SEAT_NAMES[first_player]}家先手"
+            )
         else:
             self.level = self.state.level
         return self.state
@@ -215,6 +225,44 @@ class GameSession:
             for event in self.display_state().history
             if isinstance(event, (TributeSent, TributeReturned, TributeResisted))
         )
+
+    def tribute_notice(self) -> str:
+        """Describe the public tribute result, including rounds without an exchange."""
+        events = self.tribute_events()
+        pending = self.is_next_game_pending()
+        if not events:
+            if pending:
+                return "本局贡还牌 · 正在确认，开局前公布结果"
+            if self.round_index == 1:
+                return "本局贡还牌 · 首局无需贡还牌"
+            return "本局贡还牌 · 本局没有贡还牌"
+
+        resisted = [event for event in events if isinstance(event, TributeResisted)]
+        if resisted:
+            players = "、".join(f"{SEAT_NAMES[event.player]}家" for event in resisted)
+            detail = f"{players}抗贡，本局没有换牌"
+            participants = {event.player for event in resisted}
+        else:
+            actions = []
+            participants = set()
+            for event in events:
+                if isinstance(event, TributeSent):
+                    verb = "进贡"
+                elif isinstance(event, TributeReturned):
+                    verb = "还贡"
+                else:
+                    continue
+                participants.update((event.from_player, event.to_player))
+                actions.append(
+                    f"{SEAT_NAMES[event.from_player]}家→{SEAT_NAMES[event.to_player]}家"
+                    f"{verb} {card_label(event.card)}"
+                )
+            detail = "；".join(actions)
+
+        if pending:
+            return f"本局贡还牌进行中 · {detail}；待确认最终结果"
+        participation = "你参与了贡还牌" if self.human in participants else "你未参与贡还牌"
+        return f"本局贡还牌 · {detail}；{participation}"
 
     def table_display_actions(
         self,
@@ -264,6 +312,26 @@ class GameSession:
                 self.displayed_table_actions[last_public_action.player] = ("pass", None)
 
         return dict(self.displayed_table_actions)
+
+    def previous_completed_trick(self) -> list[Event]:
+        """Return the public actions in the last collected trick, including its closing pass."""
+        state = self.require_state()
+        if state.trick_number < 1:
+            return []
+        from ..engine.replay import replay_event_states
+
+        snapshots = replay_event_states(state.history)
+        target = state.trick_number - 1
+        actions: list[Event] = []
+        previous_number = 0
+        for event, snapshot in zip(state.history, snapshots):
+            number = snapshot.trick_number
+            if isinstance(event, (TurnPlayed, Pass)):
+                action_trick = previous_number if number > previous_number else number
+                if action_trick == target:
+                    actions.append(event)
+            previous_number = number
+        return actions
 
     def last_player_of(self, pattern: Pattern) -> int:
         return last_player_of_pattern(self.require_state(), pattern, default=0) or 0
@@ -472,7 +540,10 @@ class GameSession:
             seed=next_seed,
             round_index=self.round_index + 1,
         )
-        self.last_action = f"第 {self.round_index + 1} 局已发牌，请查看手牌"
+        self.last_action = (
+            f"第 {self.round_index + 1} 局已发牌：本局级牌 {rank_value_label(next_level)}，"
+            "请查看手牌"
+        )
         return SessionAction(True, self.last_action)
 
     def begin_next_game_tribute(self) -> SessionAction:
@@ -597,10 +668,9 @@ class GameSession:
         self.last_display_turn = None
         self.state = next_state
         self._pending_next_game = None
-        tribute_note = self._tribute_summary(tribute_result)
         self.last_action = (
-            f"第 {self.round_index} 局开始：级牌 {next_state.level}，"
-            f"{tribute_note}{SEAT_NAMES[tribute_result.first_player]}家先手"
+            f"第 {self.round_index} 局开始：本局级牌 {rank_value_label(next_state.level)}，"
+            f"{self.tribute_notice()}；{SEAT_NAMES[tribute_result.first_player]}家先手"
         )
         return SessionAction(True, self.last_action)
 
@@ -613,21 +683,6 @@ class GameSession:
         if not started.ok:
             return started
         return self.finalize_next_game()
-
-    @staticmethod
-    def _tribute_summary(result: TributeFlowResult) -> str:
-        if result.resisted:
-            return "抗贡，"
-        if not result.exchanges:
-            return ""
-        exchanges = []
-        for exchange in result.exchanges:
-            returned = card_label(exchange.return_card) if exchange.return_card is not None else "-"
-            exchanges.append(
-                f"{SEAT_NAMES[exchange.from_player]}贡{card_label(exchange.tribute_card)}给"
-                f"{SEAT_NAMES[exchange.to_player]}，还{returned}"
-            )
-        return "；".join(exchanges) + "；"
 
     def save_finished_if_needed(self) -> bool:
         if self.game_saved:

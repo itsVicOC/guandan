@@ -13,7 +13,7 @@ python -m guandan.ai.benchmark \
 
 ## Current baseline
 
-`v0.8.2b1-mixed-20.json` records the reference run for the current code:
+`v0.8.2b2-mixed-20.json` records the reference run for the current code:
 
 - completion: `20/20` (`1.0`)
 - average turns: `91.1`
@@ -34,7 +34,7 @@ so a benchmark rerun on different hardware can shift `average_turns` and even
 
 ```bash
 python -m guandan.ai.benchmark \
-  --compare benchmarks/v0.8.2b1-mixed-20.json current.json \
+  --compare benchmarks/v0.8.2b2-mixed-20.json current.json \
   --fail-completion-drop 0.05 \
   --fail-turn-increase 20 \
   --fail-bomb-drift 0.4
@@ -89,13 +89,12 @@ confidence interval and an Elo estimate. `ai-v2-style-tuning.json` records the
 independent holdout used for the current Dai Changsheng profile.
 
 `--deterministic-search` disables wall-clock cutoffs and uses calibrated fixed
-counts (64 simulations for Professional, 96 for Dai Changsheng). It is intended
+counts (32 root evaluations for Professional, 96 for Dai Changsheng). It is intended
 for cross-machine regression and exercises the full search-work ceiling.
 
-**Production runs a different search than this mode.** The 240/420ms clock
-budget stops production at roughly 40-80 simulations, and the two modes pick
-different actions for a substantial share of decisions, so neither mode's win
-rate can stand in for the other. Production decisions report this through
+**Production uses the same root search with a time limit.** The 240/420ms clock
+budget can stop it before the 32/96 fixed ceilings, so neither mode's win rate
+can stand in for the other. Production decisions report this through
 `SearchResult.budget_limited`. A latency gate must be set above the budget
 rather than equal to it, because the deadline is only observed between
 simulations.
@@ -141,6 +140,40 @@ The selected production settings are uniform root allocation, rollout level 1,
 32 evaluations for Professional and 96 for Dai Changsheng. `race32/race64` are
 kept only as negative results so the aggressive early-elimination experiment is
 not repeated.
+
+Additional diagnostics after v0.8.2-beta.1:
+
+- `candidate-recall-audit-12.json`: 12 positions, all legal exact-card actions,
+  200 paired novice continuations per action. Current six-action pool contains a
+  best labeled action in 9/12 positions; mean pool oracle gap is 0.0096. This is
+  exploratory because taking the maximum over many noisy action labels inflates
+  the apparent gap.
+- `action-value-evaluation-complex-rollout-200.json`: targeted structured
+  replies to opponent-led complex tricks have regret 0.0537 versus 0.0487 for
+  the production lightweight rollout, with higher latency. The experimental
+  policy is not enabled in production.
+- `action-value-diverse-24.json`: held-out positions balanced across levels
+  2/9/A, four seats and novice/advanced source play, labeled by 100 advanced
+  continuations per action. Paired differences between greedy, root32 and root96
+  are not statistically resolved at this sample size.
+- `root96-vs-root32-arena-8.json`: fixed-iteration paired Arena, eight seeds,
+  16 complete rounds; root96 and root32 each win eight.
+- `root96-vs-root32-clock-4.json`: production-clock paired Arena, four seeds,
+  eight rounds; root96 wins two with a wide 95% Wilson interval (7.1%–59.1%).
+  Its decision p95 is 377ms. This is a latency smoke check, not a strength claim.
+- `v0.8.2b2-mixed-20.json`: production-clock rerun after the search-clone
+  change. Completion, turns, wins and bombs match `v0.8.2b1-mixed-20.json`;
+  the existing completion/turn/bomb gate passes.
+
+Reproduce the new diagnostics with the `audit-candidates` and
+`evaluate-diverse` commands of `scripts/action_value_baseline.py`. Both accept
+seed, sample, playout and worker counts. The diverse run used:
+
+```bash
+python scripts/action_value_baseline.py evaluate-diverse \
+  --positions 24 --playouts 100 --seed-start 10000 \
+  --label-difficulty 2 --workers 8
+```
 
 Re-evaluate new methods against the cached labels without rebuilding them:
 

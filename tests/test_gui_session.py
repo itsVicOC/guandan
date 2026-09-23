@@ -29,7 +29,7 @@ from guandan.engine.card import (
     Card,
     Suit,
 )
-from guandan.engine.events import TributeReturned, TributeSent
+from guandan.engine.events import TributeResisted, TributeReturned, TributeSent
 from guandan.engine.hand import Pattern, PatternType, sort_cards
 from guandan.engine.state import GameState, pass_turn, play_pattern
 from guandan.storage import (
@@ -409,6 +409,29 @@ def test_session_next_game_uses_selected_human_return_and_records_events() -> No
     assert prepared.ok
     assert started.ok
     assert len(session.tribute_events()) == 2
+
+
+def test_tribute_notice_covers_no_exchange_ai_only_exchange_and_resistance() -> None:
+    first = GameSession(difficulty=0, level=RANK_2, human=0)
+    assert first.tribute_notice() == "本局贡还牌 · 首局无需贡还牌"
+
+    state = GameState(
+        level=RANK_5,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=0,
+        history=[
+            TributeSent(3, 1, Card(RANK_BIG_JOKER, Suit.BIG_JOKER)),
+            TributeReturned(1, 3, Card(RANK_4, Suit.HEARTS)),
+        ],
+    )
+    session = GameSession(difficulty=0, existing_state=state, human=0, round_index=2)
+    assert session.tribute_notice() == (
+        "本局贡还牌 · 北家→南家进贡 大王；南家→北家还贡 红4♥；你未参与贡还牌"
+    )
+
+    state.history = [TributeResisted(player=3, team=1, reason="single")]
+    assert session.tribute_notice() == "本局贡还牌 · 北家抗贡，本局没有换牌；你未参与贡还牌"
 
 
 def test_session_cancel_prepared_next_game_keeps_completed_round() -> None:
@@ -867,12 +890,44 @@ def test_gui_next_round_shows_deal_before_public_tribute_cards() -> None:
     code = """
 from unittest.mock import patch
 from PySide6.QtWidgets import QApplication
-from guandan.engine.card import RANK_3, RANK_4, RANK_5, RANK_8, RANK_BIG_JOKER, Card, Suit
+from guandan.engine.card import RANK_3, RANK_4, RANK_5, RANK_8, RANK_A, RANK_BIG_JOKER, Card, Suit
+from guandan.engine.events import TributeReturned, TributeSent
 from guandan.engine.state import GameState
 from guandan.gui.window import GuandanMainWindow
 from guandan.ui.session import GameSession
 
 app = QApplication([])
+window = GuandanMainWindow()
+with patch("guandan.ui.session.random.randint", return_value=0):
+    opening = GameSession(difficulty=0, level=RANK_A, human=0, seed=7)
+    window.start_game(opening)
+opening_page = window.game_page
+assert opening_page is not None
+assert opening_page.round_phase.text() == "第 1 局 · 本局开始"
+assert opening_page.round_level.text() == "本局级牌 A"
+assert "本局级牌 A" in opening.last_action
+assert opening_page.table.tribute_banner.isHidden() is False
+assert "首局无需贡还牌" in opening_page.table.tribute_text.text()
+assert "首局无需贡还牌" in opening_page.status.text()
+
+ai_exchange = GameState(
+    level=RANK_5,
+    wild_card=None,
+    hands=[[], [], [], []],
+    turn_index=0,
+    history=[
+        TributeSent(3, 1, Card(RANK_BIG_JOKER, Suit.BIG_JOKER)),
+        TributeReturned(1, 3, Card(RANK_4, Suit.HEARTS)),
+    ],
+)
+window.start_game(GameSession(difficulty=0, existing_state=ai_exchange, human=0, round_index=2))
+ai_page = window.game_page
+assert ai_page is not None
+assert "北家→南家进贡 大王" in ai_page.table.tribute_text.text()
+assert "南家→北家还贡 红4♥" in ai_page.table.tribute_text.text()
+assert "你未参与贡还牌" in ai_page.table.tribute_text.text()
+assert "你未参与贡还牌" in ai_page.status.text()
+
 finished = GameState(
     level=2,
     wild_card=None,
@@ -885,10 +940,18 @@ finished = GameState(
 )
 session = GameSession(difficulty=0, existing_state=finished, human=0)
 session.game_saved = True
-window = GuandanMainWindow()
 window.start_game(session)
 page = window.game_page
 assert page is not None
+assert page.round_phase.text() == "第 1 局 · 本局结束"
+assert page.round_level.text() == "本局级牌 2"
+assert page.hand_stack.currentWidget() is page.result_panel
+assert "头游 东家" in page.result_places.text()
+assert "升级 3 级" in page.result_scores.text()
+assert "本局级牌 2" in page.status.text()
+assert "下一局级牌 5" in page.status.text()
+assert "级牌 5" in page.next_button.text()
+assert page.turn_label.text() == "本局结束"
 
 fixed_hands = [
     [Card(RANK_3, Suit.HEARTS), Card(RANK_4, Suit.HEARTS)],
@@ -912,7 +975,10 @@ with patch("guandan.ui.session.make_initial_state", fake_initial_state):
     assert session.state is finished
     assert set(page.hand_cards) == set(fixed_hands[0])
     assert "手牌已发放" in page.status.text()
-    assert page.table.tribute_banner.isHidden()
+    assert page.round_phase.text() == "第 2 局 · 发牌中"
+    assert page.round_level.text() == "本局级牌 5"
+    assert page.table.tribute_banner.isHidden() is False
+    assert "正在确认" in page.table.tribute_text.text()
 
     page._begin_next_game_tribute()
     choice = session.pending_next_game_choice()
@@ -921,18 +987,96 @@ with patch("guandan.ui.session.make_initial_state", fake_initial_state):
     assert Card(RANK_BIG_JOKER, Suit.BIG_JOKER) in page.hand_cards
     assert page.table.tribute_banner.isHidden() is False
     assert "进贡" in page.table.tribute_text.text()
+    assert "待确认最终结果" in page.table.tribute_text.text()
+    assert page.hand_stack.currentWidget() is page.hand
+    assert page.play_button.text() == "确认还贡"
+    assert not page.play_button.isEnabled()
+    assert any(not card.isEnabled() for card in page.hand._buttons)
 
-    page._finish_next_game(Card(RANK_4, Suit.HEARTS))
+    page.toggle_card(page.hand_cards.index(Card(RANK_4, Suit.HEARTS)))
+    assert page.play_button.isEnabled()
+    assert "红4♥" in page.selection_preview.text()
+    page.play_selected()
 
 assert session.state is not finished
+assert page.round_phase.text() == "第 2 局 · 本局开始"
+assert page.round_level.text() == "本局级牌 5"
 assert "进贡" in page.table.tribute_text.text()
 assert "还贡" in page.table.tribute_text.text()
+assert "你参与了贡还牌" in page.table.tribute_text.text()
 assert len(page.table.tribute_cards._cards) == 2
 page.refresh()
 assert page.table.tribute_banner.isHidden() is False
 assert len(page.table.tribute_cards._cards) == 2
 
 page.deactivate()
+window.game_page = None
+window.close()
+app.quit()
+print("ok")
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=os.getcwd(),
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
+def test_gui_compact_table_selection_and_previous_trick() -> None:
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    env = dict(os.environ)
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    code = """
+from PySide6.QtCore import QPoint
+from PySide6.QtWidgets import QApplication
+from guandan.engine.rules.patterns import find_complete_pattern
+from guandan.engine.state import make_initial_state, pass_turn, play_pattern
+from guandan.gui.window import GuandanMainWindow
+from guandan.ui.session import GameSession
+
+app = QApplication([])
+state = make_initial_state(level=2, first_player=0, seed=7)
+window = GuandanMainWindow()
+window.start_game(GameSession(difficulty=0, existing_state=state, human=0))
+window.resize(1080, 760)
+window.show()
+app.processEvents()
+page = window.game_page
+assert page is not None
+south = page.table.trick_rows[1]
+assert south.mapToGlobal(QPoint(0, south.height())).y() < page.me.mapToGlobal(QPoint(0, 0)).y()
+assert page.table.activity.mapToGlobal(QPoint(0, page.table.activity.height())).y() <= page.table.mapToGlobal(QPoint(0, page.table.height())).y()
+
+first = next(i for i, card in enumerate(page.hand_cards) if card != state.wild_card)
+page.toggle_card(first)
+assert page.play_button.isEnabled()
+assert "可出牌" in page.selection_preview.text()
+second = next(i for i, card in enumerate(page.hand_cards) if card.rank != page.hand_cards[first].rank and card != state.wild_card)
+page.toggle_card(second)
+assert not page.play_button.isEnabled()
+assert "不是完整牌型" in page.selection_preview.text()
+page.clear_selection()
+
+pattern = find_complete_pattern([state.hands[0][0]], state.wild_card)
+play_pattern(state, 0, pattern)
+for seat in (3, 2, 1):
+    pass_turn(state, seat)
+page.refresh()
+assert page.previous_trick_button.isVisible()
+assert len(page.session.previous_completed_trick()) == 4
+page.show_previous_trick()
+assert page._previous_trick_dialog.isVisible()
+page._previous_trick_dialog.close()
+ai_state = make_initial_state(level=2, first_player=3, seed=7)
+window.start_game(GameSession(difficulty=0, existing_state=ai_state, human=0))
+assert "思考中" in window.game_page.turn_label.text()
+window.game_page.deactivate()
 window.game_page = None
 window.close()
 app.quit()

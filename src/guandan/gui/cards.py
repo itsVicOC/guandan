@@ -75,12 +75,16 @@ class CardButton(QPushButton):
 
     clicked_index = Signal(int)
 
-    def __init__(self, index: int, card: Card, *, wild: bool = False, selected: bool = False) -> None:
+    def __init__(
+        self, index: int, card: Card, *, wild: bool = False,
+        selected: bool = False, eligible: bool | None = None,
+    ) -> None:
         super().__init__()
         self.index = index
         self.card = card
         self.wild = wild
         self.selected = selected
+        self.eligible = eligible
         self.setCheckable(False)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFixedSize(QSize(CARD_WIDTH, CARD_HEIGHT))
@@ -93,10 +97,13 @@ class CardButton(QPushButton):
     def _emit_index(self) -> None:
         self.clicked_index.emit(self.index)
 
-    def set_visual_state(self, *, wild: bool, selected: bool) -> None:
-        changed = self.wild != wild or self.selected != selected
+    def set_visual_state(
+        self, *, wild: bool, selected: bool, eligible: bool | None = None
+    ) -> None:
+        changed = self.wild != wild or self.selected != selected or self.eligible != eligible
         self.wild = wild
         self.selected = selected
+        self.eligible = eligible
         if changed:
             self._render()
 
@@ -116,6 +123,8 @@ class CardButton(QPushButton):
         if self.selected:
             border = GOLD_BRIGHT.name()
             bg = "#fff4c8"
+        elif self.eligible:
+            border = GOLD_BRIGHT.name()
 
         shadow = self.rect().adjusted(5, 7, -1, -1)
         painter.setPen(Qt.PenStyle.NoPen)
@@ -144,6 +153,10 @@ class CardButton(QPushButton):
             self._paint_wild_badge(painter, rect)
         if self.selected:
             self._paint_selected_badge(painter, rect)
+        if self.eligible is False:
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(4, 15, 13, 150))
+            painter.drawRoundedRect(rect, 8, 8)
         painter.end()
 
     def _paint_normal_card(self, painter: QPainter, rect: QRect, color: str) -> None:
@@ -238,6 +251,7 @@ class HandWidget(QWidget):
         self._cards: list[Card] = []
         self._wild_card: Card | None = None
         self._selected: set[int] = set()
+        self._eligible: set[int] | None = None
         self._buttons: list[CardButton] = []
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMinimumHeight(HAND_HEIGHT)
@@ -249,18 +263,22 @@ class HandWidget(QWidget):
         *,
         wild_card: Card | None,
         selected_indices: set[int],
+        eligible_indices: set[int] | None = None,
     ) -> None:
         cards_changed = cards != self._cards
         self._cards = list(cards)
         self._wild_card = wild_card
         self._selected = set(selected_indices)
+        self._eligible = None if eligible_indices is None else set(eligible_indices)
         if cards_changed:
             self._rebuild_buttons()
         else:
             for index, card_button in enumerate(self._buttons):
+                card_button.setEnabled(self._eligible is None or index in self._eligible)
                 card_button.set_visual_state(
                     wild=self._is_wild(card_button.card),
                     selected=index in self._selected,
+                    eligible=None if self._eligible is None else index in self._eligible,
                 )
         self._position_cards()
 
@@ -289,7 +307,9 @@ class HandWidget(QWidget):
                 card,
                 wild=self._is_wild(card),
                 selected=index in self._selected,
+                eligible=None if self._eligible is None else index in self._eligible,
             )
+            card_button.setEnabled(self._eligible is None or index in self._eligible)
             card_button.setParent(self)
             card_button.clicked_index.connect(self.card_clicked.emit)
             card_button.show()

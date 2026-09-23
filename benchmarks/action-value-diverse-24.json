@@ -1,0 +1,430 @@
+{
+  "meta": {
+    "positions": 24,
+    "playouts_per_action": 100,
+    "seed_start": 10000,
+    "levels": [
+      2,
+      9,
+      14
+    ],
+    "seats": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "source_difficulties": [
+      0,
+      2
+    ],
+    "label_difficulty": 2,
+    "candidate_policy": "production root six plus pass/greedy"
+  },
+  "summary": {
+    "greedy": {
+      "mean_regret": 0.06624999999999999,
+      "ci95": [
+        0.038112461892968706,
+        0.09438753810703127
+      ]
+    },
+    "root32": {
+      "mean_regret": 0.057499999999999996,
+      "ci95": [
+        0.033838103154674164,
+        0.08116189684532582
+      ]
+    },
+    "root96": {
+      "mean_regret": 0.07666666666666666,
+      "ci95": [
+        0.04890626669182327,
+        0.10442706664151005
+      ]
+    },
+    "root32_minus_greedy": {
+      "mean": -0.008749999999999999,
+      "ci95": [
+        -0.030514088390701334,
+        0.013014088390701338
+      ]
+    },
+    "root96_minus_greedy": {
+      "mean": 0.010416666666666666,
+      "ci95": [
+        -0.02514310933209527,
+        0.0459764426654286
+      ]
+    },
+    "root96_minus_root32": {
+      "mean": 0.019166666666666665,
+      "ci95": [
+        -0.006920021778010665,
+        0.045253355111344
+      ]
+    }
+  },
+  "positions": [
+    {
+      "id": 0,
+      "seed": 10000,
+      "level": 2,
+      "seat": 0,
+      "source_difficulty": 0,
+      "hand_cards": 16,
+      "table_type": "single",
+      "actions": 4,
+      "regret": {
+        "greedy": 0.0,
+        "root32": 0.0,
+        "root96": 0.18
+      }
+    },
+    {
+      "id": 1,
+      "seed": 10001,
+      "level": 2,
+      "seat": 0,
+      "source_difficulty": 2,
+      "hand_cards": 12,
+      "table_type": "lead",
+      "actions": 7,
+      "regret": {
+        "greedy": 0.13,
+        "root32": 0.07,
+        "root96": 0.07
+      }
+    },
+    {
+      "id": 2,
+      "seed": 10002,
+      "level": 2,
+      "seat": 1,
+      "source_difficulty": 0,
+      "hand_cards": 16,
+      "table_type": "single",
+      "actions": 6,
+      "regret": {
+        "greedy": 0.0,
+        "root32": 0.05,
+        "root96": 0.05
+      }
+    },
+    {
+      "id": 3,
+      "seed": 10003,
+      "level": 2,
+      "seat": 1,
+      "source_difficulty": 2,
+      "hand_cards": 16,
+      "table_type": "lead",
+      "actions": 7,
+      "regret": {
+        "greedy": 0.22,
+        "root32": 0.02,
+        "root96": 0.02
+      }
+    },
+    {
+      "id": 4,
+      "seed": 10004,
+      "level": 2,
+      "seat": 2,
+      "source_difficulty": 0,
+      "hand_cards": 16,
+      "table_type": "single",
+      "actions": 6,
+      "regret": {
+        "greedy": 0.12,
+        "root32": 0.12,
+        "root96": 0.07
+      }
+    },
+    {
+      "id": 5,
+      "seed": 10005,
+      "level": 2,
+      "seat": 2,
+      "source_difficulty": 2,
+      "hand_cards": 15,
+      "table_type": "triple_pair",
+      "actions": 3,
+      "regret": {
+        "greedy": 0.03,
+        "root32": 0.03,
+        "root96": 0.03
+      }
+    },
+    {
+      "id": 6,
+      "seed": 10006,
+      "level": 2,
+      "seat": 3,
+      "source_difficulty": 0,
+      "hand_cards": 9,
+      "table_type": "single",
+      "actions": 6,
+      "regret": {
+        "greedy": 0.0,
+        "root32": 0.03,
+        "root96": 0.03
+      }
+    },
+    {
+      "id": 7,
+      "seed": 10007,
+      "level": 2,
+      "seat": 3,
+      "source_difficulty": 2,
+      "hand_cards": 12,
+      "table_type": "single",
+      "actions": 4,
+      "regret": {
+        "greedy": 0.16,
+        "root32": 0.16,
+        "root96": 0.16
+      }
+    },
+    {
+      "id": 8,
+      "seed": 10032,
+      "level": 9,
+      "seat": 0,
+      "source_difficulty": 0,
+      "hand_cards": 15,
+      "table_type": "single",
+      "actions": 7,
+      "regret": {
+        "greedy": 0.0,
+        "root32": 0.03,
+        "root96": 0.15
+      }
+    },
+    {
+      "id": 9,
+      "seed": 10009,
+      "level": 9,
+      "seat": 0,
+      "source_difficulty": 2,
+      "hand_cards": 12,
+      "table_type": "lead",
+      "actions": 6,
+      "regret": {
+        "greedy": 0.0,
+        "root32": 0.08,
+        "root96": 0.08
+      }
+    },
+    {
+      "id": 10,
+      "seed": 10010,
+      "level": 9,
+      "seat": 1,
+      "source_difficulty": 0,
+      "hand_cards": 14,
+      "table_type": "single",
+      "actions": 6,
+      "regret": {
+        "greedy": 0.0,
+        "root32": 0.0,
+        "root96": 0.0
+      }
+    },
+    {
+      "id": 11,
+      "seed": 10011,
+      "level": 9,
+      "seat": 1,
+      "source_difficulty": 2,
+      "hand_cards": 16,
+      "table_type": "lead",
+      "actions": 6,
+      "regret": {
+        "greedy": 0.08,
+        "root32": 0.1,
+        "root96": 0.06
+      }
+    },
+    {
+      "id": 12,
+      "seed": 10036,
+      "level": 9,
+      "seat": 2,
+      "source_difficulty": 0,
+      "hand_cards": 16,
+      "table_type": "single",
+      "actions": 5,
+      "regret": {
+        "greedy": 0.0,
+        "root32": 0.01,
+        "root96": 0.06
+      }
+    },
+    {
+      "id": 13,
+      "seed": 10013,
+      "level": 9,
+      "seat": 2,
+      "source_difficulty": 2,
+      "hand_cards": 16,
+      "table_type": "triple_pair",
+      "actions": 4,
+      "regret": {
+        "greedy": 0.1,
+        "root32": 0.1,
+        "root96": 0.1
+      }
+    },
+    {
+      "id": 14,
+      "seed": 10014,
+      "level": 9,
+      "seat": 3,
+      "source_difficulty": 0,
+      "hand_cards": 9,
+      "table_type": "single",
+      "actions": 4,
+      "regret": {
+        "greedy": 0.06,
+        "root32": 0.01,
+        "root96": 0.0
+      }
+    },
+    {
+      "id": 15,
+      "seed": 10015,
+      "level": 9,
+      "seat": 3,
+      "source_difficulty": 2,
+      "hand_cards": 12,
+      "table_type": "triple_pair",
+      "actions": 2,
+      "regret": {
+        "greedy": 0.0,
+        "root32": 0.0,
+        "root96": 0.23
+      }
+    },
+    {
+      "id": 16,
+      "seed": 10016,
+      "level": 14,
+      "seat": 0,
+      "source_difficulty": 0,
+      "hand_cards": 10,
+      "table_type": "single",
+      "actions": 7,
+      "regret": {
+        "greedy": 0.03,
+        "root32": 0.03,
+        "root96": 0.03
+      }
+    },
+    {
+      "id": 17,
+      "seed": 10041,
+      "level": 14,
+      "seat": 0,
+      "source_difficulty": 2,
+      "hand_cards": 8,
+      "table_type": "triple_pair",
+      "actions": 2,
+      "regret": {
+        "greedy": 0.14,
+        "root32": 0.14,
+        "root96": 0.14
+      }
+    },
+    {
+      "id": 18,
+      "seed": 10018,
+      "level": 14,
+      "seat": 1,
+      "source_difficulty": 0,
+      "hand_cards": 15,
+      "table_type": "single",
+      "actions": 7,
+      "regret": {
+        "greedy": 0.21,
+        "root32": 0.21,
+        "root96": 0.21
+      }
+    },
+    {
+      "id": 19,
+      "seed": 10019,
+      "level": 14,
+      "seat": 1,
+      "source_difficulty": 2,
+      "hand_cards": 12,
+      "table_type": "triple_pair",
+      "actions": 4,
+      "regret": {
+        "greedy": 0.07,
+        "root32": 0.01,
+        "root96": 0.0
+      }
+    },
+    {
+      "id": 20,
+      "seed": 10020,
+      "level": 14,
+      "seat": 2,
+      "source_difficulty": 0,
+      "hand_cards": 16,
+      "table_type": "single",
+      "actions": 7,
+      "regret": {
+        "greedy": 0.07,
+        "root32": 0.12,
+        "root96": 0.11
+      }
+    },
+    {
+      "id": 21,
+      "seed": 10021,
+      "level": 14,
+      "seat": 2,
+      "source_difficulty": 2,
+      "hand_cards": 12,
+      "table_type": "triple_pair",
+      "actions": 2,
+      "regret": {
+        "greedy": 0.0,
+        "root32": 0.0,
+        "root96": 0.0
+      }
+    },
+    {
+      "id": 22,
+      "seed": 10022,
+      "level": 14,
+      "seat": 3,
+      "source_difficulty": 0,
+      "hand_cards": 13,
+      "table_type": "single",
+      "actions": 5,
+      "regret": {
+        "greedy": 0.13,
+        "root32": 0.06,
+        "root96": 0.06
+      }
+    },
+    {
+      "id": 23,
+      "seed": 10023,
+      "level": 14,
+      "seat": 3,
+      "source_difficulty": 2,
+      "hand_cards": 16,
+      "table_type": "single",
+      "actions": 3,
+      "regret": {
+        "greedy": 0.04,
+        "root32": 0.0,
+        "root96": 0.0
+      }
+    }
+  ]
+}

@@ -16,11 +16,12 @@ os.environ.setdefault("GUANDAN_TUI_NO_RESIZE", "1")
 from PySide6.QtGui import QImage
 from PySide6.QtWidgets import QApplication
 
-from guandan.engine.card import Card, Suit
+from guandan.engine.card import RANK_BIG_JOKER, Card, Suit
+from guandan.engine.events import TributeReturned, TributeSent
 from guandan.engine.rules.patterns import find_complete_pattern
-from guandan.engine.state import make_initial_state, pass_turn, play_pattern
+from guandan.engine.state import GameState, make_initial_state, pass_turn, play_pattern
 from guandan.gui.theme import APP_QSS
-from guandan.gui.window import CardChoiceDialog, GuandanMainWindow
+from guandan.gui.window import GuandanMainWindow
 from guandan.tui.app import GuandanApp
 from guandan.tui.screens.confirm import ConfirmModal, TributeChoiceModal
 from guandan.tui.screens.error import ErrorModal
@@ -128,6 +129,39 @@ def capture_gui(output: Path) -> list[dict]:
         window.game_page.refresh()
     capture("game-collected-trick", 1080, 760)
 
+    finished = GameState(
+        level=2,
+        wild_card=None,
+        hands=[[], [], [], []],
+        turn_index=0,
+        leader=0,
+        finish_order=[0, 1, 2],
+        finished=True,
+        team_levels_final=[5, 2],
+    )
+    window.start_game(GameSession(difficulty=0, existing_state=finished, human=0))
+    capture("game-finished", 1080, 760)
+
+    finished_session = window.game_page.session
+    finished_session.game_saved = True
+    with patch("guandan.ui.session.random.randint", return_value=14):
+        window.game_page.next_game()
+    window.game_page._begin_next_game_tribute()
+    choice = finished_session.pending_next_game_choice()
+    if choice is None:
+        raise RuntimeError("visual tribute scenario did not request a human card")
+    capture("tribute-choice", 1080, 760)
+
+    tribute = make_initial_state(level=5, first_player=0, seed=14)
+    tribute.history.extend(
+        (
+            TributeSent(3, 1, Card(RANK_BIG_JOKER, Suit.BIG_JOKER)),
+            TributeReturned(1, 3, Card(4, Suit.HEARTS)),
+        )
+    )
+    window.start_game(GameSession(difficulty=0, existing_state=tribute, human=0, round_index=2))
+    capture("game-tribute", 1080, 760)
+
     history = _replay_history()
     window.show_replay(history)
     replay = window.stack.currentWidget()
@@ -140,18 +174,6 @@ def capture_gui(output: Path) -> list[dict]:
         window.show_history()
         capture("history-empty", 1080, 760)
 
-    dialog = CardChoiceDialog(
-        "return",
-        tuple(Card(rank, Suit.HEARTS) for rank in range(3, 11)),
-        window,
-    )
-    dialog.show()
-    app.processEvents()
-    dialog_path = output / "tribute-choice.png"
-    if not dialog.grab().save(str(dialog_path)):
-        raise RuntimeError(f"could not save GUI dialog screenshot: {dialog_path}")
-    artifacts.append(_assert_png(dialog_path))
-    dialog.close()
     window.game_page = None
     window.close()
     app.processEvents()
@@ -181,6 +203,31 @@ async def capture_tui(output: Path) -> list[dict]:
         state.hands[2] = state.hands[2][:7]
         state.hands[3] = state.hands[3][:2]
         app.push_screen(GameScreen(difficulty=0, existing_state=state, human=0))
+
+    async def game_finished_setup(app, pilot) -> None:
+        del pilot
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[[], [], [], []],
+            turn_index=0,
+            leader=0,
+            finish_order=[0, 1, 2],
+            finished=True,
+            team_levels_final=[5, 2],
+        )
+        app.push_screen(GameScreen(difficulty=0, existing_state=state, human=0))
+
+    async def game_tribute_setup(app, pilot) -> None:
+        del pilot
+        state = make_initial_state(level=5, first_player=0, seed=14)
+        state.history.extend(
+            (
+                TributeSent(3, 1, Card(RANK_BIG_JOKER, Suit.BIG_JOKER)),
+                TributeReturned(1, 3, Card(4, Suit.HEARTS)),
+            )
+        )
+        app.push_screen(GameScreen(difficulty=0, existing_state=state, human=0, round_index=2))
 
     async def replay_setup(app, pilot) -> None:
         del pilot
@@ -216,6 +263,8 @@ async def capture_tui(output: Path) -> list[dict]:
     specifications = (
         ("menu", menu_setup, ("掼蛋", "开始新局", "历史战绩")),
         ("game-claims", game_setup, ("你的手牌", "报单", "报双")),
+        ("game-finished", game_finished_setup, ("本局级牌", "下一局级牌")),
+        ("game-tribute", game_tribute_setup, ("本局贡还牌", "你未参与贡还牌")),
         ("replay", replay_setup, ("对局回放", "四家手牌", "自动播放")),
         ("history-empty", history_setup, ("历史战绩", "暂无对局记录")),
         ("tribute-choice", tribute_setup, ("选择还贡牌", "取消")),

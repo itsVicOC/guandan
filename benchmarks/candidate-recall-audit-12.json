@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "positions": 12,
+    "playouts_per_action": 200,
+    "seed_start": 2000,
+    "pool": "all legal exact-card actions plus pass",
+    "label_policy": "novice"
+  },
+  "summary": {
+    "best_action_recall": 0.75,
+    "mean_oracle_gap": 0.009583333333333333,
+    "mean_legal_actions": 11.916666666666666,
+    "mean_current_actions": 5.916666666666667
+  },
+  "positions": [
+    {
+      "seed": 2000,
+      "hand_cards": 9,
+      "table_type": "single",
+      "legal_actions": 10,
+      "current_actions": 6,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "single"
+    },
+    {
+      "seed": 2001,
+      "hand_cards": 13,
+      "table_type": "single",
+      "legal_actions": 12,
+      "current_actions": 5,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "bomb"
+    },
+    {
+      "seed": 2002,
+      "hand_cards": 16,
+      "table_type": "single",
+      "legal_actions": 21,
+      "current_actions": 6,
+      "best_in_current": false,
+      "oracle_gap": 0.02,
+      "best_action_type": "bomb"
+    },
+    {
+      "seed": 2003,
+      "hand_cards": 8,
+      "table_type": "single",
+      "legal_actions": 3,
+      "current_actions": 3,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "single"
+    },
+    {
+      "seed": 2004,
+      "hand_cards": 15,
+      "table_type": "single",
+      "legal_actions": 17,
+      "current_actions": 6,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "straight_flush"
+    },
+    {
+      "seed": 2005,
+      "hand_cards": 16,
+      "table_type": "single",
+      "legal_actions": 16,
+      "current_actions": 7,
+      "best_in_current": false,
+      "oracle_gap": 0.075,
+      "best_action_type": "straight_flush"
+    },
+    {
+      "seed": 2006,
+      "hand_cards": 16,
+      "table_type": "single",
+      "legal_actions": 7,
+      "current_actions": 4,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "single"
+    },
+    {
+      "seed": 2007,
+      "hand_cards": 11,
+      "table_type": "single",
+      "legal_actions": 13,
+      "current_actions": 8,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "bomb"
+    },
+    {
+      "seed": 2008,
+      "hand_cards": 16,
+      "table_type": "single",
+      "legal_actions": 13,
+      "current_actions": 7,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "single"
+    },
+    {
+      "seed": 2009,
+      "hand_cards": 16,
+      "table_type": "single",
+      "legal_actions": 9,
+      "current_actions": 6,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "bomb"
+    },
+    {
+      "seed": 2011,
+      "hand_cards": 14,
+      "table_type": "single",
+      "legal_actions": 9,
+      "current_actions": 7,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "single"
+    },
+    {
+      "seed": 2012,
+      "hand_cards": 13,
+      "table_type": "single",
+      "legal_actions": 13,
+      "current_actions": 6,
+      "best_in_current": false,
+      "oracle_gap": 0.02,
+      "best_action_type": "single"
+    }
+  ]
+}

@@ -553,6 +553,33 @@ class TestMCTSRolloutPolicy:
         assert pattern.type == PatternType.SINGLE
         assert pattern.rank == 9
 
+    def test_targeted_rollout_answers_complex_table_without_changing_level_one(self):
+        state = _make_test_state()
+        state.wild_card = None
+        state.table = [
+            Pattern(
+                PatternType.STRAIGHT,
+                8,
+                5,
+                tuple(Card(rank, Suit.HEARTS) for rank in range(4, 9)),
+            )
+        ]
+        state.hands[1] = [
+            *(Card(rank, Suit.CLUBS) for rank in range(5, 10)),
+            Card(13, Suit.DIAMONDS),
+        ]
+
+        assert _rollout_select_pattern(state, 1, rollout_strategy_level=1) is None
+        response = _rollout_select_pattern(state, 1, rollout_strategy_level=3)
+        assert response is not None
+        assert response.type == PatternType.STRAIGHT
+        assert response.rank == 9
+
+        from guandan.engine.events import TurnPlayed
+
+        state.history.append(TurnPlayed(player=3, pattern=state.table[-1], hand_remaining=8))
+        assert _rollout_select_pattern(state, 1, rollout_strategy_level=3) is None
+
 
 class TestRootActionSearch:
     """根动作竞速应覆盖真实动作并严格遵守总评估预算。"""
@@ -591,6 +618,41 @@ class TestRootActionSearch:
         assert first.simulations == 16
         assert sum(action.visits for action in first.actions) == 16
         assert first.sampled_worlds < first.simulations
+
+    def test_search_clone_matches_deepcopy_without_mutating_input(self, monkeypatch):
+        from guandan.ai.mcts import root_search as module
+        from guandan.ai.play import play_or_pass
+        from guandan.ai.strategies.novice import NoviceStrategy
+        from guandan.engine.state import make_initial_state
+
+        middle = make_initial_state(level=9, first_player=0, seed=779)
+        rng = random.Random(779)
+        novice = NoviceStrategy()
+        for _ in range(40):
+            play_or_pass(middle, middle.current_player(), novice, rng)
+        assert middle.history
+
+        kwargs = {
+            "iterations": 16,
+            "time_budget_ms": 0,
+            "max_actions": 4,
+            "rollout_strategy": 1,
+            "rollout_max_turns": 12,
+            "prior_weight": 0.18,
+        }
+        for state in (_make_test_state(seed=779), middle):
+            player = state.current_player()
+            before = copy.deepcopy(state)
+            cloned = root_action_search(state, player, rng=random.Random(101), **kwargs)
+            with monkeypatch.context() as context:
+                context.setattr(module, "clone_state_for_search", copy.deepcopy)
+                deepcopied = root_action_search(
+                    state, player, rng=random.Random(101), **kwargs
+                )
+
+            assert cloned.pattern == deepcopied.pattern
+            assert cloned.actions == deepcopied.actions
+            assert state == before
 
     def test_adaptive_search_concentrates_on_survivors(self):
         state = _make_test_state(seed=778)

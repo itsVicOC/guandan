@@ -251,7 +251,7 @@ def _rollout_select_pattern(
     if finish is not None:
         return finish
 
-    if rollout_strategy_level >= 2 and state.table:
+    if rollout_strategy_level == 2 and state.table:
         top_player = current_top_player(state)
         if (
             top_player is not None
@@ -269,9 +269,16 @@ def _rollout_select_pattern(
         PatternType.PAIR,
         PatternType.TRIPLE,
     )
-    if rollout_strategy_level >= 2 and (
-        state.hand_size(player) <= 8 or complex_response
-    ):
+    if rollout_strategy_level == 3 and complex_response:
+        top_player = current_top_player(state)
+        if top_player is not None and is_teammate(top_player, player):
+            return None
+    # Level 3 is an isolated experiment: recognize legal responses to complex
+    # table patterns without changing the inexpensive lead/teammate policy.
+    if (
+        rollout_strategy_level == 2
+        and (state.hand_size(player) <= 8 or complex_response)
+    ) or (rollout_strategy_level == 3 and complex_response):
         structured = _structured_rollout_pattern(state, player)
         if structured is not None:
             return structured

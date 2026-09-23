@@ -6,7 +6,7 @@ import random
 from unittest.mock import patch
 
 from rich.text import Text
-from textual.widgets import Button
+from textual.widgets import Button, Static
 
 from guandan.engine.card import (
     RANK_2,
@@ -22,7 +22,7 @@ from guandan.engine.card import (
     Card,
     Suit,
 )
-from guandan.engine.events import Pass, TributeReturned, TributeSent, TurnPlayed
+from guandan.engine.events import Pass, TributeResisted, TributeReturned, TributeSent, TurnPlayed
 from guandan.engine.hand import Pattern, PatternType
 from guandan.engine.rules.patterns import find_complete_pattern
 from guandan.engine.state import (
@@ -588,8 +588,9 @@ def test_table_display_renders_all_seat_actions_in_current_trick() -> None:
             table = screen.query_one("#table")
             lines = _plain(table.content).splitlines()
 
-            assert len(lines) == 5
+            assert len(lines) == 6
             assert "最大 北家" in lines[0]
+            assert "首局无需贡还牌" in lines[1]
             assert any(line.startswith("  东:") and "三带二" in line for line in lines)
             assert any(line.startswith("  北: 最大") and "三带二" in line for line in lines)
             assert any(line == "  西: 过牌" for line in lines)
@@ -899,6 +900,11 @@ def test_finished_game_can_start_next_round_from_head_team_level() -> None:
                 next_button = screen.query_one("#btn-next-game", Button)
                 assert next_button.disabled is False
                 assert "级牌 5" in str(next_button.label)
+                assert "第 1 局 · 本局结束 · 本局级牌 2" in str(
+                    screen.query_one("#status-bar", Static).render()
+                )
+                assert "本局级牌 2" in screen.sub_title
+                assert "下一局级牌 5" in screen.sub_title
 
                 screen.action_next_game()
                 await pilot.pause()
@@ -908,6 +914,9 @@ def test_finished_game_can_start_next_round_from_head_team_level() -> None:
                 assert dealt_state.level == 5
                 assert len(dealt_state.hands[0]) == 27
                 assert "手牌已发放" in screen.sub_title
+                assert "第 2 局 · 发牌中 · 本局级牌 5" in str(
+                    screen.query_one("#status-bar", Static).render()
+                )
 
                 screen._begin_next_game_tribute()
                 choice = screen.session.pending_next_game_choice()
@@ -922,6 +931,9 @@ def test_finished_game_can_start_next_round_from_head_team_level() -> None:
                 assert len(screen.state.hands[0]) == 27
                 assert screen._game_saved is False
                 assert "局开始" in screen._last_action
+                assert "第 2 局 · 本局开始 · 本局级牌 5" in str(
+                    screen.query_one("#status-bar", Static).render()
+                )
 
     asyncio.run(run())
 
@@ -998,6 +1010,36 @@ def test_next_round_applies_tribute_card_swaps_and_records_events() -> None:
     asyncio.run(run())
 
 
+def test_tui_shows_tribute_result_when_human_did_not_participate() -> None:
+    async def run() -> None:
+        state = GameState(
+            level=RANK_5,
+            wild_card=None,
+            hands=[[], [], [], []],
+            turn_index=0,
+            history=[
+                TributeSent(3, 1, Card(RANK_BIG_JOKER, Suit.BIG_JOKER)),
+                TributeReturned(1, 3, Card(RANK_4, Suit.HEARTS)),
+            ],
+        )
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state, human=0, round_index=2)
+            with patch.object(screen, "_maybe_ai_turn"):
+                app.push_screen(screen)
+                await pilot.pause()
+                table = screen.query_one("#table", TableWidget)
+                assert "北家→南家进贡 大王" in str(table.content)
+                assert "南家→北家还贡 红4♥" in str(table.content)
+                assert "你未参与贡还牌" in str(table.content)
+
+                state.history = [TributeResisted(player=3, team=1, reason="single")]
+                screen._refresh_all()
+                assert "北家抗贡，本局没有换牌" in str(table.content)
+
+    asyncio.run(run())
+
+
 def test_match_finished_disables_next_round_button() -> None:
     async def run() -> None:
         state = GameState(
@@ -1022,6 +1064,8 @@ def test_match_finished_disables_next_round_button() -> None:
             next_button = screen.query_one("#btn-next-game", Button)
             assert next_button.disabled is True
             assert "比赛已结束" in str(next_button.label)
+            assert "本局级牌 A" in screen.sub_title
+            assert "下一局级牌" not in screen.sub_title
 
     asyncio.run(run())
 

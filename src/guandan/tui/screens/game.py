@@ -14,11 +14,7 @@ from textual.widgets import Button, Footer, Header, Static
 
 from ...engine.card import Card, Suit
 from ...engine.events import (
-    Event,
     Pass,
-    TributeResisted,
-    TributeReturned,
-    TributeSent,
     TurnPlayed,
 )
 from ...engine.hand import Pattern, PatternType, comparison_rank, sort_cards
@@ -246,7 +242,7 @@ class TableWidget(Static):
         self._players: List[int] = []
         self._passed: List[int] = []  # 本轮已过牌的玩家
         self._seat_actions: dict[int, tuple[str, Pattern | None]] = {}
-        self._tribute_events: tuple[Event, ...] = ()
+        self._tribute_notice = ""
 
     def on_mount(self) -> None:
         self._do_render()
@@ -257,13 +253,13 @@ class TableWidget(Static):
         players: List[int],
         passed: Optional[List[int]] = None,
         seat_actions: Optional[dict[int, tuple[str, Pattern | None]]] = None,
-        tribute_events: Sequence[Event] = (),
+        tribute_notice: str = "",
     ) -> None:
         self._table_patterns = patterns
         self._players = players
         self._passed = passed if passed is not None else []
         self._seat_actions = dict(seat_actions or {})
-        self._tribute_events = tuple(tribute_events)
+        self._tribute_notice = tribute_notice
         self._do_render()
 
     def _pattern_str(self, p: Pattern) -> str:
@@ -275,38 +271,17 @@ class TableWidget(Static):
         return f"{_pattern_type_label(p.type)}  {cards_str}"
 
     def _do_render(self) -> None:
-        if (
-            not self._table_patterns
-            and not self._passed
-            and not self._seat_actions
-            and not self._tribute_events
-        ):
-            self.update("[bold #d6b35a]当前轮[/bold #d6b35a]\n\n[dim]桌面空，等待先手出牌[/dim]")
-            return
-
         top_player = self._players[-1] if self._table_patterns and self._players else None
         title = "[bold #d6b35a]当前轮[/bold #d6b35a]"
         if top_player is not None:
             title += f" · [bold]最大 {SEAT_NAMES[top_player]}家[/bold]"
         lines = [title]
-        if self._tribute_events:
-            tribute_parts: list[str] = []
-            for event in self._tribute_events:
-                if isinstance(event, TributeSent):
-                    tribute_parts.append(
-                        f"{SEAT_NAMES[event.from_player]}→{SEAT_NAMES[event.to_player]}进贡 "
-                        f"{_tui_card(event.card)}"
-                    )
-                elif isinstance(event, TributeReturned):
-                    tribute_parts.append(
-                        f"{SEAT_NAMES[event.from_player]}→{SEAT_NAMES[event.to_player]}还贡 "
-                        f"{_tui_card(event.card)}"
-                    )
-                elif isinstance(event, TributeResisted):
-                    tribute_parts.append(f"{SEAT_NAMES[event.player]}家抗贡")
-            lines.append(
-                "[bold #f6d779]本局贡还牌[/bold #f6d779] · " + " · ".join(tribute_parts)
-            )
+        if self._tribute_notice:
+            lines.append(f"[bold #f6d779]{escape(self._tribute_notice)}[/bold #f6d779]")
+        if not self._table_patterns and not self._passed and not self._seat_actions:
+            lines.extend(("", "[dim]桌面空，等待先手出牌[/dim]"))
+            self.update("\n".join(lines))
+            return
 
         actions = dict(self._seat_actions)
         if not actions:
@@ -386,7 +361,7 @@ class GameScreen(Screen):
         background: #101512;
     }
     #btn-next-game {
-        width: 24;
+        width: 30;
         margin-right: 2;
     }
     #btn-game-back {
@@ -584,7 +559,7 @@ class GameScreen(Screen):
             table_players,
             passed=passed_players,
             seat_actions=seat_actions,
-            tribute_events=self.session.tribute_events(),
+            tribute_notice=self.session.tribute_notice(),
         )
         # 状态信息写入 screen title
         turn_name = SEAT_NAMES[s.turn_index]
@@ -599,10 +574,16 @@ class GameScreen(Screen):
             order_str = " > ".join(SEAT_NAMES[p] for p in s.finish_order)
             if s.match_finished and s.winner_team is not None:
                 winner = "东西" if s.winner_team == 0 else "南北"
-                self.sub_title = f"比赛结束！{winner}方获胜 · 名次：{order_str}"
+                self.sub_title = (
+                    f"比赛结束！本局级牌 {_rank_value_label(s.level)} · "
+                    f"{winner}方获胜 · 名次：{order_str}"
+                )
             else:
                 next_level = self._next_round_level(s)
-                self.sub_title = f"本局结束！名次：{order_str} · 下一局级牌 {next_level} · 按 N 继续"
+                self.sub_title = (
+                    f"本局结束！本局级牌 {_rank_value_label(s.level)} · 名次：{order_str} · "
+                    f"下一局级牌 {_rank_value_label(next_level)} · 按 N 继续"
+                )
         elif s.turn_index == self.human:
             hand_size = len(s.hands[self.human])
             self.sub_title = f"轮到你（{turn_name}）· {hand_size} 张"
@@ -624,13 +605,24 @@ class GameScreen(Screen):
         top_player = SEAT_NAMES[table_players[-1]] if s.table and table_players else "-"
         finished = " > ".join(SEAT_NAMES[p] for p in s.finish_order) or "-"
         levels = self._visible_team_levels(s)
-        current = (
-            "贡还牌阶段"
-            if self.session.is_next_game_pending()
-            else f"{SEAT_NAMES[s.turn_index]}家"
-        )
+        if self.session.is_next_game_pending():
+            current = "贡还牌阶段"
+        elif s.finished:
+            current = "比赛结束" if s.match_finished else "本局结束"
+        else:
+            current = f"{SEAT_NAMES[s.turn_index]}家"
+        round_index = self.session.round_index + int(self.session.is_next_game_pending())
+        if self.session.is_next_game_pending():
+            phase = "发牌中"
+        elif s.finished:
+            phase = "比赛结束" if s.match_finished else "本局结束"
+        elif any(isinstance(event, (TurnPlayed, Pass)) for event in s.history):
+            phase = "进行中"
+        else:
+            phase = "本局开始"
         text = (
-            f"[bold #ffd978]级牌[/bold #ffd978] {s.level}   "
+            f"[bold #ffd978]第 {round_index} 局 · {phase} · 本局级牌 "
+            f"{_rank_value_label(s.level)}[/bold #ffd978]   "
             f"[bold #ffd978]逢人配[/bold #ffd978] {wild}   "
             f"[bold #ffd978]当前[/bold #ffd978] {current}   "
             f"[bold #ffd978]AI[/bold #ffd978] {self._strategy.name}\n"
@@ -641,7 +633,7 @@ class GameScreen(Screen):
                 winner = "东西" if s.winner_team == 0 else "南北"
                 text += f" · 比赛结束：{winner}方获胜"
             else:
-                text += f" · 下一局级牌 {self._next_round_level(s)}"
+                text += f" · 下一局级牌 {_rank_value_label(self._next_round_level(s))}"
         self.query_one("#status-bar", Static).update(text)
 
     def _do_render_hand(self) -> None:
@@ -701,7 +693,7 @@ class GameScreen(Screen):
         elif s.finished and s.match_finished:
             next_button.label = "比赛已结束"
         elif s.finished:
-            next_button.label = f"N  下一局 · 级牌 {self._next_round_level(s)}"
+            next_button.label = f"N  下一局 · 级牌 {_rank_value_label(self._next_round_level(s))}"
         else:
             next_button.label = "N  下一局"
 

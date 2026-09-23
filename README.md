@@ -1,6 +1,6 @@
 # 掼蛋（Guandan）— 本地 GUI / TUI 单机版
 
-> 状态：**v0.8.2-beta.1 / 公测版**（高档 AI 配对根动作评估）
+> 状态：**v0.8.2-beta.2 / 公测版**（牌局交互优化与 AI 搜索验证）
 > 规则：与全国锦标赛通用口径一致
 > AI：5 档（新手 / 进阶 / 高手 / 职业（配对根动作评估）/ **戴长胜（自对弈调优）**）
 > 持久化：Profile / Savegame / History / 断点续局恢复已实现
@@ -77,7 +77,7 @@ guandan-gui
 
 ## 关于"戴长胜" AI
 
-> ⚠️ **致敬声明**：本项目中以"戴长胜"命名的 AI 档位，其牌风倾向（炸弹审慎、控场节奏、配合意识）为向该掼蛋竞技名宿的**致敬性模拟**，并非其本人参与训练或授权。如有侵权疑问请与作者联系。
+> **致敬声明**：本项目中以"戴长胜"命名的 AI 档位是致敬性命名，并非其本人参与训练或授权。当前版本以更高预算的团队决策为目标，自对弈选中的风格先验为中性值，不声称复现真人牌风。如有侵权疑问请与作者联系。
 
 ## 项目结构
 
@@ -162,12 +162,12 @@ python -m guandan.ai.benchmark --compare baseline.json current.json \
   --fail-completion-drop 0.05 --fail-duration-increase 2.0 --fail-turn-increase 20
 ```
 
-### 当前基准（v0.8.2b1）
+### 当前基准（v0.8.2b2）
 
 - 命令：`python -m guandan.ai.benchmark --games 20 --difficulties 0,1,2,3 --seed-start 800 --max-turns 2000 --json`
-- 固定基线：`benchmarks/v0.8.2b1-mixed-20.json`，比较门禁见 [benchmarks/README.md](benchmarks/README.md)
-- 结果：20/20 完成，完成率 1.0，平均 91.95 回合，平均炸弹数 `[0.95, 1.0]`。
-- 胜场：`[4, 16]`；这是混合难度座位基准，1/3 号位难度整体高于 0/2 号位，不作为公平胜率结论。
+- 固定基线：`benchmarks/v0.8.2b2-mixed-20.json`，比较门禁见 [benchmarks/README.md](benchmarks/README.md)
+- 结果：20/20 完成，完成率 1.0，平均 91.1 回合，平均炸弹数 `[0.95, 1.15]`。
+- 胜场：`[2, 18]`；这是混合难度座位基准，1/3 号位难度整体高于 0/2 号位，不作为公平胜率结论。
 - 只有 Arena 的固定迭代模式可跨机器复现；生产走时钟预算，模拟数随机器变化，换机器重跑基准可能改变回合数与胜场。
 
 > `benchmarks/v0.8.0b1-mixed-20.json` 仅作历史记录保留，**不可与当前代码对比**（早于 M9 搜索重构）。两份基线的 `average_bombs` 由 `[0.25, 0.45]` 变为 `[0.95, 1.0]`，而完成率与平均回合数基本不变——这正是加入 `--fail-bomb-drift` 门禁的原因。
@@ -314,6 +314,8 @@ python scripts/action_value_baseline.py evaluate \
 - rollout 档 2 让 32 次根评估退化到 regret `0.0551`、167.7 ms；轻量档 1 更好，因此生产改用档 1。风格先验的影响很小（0.0487 → 0.0493），继续保留为弱先验。
 - 固定迭代整局 Arena（8 seeds、座位互换、16 局）中，新 root32 对旧 tree64 为 `8:8`、平均升级差 `+0.00`；这是非回退证据，不宣称显著提升。
 - 生产时钟 Arena（4 seeds、8 局）同样为 `4:4`，平均升级差 `+0.25`；root32 决策平均 105 ms、p95 247 ms、最大 260 ms，符合 240 ms 预算在单次 rollout 后检查的口径。
+
+后续优化验证：根评估已改用轻量状态克隆；新增全部合法出牌的候选召回审计及跨级牌、座位、对局来源的留出评估。24 个留出局面与 16 局固定迭代复赛都未证实 root96 稳定优于 root32；复杂牌型定向 rollout 的试验也未优于现行轻量策略，因此生产仍采用原来的候选上限和 rollout。详情与可复现命令见 [docs/ai.md](docs/ai.md) 和 [benchmarks/README.md](benchmarks/README.md)。
 
 实验 JSON：[`action-value-evaluation-root-search-200.json`](benchmarks/action-value-evaluation-root-search-200.json)、
 [`action-value-evaluation-flat-budget-200.json`](benchmarks/action-value-evaluation-flat-budget-200.json)、

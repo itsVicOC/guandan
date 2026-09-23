@@ -87,6 +87,14 @@ QLabel#subtitle, QLabel#muted { color: #9eaaa3; }
 QLabel#sectionTitle { color: #f8f1df; font-size: 18px; font-weight: 850; }
 QLabel#accentTitle { color: #f2cb70; font-size: 17px; font-weight: 900; }
 QLabel#statusText { color: #c7d0ca; font-size: 12px; }
+QLabel#statusText[opening="true"] { color: #ffe59d; font-size: 13px; font-weight: 850; }
+QFrame#roundInfo {
+    background: rgba(91, 65, 18, 185);
+    border: 1px solid #ad8739;
+    border-radius: 10px;
+}
+QLabel#roundPhase { color: #d9bd7a; font-size: 10px; font-weight: 800; }
+QLabel#roundLevel { color: #ffe394; font-size: 18px; font-weight: 900; }
 QLabel#statusBar {
     background: rgba(15, 28, 24, 220);
     color: #ccd5ce;
@@ -128,6 +136,17 @@ QLabel#featureChip {
     font-weight: 750;
 }
 QLabel#menuNote { color: #7e9188; font-size: 11px; }
+QLabel#selectionPreview { color: #9eb4a9; font-size: 12px; padding-left: 16px; }
+QLabel#selectionPreview[valid="true"] { color: #ffe394; font-weight: 850; }
+QLabel#resultPlaces { color: #f5df9b; font-size: 13px; font-weight: 850; }
+QLabel#resultScores { color: #d2e2d6; font-size: 12px; font-weight: 750; }
+QLabel#previousTrickLine {
+    background: #19362c;
+    color: #f5edda;
+    border: 1px solid #466a55;
+    border-radius: 8px;
+    padding: 9px;
+}
 QLabel#emptyState {
     background: rgba(12, 26, 21, 180);
     color: #8fa097;
@@ -192,6 +211,7 @@ QFrame#trickRow[top="true"] {
     border: 1px solid #cda548;
 }
 QFrame#trickRow[turn="true"] { border-right: 3px solid #72d8c1; }
+QFrame#trickRow[recent="true"] { border: 2px solid #ffe18a; }
 QLabel#trickPhase {
     color: #aab7b0;
     background: rgba(28, 47, 40, 210);
@@ -248,6 +268,7 @@ QFrame#seatPanel[human="true"][active="true"] {
     background: rgba(77, 60, 22, 235);
     border: 2px solid #f4cc68;
 }
+QFrame#seatPanel[recent="true"] { border: 2px solid #ffe18a; }
 QLabel#seatAvatar {
     background: #1d332c;
     color: #e8eee9;
@@ -310,6 +331,9 @@ QPushButton#menuPrimary:hover {
 }
 QPushButton#infoButton { background: #123a35; color: #83dfce; border-color: #397d6e; }
 QPushButton#quietButton { background: rgba(13, 24, 21, 155); color: #aebbb4; border-color: #31463d; }
+QPushButton#infoButton:disabled, QPushButton#quietButton:disabled {
+    color: #5d6963; background: #111b18; border-color: #27342f;
+}
 QPushButton#dangerButton { background: #38201f; color: #ffb9b5; border-color: #70413d; }
 QPushButton#difficultyCard {
     min-height: 92px;

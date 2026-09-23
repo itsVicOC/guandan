@@ -7,14 +7,13 @@ uses conservative successive halving after two and four samples per survivor.
 """
 from __future__ import annotations
 
-import copy
 import math
 import random
 import time
 from dataclasses import dataclass, field
 
 from ...engine.hand import Pattern
-from ...engine.state import GameState
+from ...engine.state import GameState, clone_state_for_search
 from ..candidates import observable_key, smallest_legal_pattern
 from ..valuation import enumerate_search_candidates
 from .determinize import determinize
@@ -165,7 +164,7 @@ def root_action_search(
                 stopped_by_clock = True
                 completed_round = False
                 break
-            sampled = copy.deepcopy(sampled_world)
+            sampled = clone_state_for_search(sampled_world)
             if not _apply_action(sampled, player, arm.pattern):
                 continue
             value = simulate_state(

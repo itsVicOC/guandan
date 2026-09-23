@@ -1,14 +1,7 @@
 """档 4 戴长胜策略：更高预算的团队感知根动作评估。
 
-戴长胜风格特点：
-- 炸弹审慎：综合紧迫度、终局价值与控场收益决定使用时机
-- 控场节奏：掌握出牌节奏，控制局势
-- 配合意识：与队友高度配合
-
-实现方式：
-- 继承 ProfessionalStrategy 的配对根动作评估
-- 加载经自对弈筛选的 profile 参数
-- 把风格参数作为根动作的弱先验，不在评估结束后否决首选动作
+当前自对弈选中的风格先验是中性值；此档主要通过更高的搜索预算
+追求出牌质量。风格参数只在根动作排序中作弱修正，不否决搜索首选。
 """
 from __future__ import annotations
 
@@ -46,8 +39,6 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         self.style = dict(self.profile["style"])
         if style_overrides:
             self.style.update(style_overrides)
-        self.pass_probability_multiplier = self.style.get("pass_probability_multiplier", 1.0)
-
         # 初始化搜索（用 profile 的参数）
         mcts_config = dict(self.profile["mcts"])
         if mcts_overrides:

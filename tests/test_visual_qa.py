@@ -31,6 +31,6 @@ def test_visual_qa_capture_is_nonblank_and_complete(tmp_path: Path) -> None:
 
     manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
     artifacts = manifest["artifacts"]
-    assert len(artifacts) == 17
+    assert len(artifacts) == 21
     assert {artifact["format"] for artifact in artifacts} == {"png", "svg"}
     assert all(Path(artifact["path"]).is_file() for artifact in artifacts)

@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from guandan.ai.mcts.information_set import SearchStyle
 from guandan.ai.profiles import load_profile
 from guandan.ai.strategies.dachangsheng import DaiChangshengStrategy
 from guandan.engine.card import Card, Suit
@@ -148,7 +149,9 @@ class TestDaiChangshengStrategy:
         assert strategy.max_actions == profile["mcts"]["top_actions"]
         assert strategy.mcts_hand_threshold == profile["mcts"]["hand_threshold"]
         assert strategy.rollout_max_turns == profile["mcts"]["rollout_max_turns"]
-        assert strategy.pass_probability_multiplier == profile["style"]["pass_probability_multiplier"]
+        assert "pass_probability_multiplier" not in profile["style"]
+        assert strategy.uses_stochastic_pass is False
+        assert strategy._search_style() == SearchStyle()
 
     def test_finish_bomb_not_blocked_when_teammate_already_first(self):
         """队友已头游时，能直接出完的炸弹仍应执行。"""

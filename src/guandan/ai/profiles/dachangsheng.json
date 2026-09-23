@@ -1,7 +1,7 @@
 {
   "name": "戴长胜",
   "difficulty": 4,
-  "description": "炸弹审慎、控场节奏、配合意识",
+  "description": "更高预算的团队根动作评估；风格先验为自对弈选中的中性值",
   "mcts": {
     "iterations": 96,
     "time_budget_ms": 420,
@@ -19,7 +19,6 @@
   "style": {
     "bomb_threshold": 0.25,
     "control_priority": 0.5,
-    "teammate_awareness": 0.85,
-    "pass_probability_multiplier": 1.2
+    "teammate_awareness": 0.85
   }
 }

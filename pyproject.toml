@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guandan"
-version = "0.8.2b1"
-description = "本地掼蛋游戏（桌面 GUI / 终端 TUI），5 档 AI 含致敬戴长胜牌风"
+version = "0.8.2b2"
+description = "本地掼蛋游戏（桌面 GUI / 终端 TUI），含戴长胜致敬档位的 5 档 AI"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

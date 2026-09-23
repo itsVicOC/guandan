@@ -9,7 +9,7 @@
 - 参数来自 `guandan.ai.mcts.MCTS_CONFIG`，不需要配置文件
 
 ### 档位 4：戴长胜（M4+）
-- 风格化 AI，致敬戴长胜牌风
+- 更高预算的团队根动作评估，名称为致敬；当前自对弈选中的风格先验与职业档中性先验相同，主要能力差别来自预算
 - 配置文件示例：`dachangsheng.json`
 
 ## 配置文件格式
@@ -35,10 +35,9 @@
   "style": {
     "bomb_threshold": 0.25,
     "control_priority": 0.5,
-    "teammate_awareness": 0.85,
-    "pass_probability_multiplier": 1.2
+    "teammate_awareness": 0.85
   },
-  "description": "炸弹审慎、控场节奏、配合意识"
+  "description": "更高预算的团队根动作评估；风格先验为自对弈选中的中性值"
 }
 ```
 
@@ -52,6 +51,7 @@
 ## 使用方式
 
 配置文件会通过 `make_strategy(4)` 加载并应用到 AI 决策中。
+高档 AI 不使用随机过牌；是否过牌由根动作评估选择，配置不再包含无效的随机过牌倍率。
 
 ## 参考
 
