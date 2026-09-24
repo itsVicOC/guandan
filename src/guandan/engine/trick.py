@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, List, Optional, Union
 
 from .events import Pass, TurnPlayed
 from .hand import Pattern
+from .state import LEGACY_RULESET_VERSION
 
 if TYPE_CHECKING:
     from .state import GameState
@@ -20,7 +21,7 @@ def current_trick_actions(state: GameState) -> List[TrickAction]:
     """从事件历史尾部提取当前 trick 的出牌/过牌事件。
 
     `state.table` 是当前牌墩尚未收走的出牌列表。本函数从历史尾部向前对齐
-    table，避免把上一个牌墩中同一玩家的过牌误认为当前牌墩的锁定过牌。
+    table，避免把上一个牌墩中的过牌误认为当前牌墩的行动。
     """
     if not state.table:
         return []
@@ -29,8 +30,7 @@ def current_trick_actions(state: GameState) -> List[TrickAction]:
     actions_reversed: List[TrickAction] = []
     for ev in reversed(state.history):
         if isinstance(ev, Pass):
-            if ev.player in state.passed_players:
-                actions_reversed.append(ev)
+            actions_reversed.append(ev)
             continue
         if isinstance(ev, TurnPlayed) and table_idx >= 0 and ev.pattern == state.table[table_idx]:
             actions_reversed.append(ev)
@@ -84,11 +84,13 @@ def current_top_player(state: GameState) -> Optional[int]:
 
 
 def locked_passed_players(state: GameState) -> List[int]:
-    """提取本轮仍被锁定的过牌玩家，按过牌发生顺序。"""
+    """提取当前桌顶仍需视为过牌的玩家，按过牌发生顺序。"""
     passed: List[int] = []
-    for ev in current_trick_actions(state):
+    for ev in reversed(current_trick_actions(state)):
+        if isinstance(ev, TurnPlayed) and state.ruleset_version != LEGACY_RULESET_VERSION:
+            break
         if isinstance(ev, Pass) and ev.player in state.passed_players and ev.player not in passed:
-            passed.append(ev.player)
+            passed.insert(0, ev.player)
     for player in range(4):
         if player in state.passed_players and player not in passed:
             passed.append(player)

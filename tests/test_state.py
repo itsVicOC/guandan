@@ -15,6 +15,7 @@ from guandan.engine.card import (
     RANK_A,
     RANK_BIG_JOKER,
     RANK_J,
+    RANK_SMALL_JOKER,
     Card,
     Suit,
 )
@@ -316,6 +317,9 @@ class TestPassTurn:
         play_pattern(state, 2, single_pattern(c(RANK_8, "H")))
         pass_turn(state, 1)
         pass_turn(state, 0)
+        # 3 曾在更早的桌顶过牌，但西家压牌后必须再次询问。
+        assert state.turn_index == 3
+        pass_turn(state, 3)
 
         assert state.table == []
         assert state.leader == 2
@@ -566,66 +570,94 @@ class TestGameCompletion_Document:
         assert state.team_levels_final[0] == RANK_5 + 3
 
 
-class TestPassedLockout:
-    """spec 规则 3：一旦选择"过"，该玩家在本圈牌中将失去出牌机会。
+class TestPassResponseWindow:
+    """过牌只回应当前桌顶；每次压牌都会重新开放其他玩家的机会。"""
 
-    修复 v0.3.0 → v0.3.1：`pass_count` 计数器改为 `passed_players: set`，
-    锁住过牌玩家直到本 trick 结束（`_end_trick_or_jiefeng`）。
-    """
+    @staticmethod
+    def _state(*, ruleset_version: int = 2) -> GameState:
+        return GameState(
+            level=RANK_5,
+            wild_card=None,
+            hands=[
+                [c(RANK_2, "H"), c(RANK_6, "H"), c(RANK_9, "H")],
+                [c(RANK_7, "H"), c(RANK_9, "H")],
+                [c(RANK_3, "H"), c(RANK_8, "H")],
+                [c(RANK_4, "H"), c(RANK_J, "H")],
+            ],
+            turn_index=0,
+            leader=0,
+            ruleset_version=ruleset_version,
+        )
 
-    def test_passed_player_cannot_play_via_engine(self):
-        """过牌后该玩家在同 trick 内 play_pattern 抛 IllegalPlayError。"""
-        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
-        state.wild_card = None
-        state.hands[0] = [c(RANK_2, "H"), c(RANK_6, "H")]
-        state.hands[1] = [c(RANK_7, "H"), c(RANK_9, "H")]
-        state.hands[2] = [c(RANK_3, "H"), c(RANK_8, "H")]
-        state.hands[3] = [c(RANK_4, "H"), c(RANK_J, "H")]
-
-        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))  # 0 出
-        pass_turn(state, 3)  # 3 过
-        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # 2 出
-        pass_turn(state, 1)  # 1 过
-        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))  # 0 再出
-        # 3 已过 → 即便手牌更大也不能出
-        assert 3 in state.passed_players
-        state.turn_index = 3
-        with pytest.raises(IllegalPlayError):
-            play_pattern(state, 3, single_pattern(c(RANK_J, "H")))
-
-    def test_passed_players_set_persists_across_leader_replay(self):
-        """0 在 trick 中再出牌时，passed_players 不应被清空。"""
-        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
-        state.wild_card = None
-        state.hands[0] = [c(RANK_2, "H"), c(RANK_6, "H")]
-        state.hands[1] = [c(RANK_7, "H"), c(RANK_9, "H")]
-        state.hands[2] = [c(RANK_3, "H"), c(RANK_8, "H")]
-        state.hands[3] = [c(RANK_4, "H"), c(RANK_J, "H")]
-
+    def test_old_pass_does_not_skip_player_after_new_top(self):
+        state = self._state()
         play_pattern(state, 0, single_pattern(c(RANK_2, "H")))
-        pass_turn(state, 3)  # passed = {3}
-        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # passed 应仍 = {3}
+        pass_turn(state, 3)
         assert state.passed_players == {3}
-        pass_turn(state, 1)  # passed = {1, 3}
-        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))  # passed 应仍 = {1, 3}
-        assert state.passed_players == {1, 3}
-
-    def test_turn_skips_passed_players(self):
-        """turn 推进应跳过已过牌玩家。"""
-        state = make_initial_state(level=RANK_5, first_player=0, seed=42)
-        state.wild_card = None
-        state.hands[0] = [c(RANK_2, "H"), c(RANK_6, "H")]
-        state.hands[1] = [c(RANK_7, "H"), c(RANK_9, "H")]
-        state.hands[2] = [c(RANK_3, "H"), c(RANK_8, "H")]
-        state.hands[3] = [c(RANK_4, "H"), c(RANK_J, "H")]
-
-        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))  # turn=3
-        pass_turn(state, 3)  # turn=2
-        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))  # turn=1
-        pass_turn(state, 1)  # turn 应跳过 3, 跳到 0
-        assert state.turn_index == 0
-        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))  # turn 应跳过 3, 跳到 2
+        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))
+        assert state.passed_players == set()
+        pass_turn(state, 1)
+        assert state.passed_players == {1}
+        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))
+        assert state.passed_players == set()
+        assert state.turn_index == 3
+        play_pattern(state, 3, single_pattern(c(RANK_J, "H")))
         assert state.turn_index == 2
+
+    def test_same_player_can_pass_twice_before_trick_ends(self):
+        state = self._state()
+        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))
+        pass_turn(state, 3)
+        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))
+        pass_turn(state, 1)
+        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))
+        pass_turn(state, 3)
+        assert state.turn_index == 2
+        pass_turn(state, 2)
+        assert state.turn_index == 1
+        pass_turn(state, 1)
+        assert state.table == []
+        assert state.turn_index == 0
+
+    def test_joker_requires_south_and_east_to_answer_after_west_passes(self):
+        joker = Card(RANK_SMALL_JOKER, Suit.SMALL_JOKER)
+        state = GameState(
+            level=RANK_5,
+            wild_card=None,
+            hands=[
+                [c(RANK_7), c(RANK_8)],
+                [c(RANK_5), c(RANK_6)],
+                [c(RANK_3), c(RANK_4)],
+                [joker, c(RANK_J)],
+            ],
+            turn_index=2,
+            leader=2,
+        )
+        play_pattern(state, 2, single_pattern(c(RANK_3)))
+        pass_turn(state, 1)
+        pass_turn(state, 0)
+        play_pattern(state, 3, single_pattern(joker))
+        pass_turn(state, 2)
+        assert state.turn_index == 1
+        assert state.table[-1].cards == (joker,)
+        pass_turn(state, 1)
+        assert state.turn_index == 0
+        pass_turn(state, 0)
+        assert state.table == []
+        assert state.turn_index == 3
+
+    def test_legacy_game_keeps_old_lockout_for_replay(self):
+        state = self._state(ruleset_version=1)
+        play_pattern(state, 0, single_pattern(c(RANK_2, "H")))
+        pass_turn(state, 3)
+        play_pattern(state, 2, single_pattern(c(RANK_3, "H")))
+        assert state.passed_players == {3}
+        pass_turn(state, 1)
+        play_pattern(state, 0, single_pattern(c(RANK_6, "H")))
+        assert state.turn_index == 2
+        state.turn_index = 3
+        with pytest.raises(IllegalPlayError, match="already passed"):
+            play_pattern(state, 3, single_pattern(c(RANK_J, "H")))
 
     def test_passed_players_cleared_on_new_trick(self):
         """其他可行动玩家全过 → trick 结束，passed_players 清空，3 可在新 trick 再行动。"""

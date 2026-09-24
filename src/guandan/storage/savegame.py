@@ -18,7 +18,12 @@ from ..engine.deck import make_deck
 from ..engine.events import TurnPlayed
 from ..engine.hand import Pattern, PatternType
 from ..engine.replay import replay_events
-from ..engine.state import GameState, IllegalPlayError, TributeState
+from ..engine.state import (
+    LEGACY_RULESET_VERSION,
+    GameState,
+    IllegalPlayError,
+    TributeState,
+)
 from .jsonio import write_json_atomic
 from .locking import storage_lock
 from .paths import get_savegame_path, validate_game_id
@@ -54,6 +59,7 @@ def save_game(
         raise ValueError("elapsed_seconds must not be negative")
     data = {
         "version": SAVEGAME_VERSION,
+        "ruleset_version": state.ruleset_version,
         "saved_at": datetime.now().isoformat(),
         "game_id": game_id,
         "match_id": match_id,
@@ -120,9 +126,20 @@ def restore_game_state(savegame: dict[str, Any]) -> GameState:
     手牌快照时，退回到 `seed + events` 重放。
     """
     try:
-        if savegame.get("state"):
-            return _dict_to_state(savegame["state"], savegame.get("events", []))
-        return _replay_events_to_state(savegame)
+        snapshot = savegame.get("state")
+        ruleset_version = savegame.get(
+            "ruleset_version",
+            snapshot.get("ruleset_version", LEGACY_RULESET_VERSION)
+            if isinstance(snapshot, dict)
+            else LEGACY_RULESET_VERSION,
+        )
+        if not isinstance(ruleset_version, int) or isinstance(ruleset_version, bool):
+            raise ValueError("savegame ruleset version is invalid")
+        if isinstance(snapshot, dict) and snapshot:
+            if snapshot.get("ruleset_version", ruleset_version) != ruleset_version:
+                raise ValueError("savegame ruleset versions disagree")
+            return _dict_to_state(snapshot, savegame.get("events", []), ruleset_version)
+        return _replay_events_to_state(savegame, ruleset_version)
     except (IndexError, KeyError, TypeError, ValueError, IllegalPlayError) as exc:
         raise ValueError("invalid savegame state") from exc
 
@@ -177,7 +194,7 @@ def _validate_loaded_savegame(savegame: dict[str, Any]) -> None:
     _validate_state_invariants(restored)
 
     events = savegame.get("events", [])
-    replayed = replay_events(events)
+    replayed = replay_events(events, ruleset_version=restored.ruleset_version)
     if not _replayable_state_matches(replayed, restored):
         raise ValueError("savegame state does not match its event stream")
 
@@ -241,6 +258,16 @@ def _migrate_savegame(savegame: dict[str, Any]) -> dict[str, Any]:
     version = str(savegame.get("version", "1.0"))
     if version not in {"1.0", "2.0", SAVEGAME_VERSION}:
         raise ValueError(f"unsupported savegame version: {version}")
+    snapshot = savegame.get("state")
+    ruleset_version = savegame.get(
+        "ruleset_version",
+        snapshot.get("ruleset_version", LEGACY_RULESET_VERSION)
+        if isinstance(snapshot, dict)
+        else LEGACY_RULESET_VERSION,
+    )
+    savegame["ruleset_version"] = ruleset_version
+    if isinstance(snapshot, dict):
+        snapshot.setdefault("ruleset_version", ruleset_version)
     if version == "1.0":
         restored = restore_game_state(savegame)
         savegame.setdefault("state", _state_to_dict(restored))
@@ -393,10 +420,13 @@ def _state_to_dict(state: GameState) -> dict[str, Any]:
         "guo_a_failed": state.guo_a_failed,
         "match_finished": state.match_finished,
         "winner_team": state.winner_team,
+        "ruleset_version": state.ruleset_version,
     }
 
 
-def _dict_to_state(data: dict[str, Any], events: list[Any]) -> GameState:
+def _dict_to_state(
+    data: dict[str, Any], events: list[Any], ruleset_version: int
+) -> GameState:
     state = GameState(
         level=data["level"],
         wild_card=_dict_to_card(data["wild_card"]) if data.get("wild_card") else None,
@@ -423,10 +453,13 @@ def _dict_to_state(data: dict[str, Any], events: list[Any]) -> GameState:
         guo_a_failed=data.get("guo_a_failed", False),
         match_finished=data.get("match_finished", False),
         winner_team=data.get("winner_team"),
+        ruleset_version=ruleset_version,
     )
     return state
 
 
-def _replay_events_to_state(savegame: dict[str, Any]) -> GameState:
+def _replay_events_to_state(
+    savegame: dict[str, Any], ruleset_version: int
+) -> GameState:
     events = savegame.get("events") or []
-    return replay_events(events)
+    return replay_events(events, ruleset_version=ruleset_version)

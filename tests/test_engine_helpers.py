@@ -87,7 +87,7 @@ def test_current_trick_actions_ignore_old_passes() -> None:
         hands=[[], [], [], []],
         turn_index=0,
         table=[first, press],
-        passed_players={2, 3},
+        passed_players=set(),
         leader=0,
         history=[
             Pass(player=2, hand_remaining=3),
@@ -104,7 +104,7 @@ def test_current_trick_actions_ignore_old_passes() -> None:
     assert actions == state.history[2:]
     assert current_table_players(state) == [0, 1]
     assert current_top_player(state) == 1
-    assert locked_passed_players(state) == [3, 2]
+    assert locked_passed_players(state) == []
 
 
 def test_current_top_player_returns_leader_when_table_empty() -> None:

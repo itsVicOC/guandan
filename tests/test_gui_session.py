@@ -1290,3 +1290,87 @@ print("ok")
     )
     assert result.returncode == 0, result.stderr
     assert "ok" in result.stdout
+
+
+def test_gui_organizes_hand_without_losing_selected_cards() -> None:
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    env = dict(os.environ)
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    code = """
+from PySide6.QtWidgets import QApplication
+from PySide6.QtTest import QTest
+from PySide6.QtCore import Qt
+from guandan.engine.card import Card, Suit
+from guandan.engine.state import GameState
+from guandan.gui.window import GuandanMainWindow
+from guandan.ui.session import GameSession
+
+selected = Card(3, Suit.DIAMONDS)
+hand = [
+    Card(3, Suit.HEARTS), selected,
+    Card(4, Suit.HEARTS), Card(5, Suit.HEARTS),
+    Card(6, Suit.HEARTS), Card(7, Suit.HEARTS),
+    Card(8, Suit.CLUBS),
+]
+state = GameState(level=2, wild_card=None, hands=[hand, [], [], []], turn_index=0, leader=0)
+app = QApplication([])
+window = GuandanMainWindow()
+window.start_game(GameSession(difficulty=0, existing_state=state, human=0))
+page = window.game_page
+assert page is not None
+assert page.organize_button.isEnabled()
+page.toggle_card(page.hand_cards.index(selected))
+page.organize_hand()
+assert page.selected_cards() == [selected]
+assert page.hand_title.text().startswith('我的手牌 · 牌型·综合 1/')
+assert page.hand._group_starts
+assert page.hand._group_ranges[0][2].label
+first_end = page.hand._group_ranges[0][1]
+buttons = page.hand._buttons
+assert buttons[1].x() - buttons[0].x() < buttons[first_end].x() - buttons[first_end - 1].x()
+assert buttons[1].y() > buttons[0].y()
+group = page.hand_organizer.playable_group_at(0)
+assert group is not None
+QTest.mouseDClick(page.hand._buttons[0], Qt.MouseButton.LeftButton)
+app.processEvents()
+assert len(page.selected_cards()) == len(group[2].cards)
+QTest.mouseDClick(page.hand._buttons[0], Qt.MouseButton.LeftButton)
+app.processEvents()
+assert not page.selected_cards()
+page.toggle_card(page.hand_cards.index(selected))
+page.organize_hand()
+rank_index = next(i for i, item in enumerate(page.hand_organizer.arrangements) if item.kind == 'rank')
+page.choose_organization(rank_index)
+assert page.hand_title.text().startswith('我的手牌 · 点数理 ')
+assert page.selected_cards() == [selected]
+suit_index = next(i for i, item in enumerate(page.hand_organizer.arrangements) if item.kind == 'suit')
+page.choose_organization(suit_index)
+assert '花色理' in page.hand_title.text()
+page.reset_organization()
+assert page.hand_organizer.status == ''
+state.turn_index = 1
+page.refresh()
+assert page.organize_button.isEnabled()
+page.organize_hand()
+assert page.selected_cards() == [selected]
+state.turn_index = 0
+page.refresh()
+page.play_selected()
+assert state.table[-1].cards == (selected,)
+window.game_page = None
+window.close()
+app.quit()
+print('ok')
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=os.getcwd(),
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout

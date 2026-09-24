@@ -3,7 +3,9 @@ from __future__ import annotations
 
 from typing import List, Optional, Sequence
 
+from rich.cells import cell_len
 from rich.markup import escape
+from rich.text import Text
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -26,8 +28,9 @@ from ...engine.state import (
 from ...engine.trick import (
     current_trick_actions,
 )
+from ...ui.hand_organizer import HandOrganizer
 from ...ui.session import GameSession, card_indices_for_selection
-from ..layout import MIN_COLUMNS, MIN_LINES, RECOMMENDED_COLUMNS, RECOMMENDED_LINES
+from ..layout import RECOMMENDED_COLUMNS
 
 
 class OpponentWidget(Static):
@@ -240,7 +243,7 @@ class TableWidget(Static):
         super().__init__("（空）", **kwargs)
         self._table_patterns: List[Pattern] = []
         self._players: List[int] = []
-        self._passed: List[int] = []  # 本轮已过牌的玩家
+        self._passed: List[int] = []  # 对当前桌顶已过牌的玩家
         self._seat_actions: dict[int, tuple[str, Pattern | None]] = {}
         self._tribute_notice = ""
 
@@ -364,6 +367,10 @@ class GameScreen(Screen):
         width: 30;
         margin-right: 2;
     }
+    #btn-organize-hand {
+        width: 20;
+        margin-right: 2;
+    }
     #btn-game-back {
         width: 18;
     }
@@ -385,6 +392,9 @@ class GameScreen(Screen):
         Binding("enter", "play", "出牌", priority=True),
         Binding("p", "pass", "过牌", priority=True),
         Binding("t", "hint", "提示", priority=True),
+        Binding("s", "organize_hand", "理牌", priority=True),
+        Binding("shift+s", "reset_organize", "默认", priority=True),
+        Binding("g", "select_group", "整组", priority=True),
         Binding("n", "next_game", "下一局", priority=True),
         ("?", "rules", "规则"),
         ("escape", "back", "返回"),
@@ -421,6 +431,8 @@ class GameScreen(Screen):
         self._hand_cards: List[Card] = []
         self._hand_selected_indices: set[int] = set()
         self._hand_cursor = 0
+        self._hand_group_starts: frozenset[int] = frozenset()
+        self._hand_organizer = HandOrganizer()
         self._ai_running = False
         self._tribute_timer: Timer | None = None
 
@@ -504,6 +516,7 @@ class GameScreen(Screen):
                 yield Static("")
             yield Static("hand", id="my-hand")
             with Horizontal(id="round-actions"):
+                yield Button("S  智能理牌", id="btn-organize-hand", disabled=True)
                 yield Button("N  下一局", id="btn-next-game", variant="success", disabled=True)
                 yield Button("返回大厅", id="btn-game-back", variant="default")
             yield Static("ready", id="action-log")
@@ -542,15 +555,39 @@ class GameScreen(Screen):
             not tribute_pending and s.turn_index == self.human,
         )
         # 更新玩家手牌（在自己管理的状态 + 外部渲染）
-        self._hand_cards = sort_cards(s.hands[self.human])
-        if self._hand_cursor >= len(self._hand_cards):
-            self._hand_cursor = max(0, len(self._hand_cards) - 1)
-        self._hand_selected_indices = {
-            i for i in self._hand_selected_indices if i < len(self._hand_cards)
-        }
+        selected_cards = tuple(
+            self._hand_cards[index]
+            for index in sorted(self._hand_selected_indices)
+            if index < len(self._hand_cards)
+        )
+        cursor_card = (
+            self._hand_cards[self._hand_cursor]
+            if self._hand_cursor < len(self._hand_cards) else None
+        )
+        cursor_occurrence = (
+            self._hand_cards[:self._hand_cursor + 1].count(cursor_card) - 1
+            if cursor_card is not None else 0
+        )
+        base_cards = sort_cards(s.hands[self.human])
+        self._hand_organizer.sync(base_cards, s.wild_card, s.level)
+        arranged = not tribute_pending and not s.finished
+        self._hand_cards = list(self._hand_organizer.cards) if arranged else base_cards
+        self._hand_group_starts = (
+            self._hand_organizer.group_starts if arranged else frozenset()
+        )
+        self._hand_selected_indices = card_indices_for_selection(
+            self._hand_cards, selected_cards
+        )
+        if cursor_card in self._hand_cards:
+            matching = [
+                index for index, card in enumerate(self._hand_cards) if card == cursor_card
+            ]
+            self._hand_cursor = matching[min(cursor_occurrence, len(matching) - 1)]
+        else:
+            self._hand_cursor = min(self._hand_cursor, max(0, len(self._hand_cards) - 1))
         self._do_render_hand()
         tbl = self.query_one("#table", TableWidget)
-        # 提取本轮已过牌且仍被锁定的玩家
+        # 提取对当前桌顶已过牌的玩家
         table_players = self._current_table_players()
         passed_players = self._locked_passed_players()
         seat_actions = self._table_display_actions(table_players, passed_players)
@@ -642,52 +679,96 @@ class GameScreen(Screen):
                 "[bold #d6b35a]你的手牌[/bold #d6b35a]\n[dim]本局已结束，点击“下一局”继续。[/dim]"
             )
             return
-        parts = []
+        current = self._hand_organizer.current
+        parts: list[str] = []
         for i, c in enumerate(self._hand_cards):
             selected = i in self._hand_selected_indices
             cursor = i == self._hand_cursor
             wild = c == self._state().wild_card
             parts.append(_tui_card(c, selected=selected, cursor=cursor, wild=wild))
-        cards_per_row = self._cards_per_hand_row()
-        rows = [
-            "  ".join(parts[i : i + cards_per_row])
-            for i in range(0, len(parts), cards_per_row)
-        ]
+
+        def visible_width(markup: str) -> int:
+            return cell_len(Text.from_markup(markup).plain)
+
+        groups = (
+            current.groups if current is not None and not self.session.is_next_game_pending()
+            else ()
+        )
+        segments: list[str] = []
+        if groups:
+            position = 0
+            for group in groups:
+                group_parts = parts[position:position + len(group.cards)]
+                position += len(group.cards)
+                segment = "".join(group_parts)
+                if visible_width(segment) <= self._hand_row_width():
+                    segments.append(segment)
+                    continue
+                # Keep each card intact if a large stack needs another row.
+                chunk = ""
+                for part in group_parts:
+                    joined = chunk + part
+                    if chunk and visible_width(joined) > self._hand_row_width():
+                        segments.append(chunk)
+                        chunk = part
+                    else:
+                        chunk = joined
+                if chunk:
+                    segments.append(chunk)
+        else:
+            segments = parts
+        rows: list[str] = []
+        row: list[str] = []
+        row_width = 0
+        max_width = self._hand_row_width()
+        for segment in segments:
+            part_width = visible_width(segment)
+            if row and row_width + 4 + part_width > max_width:
+                rows.append("    ".join(row))
+                row = []
+                row_width = 0
+            row.append(segment)
+            row_width += part_width + (4 if len(row) > 1 else 0)
+        if row:
+            rows.append("    ".join(row))
         selected_count = len(self._hand_selected_indices)
         cursor_pos = self._hand_cursor + 1 if self._hand_cards else 0
-        size_tip = self._terminal_size_tip()
+        organize_status = (
+            f" · 理牌 {self._hand_organizer.status}"
+            if self._hand_organizer.status
+            and not self.session.is_next_game_pending()
+            and not self._state().finished else ""
+        )
+        narrow = self._hand_row_width() < 90
+        guide = (
+            "←→光标 · 空格选牌 · G整组 · S理牌 · 回车出牌" if narrow else
+            "←→光标 · 空格选牌 · G整组选牌 · S换理牌 · Shift+S默认 · 回车出牌"
+        )
         header = (
             "[bold #d6b35a]你的手牌[/bold #d6b35a]  "
-            f"[#cdd7c8]光标 {cursor_pos}/{len(self._hand_cards)} · 已选 {selected_count} 张{size_tip}[/#cdd7c8]\n"
-            "[dim]红♥ / 方♦ / 黑♠ / 梅♣ · ▶光标 · ✓选中 · ★逢人配 · 空格选牌 · 回车出牌[/dim]"
+            f"[#cdd7c8]光标 {cursor_pos}/{len(self._hand_cards)} · 已选 {selected_count} 张{organize_status}[/#cdd7c8]\n"
+            f"[dim]{guide}[/dim]"
         )
         self.query_one("#my-hand", Static).update(f"{header}\n" + "\n".join(rows))
 
-    def _cards_per_hand_row(self) -> int:
-        """Choose a stable hand wrap count from the live terminal width."""
+    def _hand_row_width(self) -> int:
+        """Leave room for the hand border and padding in narrow terminals."""
         size = getattr(self.app, "size", None)
         width = size.width if size is not None else RECOMMENDED_COLUMNS
-        usable_width = max(40, width - 10)
-        return max(6, min(10, usable_width // 12))
-
-    def _terminal_size_tip(self) -> str:
-        size = getattr(self.app, "size", None)
-        if size is None:
-            return ""
-        if size.width >= MIN_COLUMNS and size.height >= MIN_LINES:
-            return ""
-        return (
-            f" · 建议终端 {RECOMMENDED_COLUMNS}x{RECOMMENDED_LINES}"
-            f"（当前 {size.width}x{size.height}）"
-        )
+        return max(40, width - 10)
 
     def _refresh_round_actions(self) -> None:
         s = self._state()
         next_button = self.query_one("#btn-next-game", Button)
+        organize_button = self.query_one("#btn-organize-hand", Button)
         back_button = self.query_one("#btn-game-back", Button)
         tribute_pending = self.session.is_next_game_pending()
         back_button.disabled = self._ai_running or tribute_pending
         next_button.disabled = tribute_pending or not s.finished or s.match_finished
+        organize_button.disabled = (
+            tribute_pending or s.finished or not s.hands[self.human]
+            or not self._hand_organizer.available
+        )
         if tribute_pending:
             next_button.label = "已发牌"
         elif s.finished and s.match_finished:
@@ -738,7 +819,7 @@ class GameScreen(Screen):
         return current_trick_actions(self._state())
 
     def _locked_passed_players(self) -> List[int]:
-        """提取本轮仍被锁定的过牌玩家，按过牌发生顺序。"""
+        """提取对当前桌顶已过牌的玩家，按过牌发生顺序。"""
         return self.session.locked_passed_players()
 
     def _table_display_actions(
@@ -828,6 +909,38 @@ class GameScreen(Screen):
         )
         self.sub_title = result.message
         self._refresh_all()
+
+    def action_organize_hand(self) -> None:
+        s = self._state()
+        if self.session.is_next_game_pending() or s.finished or not s.hands[self.human]:
+            return
+        if self._hand_organizer.advance():
+            self._refresh_all()
+
+    def action_reset_organize(self) -> None:
+        s = self._state()
+        if self.session.is_next_game_pending() or s.finished:
+            return
+        self._hand_organizer.reset()
+        self._refresh_all()
+
+    def action_select_group(self) -> None:
+        s = self._state()
+        if (
+            self._ai_running or self.session.is_next_game_pending()
+            or s.finished or s.turn_index != self.human
+        ):
+            return
+        result = self._hand_organizer.playable_group_at(self._hand_cursor)
+        if result is None:
+            return
+        start, end, _ = result
+        indices = set(range(start, end))
+        self._hand_selected_indices = (
+            set() if self._hand_selected_indices == indices else indices
+        )
+        self.session.reset_hint_cycle()
+        self._do_render_hand()
 
     def action_next_game(self) -> None:
         if self._ai_running or self.session.is_next_game_pending():
@@ -921,7 +1034,10 @@ class GameScreen(Screen):
         self.app.push_screen(ErrorModal(str(error), title="保存失败"))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-next-game":
+        if event.button.id == "btn-organize-hand":
+            self.action_organize_hand()
+            event.stop()
+        elif event.button.id == "btn-next-game":
             self.action_next_game()
             event.stop()
         elif event.button.id == "btn-game-back":
@@ -935,6 +1051,8 @@ class GameScreen(Screen):
         if s.finished:
             self._refresh_all()
             self.session.save_finished_if_needed()
+            return
+        if s.turn_index == self.human:
             return
         self._ai_running = True
         self._refresh_all()

@@ -85,6 +85,7 @@ def save_history(
 
         data = {
             "version": "1.0",
+            "ruleset_version": state.ruleset_version,
             "game_id": game_id,
             "match_id": resolved_match_id,
             "round_index": round_index,

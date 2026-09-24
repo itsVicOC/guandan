@@ -36,6 +36,7 @@ from ..engine.rules.tributes import (
     legal_tribute_cards,
 )
 from ..engine.state import (
+    LEGACY_RULESET_VERSION,
     SEAT_NAMES,
     GameState,
     IllegalPlayError,
@@ -269,7 +270,7 @@ class GameSession:
         *,
         preserve_completed_trick: bool = False,
     ) -> dict[int, tuple[str, Pattern | None]]:
-        """Keep each seat's last visible action until that seat is asked to act again.
+        """Display each seat's last action, clearing old passes after a new top play.
 
         The desktop GUI opts into ``preserve_completed_trick`` so a collected
         trick remains readable during the pause before the next lead.  The TUI
@@ -290,6 +291,13 @@ class GameSession:
         if should_advance_display and self.last_display_turn != state.turn_index:
             self.displayed_table_actions.pop(state.turn_index, None)
             self.last_display_turn = state.turn_index
+
+        # 新规则中新的压牌会使此前的“过”失效；桌面也不能继续把它显示
+        # 成当前桌顶的过牌。旧局回放仍保留旧规则的锁定标记。
+        if state.table and state.ruleset_version != LEGACY_RULESET_VERSION:
+            for player, (kind, _) in list(self.displayed_table_actions.items()):
+                if kind == "pass" and player not in state.passed_players:
+                    self.displayed_table_actions.pop(player)
 
         for player, pattern in zip(self.current_table_players(), state.table):
             self.displayed_table_actions[player] = ("play", pattern)
@@ -320,7 +328,7 @@ class GameSession:
             return []
         from ..engine.replay import replay_event_states
 
-        snapshots = replay_event_states(state.history)
+        snapshots = replay_event_states(state.history, ruleset_version=state.ruleset_version)
         target = state.trick_number - 1
         actions: list[Event] = []
         previous_number = 0

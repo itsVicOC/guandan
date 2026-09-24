@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 from typing import Callable
 
-from PySide6.QtCore import QObject, QRect, QRunnable, Qt, QThreadPool, QTimer, Signal
+from PySide6.QtCore import QObject, QPoint, QRect, QRunnable, Qt, QThreadPool, QTimer, Signal
 from PySide6.QtGui import (
     QCloseEvent,
     QColor,
@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QLabel,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QPushButton,
     QSlider,
@@ -59,6 +60,7 @@ from ..storage import (
 )
 from ..ui.content import DIFFICULTIES, GAME_RULES_TEXT, GUI_CONTROLS_TEXT
 from ..ui.formatting import card_label, pattern_type_label, rank_value_label
+from ..ui.hand_organizer import HandOrganizer
 from ..ui.history import HISTORY_COLUMNS, history_entry_cells, history_statistics_text
 from ..ui.replay import ReplayCursor, replay_event_text, replay_state_text
 from ..ui.session import GameSession, PendingCardChoice, card_indices_for_selection
@@ -667,7 +669,9 @@ class ReplayPage(QWidget):
         if not self.events:
             raise ValueError("history has no events")
         try:
-            self._replay_cursor = ReplayCursor(self.events)
+            self._replay_cursor = ReplayCursor(
+                self.events, ruleset_version=history.get("ruleset_version", 1)
+            )
         except (IllegalPlayError, ValueError) as exc:
             raise ValueError("history event stream cannot be replayed") from exc
         self._auto_timer = QTimer(self)
@@ -1159,6 +1163,7 @@ class GamePage(QWidget):
         self.session = session
         self.selected_indices: set[int] = set()
         self.hand_cards: list[Card] = []
+        self.hand_organizer = HandOrganizer()
         self._ai_timer = QTimer(self)
         self._ai_timer.setSingleShot(True)
         # Give every public action enough dwell time to be perceived before the
@@ -1253,10 +1258,15 @@ class GamePage(QWidget):
         self.selection_preview.setObjectName("selectionPreview")
         hand_head.addWidget(self.selection_preview, 1)
         hand_head.addStretch(1)
+        self.organize_button = button("切换理牌", self.organize_hand, role="infoButton")
+        hand_head.addWidget(self.organize_button)
+        self.organize_menu_button = button("方式 ▾", self.show_organize_menu, role="quietButton")
+        hand_head.addWidget(self.organize_menu_button)
         hand_head.addWidget(self.hand_counter)
         hand_layout.addLayout(hand_head)
         self.hand = HandWidget()
         self.hand.card_clicked.connect(self.toggle_card)
+        self.hand.group_double_clicked.connect(self.toggle_group)
         self.hand_stack = QStackedWidget()
         self.hand_stack.setFixedHeight(HAND_HEIGHT)
         self.hand_stack.addWidget(self.hand)
@@ -1314,6 +1324,8 @@ class GamePage(QWidget):
             ("Enter", self.play_selected),
             ("P", self.pass_turn),
             ("T", self.hint),
+            ("S", self.organize_hand),
+            ("Shift+S", self.show_organize_menu),
             ("N", self.next_game),
             ("R", self.show_previous_trick),
             ("Escape", self.back_to_menu),
@@ -1398,6 +1410,11 @@ class GamePage(QWidget):
         self.pass_button.setEnabled(human_turn and bool(state.table))
         self.hint_button.setVisible(human_turn)
         self.hint_button.setEnabled(human_turn)
+        self.organize_button.setEnabled(
+            not tribute_pending and not state.finished
+            and bool(self.hand_cards) and self.hand_organizer.available
+        )
+        self.organize_menu_button.setEnabled(self.organize_button.isEnabled())
         self.clear_button.setVisible((human_turn or choosing) and bool(self.selected_indices))
         self.clear_button.setEnabled(bool(self.selected_indices))
         self.cancel_tribute_button.setVisible(choosing)
@@ -1419,7 +1436,10 @@ class GamePage(QWidget):
         self.back_button.setEnabled(not self._ai_running and not tribute_pending)
         self.back_button.setVisible(not tribute_pending)
         self.hand_stack.setCurrentWidget(self.result_panel if state.finished and not tribute_pending else self.hand)
-        self.hand_title.setText("本局结算" if state.finished and not tribute_pending else "我的手牌")
+        title = "本局结算" if state.finished and not tribute_pending else "我的手牌"
+        if not tribute_pending and not state.finished and self.hand_organizer.status:
+            title += f" · {self.hand_organizer.status}"
+        self.hand_title.setText(title)
         self.hand_counter.setVisible(not state.finished or tribute_pending)
         if state.finished and not tribute_pending:
             self._refresh_result(state)
@@ -1434,6 +1454,10 @@ class GamePage(QWidget):
                 return False, f"{verb}阶段 · 请选择一张高亮手牌"
             return len(cards) == 1, f"已选 {card_label(cards[0])} · 点击确认{verb}"
         if not cards:
+            current = self.hand_organizer.current
+            if current is not None:
+                suffix = " · 双击成组手牌可整组选中" if current.kind == "pattern" else ""
+                return False, current.summary + suffix
             return False, "选择手牌查看牌型" if human_turn else ""
         pattern = find_complete_pattern(cards, state.wild_card)
         if pattern is None:
@@ -1442,7 +1466,7 @@ class GamePage(QWidget):
         if not human_turn:
             return False, description
         if self.session.human in state.passed_players:
-            return False, f"{description} · 本墩已过牌"
+            return False, f"{description} · 已对当前桌顶过牌"
         if state.table and not pattern.can_be_played_on(state.table[-1], level=state.level):
             return False, f"{description} · 压不过桌面"
         return True, f"{description} · 可出牌"
@@ -1546,13 +1570,17 @@ class GamePage(QWidget):
             )
 
     def _refresh_hand(self, state: GameState) -> None:
-        self.hand_cards = sort_cards_for_display(
+        previously_selected = self.selected_cards()
+        base_cards = sort_cards_for_display(
             state.hands[self.session.human],
             level=state.level,
         )
-        self.selected_indices = {
-            index for index in self.selected_indices if index < len(self.hand_cards)
-        }
+        self.hand_organizer.sync(base_cards, state.wild_card, state.level)
+        arranged = not self.session.is_next_game_pending() and not state.finished
+        self.hand_cards = list(self.hand_organizer.cards) if arranged else base_cards
+        self.selected_indices = card_indices_for_selection(
+            self.hand_cards, tuple(previously_selected)
+        )
         choice = self.session.pending_next_game_choice()
         eligible_indices = (
             {index for index, card in enumerate(self.hand_cards) if card in choice.cards}
@@ -1567,6 +1595,8 @@ class GamePage(QWidget):
             wild_card=state.wild_card,
             selected_indices=self.selected_indices,
             eligible_indices=eligible_indices,
+            groups=(self.hand_organizer.current.groups
+                    if arranged and self.hand_organizer.current is not None else None),
         )
         self.hand_counter.setText(
             f"{len(self.hand_cards)} 张 · 可选 {len(eligible_indices)} 张"
@@ -1590,6 +1620,19 @@ class GamePage(QWidget):
             self.selected_indices.remove(index)
         else:
             self.selected_indices.add(index)
+        self.refresh()
+
+    def toggle_group(self, index: int) -> None:
+        state = self.session.display_state()
+        if state.finished or state.turn_index != self.session.human or self.session.is_next_game_pending():
+            return
+        result = self.hand_organizer.playable_group_at(index)
+        if result is None:
+            return
+        start, end, _ = result
+        indices = set(range(start, end))
+        self.selected_indices = set() if self.selected_indices == indices else indices
+        self.session.reset_hint_cycle()
         self.refresh()
 
     def selected_cards(self) -> list:
@@ -1632,6 +1675,38 @@ class GamePage(QWidget):
             result.suggested_cards,
         )
         self.refresh()
+
+    def organize_hand(self) -> None:
+        if not self.organize_button.isEnabled():
+            return
+        if self.hand_organizer.advance():
+            self.refresh()
+
+    def choose_organization(self, index: int) -> None:
+        if self.organize_menu_button.isEnabled() and self.hand_organizer.select(index):
+            self.refresh()
+
+    def reset_organization(self) -> None:
+        if self.organize_menu_button.isEnabled():
+            self.hand_organizer.reset()
+            self.refresh()
+
+    def show_organize_menu(self) -> None:
+        if not self.organize_menu_button.isEnabled():
+            return
+        menu = QMenu(self.organize_menu_button)
+        menu.addAction("恢复默认顺序", self.reset_organization)
+        menu.addSeparator()
+        for index, arrangement in enumerate(self.hand_organizer.arrangements):
+            action = menu.addAction(f"{index + 1}. {arrangement.name} · {arrangement.summary}")
+            action.setCheckable(True)
+            action.setChecked(arrangement is self.hand_organizer.current)
+            action.triggered.connect(
+                lambda checked=False, position=index: self.choose_organization(position)
+            )
+        menu.exec(self.organize_menu_button.mapToGlobal(
+            QPoint(0, self.organize_menu_button.height())
+        ))
 
     def clear_selection(self) -> None:
         self.session.reset_hint_cycle()

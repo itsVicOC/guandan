@@ -8,6 +8,7 @@ from PySide6.QtGui import (
     QColor,
     QFont,
     QLinearGradient,
+    QMouseEvent,
     QPainter,
     QPaintEvent,
     QPen,
@@ -18,6 +19,7 @@ from PySide6.QtWidgets import QPushButton, QSizePolicy, QWidget
 from ..engine.card import Card, Suit
 from ..engine.hand import sort_cards
 from ..ui.formatting import rank_label, suit_symbol_plain
+from ..ui.hand_organizer import HandGroup
 from .theme import GOLD, GOLD_BRIGHT
 
 CARD_WIDTH = 72
@@ -25,7 +27,7 @@ CARD_HEIGHT = 104
 CARD_GAP = 8
 CARD_OVERLAP_MIN = 32
 SELECT_LIFT = 14
-HAND_HEIGHT = CARD_HEIGHT + SELECT_LIFT + 6
+HAND_HEIGHT = CARD_HEIGHT + SELECT_LIFT + 10
 NORMAL_SUIT_FONT_SIZE = 44
 RED_SUIT_COLOR = "#c72f3e"
 BLACK_SUIT_COLOR = "#15201c"
@@ -74,6 +76,7 @@ class CardButton(QPushButton):
     """Clickable playing card bound to its position in the rendered hand."""
 
     clicked_index = Signal(int)
+    double_clicked_index = Signal(int)
 
     def __init__(
         self, index: int, card: Card, *, wild: bool = False,
@@ -96,6 +99,13 @@ class CardButton(QPushButton):
 
     def _emit_index(self) -> None:
         self.clicked_index.emit(self.index)
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.double_clicked_index.emit(self.index)
+            event.accept()
+            return
+        super().mouseDoubleClickEvent(event)
 
     def set_visual_state(
         self, *, wild: bool, selected: bool, eligible: bool | None = None
@@ -245,6 +255,7 @@ class HandWidget(QWidget):
     """Single-row overlapping hand with lift-to-select interaction."""
 
     card_clicked = Signal(int)
+    group_double_clicked = Signal(int)
 
     def __init__(self) -> None:
         super().__init__()
@@ -252,6 +263,8 @@ class HandWidget(QWidget):
         self._wild_card: Card | None = None
         self._selected: set[int] = set()
         self._eligible: set[int] | None = None
+        self._group_starts: set[int] = set()
+        self._group_ranges: list[tuple[int, int, HandGroup]] = []
         self._buttons: list[CardButton] = []
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMinimumHeight(HAND_HEIGHT)
@@ -264,12 +277,20 @@ class HandWidget(QWidget):
         wild_card: Card | None,
         selected_indices: set[int],
         eligible_indices: set[int] | None = None,
+        groups: Sequence[HandGroup] | None = None,
     ) -> None:
         cards_changed = cards != self._cards
         self._cards = list(cards)
         self._wild_card = wild_card
         self._selected = set(selected_indices)
         self._eligible = None if eligible_indices is None else set(eligible_indices)
+        self._group_ranges = []
+        position = 0
+        for group in groups or ():
+            end = position + len(group.cards)
+            self._group_ranges.append((position, end, group))
+            position = end
+        self._group_starts = {start for start, _, _ in self._group_ranges if start}
         if cards_changed:
             self._rebuild_buttons()
         else:
@@ -280,6 +301,7 @@ class HandWidget(QWidget):
                     selected=index in self._selected,
                     eligible=None if self._eligible is None else index in self._eligible,
                 )
+                card_button.setToolTip(self._card_tooltip(index))
         self._position_cards()
 
     def resizeEvent(self, event: QResizeEvent) -> None:
@@ -312,28 +334,56 @@ class HandWidget(QWidget):
             card_button.setEnabled(self._eligible is None or index in self._eligible)
             card_button.setParent(self)
             card_button.clicked_index.connect(self.card_clicked.emit)
+            card_button.double_clicked_index.connect(self.group_double_clicked.emit)
+            card_button.setToolTip(self._card_tooltip(index))
             card_button.show()
             self._buttons.append(card_button)
+
+    def _card_tooltip(self, index: int) -> str:
+        for start, end, group in self._group_ranges:
+            if start <= index < end:
+                return (
+                    f"{group.label} · 双击选中整组"
+                    if group.pattern is not None else group.label
+                )
+        return ""
 
     def _position_cards(self) -> None:
         count = len(self._buttons)
         if not count:
             return
         usable_width = max(CARD_WIDTH, self.width() - 8)
+        boundary_count = len(self._group_starts)
+        # Cards in one combination form a compact, slightly stepped pile;
+        # a wider gap makes each pile readable without a label above it.
+        group_gap = (
+            min(24, max(0, (usable_width - CARD_WIDTH - (count - 1) * 18)
+                        // boundary_count))
+            if boundary_count else 0
+        )
         if count == 1:
             step: float = float(CARD_WIDTH + CARD_GAP)
         else:
-            fit_step = (usable_width - CARD_WIDTH) / (count - 1)
-            step = min(CARD_WIDTH + CARD_GAP, max(CARD_OVERLAP_MIN, fit_step))
-        total_width = CARD_WIDTH + (count - 1) * step
+            fit_step = (usable_width - CARD_WIDTH - boundary_count * group_gap) / (count - 1)
+            step = min(34 if self._group_ranges else CARD_WIDTH + CARD_GAP,
+                       max(18 if self._group_ranges else CARD_OVERLAP_MIN, fit_step))
+        total_width = CARD_WIDTH + (count - 1) * step + boundary_count * group_gap
         start_x = max(4, int((self.width() - total_width) / 2))
+        gaps_seen = 0
+        pile_index = 0
         for index, card_button in enumerate(self._buttons):
-            y = 1 if index in self._selected else SELECT_LIFT + 1
-            card_button.move(start_x + int(index * step), y)
+            if index in self._group_starts:
+                gaps_seen += 1
+                pile_index = 0
+            depth = min(pile_index * 2, 8) if self._group_ranges else 0
+            y = (1 if index in self._selected else SELECT_LIFT + 1) + depth
+            card_button.move(start_x + int(index * step) + gaps_seen * group_gap, y)
             card_button.raise_()
+            pile_index += 1
         for index in sorted(self._selected):
             if 0 <= index < len(self._buttons):
                 self._buttons[index].raise_()
+        self.update()
 
 
 class CardBackWidget(QWidget):

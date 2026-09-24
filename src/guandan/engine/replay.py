@@ -18,13 +18,22 @@ from .events import (
     TributeSent,
     TurnPlayed,
 )
-from .state import GameState, IllegalPlayError, claim, make_initial_state, pass_turn, play_pattern
+from .state import (
+    CURRENT_RULESET_VERSION,
+    GameState,
+    IllegalPlayError,
+    claim,
+    make_initial_state,
+    pass_turn,
+    play_pattern,
+)
 
 
 def replay_events(
     events: Sequence[Event],
     *,
     allow_incomplete_tail: bool = False,
+    ruleset_version: int = CURRENT_RULESET_VERSION,
 ) -> GameState:
     """Rebuild a state from a complete, ordered event stream.
 
@@ -32,13 +41,24 @@ def replay_events(
     for snapshot-less saves and deliberately validates every state-changing
     event while applying it.
     """
-    state, _ = _replay_events(events, allow_incomplete_tail=allow_incomplete_tail)
+    state, _ = _replay_events(
+        events,
+        allow_incomplete_tail=allow_incomplete_tail,
+        ruleset_version=ruleset_version,
+    )
     return state
 
 
-def replay_event_states(events: Sequence[Event]) -> tuple[GameState, ...]:
+def replay_event_states(
+    events: Sequence[Event], *, ruleset_version: int = CURRENT_RULESET_VERSION
+) -> tuple[GameState, ...]:
     """Build one immutable-by-convention state snapshot per persisted event."""
-    _, states = _replay_events(events, allow_incomplete_tail=False, capture_states=True)
+    _, states = _replay_events(
+        events,
+        allow_incomplete_tail=False,
+        capture_states=True,
+        ruleset_version=ruleset_version,
+    )
     return tuple(states)
 
 
@@ -47,6 +67,7 @@ def _replay_events(
     *,
     allow_incomplete_tail: bool,
     capture_states: bool = False,
+    ruleset_version: int,
 ) -> tuple[GameState, list[GameState]]:
     if not events or not isinstance(events[0], ShuffleDeal):
         raise ValueError("event stream must start with ShuffleDeal")
@@ -57,6 +78,7 @@ def _replay_events(
         first_player=shuffle.first_player,
         seed=shuffle.seed,
         team_levels=shuffle.team_levels,
+        ruleset_version=ruleset_version,
     )
     if state.history[0] != shuffle:
         raise ValueError("ShuffleDeal does not match the reproducible deal")

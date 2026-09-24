@@ -73,7 +73,9 @@ class ReplayScreen(Screen):
         if not self._events:
             raise ValueError("history has no events")
         try:
-            self._cursor = ReplayCursor(self._events)
+            self._cursor = ReplayCursor(
+                self._events, ruleset_version=history.get("ruleset_version", 1)
+            )
         except (IllegalPlayError, ValueError) as exc:
             # Normalise engine errors to ValueError so screen constructors only
             # ever signal "unusable history" one way. Without this an

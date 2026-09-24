@@ -524,6 +524,7 @@ class TestSavegame:
                 assert loaded["game_id"] == "test_game_001"
                 assert loaded["metadata"]["player_seat"] == 0
                 assert loaded["metadata"]["seed"] == 42
+                assert loaded["ruleset_version"] == 2
                 assert isinstance(loaded["events"], list)
                 assert len(loaded["events"]) > 0
                 assert "state" in loaded
@@ -567,6 +568,7 @@ class TestSavegame:
                 assert restored.team_levels_final is None
                 assert restored.match_finished is False
                 assert restored.winner_team is None
+                assert restored.ruleset_version == 2
 
     def test_restore_game_state_replays_tribute_events_without_snapshot(self):
         state = make_initial_state(level=5, first_player=0, seed=42)
@@ -596,6 +598,7 @@ class TestSavegame:
                 save_game(state, "legacy", 0, [None, 2, 2, 2], 42)
             payload = json.loads(path.read_text(encoding="utf-8"))
             payload["version"] = "1.0"
+            payload.pop("ruleset_version")
             payload.pop("state")
             path.write_text(json.dumps(payload), encoding="utf-8")
             with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
@@ -603,6 +606,7 @@ class TestSavegame:
 
             assert loaded is not None
             assert loaded["version"] == "3.0"
+            assert loaded["ruleset_version"] == 1
             assert loaded["match_id"] == "legacy"
             assert loaded["round_index"] == 1
             assert loaded["elapsed_seconds"] == 0
@@ -616,6 +620,8 @@ class TestSavegame:
                 save_game(state, "legacy-v2", 0, [None, 2, 2, 2], 42)
             payload = json.loads(path.read_text(encoding="utf-8"))
             payload["version"] = "2.0"
+            payload.pop("ruleset_version")
+            payload["state"].pop("ruleset_version")
             for key in ("match_id", "round_index", "elapsed_seconds"):
                 payload.pop(key)
                 payload["metadata"].pop(key)
@@ -626,7 +632,39 @@ class TestSavegame:
 
             assert loaded is not None
             assert loaded["version"] == "3.0"
+            assert loaded["ruleset_version"] == 1
             assert loaded["match_id"] == "legacy-v2"
+
+    def test_unmarked_legacy_mid_trick_save_keeps_original_turn(self, tmp_path: Path):
+        path = tmp_path / "savegame.json"
+        state = make_initial_state(level=5, first_player=2, seed=42, ruleset_version=1)
+        west_card = min(state.hands[2], key=lambda card: card.rank)
+        west_play = find_complete_pattern([west_card], state.wild_card)
+        assert west_play is not None
+        north_play = next(
+            pattern
+            for card in state.hands[3]
+            if (pattern := find_complete_pattern([card], state.wild_card)) is not None
+            and pattern.can_be_played_on(west_play, level=state.level)
+        )
+        play_pattern(state, 2, west_play)
+        pass_turn(state, 1)
+        pass_turn(state, 0)
+        play_pattern(state, 3, north_play)
+        pass_turn(state, 2)
+        assert state.turn_index == 3
+
+        with patch("guandan.storage.savegame.get_savegame_path", return_value=path):
+            save_game(state, "old-mid-trick", 0, [None, 2, 2, 2], 42)
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload.pop("ruleset_version")
+            payload["state"].pop("ruleset_version")
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            loaded = load_game()
+
+        assert loaded is not None
+        assert loaded["ruleset_version"] == 1
+        assert restore_game_state(loaded) == state
 
     def test_load_game_no_savegame(self):
         """无存档时返回 None。"""
@@ -819,6 +857,7 @@ class TestHistory:
                 detail = load_history_detail("game001")
                 assert detail is not None
                 assert detail["game_id"] == "game001"
+                assert detail["ruleset_version"] == 2
                 assert isinstance(detail["events"], list)
                 assert len(detail["events"]) > 0
 

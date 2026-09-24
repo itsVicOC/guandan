@@ -9,7 +9,8 @@ from guandan.ai import make_strategy
 from guandan.ai.play import play_or_pass
 from guandan.engine.events import Pass, TributeResisted
 from guandan.engine.replay import replay_events
-from guandan.engine.state import make_initial_state
+from guandan.engine.rules.patterns import find_complete_pattern
+from guandan.engine.state import IllegalPlayError, make_initial_state, pass_turn, play_pattern
 from guandan.ui.replay import ReplayCursor
 
 
@@ -82,3 +83,32 @@ def test_replay_cursor_precomputes_exact_event_states() -> None:
     assert cursor.state.history == []
     assert cursor.set_index(10_000) == len(state.history) - 1
     assert cursor.state.hands == state.hands
+
+
+def test_legacy_pass_lockout_stream_replays_with_its_original_ruleset() -> None:
+    state = make_initial_state(level=5, first_player=2, seed=42, ruleset_version=1)
+    west_card = min(state.hands[2], key=lambda card: card.rank)
+    west_play = find_complete_pattern([west_card], state.wild_card)
+    assert west_play is not None
+    north_play = next(
+        pattern
+        for card in state.hands[3]
+        if (pattern := find_complete_pattern([card], state.wild_card)) is not None
+        and pattern.can_be_played_on(west_play, level=state.level)
+    )
+
+    play_pattern(state, 2, west_play)
+    pass_turn(state, 1)
+    pass_turn(state, 0)
+    play_pattern(state, 3, north_play)
+    pass_turn(state, 2)
+    assert state.turn_index == 3
+    assert state.table == []
+    next_play = find_complete_pattern([state.hands[3][0]], state.wild_card)
+    assert next_play is not None
+    play_pattern(state, 3, next_play)
+
+    assert replay_events(state.history, ruleset_version=1) == state
+    assert ReplayCursor(state.history, ruleset_version=1).state.hands == state.hands
+    with pytest.raises(IllegalPlayError, match="not player's turn"):
+        replay_events(state.history, ruleset_version=2)

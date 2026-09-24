@@ -38,6 +38,16 @@ QWidget#page {
     );
 }
 QDialog { background: #101a17; }
+QMenu {
+    background: #14241e;
+    color: #f6f1e5;
+    border: 1px solid #4b6858;
+    border-radius: 9px;
+    padding: 6px;
+}
+QMenu::item { padding: 7px 20px; border-radius: 5px; }
+QMenu::item:selected { background: #245747; color: #fff5d8; }
+QMenu::separator { height: 1px; background: #395447; margin: 5px 7px; }
 QListWidget {
     background: #091411;
     color: #f1eee5;

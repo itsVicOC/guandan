@@ -9,7 +9,7 @@ State 组成：
 - hands: 4 家手牌（list of list[Card]）
 - turn_index: 当前轮到的玩家
 - table: 本轮出牌区（按出牌顺序）
-- pass_count: 本轮已过牌数
+- passed_players: 对当前桌顶已过牌的玩家（旧规则局为整墩过牌玩家）
 - leader: 本轮的先出者
 - history: 已发生的事件
 - finish_order: 已出完牌的玩家顺序（空表示未结束）
@@ -36,8 +36,11 @@ from .deck import deal, make_deck, shuffle_deck
 from .events import Event, ShuffleDeal
 from .hand import Pattern, PatternType
 
-
 # 队伍：0=东-西（player 0 & 2），1=南-北（player 1 & 3）
+LEGACY_RULESET_VERSION = 1  # 旧局：过牌锁定至整墩结束
+CURRENT_RULESET_VERSION = 2  # 新局：每次压牌后重新询问其他在场玩家
+
+
 def team_of(player: int) -> int:
     return player % 2
 
@@ -85,7 +88,7 @@ class GameState:
     turn_index: int  # 0-3
     team_levels: list[int] = field(default_factory=list)
     table: list[Pattern] = field(default_factory=list)
-    # 本轮已过牌的玩家集合（spec 规则 3：一旦过牌，本圈不能再出）
+    # 对当前桌顶已过牌的玩家；旧规则局中保留为整墩过牌集合。
     passed_players: set[int] = field(default_factory=set)
     leader: Optional[int] = None  # 本轮先手
     history: list[Event] = field(default_factory=list)
@@ -104,6 +107,7 @@ class GameState:
     guo_a_failed: bool = False
     match_finished: bool = False
     winner_team: Optional[int] = None
+    ruleset_version: int = CURRENT_RULESET_VERSION
 
     def hand(self, player: int) -> list[Card]:
         return self.hands[player]
@@ -124,6 +128,11 @@ class GameState:
     def __post_init__(self) -> None:
         if not self.team_levels:
             self.team_levels = [self.level, self.level]
+        if type(self.ruleset_version) is not int or self.ruleset_version not in (
+            LEGACY_RULESET_VERSION,
+            CURRENT_RULESET_VERSION,
+        ):
+            raise ValueError("unsupported ruleset version")
 
 
 # ---- 玩家行动 ----
@@ -140,15 +149,14 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
     - player == state.turn_index
     - pattern.cards 全部在 player 手牌中
     - 当前 table 为空（新一轮先手）或 pattern 可压 table[-1]
-    - 玩家未在该轮过牌（spec 规则 3）
+    - 玩家未对当前桌顶过牌
     """
     if state.finished:
         raise IllegalPlayError("game is finished")
     if player != state.turn_index:
         raise IllegalPlayError(f"not player's turn: {player} != {state.turn_index}")
     if player in state.passed_players:
-        # spec 规则 3：已过牌玩家本圈不能再出
-        raise IllegalPlayError(f"player {player} already passed this trick")
+        raise IllegalPlayError(f"player {player} already passed on this top play")
 
     # Pattern 是跨 UI、AI 和存档边界传递的数据，不能信任调用方给出的
     # type/rank/length。必须确认实际选出的整组牌确实能按该解释构成合法牌型。
@@ -202,9 +210,10 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
     # 更新本轮 leader
     if state.leader is None:
         state.leader = player
-    # 注意：不清空 passed_players —— spec 规则 3 的"本圈"是整个 trick，
-    # 已过牌的玩家在 trick 结束前一直锁出，不管 leader 中途再出几次。
-    # passed_players 只在 _end_trick_or_jiefeng 里清空。
+    # 一次过牌只回应当时的桌顶。有人压牌后，各家重新获得回应机会。
+    # 旧局保持原有锁定行为，确保旧存档与事件流可按原规则重建。
+    if state.ruleset_version == CURRENT_RULESET_VERSION:
+        state.passed_players.clear()
 
     # 累计本队炸弹数
     from .rules.comparator import is_bomb_type
@@ -230,7 +239,7 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
             return
         # 1st / 2nd finisher：不立即触发接风，要等其他 3 人是否压牌
         # 让 turn 继续推进，下家可以选择压牌或过牌
-        # 用 _next_active_player 跳过已过牌的玩家
+        # 跳过已出完或对当前桌顶过牌的玩家
         state.turn_index = _next_active_player(state, player)
         return
 
@@ -258,7 +267,7 @@ def pass_turn(state: GameState, player: int) -> None:
         PassEvent(player=player, hand_remaining=len(state.hands[player]))
     )
 
-    # 记录该玩家本轮已过牌（spec 规则 3：本圈不能再出）
+    # 记录对当前桌顶的过牌（旧局则锁定至整墩结束）
     state.passed_players.add(player)
 
     # 检查本轮是否结束：所有"能行动且不是当前最大牌玩家"的人都过了
@@ -323,10 +332,10 @@ def _next_player(state: GameState, current: int) -> int:
 
 
 def _next_active_player(state: GameState, current: int) -> int:
-    """下一个"未过牌且未出完"的玩家（按逆时针）。
+    """下一个尚未出完、且未对当前桌顶过牌的玩家（按逆时针）。
 
     区别于 `_next_player`：后者只跳过 finish_order，本函数同时跳过
-    `passed_players`（spec 规则 3：已过牌玩家本圈不能再被轮询）。
+    `passed_players`。新规则中每次压牌都会清空该集合。
     """
     nxt = next_seat_counterclockwise(current)
     visited = 0
@@ -512,6 +521,7 @@ def make_initial_state(
     first_player: int = 0,
     seed: Optional[int] = None,
     team_levels: Optional[list[int] | tuple[int, int]] = None,
+    ruleset_version: int = CURRENT_RULESET_VERSION,
 ) -> GameState:
     """构造一局的初始状态（发牌完毕）。
 
@@ -520,6 +530,7 @@ def make_initial_state(
         first_player: 首发起家索引
         seed: 随机种子（用于复现）
         team_levels: 本局开始时两队各自级牌。未传入时两队都视为 level。
+        ruleset_version: 规则版本。旧存档重放传 1，新局默认 2。
     """
     if not RANK_2 <= level <= RANK_A:
         raise ValueError(f"level must be 2..14, got {level}")
@@ -558,6 +569,7 @@ def make_initial_state(
         turn_index=first_player,
         team_levels=initial_team_levels,
         leader=first_player,
+        ruleset_version=ruleset_version,
     )
     # 记录发牌事件
     state.history.append(

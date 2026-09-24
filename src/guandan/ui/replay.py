@@ -15,16 +15,18 @@ from ..engine.events import (
     TurnPlayed,
 )
 from ..engine.replay import replay_event_states
-from ..engine.state import SEAT_NAMES, GameState
+from ..engine.state import CURRENT_RULESET_VERSION, SEAT_NAMES, GameState
 from .formatting import card_label, pattern_type_label, rank_value_label
 
 
 class ReplayCursor:
     """Validated replay timeline with O(1) state lookup while navigating."""
 
-    def __init__(self, events: list[Event]) -> None:
+    def __init__(
+        self, events: list[Event], *, ruleset_version: int = CURRENT_RULESET_VERSION
+    ) -> None:
         self.events = tuple(events)
-        self.states = replay_event_states(self.events)
+        self.states = replay_event_states(self.events, ruleset_version=ruleset_version)
         self.index = len(self.events) - 1
 
     @property

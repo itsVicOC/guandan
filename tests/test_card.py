@@ -211,13 +211,13 @@ class TestVersionLabel:
     def test_version_label_renders_pep440_beta(self):
         from guandan import __version__, version_label
 
-        assert __version__ == "0.8.2b2"
-        assert version_label() == "v0.8.2-beta.2"
+        assert __version__ == "0.8.3b1"
+        assert version_label() == "v0.8.3-beta.1"
 
     def test_version_label_accepts_a_prefix(self):
         from guandan import version_label
 
-        assert version_label("BETA  ") == "BETA  0.8.2-beta.2"
+        assert version_label("BETA  ") == "BETA  0.8.3-beta.1"
 
     def test_version_label_handles_stages_and_finals(self):
         from guandan import version_label

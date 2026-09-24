@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import asyncio
 import random
+from collections import Counter
 from unittest.mock import patch
 
+from rich.cells import cell_len
 from rich.text import Text
 from textual.widgets import Button, Static
 
@@ -389,8 +391,106 @@ def test_tui_hint_selects_and_cycles_legal_responses() -> None:
     asyncio.run(run())
 
 
-def test_locked_passes_remain_visible_after_later_play() -> None:
-    """Earlier passes in the same trick must remain visible after a later press."""
+def test_tui_organizes_during_ai_turn_and_keeps_selection_and_cursor() -> None:
+    async def run() -> None:
+        selected_card = Card(RANK_3, Suit.DIAMONDS)
+        hand = [
+            Card(RANK_3, Suit.HEARTS), selected_card,
+            Card(RANK_4, Suit.HEARTS), Card(RANK_5, Suit.HEARTS),
+            Card(RANK_6, Suit.HEARTS), Card(RANK_7, Suit.HEARTS),
+            Card(RANK_8, Suit.CLUBS),
+        ]
+        state = GameState(
+            level=RANK_2,
+            wild_card=None,
+            hands=[hand, [Card(RANK_8, Suit.SPADES)], [], []],
+            turn_index=1,
+            leader=1,
+        )
+        app = GuandanApp()
+        async with app.run_test(size=(80, 48)) as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            screen._ai_running = True
+            await pilot.pause()
+
+            sort_button = screen.query_one("#btn-organize-hand", Button)
+            assert not sort_button.disabled
+            selected_index = screen._hand_cards.index(selected_card)
+            screen._hand_selected_indices = {selected_index}
+            screen._hand_cursor = selected_index
+            screen._do_render_hand()
+
+            await pilot.click("#btn-organize-hand")
+            await pilot.pause()
+            assert [screen._hand_cards[index] for index in screen._hand_selected_indices] == [
+                selected_card
+            ]
+            assert screen._hand_cards[screen._hand_cursor] == selected_card
+            assert screen._hand_organizer.status.startswith("牌型·综合 ")
+            assert screen._hand_group_starts
+            assert sort_button.region.width > 0
+            hand_text = _plain(str(screen.query_one("#my-hand", Static).content))
+            assert "│" not in hand_text and "散牌" not in hand_text
+            assert max(cell_len(row) for row in hand_text.splitlines()[2:]) <= 70
+
+            for _ in screen._hand_organizer.arrangements:
+                await pilot.press("s")
+                await pilot.pause()
+                if screen._hand_organizer.current.kind == "rank":
+                    break
+            assert screen._hand_organizer.status.startswith("点数理 ")
+            assert [screen._hand_cards[index] for index in screen._hand_selected_indices] == [
+                selected_card
+            ]
+            state.turn_index = 0
+            screen._ai_running = False
+            screen.action_play()
+            assert state.table[-1].cards == (selected_card,)
+
+    asyncio.run(run())
+
+
+def test_tui_can_select_and_play_a_whole_organized_group() -> None:
+    async def run() -> None:
+        hand = [
+            Card(RANK_3, Suit.HEARTS), Card(RANK_3, Suit.DIAMONDS),
+            Card(RANK_4, Suit.HEARTS), Card(RANK_5, Suit.HEARTS),
+            Card(RANK_6, Suit.HEARTS), Card(RANK_7, Suit.HEARTS),
+            Card(RANK_8, Suit.CLUBS),
+        ]
+        state = GameState(
+            level=RANK_2, wild_card=None,
+            hands=[hand, [], [], []], turn_index=0, leader=0,
+        )
+        app = GuandanApp()
+        async with app.run_test(size=(80, 48)) as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            await pilot.pause()
+            await pilot.press("s")
+            await pilot.pause()
+            screen._hand_cursor = next(
+                index for index in range(len(screen._hand_cards))
+                if screen._hand_organizer.playable_group_at(index) is not None
+            )
+            group = screen._hand_organizer.playable_group_at(screen._hand_cursor)
+            assert group is not None
+            await pilot.press("g")
+            assert Counter(
+                screen._hand_cards[index] for index in screen._hand_selected_indices
+            ) == Counter(group[2].cards)
+            await pilot.press("g")
+            assert not screen._hand_selected_indices
+            await pilot.press("g")
+            screen.action_play()
+            assert Counter(state.table[-1].cards) == Counter(group[2].cards)
+
+    asyncio.run(run())
+
+
+def test_old_passes_clear_from_table_after_later_play() -> None:
+    """A new top play must stop showing previous passes as active responses."""
     async def run() -> None:
         state = GameState(
             level=2,
@@ -415,11 +515,11 @@ def test_locked_passes_remain_visible_after_later_play() -> None:
             app.push_screen(screen)
             await pilot.pause()
 
-            assert screen._locked_passed_players() == [3, 2]
+            assert screen._locked_passed_players() == []
             table = screen.query_one("#table")
             table_text = _plain(table.content)
-            assert "北: 过牌" in table_text
-            assert "西: 过牌" in table_text
+            assert "北: 过牌" not in table_text
+            assert "西: 过牌" not in table_text
 
     asyncio.run(run())
 
@@ -535,6 +635,8 @@ def test_tui_current_pass_order_ignores_previous_tricks() -> None:
                 Pass(player=3, hand_remaining=1),
                 Pass(player=2, hand_remaining=1),
                 TurnPlayed(player=1, pattern=press, hand_remaining=0),
+                Pass(player=3, hand_remaining=0),
+                Pass(player=2, hand_remaining=0),
             ],
         )
 
