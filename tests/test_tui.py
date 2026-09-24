@@ -67,6 +67,47 @@ def _triple_pair(triple_rank: int, pair_rank: int) -> Pattern:
     return Pattern(PatternType.TRIPLE_PAIR, triple_rank, 1, cards, 0)
 
 
+def test_partner_cards_appear_after_human_finishes_and_hide_on_next_deal() -> None:
+    async def run() -> None:
+        partner_card = Card(RANK_7, Suit.CLUBS)
+        state = GameState(
+            level=2,
+            wild_card=None,
+            hands=[
+                [Card(RANK_3, Suit.HEARTS)],
+                [Card(RANK_4, Suit.SPADES)],
+                [partner_card],
+                [Card(RANK_5, Suit.DIAMONDS)],
+            ],
+            turn_index=0,
+            leader=0,
+        )
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state, human=0)
+            with patch.object(screen, "_maybe_ai_turn"):
+                app.push_screen(screen)
+                await pilot.pause()
+                hand = screen.query_one("#my-hand", Static)
+                assert "对家剩余手牌" not in _plain(hand.content)
+
+                state.hands[0].clear()
+                state.finish_order.append(0)
+                screen._refresh_all()
+                assert "对家剩余手牌 · 1 张" in _plain(hand.content)
+                assert "梅7♣" in _plain(hand.content)
+
+                state.finished = True
+                state.finish_order.extend((1, 3))
+                state.team_levels_final = [3, 2]
+                screen._game_saved = True
+                assert screen.session.prepare_next_game().ok
+                screen._refresh_all()
+                assert "对家剩余手牌" not in _plain(hand.content)
+
+    asyncio.run(run())
+
+
 def test_tribute_choice_modal_renders_and_returns_selected_card() -> None:
     async def run() -> None:
         cards = (
@@ -485,6 +526,62 @@ def test_tui_can_select_and_play_a_whole_organized_group() -> None:
             await pilot.press("g")
             screen.action_play()
             assert Counter(state.table[-1].cards) == Counter(group[2].cards)
+
+    asyncio.run(run())
+
+
+def test_tui_manual_lock_works_during_ai_turn_and_releases_after_play() -> None:
+    async def run() -> None:
+        pair = [Card(RANK_3, Suit.HEARTS), Card(RANK_3, Suit.DIAMONDS)]
+        hand = [*pair, Card(RANK_4, Suit.HEARTS), Card(RANK_5, Suit.HEARTS),
+                Card(RANK_6, Suit.HEARTS), Card(RANK_7, Suit.HEARTS)]
+        state = GameState(
+            level=RANK_2, wild_card=None,
+            hands=[hand, [Card(RANK_8, Suit.SPADES)], [], []],
+            turn_index=1, leader=1,
+        )
+        app = GuandanApp()
+        async with app.run_test(size=(80, 48)) as pilot:
+            screen = GameScreen(difficulty=0, existing_state=state)
+            app.push_screen(screen)
+            screen._ai_running = True
+            await pilot.pause()
+            for card in pair:
+                screen._hand_cursor = screen._hand_cards.index(card)
+                screen.action_toggle_select()
+            lock_button = screen.query_one("#btn-lock-hand", Button)
+            assert not lock_button.disabled
+            for button_id in (
+                "btn-organize-hand", "btn-lock-hand", "btn-next-game", "btn-game-back"
+            ):
+                button = screen.query_one(f"#{button_id}", Button)
+                assert button.region.x + button.region.width <= 80
+            await pilot.click("#btn-lock-hand")
+            await pilot.pause()
+            assert screen._hand_organizer.locked_count == 1
+            assert screen._hand_organizer.display_groups[0].locked
+            assert "🔒" in _plain(str(screen.query_one("#my-hand", Static).content))
+            assert not screen._hand_selected_indices
+
+            await pilot.press("s")
+            assert screen._hand_organizer.display_groups[0].locked
+            screen._hand_cursor = 0
+            await pilot.press("k")
+            assert screen._hand_organizer.locked_count == 0
+
+            for card in pair:
+                screen._hand_cursor = screen._hand_cards.index(card)
+                screen.action_toggle_select()
+            await pilot.press("k")
+            assert screen._hand_organizer.locked_count == 1
+            screen._hand_cursor = 0
+            screen.action_select_group()
+            assert Counter(screen._hand_cards[i] for i in screen._hand_selected_indices) == Counter(pair)
+            state.turn_index = 0
+            screen._ai_running = False
+            screen.action_play()
+            assert state.table[-1].type == PatternType.PAIR
+            assert screen._hand_organizer.locked_count == 0
 
     asyncio.run(run())
 

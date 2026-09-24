@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Collection
 from dataclasses import dataclass
 from itertools import combinations, groupby
 from typing import Literal, Sequence
 
 from ..engine.card import Card
 from ..engine.hand import Pattern, PatternType, comparison_rank, effective_rank
-from ..engine.rules.patterns import detect_patterns
+from ..engine.rules.patterns import detect_patterns, find_complete_pattern
 from .formatting import pattern_type_label, rank_value_label
 
 FOCUS_TYPES = (
@@ -46,6 +47,7 @@ class HandGroup:
     cards: tuple[Card, ...]
     label: str
     pattern: Pattern | None = None
+    locked: bool = False
 
 
 @dataclass(frozen=True)
@@ -303,25 +305,87 @@ def build_hand_arrangements(
     return tuple(layouts)
 
 
+def remap_selected_indices(
+    previous_cards: Sequence[Card], selected_indices: set[int], new_cards: Sequence[Card]
+) -> set[int]:
+    """Keep the selected occurrence when identical cards from both decks move."""
+    seen: Counter[Card] = Counter()
+    selected: set[tuple[Card, int]] = set()
+    for index, card in enumerate(previous_cards):
+        seen[card] += 1
+        if index in selected_indices:
+            selected.add((card, seen[card]))
+    seen.clear()
+    result: set[int] = set()
+    for index, card in enumerate(new_cards):
+        seen[card] += 1
+        if (card, seen[card]) in selected:
+            result.add(index)
+    return result
+
+
 class HandOrganizer:
-    """Keep the selected layout stable across refreshes and changing hands."""
+    """Keep manual groups and the selected layout stable across hand changes."""
 
     def __init__(self) -> None:
-        self._key: tuple[tuple[Card, ...], Card | None, int] | None = None
+        self._key: tuple[tuple[Card, ...], Card | None, int, str | None] | None = None
+        self._hand_id: str | None = None
         self._base_cards: tuple[Card, ...] = ()
+        self._wild_card: Card | None = None
+        self._level = 2
+        self._locked: list[HandGroup] = []
         self._arrangements: tuple[HandArrangement, ...] = ()
         self._index = -1
         self._activated = False
 
-    def sync(self, base_cards: Sequence[Card], wild_card: Card | None, level: int) -> None:
-        key = (tuple(base_cards), wild_card, level)
+    def sync(
+        self, base_cards: Sequence[Card], wild_card: Card | None, level: int,
+        *, hand_id: str | None = None,
+    ) -> None:
+        key = (tuple(base_cards), wild_card, level, hand_id)
         if key == self._key:
             return
         previous = self.current
         identity = (previous.kind, previous.focus) if previous else ("pattern", None)
+        if hand_id is not None and self._hand_id is not None and hand_id != self._hand_id:
+            self._locked.clear()
+            self._activated = False
+        self._hand_id = hand_id
         self._key = key
         self._base_cards = tuple(base_cards)
-        self._arrangements = build_hand_arrangements(base_cards, wild_card, level)
+        self._wild_card = wild_card
+        self._level = level
+        self._reconcile_locks()
+        self._rebuild_arrangements(identity)
+
+    def _free_cards(self) -> tuple[Card, ...]:
+        remaining = Counter(card for group in self._locked for card in group.cards)
+        free = []
+        for card in self._base_cards:
+            if remaining[card]:
+                remaining[card] -= 1
+            else:
+                free.append(card)
+        return tuple(free)
+
+    def _reconcile_locks(self) -> None:
+        available = Counter(self._base_cards)
+        kept: list[HandGroup] = []
+        for group in self._locked:
+            used = Counter(group.cards)
+            if any(used[card] > available[card] for card in used):
+                continue
+            pattern = find_complete_pattern(group.cards, self._wild_card)
+            if pattern is None:
+                continue
+            available.subtract(used)
+            kept.append(HandGroup(group.cards, pattern_type_label(pattern.type), pattern, True))
+        self._locked = kept
+
+    def _rebuild_arrangements(self, identity: tuple[LayoutKind, PatternType | None]) -> None:
+        self._arrangements = build_hand_arrangements(
+            self._free_cards(), self._wild_card, self._level
+        )
         if self._activated and self._arrangements:
             self._index = next(
                 (index for index, item in enumerate(self._arrangements)
@@ -330,6 +394,52 @@ class HandOrganizer:
             )
         else:
             self._index = -1
+
+    def lock_action(self, selected_indices: Collection[int]) -> Literal["lock", "unlock"] | None:
+        chosen = set(selected_indices)
+        cards = self.cards
+        if not chosen or any(index < 0 or index >= len(cards) for index in chosen):
+            return None
+        start = 0
+        for group in self._locked:
+            end = start + len(group.cards)
+            indices = set(range(start, end))
+            if chosen == indices:
+                return "unlock"
+            if chosen & indices:
+                return None
+            start = end
+        selected = tuple(cards[index] for index in sorted(chosen))
+        if len(selected) < 2 or find_complete_pattern(selected, self._wild_card) is None:
+            return None
+        return "lock"
+
+    def toggle_lock(self, selected_indices: Collection[int]) -> Literal["locked", "unlocked"] | None:
+        action = self.lock_action(selected_indices)
+        if action is None:
+            return None
+        previous = self.current
+        identity = (previous.kind, previous.focus) if previous else ("pattern", None)
+        if action == "unlock":
+            chosen = set(selected_indices)
+            start = 0
+            for index, group in enumerate(self._locked):
+                end = start + len(group.cards)
+                if chosen == set(range(start, end)):
+                    del self._locked[index]
+                    self._rebuild_arrangements(identity)
+                    return "unlocked"
+                start = end
+        else:
+            selected = tuple(self.cards[index] for index in sorted(set(selected_indices)))
+            pattern = find_complete_pattern(selected, self._wild_card)
+            assert pattern is not None
+            self._locked.append(
+                HandGroup(selected, pattern_type_label(pattern.type), pattern, True)
+            )
+            self._rebuild_arrangements(identity)
+            return "locked"
+        return None
 
     def advance(self) -> bool:
         if not self._arrangements:
@@ -358,32 +468,53 @@ class HandOrganizer:
         return None if self._index < 0 else self._arrangements[self._index]
 
     @property
+    def locked_count(self) -> int:
+        return len(self._locked)
+
+    @property
+    def display_groups(self) -> tuple[HandGroup, ...]:
+        current = self.current
+        if current is not None:
+            return (*self._locked, *current.groups)
+        if self._locked:
+            loose = tuple(HandGroup((card,), "散牌") for card in self._free_cards())
+            return (*self._locked, *loose)
+        return ()
+
+    @property
     def available(self) -> bool:
         return bool(self._arrangements)
 
     @property
     def cards(self) -> tuple[Card, ...]:
         current = self.current
-        return self._base_cards if current is None else current.cards
+        if current is None and not self._locked:
+            return self._base_cards
+        return (*self._locked_cards(), *(self._free_cards() if current is None else current.cards))
+
+    def _locked_cards(self) -> tuple[Card, ...]:
+        return tuple(card for group in self._locked for card in group.cards)
 
     @property
     def group_starts(self) -> frozenset[int]:
-        current = self.current
-        return frozenset() if current is None else current.group_starts
+        starts: set[int] = set()
+        position = 0
+        for group in self.display_groups:
+            if position:
+                starts.add(position)
+            position += len(group.cards)
+        return frozenset(starts)
 
     @property
     def status(self) -> str:
         current = self.current
-        if current is None:
-            return ""
-        return f"{current.name} {self._index + 1}/{len(self._arrangements)}"
+        layout = "" if current is None else f"{current.name} {self._index + 1}/{len(self._arrangements)}"
+        locked = f"已锁 {len(self._locked)} 组" if self._locked else ""
+        return " · ".join(part for part in (layout, locked) if part)
 
     def playable_group_at(self, index: int) -> tuple[int, int, HandGroup] | None:
-        current = self.current
-        if current is None:
-            return None
         start = 0
-        for group in current.groups:
+        for group in self.display_groups:
             end = start + len(group.cards)
             if start <= index < end:
                 return (start, end, group) if group.pattern is not None else None

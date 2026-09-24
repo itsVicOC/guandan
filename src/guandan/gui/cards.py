@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from PySide6.QtCore import QRect, QSize, Qt, Signal
+from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
 from PySide6.QtGui import (
     QColor,
     QFont,
@@ -14,7 +14,7 @@ from PySide6.QtGui import (
     QPen,
     QResizeEvent,
 )
-from PySide6.QtWidgets import QPushButton, QSizePolicy, QWidget
+from PySide6.QtWidgets import QApplication, QPushButton, QSizePolicy, QWidget
 
 from ..engine.card import Card, Suit
 from ..engine.hand import sort_cards
@@ -27,7 +27,8 @@ CARD_HEIGHT = 104
 CARD_GAP = 8
 CARD_OVERLAP_MIN = 32
 SELECT_LIFT = 14
-HAND_HEIGHT = CARD_HEIGHT + SELECT_LIFT + 10
+LOCK_RAIL_HEIGHT = 14
+HAND_HEIGHT = CARD_HEIGHT + SELECT_LIFT + LOCK_RAIL_HEIGHT + 10
 NORMAL_SUIT_FONT_SIZE = 44
 RED_SUIT_COLOR = "#c72f3e"
 BLACK_SUIT_COLOR = "#15201c"
@@ -100,8 +101,36 @@ class CardButton(QPushButton):
     def _emit_index(self) -> None:
         self.clicked_index.emit(self.index)
 
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            hand = self.parentWidget()
+            if isinstance(hand, HandWidget):
+                hand._begin_drag(self.index, self.mapTo(hand, event.position().toPoint()))
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            hand = self.parentWidget()
+            if isinstance(hand, HandWidget):
+                hand._update_drag(self.mapTo(hand, event.position().toPoint()))
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            hand = self.parentWidget()
+            if isinstance(hand, HandWidget) and hand._end_drag(
+                self.mapTo(hand, event.position().toPoint())
+            ):
+                self.setDown(False)
+                event.accept()
+                return
+        super().mouseReleaseEvent(event)
+
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
+            hand = self.parentWidget()
+            if isinstance(hand, HandWidget):
+                hand._cancel_drag()
             self.double_clicked_index.emit(self.index)
             event.accept()
             return
@@ -255,6 +284,7 @@ class HandWidget(QWidget):
     """Single-row overlapping hand with lift-to-select interaction."""
 
     card_clicked = Signal(int)
+    selection_dragged = Signal(object)
     group_double_clicked = Signal(int)
 
     def __init__(self) -> None:
@@ -266,6 +296,13 @@ class HandWidget(QWidget):
         self._group_starts: set[int] = set()
         self._group_ranges: list[tuple[int, int, HandGroup]] = []
         self._buttons: list[CardButton] = []
+        self._drag_anchor: int | None = None
+        self._drag_origin: QPoint | None = None
+        self._drag_offset_x = 0
+        self._drag_baseline: set[int] = set()
+        self._drag_selecting = True
+        self._drag_active = False
+        self._drag_last_selection: set[int] = set()
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMinimumHeight(HAND_HEIGHT)
         self.setMaximumHeight(HAND_HEIGHT)
@@ -292,6 +329,7 @@ class HandWidget(QWidget):
             position = end
         self._group_starts = {start for start, _, _ in self._group_ranges if start}
         if cards_changed:
+            self._cancel_drag()
             self._rebuild_buttons()
         else:
             for index, card_button in enumerate(self._buttons):
@@ -303,6 +341,27 @@ class HandWidget(QWidget):
                 )
                 card_button.setToolTip(self._card_tooltip(index))
         self._position_cards()
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        super().paintEvent(event)
+        if not self._buttons:
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        for start, end, group in self._group_ranges:
+            if not group.locked or not start < end <= len(self._buttons):
+                continue
+            left = self._buttons[start].x() + 2
+            right = self._buttons[end - 1].x() + CARD_WIDTH - 5
+            painter.setPen(QPen(GOLD_BRIGHT, 2))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawArc(QRect(left + 4, 2, 8, 10), 0, 180 * 16)
+            painter.setBrush(GOLD_BRIGHT)
+            painter.drawRoundedRect(QRect(left + 3, 8, 10, 7), 2, 2)
+            if right > left + 22:
+                painter.setPen(QPen(QColor(214, 179, 90, 130), 2))
+                painter.drawLine(left + 20, 11, right, 11)
+        painter.end()
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
@@ -317,6 +376,63 @@ class HandWidget(QWidget):
 
     def _is_wild(self, card: Card) -> bool:
         return self._wild_card is not None and card == self._wild_card
+
+    def _begin_drag(self, index: int, position: QPoint) -> None:
+        self._cancel_drag()
+        if self._eligible is not None:
+            return
+        self._drag_anchor = index
+        self._drag_origin = position
+        self._drag_offset_x = position.x() - self._buttons[index].x()
+        self._drag_baseline = set(self._selected)
+        self._drag_last_selection = set(self._selected)
+        self._drag_selecting = index not in self._selected
+
+    def _index_at(self, position: QPoint) -> int | None:
+        if not self._buttons or not 0 <= position.y() < self.height():
+            return None
+        if position.x() < self._buttons[0].x():
+            return None
+        if position.x() >= self._buttons[-1].x() + CARD_WIDTH:
+            return None
+        return min(
+            range(len(self._buttons)),
+            key=lambda index: abs(
+                position.x() - self._buttons[index].x() - self._drag_offset_x
+            ),
+        )
+
+    def _update_drag(self, position: QPoint) -> None:
+        if self._drag_anchor is None or self._drag_origin is None:
+            return
+        if not self._drag_active and abs(position.x() - self._drag_origin.x()) < QApplication.startDragDistance():
+            return
+        index = self._index_at(position)
+        if index is None:
+            return
+        self._drag_active = True
+        span = set(range(min(self._drag_anchor, index), max(self._drag_anchor, index) + 1))
+        selection = (
+            self._drag_baseline | span
+            if self._drag_selecting else self._drag_baseline - span
+        )
+        if selection != self._drag_last_selection:
+            self._drag_last_selection = selection
+            self.selection_dragged.emit(set(selection))
+
+    def _end_drag(self, position: QPoint) -> bool:
+        if self._drag_active:
+            self._update_drag(position)
+        was_dragged = self._drag_active
+        self._cancel_drag()
+        return was_dragged
+
+    def _cancel_drag(self) -> None:
+        self._drag_anchor = None
+        self._drag_origin = None
+        self._drag_baseline.clear()
+        self._drag_last_selection.clear()
+        self._drag_active = False
 
     def _rebuild_buttons(self) -> None:
         for card_button in self._buttons:
@@ -343,7 +459,7 @@ class HandWidget(QWidget):
         for start, end, group in self._group_ranges:
             if start <= index < end:
                 return (
-                    f"{group.label} · 双击选中整组"
+                    f"{'已锁定 · ' if group.locked else ''}{group.label} · 双击选中整组"
                     if group.pattern is not None else group.label
                 )
         return ""
@@ -376,7 +492,7 @@ class HandWidget(QWidget):
                 gaps_seen += 1
                 pile_index = 0
             depth = min(pile_index * 2, 8) if self._group_ranges else 0
-            y = (1 if index in self._selected else SELECT_LIFT + 1) + depth
+            y = LOCK_RAIL_HEIGHT + (1 if index in self._selected else SELECT_LIFT + 1) + depth
             card_button.move(start_x + int(index * step) + gaps_seen * group_gap, y)
             card_button.raise_()
             pile_index += 1

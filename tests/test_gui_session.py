@@ -169,6 +169,92 @@ def test_session_visual_seats_match_east_perspective() -> None:
     }
 
 
+def test_partner_hand_reveals_after_going_out_and_hides_for_next_round() -> None:
+    partner_card = Card(RANK_7, Suit.CLUBS)
+    state = GameState(
+        level=RANK_2,
+        wild_card=None,
+        hands=[
+            [Card(RANK_3, Suit.HEARTS)],
+            [Card(RANK_4, Suit.SPADES)],
+            [partner_card],
+            [Card(RANK_5, Suit.DIAMONDS)],
+        ],
+        turn_index=0,
+        leader=0,
+    )
+    session = GameSession(difficulty=0, existing_state=state, human=0)
+    assert session.visible_partner_hand() is None
+
+    state.hands[0].clear()
+    state.finish_order.append(0)
+    assert session.visible_partner_hand() == (partner_card,)
+
+    state.finished = True
+    state.finish_order.extend((1, 3))
+    state.team_levels_final = [3, 2]
+    session.game_saved = True
+    assert session.prepare_next_game().ok
+    assert session.visible_partner_hand() is None
+
+    session.cancel_next_game()
+    assert session.visible_partner_hand() == (partner_card,)
+
+
+def test_gui_partner_hand_visibility_offscreen() -> None:
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    code = """
+from PySide6.QtWidgets import QApplication
+from guandan.engine.card import Card, Suit
+from guandan.engine.state import GameState
+from guandan.gui.window import GuandanMainWindow
+from guandan.ui.session import GameSession
+
+app = QApplication([])
+state = GameState(
+    level=2, wild_card=None,
+    hands=[[Card(3, Suit.HEARTS)], [Card(4, Suit.SPADES)],
+           [Card(7, Suit.CLUBS)], [Card(5, Suit.DIAMONDS)]],
+    turn_index=0, leader=0,
+)
+session = GameSession(difficulty=0, existing_state=state, human=0)
+window = GuandanMainWindow()
+window.start_game(session)
+page = window.game_page
+assert page is not None
+assert page.hand_stack.currentWidget() is page.hand
+assert not page.result_partner_cards._cards
+
+state.hands[0].clear()
+state.finish_order.append(0)
+page.refresh()
+assert page.hand_stack.currentWidget() is page.partner_hand
+assert page.partner_hand._cards == [Card(7, Suit.CLUBS)]
+assert '对家剩余手牌' in page.hand_title.text()
+
+state.finished = True
+state.finish_order.extend((1, 3))
+state.team_levels_final = [3, 2]
+page.refresh()
+assert page.hand_stack.currentWidget() is page.result_panel
+assert page.result_partner_cards._cards == (Card(7, Suit.CLUBS),)
+
+session.game_saved = True
+assert session.prepare_next_game().ok
+page.refresh()
+assert page.hand_stack.currentWidget() is page.hand
+assert not page.result_partner_cards._cards
+assert '对家剩余手牌' not in page.hand_title.text()
+"""
+    env = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+    result = subprocess.run(
+        [sys.executable, "-c", code], env=env, capture_output=True, text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 def test_completed_trick_stays_visible_until_the_next_lead() -> None:
     cards = [
         Card(RANK_4, Suit.HEARTS),
@@ -1371,6 +1457,137 @@ print('ok')
         text=True,
         check=False,
         timeout=60,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
+def test_gui_manual_pattern_lock_survives_sort_and_unlocks_after_play() -> None:
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    env = dict(os.environ)
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    code = """
+from PySide6.QtWidgets import QApplication
+from guandan.engine.card import Card, Suit
+from guandan.engine.hand import PatternType
+from guandan.engine.state import GameState
+from guandan.gui.window import GuandanMainWindow
+from guandan.ui.session import GameSession
+
+pair = [Card(3, Suit.HEARTS), Card(3, Suit.DIAMONDS)]
+hand = [*pair, Card(4, Suit.HEARTS), Card(5, Suit.HEARTS),
+        Card(6, Suit.HEARTS), Card(7, Suit.HEARTS), Card(8, Suit.CLUBS)]
+state = GameState(level=2, wild_card=None, hands=[hand, [], [], []], turn_index=0, leader=0)
+app = QApplication([])
+window = GuandanMainWindow()
+window.start_game(GameSession(difficulty=0, existing_state=state, human=0))
+page = window.game_page
+assert page is not None
+state.turn_index = 1
+page.refresh()
+for card in pair:
+    page.toggle_card(page.hand_cards.index(card))
+assert page.lock_button.isEnabled()
+page.toggle_lock()
+assert page.hand_organizer.locked_count == 1
+assert page.hand._group_ranges[0][2].locked
+assert not page.selected_cards()
+page.organize_hand()
+assert page.hand_organizer.display_groups[0].locked
+page.toggle_group(0)
+assert page.lock_button.text() == '解除锁定'
+page.toggle_lock()
+assert page.hand_organizer.locked_count == 0
+
+for card in pair:
+    page.toggle_card(page.hand_cards.index(card))
+page.toggle_lock()
+page.toggle_group(0)
+state.turn_index = 0
+page.refresh()
+page.play_selected()
+assert state.table[-1].type == PatternType.PAIR
+assert page.hand_organizer.locked_count == 0
+window.game_page = None
+window.close()
+app.quit()
+print('ok')
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code], cwd=os.getcwd(), env=env,
+        capture_output=True, text=True, check=False, timeout=60,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "ok" in result.stdout
+
+
+def test_gui_drag_selects_and_deselects_contiguous_cards() -> None:
+    if importlib.util.find_spec("PySide6") is None:
+        pytest.skip("PySide6 is not installed")
+    env = dict(os.environ)
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    code = """
+from PySide6.QtCore import QEvent, QPoint, QPointF, Qt
+from PySide6.QtGui import QMouseEvent
+from PySide6.QtTest import QTest
+from PySide6.QtWidgets import QApplication
+from guandan.engine.card import Card, Suit
+from guandan.engine.state import GameState
+from guandan.gui.window import GuandanMainWindow
+from guandan.ui.session import GameSession
+
+app = QApplication([])
+hand = [Card(rank, Suit.CLUBS) for rank in range(3, 10)]
+state = GameState(level=2, wild_card=None, hands=[hand, [], [], []], turn_index=0, leader=0)
+window = GuandanMainWindow()
+window.start_game(GameSession(difficulty=0, existing_state=state, human=0))
+page = window.game_page
+assert page is not None
+
+def drag(start, *targets):
+    source = page.hand._buttons[start]
+    QTest.mousePress(source, Qt.MouseButton.LeftButton, pos=QPoint(4, 40))
+    for index in targets:
+        target = page.hand._buttons[index]
+        point = QPoint(target.x() + 4, target.y() + 40)
+        global_point = page.hand.mapToGlobal(point)
+        local_point = source.mapFromGlobal(global_point)
+        move = QMouseEvent(
+            QEvent.Type.MouseMove, QPointF(local_point), QPointF(global_point),
+            Qt.MouseButton.NoButton, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier,
+        )
+        app.sendEvent(source, move)
+    target = page.hand._buttons[targets[-1]]
+    release_point = source.mapFromGlobal(
+        page.hand.mapToGlobal(QPoint(target.x() + 4, target.y() + 40))
+    )
+    QTest.mouseRelease(source, Qt.MouseButton.LeftButton, pos=release_point)
+    app.processEvents()
+
+QTest.mouseClick(page.hand._buttons[0], Qt.MouseButton.LeftButton, pos=QPoint(4, 40))
+assert page.selected_indices == {0}
+drag(1, 4)
+assert page.selected_indices == {0, 1, 2, 3, 4}
+drag(4, 2)
+assert page.selected_indices == {0, 1}
+drag(2, 5, 3)
+assert page.selected_indices == {0, 1, 2, 3}
+QTest.mouseClick(page.hand._buttons[6], Qt.MouseButton.LeftButton, pos=QPoint(4, 40))
+assert page.selected_indices == {0, 1, 2, 3, 6}
+QTest.mouseClick(page.hand._buttons[2], Qt.MouseButton.LeftButton, pos=QPoint(35, 40))
+assert page.selected_indices == {0, 1, 3, 6}
+page.clear_selection()
+drag(6, 3)
+assert page.selected_indices == {3, 4, 5, 6}
+window.game_page = None
+window.close()
+app.quit()
+print('ok')
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code], cwd=os.getcwd(), env=env,
+        capture_output=True, text=True, check=False, timeout=60,
     )
     assert result.returncode == 0, result.stderr
     assert "ok" in result.stdout

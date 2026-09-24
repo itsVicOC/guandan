@@ -213,6 +213,15 @@ class GameSession:
     def is_next_game_pending(self) -> bool:
         return self._pending_next_game is not None
 
+    def visible_partner_hand(self) -> tuple[Card, ...] | None:
+        """Reveal the partner's remaining cards after the human has gone out."""
+        if self.is_next_game_pending():
+            return None
+        state = self.require_state()
+        if self.human not in state.finish_order:
+            return None
+        return tuple(state.hands[self.visual_seats()["opposite"]])
+
     def current_table_players(self) -> list[int]:
         return current_table_players(self.display_state())
 

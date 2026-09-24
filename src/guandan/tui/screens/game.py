@@ -28,7 +28,7 @@ from ...engine.state import (
 from ...engine.trick import (
     current_trick_actions,
 )
-from ...ui.hand_organizer import HandOrganizer
+from ...ui.hand_organizer import HandOrganizer, remap_selected_indices
 from ...ui.session import GameSession, card_indices_for_selection
 from ..layout import RECOMMENDED_COLUMNS
 
@@ -364,15 +364,19 @@ class GameScreen(Screen):
         background: #101512;
     }
     #btn-next-game {
-        width: 30;
-        margin-right: 2;
+        width: 22;
+        margin-right: 1;
     }
     #btn-organize-hand {
-        width: 20;
-        margin-right: 2;
+        width: 16;
+        margin-right: 1;
+    }
+    #btn-lock-hand {
+        width: 16;
+        margin-right: 1;
     }
     #btn-game-back {
-        width: 18;
+        width: 16;
     }
     #action-log {
         height: 4;
@@ -395,6 +399,7 @@ class GameScreen(Screen):
         Binding("s", "organize_hand", "理牌", priority=True),
         Binding("shift+s", "reset_organize", "默认", priority=True),
         Binding("g", "select_group", "整组", priority=True),
+        Binding("k", "toggle_lock", "锁牌", priority=True),
         Binding("n", "next_game", "下一局", priority=True),
         ("?", "rules", "规则"),
         ("escape", "back", "返回"),
@@ -517,6 +522,7 @@ class GameScreen(Screen):
             yield Static("hand", id="my-hand")
             with Horizontal(id="round-actions"):
                 yield Button("S  智能理牌", id="btn-organize-hand", disabled=True)
+                yield Button("K  锁定牌型", id="btn-lock-hand", disabled=True)
                 yield Button("N  下一局", id="btn-next-game", variant="success", disabled=True)
                 yield Button("返回大厅", id="btn-game-back", variant="default")
             yield Static("ready", id="action-log")
@@ -555,11 +561,8 @@ class GameScreen(Screen):
             not tribute_pending and s.turn_index == self.human,
         )
         # 更新玩家手牌（在自己管理的状态 + 外部渲染）
-        selected_cards = tuple(
-            self._hand_cards[index]
-            for index in sorted(self._hand_selected_indices)
-            if index < len(self._hand_cards)
-        )
+        previous_cards = tuple(self._hand_cards)
+        previous_indices = set(self._hand_selected_indices)
         cursor_card = (
             self._hand_cards[self._hand_cursor]
             if self._hand_cursor < len(self._hand_cards) else None
@@ -569,14 +572,16 @@ class GameScreen(Screen):
             if cursor_card is not None else 0
         )
         base_cards = sort_cards(s.hands[self.human])
-        self._hand_organizer.sync(base_cards, s.wild_card, s.level)
+        self._hand_organizer.sync(
+            base_cards, s.wild_card, s.level, hand_id=self.session.game_id
+        )
         arranged = not tribute_pending and not s.finished
         self._hand_cards = list(self._hand_organizer.cards) if arranged else base_cards
         self._hand_group_starts = (
             self._hand_organizer.group_starts if arranged else frozenset()
         )
-        self._hand_selected_indices = card_indices_for_selection(
-            self._hand_cards, selected_cards
+        self._hand_selected_indices = remap_selected_indices(
+            previous_cards, previous_indices, self._hand_cards
         )
         if cursor_card in self._hand_cards:
             matching = [
@@ -675,11 +680,33 @@ class GameScreen(Screen):
 
     def _do_render_hand(self) -> None:
         if not self._hand_cards:
+            partner_cards = self.session.visible_partner_hand()
+            if partner_cards:
+                cards = sort_cards(partner_cards)
+                max_width = self._hand_row_width()
+                partner_rows: list[str] = []
+                partner_row: list[str] = []
+                row_width = 0
+                for card in cards:
+                    part = _tui_card(card, wild=card == self._state().wild_card)
+                    width = cell_len(Text.from_markup(part).plain)
+                    if partner_row and row_width + 1 + width > max_width:
+                        partner_rows.append(" ".join(partner_row))
+                        partner_row = []
+                        row_width = 0
+                    partner_row.append(part)
+                    row_width += width + (1 if len(partner_row) > 1 else 0)
+                if partner_row:
+                    partner_rows.append(" ".join(partner_row))
+                self.query_one("#my-hand", Static).update(
+                    f"[bold #d6b35a]对家剩余手牌 · {len(cards)} 张[/bold #d6b35a]\n"
+                    + "\n".join(partner_rows)
+                )
+                return
             self.query_one("#my-hand", Static).update(
                 "[bold #d6b35a]你的手牌[/bold #d6b35a]\n[dim]本局已结束，点击“下一局”继续。[/dim]"
             )
             return
-        current = self._hand_organizer.current
         parts: list[str] = []
         for i, c in enumerate(self._hand_cards):
             selected = i in self._hand_selected_indices
@@ -690,22 +717,20 @@ class GameScreen(Screen):
         def visible_width(markup: str) -> int:
             return cell_len(Text.from_markup(markup).plain)
 
-        groups = (
-            current.groups if current is not None and not self.session.is_next_game_pending()
-            else ()
-        )
+        groups = self._hand_organizer.display_groups if not self.session.is_next_game_pending() else ()
         segments: list[str] = []
         if groups:
             position = 0
             for group in groups:
                 group_parts = parts[position:position + len(group.cards)]
                 position += len(group.cards)
-                segment = "".join(group_parts)
+                prefix = "[bold #ffd978]🔒[/bold #ffd978]" if group.locked else ""
+                segment = prefix + "".join(group_parts)
                 if visible_width(segment) <= self._hand_row_width():
                     segments.append(segment)
                     continue
                 # Keep each card intact if a large stack needs another row.
-                chunk = ""
+                chunk = prefix
                 for part in group_parts:
                     joined = chunk + part
                     if chunk and visible_width(joined) > self._hand_row_width():
@@ -741,8 +766,8 @@ class GameScreen(Screen):
         )
         narrow = self._hand_row_width() < 90
         guide = (
-            "←→光标 · 空格选牌 · G整组 · S理牌 · 回车出牌" if narrow else
-            "←→光标 · 空格选牌 · G整组选牌 · S换理牌 · Shift+S默认 · 回车出牌"
+            "←→光标 · 空格选牌 · G整组 · K锁牌 · S理牌 · 回车出牌" if narrow else
+            "←→光标 · 空格选牌 · G整组选牌 · K锁/解锁 · S换理牌 · 回车出牌"
         )
         header = (
             "[bold #d6b35a]你的手牌[/bold #d6b35a]  "
@@ -761,6 +786,7 @@ class GameScreen(Screen):
         s = self._state()
         next_button = self.query_one("#btn-next-game", Button)
         organize_button = self.query_one("#btn-organize-hand", Button)
+        lock_button = self.query_one("#btn-lock-hand", Button)
         back_button = self.query_one("#btn-game-back", Button)
         tribute_pending = self.session.is_next_game_pending()
         back_button.disabled = self._ai_running or tribute_pending
@@ -769,6 +795,9 @@ class GameScreen(Screen):
             tribute_pending or s.finished or not s.hands[self.human]
             or not self._hand_organizer.available
         )
+        lock_action = self._hand_organizer.lock_action(self._lock_indices())
+        lock_button.label = "K  解除锁定" if lock_action == "unlock" else "K  锁定牌型"
+        lock_button.disabled = tribute_pending or s.finished or lock_action is None
         if tribute_pending:
             next_button.label = "已发牌"
         elif s.finished and s.match_finished:
@@ -836,12 +865,14 @@ class GameScreen(Screen):
             return
         self._hand_cursor = (self._hand_cursor - 1) % len(self._hand_cards)
         self._do_render_hand()
+        self._refresh_round_actions()
 
     def action_cursor_right(self) -> None:
         if not self._hand_cards:
             return
         self._hand_cursor = (self._hand_cursor + 1) % len(self._hand_cards)
         self._do_render_hand()
+        self._refresh_round_actions()
 
     def action_toggle_select(self) -> None:
         if not self._hand_cards:
@@ -852,6 +883,7 @@ class GameScreen(Screen):
         else:
             self._hand_selected_indices.add(self._hand_cursor)
         self._do_render_hand()
+        self._refresh_round_actions()
 
     def action_play(self) -> None:
         s = self._state()
@@ -926,10 +958,7 @@ class GameScreen(Screen):
 
     def action_select_group(self) -> None:
         s = self._state()
-        if (
-            self._ai_running or self.session.is_next_game_pending()
-            or s.finished or s.turn_index != self.human
-        ):
+        if self.session.is_next_game_pending() or s.finished:
             return
         result = self._hand_organizer.playable_group_at(self._hand_cursor)
         if result is None:
@@ -941,6 +970,24 @@ class GameScreen(Screen):
         )
         self.session.reset_hint_cycle()
         self._do_render_hand()
+        self._refresh_round_actions()
+
+    def _lock_indices(self) -> set[int]:
+        if self._hand_selected_indices:
+            return set(self._hand_selected_indices)
+        group = self._hand_organizer.playable_group_at(self._hand_cursor)
+        if group is not None and group[2].locked:
+            return set(range(group[0], group[1]))
+        return set()
+
+    def action_toggle_lock(self) -> None:
+        s = self._state()
+        if self.session.is_next_game_pending() or s.finished:
+            return
+        if self._hand_organizer.toggle_lock(self._lock_indices()):
+            self._hand_selected_indices.clear()
+            self.session.reset_hint_cycle()
+            self._refresh_all()
 
     def action_next_game(self) -> None:
         if self._ai_running or self.session.is_next_game_pending():
@@ -1036,6 +1083,9 @@ class GameScreen(Screen):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-organize-hand":
             self.action_organize_hand()
+            event.stop()
+        elif event.button.id == "btn-lock-hand":
+            self.action_toggle_lock()
             event.stop()
         elif event.button.id == "btn-next-game":
             self.action_next_game()
