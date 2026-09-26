@@ -1,185 +1,130 @@
-# AI Benchmark Baselines
+# 掼蛋 AI 难度阶梯验收记录
 
-The checked-in baseline uses the fixed mixed-seat configuration below:
+本轮配置保持难度编号 `0..4` 和存档兼容，取消随机过牌，增加有界手牌规划、公开记牌、动态协作、合法贡还选择和全局面搜索。实现说明见 [AI 文档](../docs/ai.md)。
 
-```bash
-python -m guandan.ai.benchmark \
-  --games 20 \
-  --difficulties 0,1,2,3 \
-  --seed-start 800 \
-  --max-turns 2000 \
-  --json
-```
+最终配置为 `planned-cutoff-paired-confidence-v3`，最高档已默认启用配对误差阈值。四组相邻档的同种子换队复赛结果如下；高档按实际时钟预算运行，头游确定即停止，只支持小局胜率结论。扩样期间策略与预算保持不变，区间为描述性结果，未对开发阶段的多次试验及顺序扩样作显著性校正。
 
-## Current baseline
+| 对比 | 种子对 / 局数 | 高档胜负 | 胜率 | 配对 95% 区间 | 记录 |
+| --- | --- | --- | --- | --- | --- |
+| 进阶 → 新手 | 80 / 160 | 107 : 53 | 66.88% | 58.75%–74.38% | [完整小局](ai-ladder-1-vs-0-80.json) |
+| 高手 → 进阶 | 320 / 640 | 380 : 260 | 59.38% | 56.09%–62.81% | [完整小局](ai-ladder-2-vs-1-320.json) |
+| 职业 → 高手 | 160 / 320 | 174 : 146 | 54.38% | 50.94%–58.13% | [时钟验证](ai-ladder-clock-3-vs-2-160.json) |
+| 戴长胜 → 职业 | 240 / 480 | 263 : 217 | 54.79% | 51.04%–58.75% | [时钟验证](ai-ladder-confidence-validation-240.json) |
 
-`v0.8.2b2-mixed-20.json` records the reference run for the current code:
+前三组策略未因最终启用最高档开关而改变。最高档的原始记录使用 `planned-cutoff-forced-pass-v2` 加 `confidence_guard: true`，行为等同于最终 v3 默认配置；保留原始版本和覆盖项，不改写试验来源。
 
-- completion: `20/20` (`1.0`)
-- average turns: `91.1`
-- team wins: East-West `2`, South-North `18`
-- average bombs: East-West `0.95`, South-North `1.15`
+## 相邻档对赛与实现阶段
 
-This benchmark mixes four difficulties across fixed seats (seat 0 novice, seat 1
-intermediate, seat 2 advanced, seat 3 professional), so `team_wins` reflects the
-seat/difficulty assignment, **not** a fair strength comparison. Use the arena for
-strength claims.
+同一发牌种子打两局并换队，95% 区间按种子对做 bootstrap（2,000 次），独立单位是种子而非单局。下表均从 2 级打一个完整小局，完成率 100%，不能直接解读为整场过 A 胜率。前两组策略保持不变；职业这一行早于强制过牌快路径，最高档这一行也早于新截断估值。
 
-Note that only the **fixed-iteration** arena mode is reproducible across
-machines; the production clock budget makes simulation counts machine-dependent,
-so a benchmark rerun on different hardware can shift `average_turns` and even
-`team_wins` without any code change.
+| 对比 | 种子对 / 局数 | 高档胜负 | 胜率 | 配对 95% 区间 | 平均升级差 | 记录 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 进阶 → 新手 | 80 / 160 | 107 : 53 | 66.88% | 58.75%–74.38% | +0.888 | [原始结果](ai-ladder-1-vs-0-80.json) |
+| 高手 → 进阶 | 320 / 640 | 380 : 260 | 59.38% | 56.09%–62.81% | +0.453 | [原始结果](ai-ladder-2-vs-1-320.json) |
+| 职业（过牌优化前）→ 高手 | 40 / 80 | 46 : 34 | 57.50% | 51.25%–63.75% | +0.275 | [原始结果](ai-ladder-3-vs-2-root256-40.json) |
+| 戴长胜旧方案 → 职业 | 40 / 80 | 45 : 35 | 56.25% | 50.00%–62.50% | +0.288 | [原始结果](ai-ladder-4-vs-3-root768-40.json) |
 
-## Comparing a new run
+高手最初 80 对的区间为 48.13%–62.50%，增加至 320 对后才分开；两个文件均保留。旧最高档 40 对的区间仍触及 50%；[扩到 80 对后](ai-ladder-4-vs-3-head-80.json)为 **82 : 78，51.25%，区间 46.25%–55.63%**，仍未证实领先。扩充采用同样的发牌、策略、搜索工作量和 RNG 种子，新增局在头游确定时停止：本项目小局获胜方即头游所属队伍，后续名次不能改变该结论。新增数据只补充小局胜率，不用于升级差、完整局完成率、过 A 胜率或延迟。
 
-```bash
-python -m guandan.ai.benchmark \
-  --compare benchmarks/v0.8.2b2-mixed-20.json current.json \
-  --fail-completion-drop 0.05 \
-  --fail-turn-increase 20 \
-  --fail-bomb-drift 0.4
-```
+职业使用 **256 次主搜索评估、关闭时钟**，不是低工作量试验。固定工作量便于跨机器复现，生产时钟模式的强度需要单独检验。这些区间描述本次样本，没有对开发期间的多次试验做显著性校正。
 
-Duration is reported for diagnosis but is not used as a default gate because it
-varies with CPU load and MCTS scheduling.
+生产时钟对赛的两局在同一工作进程中顺序运行，缓存会延续；CPU 调度也会改变实际搜索量。因此时钟结果描述这里记录的运行环境，不能当作跨机器不变的 Elo 或胜率。
 
-`--fail-bomb-drift` exists because `average_bombs` is the metric that drifted
-without any gate noticing: between `v0.8.0b1-mixed-20.json` and the current
-baseline the average bomb count moved from `[0.25, 0.45]` to `[0.95, 1.0]`
-while completion and average turns stayed flat.
-
-Measured rerun variance (same machine, same seeds, two consecutive runs):
-`completion_rate` and both `average_bombs` values were **identical**, while
-`average_turns` moved by 3.6 and `team_wins` by 2. That is why bomb drift gets a
-tight threshold and turn drift gets a loose one — the benchmark is not
-reproducible for outcomes because production AI runs on a clock budget, but the
-bomb statistic is stable enough to gate at ±0.4.
-
-Comparing the two checked-in baselines reproduces the original finding:
+旧职业固定工作量验证种子为 `35000..35039`；低档对比为 `23000` 起。当前职业时钟验证使用 `45000..45159`，最高档验证使用 `51000..51239`。复查命令（时钟运行的搜索量受机器和并发负载影响）：
 
 ```bash
-python -m guandan.ai.benchmark \
-  --compare benchmarks/v0.8.0b1-mixed-20.json benchmarks/v0.8.1b2-mixed-20.json \
-  --fail-completion-drop 0.05 --fail-turn-increase 20 --fail-bomb-drift 0.4
-# gate=fail — average_bombs_drift_team0 +0.70 / team1 +0.55
+python -m guandan.ai.arena --candidate 1 --baseline 0 --deals 80 --seed-start 23000 --json
+python -m guandan.ai.arena --candidate 2 --baseline 1 --deals 320 --seed-start 23000 --json
+python -m guandan.ai.arena --candidate 3 --baseline 2 --deals 40 --seed-start 35000 --deterministic-search --json
+# 当前方案采用实际游戏时限验证；CPU 调度会影响选牌
+python scripts/ai_head_race.py --candidate 3 --baseline 2 --clock \
+  --deals 160 --seed-start 45000 --workers 2 --out benchmarks/professional-clock.json
+python scripts/ai_head_race.py --candidate 4 --baseline 3 --clock \
+  --deals 240 --seed-start 51000 --workers 8 --out benchmarks/dai-clock.json
 ```
 
-The `v0.8.0b1` file is kept as a historical record and is **not** comparable
-with current code: it predates the M9 search rewrite.
+固定模式上限为职业 256 次、戴长胜 768 次主搜索。当前戴长胜另含有 30,000 节点上限的残局搜索，默认不再嵌套一遍职业搜索；上述旧方案曾额外运行 256 次职业基准。生产模式使用同一策略，但全次决策受 1/2 秒、2/5 秒的常规/关键预算约束。并行固定工作量跑出的耗时不应当作生产延迟。
 
-## Paired strength arena
+## 最高档的后续调优
 
-Use identical deals with the candidate and baseline swapping fixed teams:
+旧方案扩到 80 对仍未领先，因此保留失败结果并继续改动：
+
+1. 截断估值加入牌组手数、最先出完的机会、队友剩余手数和控牌特征，交换队伍后收益互补。
+2. 用 768 副当前轻量策略的合成续局拟合，按整副牌留出 192 副（1,423 个局面）验证；[拟合记录](ai-ladder-planned-value-fit.json)中旧估值误差为 0.6879，只重新拟合而不加入牌组特征为 0.6618，新估值为 0.6002。这是续局收益的软标签交叉熵，不是胜率提升的证明。
+3. [低工作量筛选](ai-ladder-planned-screen-16.json)使用职业 128 次、最高档 128 次主搜索及 128 次职业参考，结果 14 : 18，区间未分开。最高档随后取消默认嵌套搜索，把整段预算用于采用新估值的一次比较；正值 `reference_iterations` 保留为研究开关。
+4. 两档现在都在只能过牌时立即返回；此变化会影响后续随机数序列，因此重新验证，不沿用之前的部分对赛。两个 `pre-forced-pass-debug` 检查点仅留作调试记录。
+5. **实际游戏时限**下职业对高手的[首批 40 对](ai-ladder-clock-3-vs-2-40.json)为 **43 : 37，53.75%，区间 47.50%–60.00%**；[保持策略不变扩大至 160 对](ai-ladder-clock-3-vs-2-160.json)后为 **174 : 146，54.38%，区间 50.94%–58.13%**。区间为扩样后的描述性结果，没有作顺序检验校正。[新最高档对职业 80 对](ai-ladder-planned-clock-4-vs-3-80.json)为 **86 : 74，53.75%，区间 47.50%–60.63%**，仍未确认优势，继续检查续局策略。这些记录不会与旧方案、固定工作量结果混算。扩充脚本通过 `policy_version` 阻止合并不同方案的数据，此批版本为 `planned-cutoff-forced-pass-v2`。
+6. 新增可选的配对误差阈值：一般换牌需要收益差超过 `max(0.04, 1.64 × 配对标准误)`；用炸和非紧急过牌保留原来的保护条件。这是决策启发式，不能当作多候选比较的统计显著性保证。[首轮 16 对筛选](ai-ladder-confidence-screen-16.json)为 **19 : 13，59.38%，区间 50.00%–68.75%**；[独立的 80 对验证](ai-ladder-confidence-validation-80.json)为 **89 : 71，55.63%，区间 48.75%–62.50%**，仍未确认领先。随后保持策略不变，[追加 `51080..51239` 的 160 对](ai-ladder-confidence-validation-additional-160.json)，新增 174 : 146；[合计独立验证 240 对](ai-ladder-confidence-validation-240.json)为 **263 : 217，54.79%，区间 51.04%–58.75%**。筛选用的 16 对未合并。此前 80 对使用 6 个工作进程，追加 160 对使用 8 个；缓存及调度会影响搜索量。基于这批结果，最终默认开启配对误差阈值，更新版本为 `planned-cutoff-paired-confidence-v3`。
 
 ```bash
-python -m guandan.ai.arena \
-  --candidate 4 \
-  --baseline 3 \
-  --deals 20 \
-  --seed-start 5000 \
-  --max-p95-seconds 0.50 \
-  --json
+python scripts/fit_ai_value.py --deals 768 --seed-start 40000 \
+  --workers 8 --out benchmarks/value-fit-recheck.json
 ```
 
-For the release/nightly gate, add `--full-match` to play every paired seed from
-level 2 through a successful pass of A.
+## 完成率、完整比赛与延迟
 
-The arena reports candidate-only decision latency, level margin, a Wilson 95%
-confidence interval and an Elo estimate. `ai-v2-style-tuning.json` records the
-independent holdout used for the current Dai Changsheng profile.
+- [最终最高档配置完整比赛](ai-ladder-confidence-full-match.json)：种子 `52000`，档位 `0,1,2,4`，最高档开启配对误差阈值（与最终默认一致），从 2 到过 A 共 **7 局、513 手、6 次贡还牌**，全部完成且逐局严格事件重放一致。最高档 107 次决策，最长 **5.008 秒**。该记录验证最终最高档配置的流程与延迟，不以单场混合座位胜负判断棋力。
+- [职业与最高档同时参与的完整比赛](ai-ladder-confidence-search-full-match.json)：种子 `53000`，档位 `1,2,3,4`，最高档开启配对误差阈值（与最终默认一致），共 **9 局、705 手、7 次贡还牌**，成功过 A 且每局重放一致。职业档 183 次决策，最长 **2.082 秒**；最高档 170 次决策，最长 **5.039 秒**。均在其他评测并行时测量，属于软时限。
+- [启用配对误差阈值前的最高档整场测试](ai-ladder-planned-full-match-production.json)：种子 `46000`，档位 `0,1,2,4`，牌组估值及强制过牌快路径，固定收益阈值，实际时钟预算。从 2 打到成功过 A，共 **8 局、585 手、7 次贡还牌**，全部完成且每局严格事件重放一致。最高档最长一次决策为 **5.012 秒**。测试与其他评测并行运行，时限是按计算步骤检查的软预算；固定混合座位的单场胜负不作强度证明。
+- [最新生产时钟混合档测试](ai-ladder-mixed-8.json)：种子 `28000..28007`，座位档位 `0,1,2,3`，8/8 局完成，平均 80.125 手，队伍平均炸弹数 `[1.125, 1.125]`，胜场 `[3,5]`。固定座位混合档的胜场只作流程记录，不是公平强度比较。严格的逐局事件重放检查由下述完整比赛测试执行。
+- [高档生产时钟测试](ai-ladder-4-vs-3-clock-1.json)：1 对种子、2 局均完成，戴长胜与职业各胜 1 局。戴长胜 72 次决策的 p95 为 5.002 秒，最长 5.004 秒，包含缓存复核后的残局搜索；这是延迟检查，不能用于强度结论。
+- [职业档生产配置整场测试（过牌优化前）](ai-ladder-full-match-production.json)：种子 `38000`，档位 `0,1,2,3`，实际时钟预算，从 2 打到成功过 A，共 **28 局、2,121 手、24 次贡还牌**，全部完成且每局事件重放一致。固定混合座位的单场胜负不用于强度结论。该整场测试与多进程对赛同时运行，最长决策为 2.156 秒；时限在计算步骤之间检查，CPU 争用及单步计算可能造成超时，属于软预算。
+- [整场规则流程测试](ai-ladder-full-match.json)：从 2 打到成功过 A，13 局、1,177 手、10 个贡还牌回合，全部完成。
+- [含搜索策略的整场流程测试](ai-ladder-full-match-search.json)：档位 `1,2,3,4`，19 局、1,413 手、15 个贡还牌回合，覆盖 2 到 A，全部完成且事件重放一致。该流程测试用早期固定 32/96 评估配置，不能代表最终配置的强度或延迟。
 
-`--deterministic-search` disables wall-clock cutoffs and uses calibrated fixed
-counts (32 root evaluations for Professional, 96 for Dai Changsheng). It is intended
-for cross-machine regression and exercises the full search-work ceiling.
+完整比赛接口支持以同样方法换队比较过 A 胜率：给上述 Arena 命令加 `--full-match`。本轮整场样本用于完成与规则回归，数量不足以证明任何相邻档的过 A 胜率差距。
 
-**Production uses the same root search with a time limit.** The 240/420ms clock
-budget can stop it before the 32/96 fixed ceilings, so neither mode's win rate
-can stand in for the other. Production decisions report this through
-`SearchResult.budget_limited`. A latency gate must be set above the budget
-rather than equal to it, because the deadline is only observed between
-simulations.
+## 候选覆盖与决策后悔值
 
-Profile search is reproducible through:
+[当前 24 局面评测](ai-ladder-planned-diverse-24.json)已完成：级牌 2/9/A 各 8 个，座位各 6 个，开局/中盘/残局各 8 个，新手与高手来源各 12 个，种子从 `47000` 起。所有候选共使用 **6,176 次高手策略续局**，每动作 32 次。最终五档策略的平均后悔值依次为 **0.1289 / 0.0872 / 0.0703 / 0.0846 / 0.0729**；最高档取 JSON 中的 `4_confidence` 方法。JSON 中的 `4` 是启用配对误差阈值前的方案，均值为 **0.0534**。没有逐档单调下降；两种最高档的后悔值差区间仍包含 0，不能从这 24 个局面断言哪种最高档更强。生产时钟选牌也受到缓存与 CPU 调度影响，此处不是严格的开关消融试验。
+
+根候选平均保留 **71.69%** 的规则枚举动作及保留的实体变体，在这批并集内 24/24 包含标签最优动作。并集未穷举所有实体组合；这不是普遍的最优动作召回保证。按局面配对的 5,000 次 bootstrap 结果及原始动作胜场已保存在 JSON 中。
+
+采样排除头游已定局面：旧采样法在同一起点的 24 个局面中有 1 个已经确定胜负，其小局胜负标签没有选牌区分度。新输出保留每个候选的胜场、样本数及实际选择，可复用标签重新计算后悔值；头游确定即结束胜负标签续局，后续名次不影响该标签。
+
+加入新截断估值之前的 24 个分层局面均衡覆盖 2/9/A 级（各 8 个）、四个座位（各 6 个）、开局/中盘/残局（各 8 个）及新手/高手两种来源策略，种子从 `32000` 起。每个动作使用 32 个相同隐藏世界续局，分别记录[新手续局标签](ai-ladder-diverse-final-24.json)和[高手续局标签](ai-ladder-diverse-advanced-label-24.json)。
+
+| 档位 | 新手标签下平均后悔值 | 高手标签下平均后悔值 |
+| --- | --- | --- |
+| 新手 | 0.0794 | 0.0651 |
+| 进阶 | 0.0951 | 0.0599 |
+| 高手 | 0.1029 | 0.0729 |
+| 职业 | 0.0964 | 0.0599 |
+| 戴长胜 | 0.0820 | 0.0742 |
+
+两次均未呈现单调梯度。高手标签的四组相邻档按局面配对的后悔值差区间均包含 0，不能证明后悔值逐档降低，高档在这组小样本中也没有稳定领先。两次均重新执行生产时钟选牌，搜索工作量随 CPU 调度变化，因此也不是只替换标签策略的严格消融试验。
+
+十动作根候选加保障项在这批局面的并集中均包含标签最优动作，候选平均保留比例为 84.12%。[另一次候选审计](ai-ladder-candidate-audit-6.json)比较 6 个局面的全部规则枚举动作、保留的实体变体与过牌，每动作 16 次参考续局，6/6 包含标签最优动作。
+
+以上是探索性诊断：标签依赖续局策略，样本很小；并集没有穷举所有实体组合，不能声称最优动作召回率普遍为 100%，也不能以此取代完整对赛。
+
+早期 [24 局面快照](ai-ladder-diverse-24.json)使用 `27000` 起的另一组种子，每动作仅 8 次新手续局。其五档后悔值依次为 `0.2188 / 0.1979 / 0.1979 / 0.1771 / 0.1458`。该记录早于最终缓存优化及残局缓存修正，文件中已标注阶段，不能把这一次递进的点估计作为最终结论。
+
+复现当前分层评测，或提高样本量重新审计候选：
 
 ```bash
-python -m guandan.ai.tuning \
-  --candidates 6 \
-  --screening-deals 3 \
-  --finalists 2 \
-  --final-deals 10 \
-  --output tuning-report.json
+python scripts/action_value_baseline.py evaluate-ladder \
+  --positions 24 --playouts 32 --seed-start 47000 --label-difficulty 2 \
+  --workers 4 --out benchmarks/ladder-recheck.json
+python scripts/action_value_baseline.py audit-candidates \
+  --positions 24 --playouts 100 --seed-start 33000 --workers 8 \
+  --out benchmarks/candidate-expanded.json
 ```
 
-The tuner uses cost-controlled fixed counts (28/48) so CPU scheduling cannot
-change candidate ranking. Selected parameters are then validated with Arena's
-full 64/96 work ceilings and the latency-bounded production budgets.
+## 回归与未通过的实验
 
-## Action-value baseline
+最新检查：`ruff check src tests scripts` 通过，`mypy src` 对 80 个源文件无错误，`pytest -q` **537 项通过**（最终默认配置，本机 74.90 秒）。AI 三个原有策略/搜索测试文件的 125 项继续通过，并新增 22 项阶梯固定局面测试、6 项头游胜率扩充工具测试、3 项局面采样与可复用标签测试。
 
-`action-value-baseline-200.json` caches high-precision action labels for 200
-reproducible mid/late-game positions. Each of its 1,137 actions has 400 fixed-seed
-playouts; the candidate union includes up to six search candidates, legal pass,
-and the greedy policy's actual pick. This keeps paired evaluations at `n=200`
-instead of silently dropping decisions that search or greedy can make.
+新增固定局面覆盖队友领先、报单拦截、接风、自然牌组、炸弹保留、不同实体用牌、贡还牌、残局搜索、截止时间、共同采样世界、剪枝缓存与暗牌隔离。原有规则、逢人配、GUI session、存档和 TUI 回归一并执行。改变对手真实暗牌及私有的发牌种子、保持自身手牌和公开局面一致，不得改变相同固定工作量/随机种子的决策或搜索统计。
 
-`action-value-evaluation-200.json` records the paired `greedy`, `argmax32`,
-`search32`, and `search64` run, including per-position regret, method confidence
-intervals, paired confidence intervals and t values, and decision/runtime totals.
-The root-search optimization adds five reusable experiment files:
+低工作量实验保留以便追溯：
 
-- `action-value-evaluation-root-search-200.json`: uniform `flat32` versus failed
-  early-elimination `race32/race64` variants;
-- `action-value-evaluation-flat-budget-200.json`: the 32/64/96 uniform budget sweep;
-- `action-value-evaluation-production-root-200.json`: the exact selected
-  Professional/Dai settings, including their 40/48-turn rollout limits;
-- `action-value-evaluation-root-ablation-200.json`: rollout-level and prior ablation;
-- `action-value-evaluation-root-prior-200.json`: a weak-prior ablation holding
-  the rollout cap at 40 turns for direct comparison with `flat96`.
+- `ai-ladder-3-vs-2-fixed-40.json`：职业 32 次，38 : 42；尚未修正头游已定时的截断估值。
+- `ai-ladder-3-vs-2-race-40.json`：修正上述估值后仍为 38 : 42。
+- `ai-ladder-3-vs-2-root64-40.json`：职业 64 次，42 : 38，区间跨 50%。
+- `ai-ladder-4-vs-3-fixed-40.json`：戴长胜 96 次对职业 32 次，45 : 35，区间跨 50%，早于最终残局缓存修正。
+- `ai-ladder-tuning-*`：更早调优快照，均已标记实现阶段。
 
-The selected production settings are uniform root allocation, rollout level 1,
-32 evaluations for Professional and 96 for Dai Changsheng. `race32/race64` are
-kept only as negative results so the aggressive early-elimination experiment is
-not repeated.
+本轮优化除了增加预算，还修正了先验压过收益、最后一轮不对称采样、已定头游估值、大小王控制统计、残局缓存和自定义对赛未正确换队的问题。相同手牌枚举及结构估值缓存减少了重复计算。
 
-Additional diagnostics after v0.8.2-beta.1:
-
-- `candidate-recall-audit-12.json`: 12 positions, all legal exact-card actions,
-  200 paired novice continuations per action. Current six-action pool contains a
-  best labeled action in 9/12 positions; mean pool oracle gap is 0.0096. This is
-  exploratory because taking the maximum over many noisy action labels inflates
-  the apparent gap.
-- `action-value-evaluation-complex-rollout-200.json`: targeted structured
-  replies to opponent-led complex tricks have regret 0.0537 versus 0.0487 for
-  the production lightweight rollout, with higher latency. The experimental
-  policy is not enabled in production.
-- `action-value-diverse-24.json`: held-out positions balanced across levels
-  2/9/A, four seats and novice/advanced source play, labeled by 100 advanced
-  continuations per action. Paired differences between greedy, root32 and root96
-  are not statistically resolved at this sample size.
-- `root96-vs-root32-arena-8.json`: fixed-iteration paired Arena, eight seeds,
-  16 complete rounds; root96 and root32 each win eight.
-- `root96-vs-root32-clock-4.json`: production-clock paired Arena, four seeds,
-  eight rounds; root96 wins two with a wide 95% Wilson interval (7.1%–59.1%).
-  Its decision p95 is 377ms. This is a latency smoke check, not a strength claim.
-- `v0.8.2b2-mixed-20.json`: production-clock rerun after the search-clone
-  change. Completion, turns, wins and bombs match `v0.8.2b1-mixed-20.json`;
-  the existing completion/turn/bomb gate passes.
-
-Reproduce the new diagnostics with the `audit-candidates` and
-`evaluate-diverse` commands of `scripts/action_value_baseline.py`. Both accept
-seed, sample, playout and worker counts. The diverse run used:
-
-```bash
-python scripts/action_value_baseline.py evaluate-diverse \
-  --positions 24 --playouts 100 --seed-start 10000 \
-  --label-difficulty 2 --workers 8
-```
-
-Re-evaluate new methods against the cached labels without rebuilding them:
-
-```bash
-python scripts/action_value_baseline.py evaluate \
-  --file benchmarks/action-value-baseline-200.json \
-  --methods greedy,argmax32,search32,search64 \
-  --out benchmarks/action-value-evaluation-200.json
-```
+此前 v0.8.2 的 32/96 次、240/420ms 以及旧标签实验完整保存在 [历史研究记录](history.md)，不可作为新实现的胜率或延迟基准。

@@ -1,23 +1,19 @@
-"""档 0 新手策略：纯贪心 + 概率过牌。"""
+"""档 0 新手策略：基础理牌和清晰的过牌判断。"""
 from __future__ import annotations
 
 from ...engine.hand import Pattern
 from ...engine.state import GameState
-from ..endgame import legal_finish_pattern
-from ..greedy import select_min_winning
+from ..tactics import select_heuristic_action
 
 
 class NoviceStrategy:
-    """新手 AI：调 `greedy.select_min_winning` 出最小可压，概率过牌（不估值、不记牌）。"""
+    """新手 AI：不记牌、不搜索，保留明显有用的炸弹。"""
 
     name = "新手"
     difficulty = 0
-    uses_stochastic_pass = True
+    uses_stochastic_pass = False
 
     def select_pattern(
         self, state: GameState, player: int
     ) -> Pattern | None:
-        finish = legal_finish_pattern(state, player)
-        if finish is not None:
-            return finish
-        return select_min_winning(state, player)
+        return select_heuristic_action(state, player, 0)

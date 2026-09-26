@@ -13,13 +13,13 @@ from __future__ import annotations
 
 import re
 
-__version__ = "0.8.3b2"
+__version__ = "0.8.4b1"
 
 
 def version_label(prefix: str = "v") -> str:
     """Human-readable release label derived from the packaging version.
 
-    PEP 440 spells the beta as ``0.8.3b2``; users see ``v0.8.3-beta.2``.
+    PEP 440 spells the beta as ``0.8.4b1``; users see ``v0.8.4-beta.1``.
     Deriving one from the other keeps the GUI title, TUI subtitle and CLI
     banner from drifting apart from pyproject.toml at release time.
     """

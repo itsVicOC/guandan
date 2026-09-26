@@ -6,6 +6,7 @@ AI 不再手写各牌型枚举，而是复用规则层的 `detect_patterns()`：
 from __future__ import annotations
 
 from collections import Counter
+from functools import lru_cache
 from typing import List, Optional, TypeAlias
 
 from ..engine.card import Card
@@ -75,12 +76,20 @@ def observable_key(pattern: Pattern) -> ObservableKey:
     )
 
 
-def _is_in_hand(pattern: Pattern, hand: list[Card]) -> bool:
-    hand_counts = Counter(hand)
-    return all(
-        hand_counts[card] >= needed
-        for card, needed in Counter(pattern.cards).items()
-    )
+@lru_cache(maxsize=4096)
+def _patterns_in_hand(hand: tuple[Card, ...], wild: Card | None) -> tuple[Pattern, ...]:
+    """Reuse material enumeration across paired worlds and unchanged hands."""
+    counts = Counter(hand)
+    seen: set[PatternKey] = set()
+    patterns = []
+    for pattern in detect_patterns(hand, wild):
+        if any(counts[card] < needed for card, needed in Counter(pattern.cards).items()):
+            continue
+        key = pattern_key(pattern)
+        if key not in seen:
+            seen.add(key)
+            patterns.append(pattern)
+    return tuple(patterns)
 
 
 def is_bomb_pattern(pattern: Pattern) -> bool:
@@ -104,24 +113,64 @@ def enumerate_legal_patterns(
 
     table_top: Optional[Pattern] = state.table[-1] if state.table else None
     candidates: List[Pattern] = []
-    seen: set[tuple] = set()
-
-    for pattern in detect_patterns(hand, state.wild_card):
+    for pattern in _patterns_in_hand(tuple(hand), state.wild_card):
         if not include_bombs and is_bomb_pattern(pattern):
-            continue
-        if not _is_in_hand(pattern, hand):
             continue
         if table_top is not None and not pattern.can_be_played_on(
             table_top, level=state.level
         ):
             continue
-        key = pattern_key(pattern)
-        if key in seen:
-            continue
-        seen.add(key)
         candidates.append(pattern)
 
     return candidates
+
+
+def material_variants(
+    state: GameState,
+    player: int,
+    pattern: Pattern,
+    *,
+    limit: int = 2,
+) -> list[Pattern]:
+    """Find equivalent plays that spend different physical cards.
+
+    The rule detector uses one representative for most natural combinations.
+    Swapping one same-rank card can preserve a future straight flush or pair,
+    so root search should be able to compare those material choices.
+    """
+    hand = state.hands[player]
+    wild = state.wild_card
+    available = Counter(hand)
+    seen = {pattern_key(pattern)}
+    variants: list[Pattern] = []
+    for index, original in enumerate(pattern.cards):
+        if original == wild or original.is_joker:
+            continue
+        for replacement in hand:
+            if replacement.rank != original.rank or replacement == original:
+                continue
+            material = list(pattern.cards)
+            material[index] = replacement
+            counts = Counter(material)
+            if any(counts[card] > available[card] for card in counts):
+                continue
+            for candidate in detect_patterns(material, wild):
+                if (
+                    candidate.type != pattern.type
+                    or candidate.rank != pattern.rank
+                    or candidate.length != pattern.length
+                    or candidate.suit != pattern.suit
+                    or Counter(candidate.cards) != counts
+                ):
+                    continue
+                key = pattern_key(candidate)
+                if key not in seen:
+                    seen.add(key)
+                    variants.append(candidate)
+                    if len(variants) >= limit:
+                        return variants
+                break
+    return variants
 
 
 def _bomb_order_key(pattern: Pattern, level: int) -> tuple[int, int, int, int]:

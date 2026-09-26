@@ -1,0 +1,176 @@
+{
+  "average_level_margin": 0.0,
+  "baseline_difficulty": 3,
+  "baseline_name": "职业",
+  "baseline_wins": 1,
+  "candidate_decision_latency": {
+    "average_seconds": 3.487296,
+    "count": 72,
+    "max_seconds": 5.004155,
+    "p50_seconds": 3.843079,
+    "p95_seconds": 5.001702
+  },
+  "candidate_difficulty": 4,
+  "candidate_name": "戴长胜",
+  "candidate_win_rate": 0.5,
+  "candidate_wins": 1,
+  "confidence_95": [
+    0.0,
+    1.0
+  ],
+  "confidence_method": "paired seed bootstrap",
+  "deals": 1,
+  "deterministic_search": false,
+  "elo_delta": 0.0,
+  "failures": [],
+  "fixed_root_evaluations": null,
+  "full_match": false,
+  "games": 2,
+  "incomplete": 0,
+  "legs": [
+    {
+      "candidate_team": 0,
+      "candidate_won": true,
+      "level_margin": 3,
+      "match": {
+        "decision_latency": {
+          "average_seconds": 2.008574,
+          "count": 72,
+          "max_seconds": 5.003223,
+          "p50_seconds": 1.585576,
+          "p95_seconds": 5.001388
+        },
+        "difficulties": [
+          4,
+          3,
+          4,
+          3
+        ],
+        "drift": false,
+        "duration_seconds": 144.617348,
+        "final_levels": [
+          5,
+          2
+        ],
+        "finish_order": [
+          0,
+          2,
+          1
+        ],
+        "finished": true,
+        "level": 2,
+        "seat_decision_latency": [
+          {
+            "average_seconds": 3.801326,
+            "count": 10,
+            "max_seconds": 5.002216,
+            "p50_seconds": 5.000817,
+            "p95_seconds": 5.002216
+          },
+          {
+            "average_seconds": 1.088494,
+            "count": 22,
+            "max_seconds": 2.000828,
+            "p50_seconds": 1.001304,
+            "p95_seconds": 1.959902
+          },
+          {
+            "average_seconds": 3.447523,
+            "count": 19,
+            "max_seconds": 5.003223,
+            "p50_seconds": 3.184573,
+            "p95_seconds": 5.003223
+          },
+          {
+            "average_seconds": 0.816869,
+            "count": 21,
+            "max_seconds": 1.60926,
+            "p50_seconds": 0.811833,
+            "p95_seconds": 1.581739
+          }
+        ],
+        "seed": 37000,
+        "team_bomb_count": [
+          2,
+          2
+        ],
+        "turns": 72,
+        "winner_team": 0
+      },
+      "seed": 37000
+    },
+    {
+      "candidate_team": 1,
+      "candidate_won": false,
+      "level_margin": -3,
+      "match": {
+        "decision_latency": {
+          "average_seconds": 2.564876,
+          "count": 72,
+          "max_seconds": 5.004155,
+          "p50_seconds": 2.001008,
+          "p95_seconds": 5.001237
+        },
+        "difficulties": [
+          3,
+          4,
+          3,
+          4
+        ],
+        "drift": false,
+        "duration_seconds": 184.67114,
+        "final_levels": [
+          5,
+          2
+        ],
+        "finish_order": [
+          0,
+          2,
+          1
+        ],
+        "finished": true,
+        "level": 2,
+        "seat_decision_latency": [
+          {
+            "average_seconds": 1.489844,
+            "count": 10,
+            "max_seconds": 2.001324,
+            "p50_seconds": 1.311168,
+            "p95_seconds": 2.001324
+          },
+          {
+            "average_seconds": 3.713932,
+            "count": 22,
+            "max_seconds": 5.004155,
+            "p50_seconds": 4.230531,
+            "p95_seconds": 5.001702
+          },
+          {
+            "average_seconds": 1.168608,
+            "count": 19,
+            "max_seconds": 2.002989,
+            "p50_seconds": 1.002713,
+            "p95_seconds": 2.002989
+          },
+          {
+            "average_seconds": 3.136315,
+            "count": 21,
+            "max_seconds": 5.001188,
+            "p50_seconds": 3.395403,
+            "p95_seconds": 5.000745
+          }
+        ],
+        "seed": 37000,
+        "team_bomb_count": [
+          2,
+          2
+        ],
+        "turns": 72,
+        "winner_team": 0
+      },
+      "seed": 37000
+    }
+  ],
+  "passed": true,
+  "implementation_stage": "Before Dai Changsheng gained the learned hand-plan cutoff value; retained as a failed strength/diagnostic baseline."
+}

@@ -21,6 +21,7 @@ from ..engine.rules.tributes import apply_tribute_flow
 from ..engine.state import GameState, make_initial_state, team_of
 from .play import play_or_pass
 from .strategy import DIFFICULTY_NAMES, AIStrategy, make_strategy
+from .tribute import choose_ai_tribute_cards
 
 StrategyFactory = Callable[[int, int], AIStrategy]
 
@@ -378,7 +379,9 @@ def run_match(
     )
 
 
-def _prepare_next_round(previous: GameState, seed: int) -> GameState:
+def _prepare_next_round(
+    previous: GameState, seed: int, difficulties: Sequence[int] | None = None
+) -> GameState:
     if not previous.finished or previous.match_finished:
         raise ValueError("previous state must be a completed non-final round")
     if previous.team_levels_final is None or len(previous.finish_order) != 3:
@@ -392,11 +395,20 @@ def _prepare_next_round(previous: GameState, seed: int) -> GameState:
         seed=seed,
         team_levels=levels,
     )
+    tribute_choices, return_choices = choose_ai_tribute_cards(
+        previous.finish_order,
+        state.hands,
+        level=state.level,
+        wild_card=state.wild_card,
+        difficulties=difficulties or (0, 0, 0, 0),
+    )
     tribute = apply_tribute_flow(
         list(previous.finish_order),
         state.hands,
         level=state.level,
         wild_card=state.wild_card,
+        tribute_choices=tribute_choices,
+        return_choices=return_choices,
     )
     state.history.extend(tribute.events)
     state.turn_index = tribute.first_player
@@ -480,7 +492,7 @@ def run_full_match(
             tribute_rounds += 1
         if state.match_finished:
             break
-        state = _prepare_next_round(state, seed + round_offset + 1)
+        state = _prepare_next_round(state, seed + round_offset + 1, seat_difficulties)
 
     levels = state.team_levels_final or state.team_levels
     return FullMatchResult(

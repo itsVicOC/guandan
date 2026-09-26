@@ -553,7 +553,7 @@ class TestMCTSRolloutPolicy:
         assert pattern.type == PatternType.SINGLE
         assert pattern.rank == 9
 
-    def test_targeted_rollout_answers_complex_table_without_changing_level_one(self):
+    def test_production_rollout_answers_complex_table(self):
         state = _make_test_state()
         state.wild_card = None
         state.table = [
@@ -569,7 +569,8 @@ class TestMCTSRolloutPolicy:
             Card(13, Suit.DIAMONDS),
         ]
 
-        assert _rollout_select_pattern(state, 1, rollout_strategy_level=1) is None
+        production = _rollout_select_pattern(state, 1, rollout_strategy_level=1)
+        assert production is not None and production.type == PatternType.STRAIGHT
         response = _rollout_select_pattern(state, 1, rollout_strategy_level=3)
         assert response is not None
         assert response.type == PatternType.STRAIGHT
@@ -578,6 +579,7 @@ class TestMCTSRolloutPolicy:
         from guandan.engine.events import TurnPlayed
 
         state.history.append(TurnPlayed(player=3, pattern=state.table[-1], hand_remaining=8))
+        state.hands[3] = state.hands[3][:8]
         assert _rollout_select_pattern(state, 1, rollout_strategy_level=3) is None
 
 
@@ -591,13 +593,13 @@ class TestRootActionSearch:
         ]
 
         candidates = root_action_candidates(state, 0, max_actions=4)
-        keys = [None if pattern is None else observable_key(pattern) for pattern in candidates]
+        keys = [None if pattern is None else pattern_key(pattern) for pattern in candidates]
         greedy = smallest_legal_pattern(state, 0)
 
         assert None in candidates
         assert len(keys) == len(set(keys))
         assert greedy is not None
-        assert observable_key(greedy) in keys
+        assert pattern_key(greedy) in keys
 
     def test_fixed_budget_is_reproducible_and_fully_accounted(self):
         state = _make_test_state(seed=777)
@@ -756,9 +758,11 @@ class TestProfessionalStrategy:
         assert len(pattern.cards) == 5
 
     def test_professional_uses_fast_strategy_before_endgame(self, monkeypatch):
-        """M6：前中期大手牌不跑 MCTS，避免单步过慢。"""
+        """Explicitly lowered threshold keeps the old fast-path override."""
         state = _make_test_state()
-        strategy = ProfessionalStrategy(iterations=10, rng=random.Random(42))
+        strategy = ProfessionalStrategy(
+            iterations=10, rng=random.Random(42), mcts_hand_threshold=10
+        )
 
         def fail_search(*args, **kwargs):
             raise AssertionError("root search should not run before endgame")

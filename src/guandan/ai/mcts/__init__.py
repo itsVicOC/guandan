@@ -1,10 +1,10 @@
 """Imperfect-information search implementations used by the high-level AIs.
 
 Professional defaults to paired root-action evaluation: every round samples one
-hidden-card world and applies all root actions to copies of it.  The budget is
-32 evaluations or 240 ms over six representative search actions plus pass and
-greedy coverage.  SO-ISMCTS and perfect-information MCTS remain available for
-controlled comparisons and focused tests.
+hidden-card world and applies all root actions to copies of it.  Production
+uses a 256-evaluation / 1-2 second ceiling over representative actions plus
+pass and greedy coverage.  SO-ISMCTS and perfect-information MCTS remain
+available for controlled comparisons and focused tests.
 """
 from __future__ import annotations
 
@@ -36,8 +36,8 @@ __all__ = [
 
 # 默认配置
 MCTS_CONFIG: Dict[str, int | float | str] = {
-    "iterations": 32,
-    "time_budget_ms": 240,
+    "iterations": 256,
+    "time_budget_ms": 1000,
     "search_mode": "root",
     "ucb_c": 1.20,
     "prior_weight": 0.18,
@@ -45,7 +45,7 @@ MCTS_CONFIG: Dict[str, int | float | str] = {
     "rollout_strategy": 1,
     "top_actions": 6,
     "rollout_max_turns": 40,
-    "hand_threshold": 10,
+    "hand_threshold": 27,
     "widening_c": 1.8,
     "widening_alpha": 0.5,
 }

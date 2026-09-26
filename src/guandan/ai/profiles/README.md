@@ -1,60 +1,9 @@
 # AI Profiles
 
-本目录用于存放 AI 风格配置文件。
+职业档使用 `guandan.ai.mcts.MCTS_CONFIG`；戴长胜档加载 `dachangsheng.json`。难度编号、`select_pattern` 接口及存档格式不变。
 
-## 档位
+两档均全局面采用配对根动作评估。职业主搜索最多 256 次动作评估，常规/关键时钟预算为 1000/2000ms，最多 6 个主要候选；戴长胜为 768 次、2000/5000ms 和 10 个主要候选，另在全场最多 12 张时尝试限时团队残局搜索。实体牌型变体、过牌及快速战术参考动作可扩充根候选。戴长胜采用牌组规划的截断估值，整段预算用于一次根动作比较。`reference_iterations` 默认为 0，保留正值作为旧的嵌套职业搜索实验开关。搜索会在时钟或迭代上限处结束，以实际 `SearchResult.simulations` 为准。
 
-### 档位 3：职业（M3）
-- 使用配对根动作评估（同一隐藏世界比较全部候选，32 次上限）
-- 参数来自 `guandan.ai.mcts.MCTS_CONFIG`，不需要配置文件
+两个档位的过牌均由策略选择，不使用随机过牌。风格参数仅为搜索的弱先验；更高预算是否提高胜率须经过换队复赛确认。固定迭代的 Arena 主搜索采用 256/768 次，最高档另含有节点上限的残局搜索，不等同于实际时钟预算下的工作量。
 
-### 档位 4：戴长胜（M4+）
-- 更高预算的团队根动作评估，名称为致敬；当前自对弈选中的风格先验与职业档中性先验相同，主要能力差别来自预算
-- 配置文件示例：`dachangsheng.json`
-
-## 配置文件格式
-
-```json
-{
-  "name": "戴长胜",
-  "difficulty": 4,
-  "mcts": {
-    "iterations": 96,
-    "time_budget_ms": 420,
-    "search_mode": "root",
-    "ucb_c": 1.15,
-    "prior_weight": 0.22,
-    "rollout_strategy": 1,
-    "top_actions": 6,
-    "max_depth": 14,
-    "hand_threshold": 10,
-    "rollout_max_turns": 48,
-    "widening_c": 2.0,
-    "widening_alpha": 0.5
-  },
-  "style": {
-    "bomb_threshold": 0.25,
-    "control_priority": 0.5,
-    "teammate_awareness": 0.85
-  },
-  "description": "更高预算的团队根动作评估；风格先验为自对弈选中的中性值"
-}
-```
-
-## 当前状态
-
-- **M2 完成**：档 0/1/2 已实现（新手/进阶/高手）
-- **M3 完成**：档 3（职业，配对根动作评估）
-- **M4 完成**：档 4（戴长胜，自对弈选择的稳健根动作先验与更高预算）
-- **v0.7.0-beta.3 公测版**：已完成 M7 AI 对战基准与策略调优收口，包含 MCTS 性能闸门、规则驱动候选出牌、终局优先级、短手牌拦截和 TUI 主流程/回合顺序稳定性回归
-
-## 使用方式
-
-配置文件会通过 `make_strategy(4)` 加载并应用到 AI 决策中。
-高档 AI 不使用随机过牌；是否过牌由根动作评估选择，配置不再包含无效的随机过牌倍率。
-
-## 参考
-
-- `src/guandan/ai/strategy.py` - AI 策略接口
-- `src/guandan/ai/valuation.py` - 手牌估值系统
-- `pyproject.toml` - package-data 配置
+`confidence_guard` 默认开启：最高档对一般换牌使用共同暗牌样本的配对标准误确定收益阈值 `max(0.04, 1.64 × 标准误)`，仍保留过牌与炸弹的较高门槛。它是决策启发式，不代表多候选比较已经通过显著性检验。独立于首轮筛选的 240 对种子验证后采用此配置，记录见 `benchmarks/README.md`；关闭开关可复查此前固定阈值方案。

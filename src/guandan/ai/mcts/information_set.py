@@ -63,6 +63,8 @@ class ActionStatistics:
     availability: int
     mean_value: float
     prior: float
+    reference_key: ActionKey | None = None
+    paired_standard_error: float | None = None
 
 
 @dataclass(frozen=True)
@@ -75,7 +77,7 @@ class SearchResult:
     elapsed_seconds: float
     actions: tuple[ActionStatistics, ...]
     # True when the clock budget stopped the search before `iterations`.
-    # Production may stop before the nominal 32/96 root-action evaluations, so
+    # Production may stop before the nominal 256/768 root-action evaluations, so
     # `iterations` alone does not describe the search that actually ran and
     # must not be used as a strength claim.
     budget_limited: bool = False

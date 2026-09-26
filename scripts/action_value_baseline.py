@@ -2,8 +2,9 @@
 
 ## 为什么需要它
 
-评估一次「选牌是否更好」需要真实标签。做法是：固定一批局面，对每个候选动作
-从根玩家视角打完该局（隐藏手牌按公开信息重采样），用胜率作为该动作的真实价值。
+评估一次「选牌是否更好」需要可复现的参考标签。做法是：固定一批局面，对每个候选动作
+从根玩家视角打完该局（隐藏手牌按公开信息重采样），估算该续局策略下的获胜概率。
+标签依赖续局策略与样本量，不是动作的无偏真值。
 
 问题是所需样本量很大。历史结论（见 README「搜索能力上限」）：
 
@@ -47,6 +48,7 @@ import sys
 import time
 from pathlib import Path
 
+from guandan.ai.arena import AI_POLICY_VERSION
 from guandan.ai.candidates import (
     enumerate_legal_patterns,
     observable_key,
@@ -127,7 +129,7 @@ def sample_positions(
 
 
 def _playout(job):
-    """一次落地：执行动作后由固定策略打完本局，返回根队是否获胜。"""
+    """执行动作并续局到头游确定；其队伍已决定本局胜负。"""
     seed, action_index, playout_index = job
     state = _POSITIONS[seed]
     action = _CANDIDATES[seed][action_index]
@@ -138,7 +140,7 @@ def _playout(job):
     rng = random.Random(PLAYOUT_POLICY_SEED + playout_index)
     strategy = make_strategy(_LABEL_DIFFICULTY)
     turns = 0
-    while not sampled.finished and turns < 4000:
+    while not sampled.finish_order and not sampled.finished and turns < 4000:
         play_or_pass(sampled, sampled.current_player(), strategy, rng)
         turns += 1
     win = int(bool(
@@ -272,7 +274,7 @@ def audit_candidate_recall(
     seed_start: int,
     workers: int,
 ) -> dict:
-    """Compare the production candidate pool with every legal physical play.
+    """Compare the root pool with rule-enumerated plays and retained variants.
 
     All actions at a position use the same hidden worlds and continuation seeds.
     Unlike the cached six-action baseline, this audit can expose both pruning
@@ -285,7 +287,7 @@ def audit_candidate_recall(
     candidates: dict[int, list] = {}
     current_keys: dict[int, set[tuple]] = {}
     for seed, state in sampled:
-        current = root_action_candidates(state, 0, max_actions=6)
+        current = root_action_candidates(state, 0, max_actions=10)
         current_keys[seed] = {_exact_action_key(action) for action in current}
         union = {_exact_action_key(action): action for action in current}
         for action in enumerate_legal_patterns(state, 0):
@@ -339,7 +341,7 @@ def audit_candidate_recall(
             "positions": positions,
             "playouts_per_action": playouts,
             "seed_start": seed_start,
-            "pool": "all legal exact-card actions plus pass",
+            "pool": "rule-enumerated exact-card actions, retained variants and pass",
             "label_policy": "novice",
         },
         "summary": {
@@ -352,7 +354,9 @@ def audit_candidate_recall(
     }
 
 
-def sample_diverse_positions(count: int, *, seed_start: int) -> list[dict]:
+def sample_diverse_positions(
+    count: int, *, seed_start: int, stratify_phases: bool = False
+) -> list[dict]:
     """Sample held-out decisions across levels, seats and source policies."""
     recipes = [
         (level, seat, source)
@@ -363,6 +367,10 @@ def sample_diverse_positions(count: int, *, seed_start: int) -> list[dict]:
     positions = []
     for index in range(count):
         level, seat, source = recipes[index % len(recipes)]
+        phase, minimum, maximum = (
+            (("opening", 20, 27), ("middle", 10, 19), ("endgame", 1, 9))[index % 3]
+            if stratify_phases else ("middle", 8, 16)
+        )
         for attempt in range(100):
             seed = seed_start + index + attempt * max(1, count)
             state = make_initial_state(level=level, first_player=seed % 4, seed=seed)
@@ -373,8 +381,9 @@ def sample_diverse_positions(count: int, *, seed_start: int) -> list[dict]:
                     break
                 if (
                     state.current_player() == seat
-                    and 8 <= state.hand_size(seat) <= 16
-                    and 0 < opponent_min_cards(state, seat) <= 12
+                    and minimum <= state.hand_size(seat) <= maximum
+                    and 0 < opponent_min_cards(state, seat) <= (27 if stratify_phases else 12)
+                    and (not stratify_phases or not state.finish_order)
                     and len(root_action_candidates(state, seat, max_actions=6)) >= 2
                 ):
                     positions.append({
@@ -383,6 +392,7 @@ def sample_diverse_positions(count: int, *, seed_start: int) -> list[dict]:
                         "level": level,
                         "seat": seat,
                         "source_difficulty": source,
+                        "phase": phase,
                         "state": copy.deepcopy(state),
                     })
                     break
@@ -494,6 +504,177 @@ def evaluate_diverse_positions(
             "source_difficulties": [0, 2],
             "label_difficulty": label_difficulty,
             "candidate_policy": "production root six plus pass/greedy",
+        },
+        "summary": summary,
+        "positions": rows,
+    }
+
+
+def evaluate_ladder_positions(
+    positions: int,
+    playouts: int,
+    *,
+    seed_start: int,
+    workers: int,
+    label_difficulty: int = 0,
+    include_confidence_guard: bool = False,
+) -> dict:
+    """Audit all five production picks against paired, noisy action labels.
+
+    The candidate pool is the ten-action root pool plus every strategy's
+    actual pick.  This lets the audit measure root-pool recall without silently
+    dropping legal actions chosen by a policy.
+    """
+    if positions <= 0 or playouts <= 0:
+        raise ValueError("positions and playouts must be positive")
+    if label_difficulty not in (0, 2):
+        raise ValueError("label_difficulty must be 0 or 2")
+    from guandan.ai.strategies.dachangsheng import DaiChangshengStrategy
+    from guandan.ai.strategies.professional import ProfessionalStrategy
+
+    started = time.perf_counter()
+    methods = [(str(tier), tier, False) for tier in range(5)]
+    if include_confidence_guard:
+        methods.append(("4_confidence", 4, True))
+    sampled = sample_diverse_positions(
+        positions, seed_start=seed_start, stratify_phases=True
+    )
+    states = {row["id"]: row["state"] for row in sampled}
+    roots = {row["id"]: row["seat"] for row in sampled}
+    candidate_sets: dict[int, list] = {}
+    picks: dict[int, dict[str, tuple]] = {}
+    core_keys: dict[int, set[tuple]] = {}
+    legal_counts: dict[int, int] = {}
+    search_work: dict[int, dict[str, dict]] = {}
+    for row in sampled:
+        index, state, seat = row["id"], row["state"], row["seat"]
+        core = root_action_candidates(state, seat, max_actions=10)
+        core_keys[index] = {_exact_action_key(action) for action in core}
+        legal_keys = {
+            pattern_key(pattern) for pattern in enumerate_legal_patterns(state, seat)
+        } | core_keys[index]
+        union = {_exact_action_key(action): action for action in core}
+        chosen = {}
+        work = {}
+        for name, tier, confidence_guard in methods:
+            if tier == 3:
+                strategy = ProfessionalStrategy(rng=random.Random(31_000 + index))
+            elif tier == 4:
+                strategy = DaiChangshengStrategy(
+                    rng=random.Random(41_000 + index),
+                    mcts_overrides={"confidence_guard": 1} if confidence_guard else None,
+                )
+            else:
+                strategy = make_strategy(tier)
+            decision_started = time.perf_counter()
+            action = strategy.select_pattern(state, seat)
+            search = getattr(strategy, "last_search", None)
+            work[name] = {
+                "seconds": round(time.perf_counter() - decision_started, 4),
+                "root_evaluations": search.simulations if search is not None else None,
+                "root_actions": len(search.actions) if search is not None else None,
+            }
+            key = _exact_action_key(action)
+            chosen[name] = key
+            union.setdefault(key, action)
+        picks[index] = chosen
+        search_work[index] = work
+        candidate_sets[index] = list(union.values())
+        legal_counts[index] = len(legal_keys | union.keys())
+
+    jobs = [
+        (index, action_index, k)
+        for index, actions in candidate_sets.items()
+        for action_index in range(len(actions))
+        for k in range(playouts)
+    ]
+    wins: dict[tuple[int, int], list[int]] = {}
+    report_every = max(1, len(jobs) // 20)
+    print(f"ladder positions: {positions}; total label playouts: {len(jobs)}", flush=True)
+    with mp.Pool(
+        workers,
+        initializer=_init_worker,
+        initargs=(states, candidate_sets, roots, label_difficulty),
+    ) as pool:
+        for done, (index, action_index, result) in enumerate(pool.imap_unordered(
+            _playout, jobs, chunksize=16
+        ), 1):
+            if result is None:
+                raise RuntimeError(f"candidate {index}:{action_index} became illegal")
+            wins.setdefault((index, action_index), []).append(result)
+            if done % report_every == 0:
+                print(f"{done}/{len(jobs)} labels; {time.perf_counter() - started:.0f}s", flush=True)
+
+    rows = []
+    regrets: dict[str, list[float]] = {name: [] for name, _, _ in methods}
+    recall = 0
+    for row in sampled:
+        index = row["id"]
+        actions = candidate_sets[index]
+        rates = [sum(wins[index, i]) / playouts for i in range(len(actions))]
+        lookup = {_exact_action_key(action): i for i, action in enumerate(actions)}
+        best = max(rates)
+        best_keys = {
+            _exact_action_key(actions[i]) for i, rate in enumerate(rates) if rate == best
+        }
+        recall += bool(best_keys & core_keys[index])
+        chosen = {}
+        for name, key in picks[index].items():
+            regret = best - rates[lookup[key]]
+            regrets[name].append(regret)
+            chosen[name] = round(regret, 4)
+        rows.append({
+            "id": index,
+            "seed": row["seed"],
+            "level": row["level"],
+            "seat": row["seat"],
+            "source_difficulty": row["source_difficulty"],
+            "phase": row["phase"],
+            "hand_cards": row["state"].hand_size(row["seat"]),
+            "candidate_count": len(actions),
+            "enumerated_legal_count": legal_counts[index],
+            "root_pool_count": len(core_keys[index]),
+            "root_pool_fraction": round(len(core_keys[index]) / legal_counts[index], 4),
+            "root_pool_has_labeled_best": bool(best_keys & core_keys[index]),
+            "regret": chosen,
+            "decision_work": search_work[index],
+            "selected_action_keys": picks[index],
+            "action_values": [
+                {
+                    "key": _exact_action_key(action),
+                    "wins": sum(wins[index, action_index]),
+                    "samples": len(wins[index, action_index]),
+                    "in_root_pool": _exact_action_key(action) in core_keys[index],
+                }
+                for action_index, action in enumerate(actions)
+            ],
+        })
+    summary = {
+        "root_pool_recall_within_union": round(recall / positions, 4),
+        "mean_root_pool_fraction": round(statistics.mean(
+            len(core_keys[index]) / legal_counts[index] for index in candidate_sets
+        ), 4),
+        "mean_candidates": round(statistics.mean(len(v) for v in candidate_sets.values()), 3),
+        "mean_regret": {
+            name: round(statistics.mean(values), 4)
+            for name, values in regrets.items()
+        },
+    }
+    return {
+        "meta": {
+            "positions": positions,
+            "playouts_per_action": playouts,
+            "seed_start": seed_start,
+            "levels": [2, 9, 14],
+            "seats": [0, 1, 2, 3],
+            "source_difficulties": [0, 2],
+            "phases": ["opening", "middle", "endgame"],
+            "head_undetermined_at_sampling": True,
+            "policy_version": AI_POLICY_VERSION,
+            "methods": [name for name, _, _ in methods],
+            "label_difficulty": label_difficulty,
+            "candidate_policy": "root ten plus all evaluated policy picks",
+            "note": "Exploratory labels; increase playouts before strength claims.",
         },
         "summary": summary,
         "positions": rows,
@@ -808,7 +989,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     build.add_argument("--out", default="action-value-baseline.json")
 
-    audit = sub.add_parser("audit-candidates", help="检查六动作候选池的最优动作召回")
+    audit = sub.add_parser("audit-candidates", help="检查十动作根候选池的最优动作召回")
     audit.add_argument("--positions", type=int, default=12)
     audit.add_argument("--playouts", type=int, default=200)
     audit.add_argument("--seed-start", type=int, default=2000)
@@ -825,6 +1006,17 @@ def main(argv: list[str] | None = None) -> int:
     diverse.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     diverse.add_argument("--out", default="action-value-diverse.json")
 
+    ladder = sub.add_parser(
+        "evaluate-ladder", help="比较五档实际选牌的候选覆盖及后悔值"
+    )
+    ladder.add_argument("--positions", type=int, default=24)
+    ladder.add_argument("--playouts", type=int, default=20)
+    ladder.add_argument("--seed-start", type=int, default=27_000)
+    ladder.add_argument("--label-difficulty", type=int, choices=(0, 2), default=0)
+    ladder.add_argument("--include-confidence-guard", action="store_true")
+    ladder.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
+    ladder.add_argument("--out", default="action-value-ladder.json")
+
     show = sub.add_parser("show", help="查看基线分布")
     show.add_argument("--file", required=True)
 
@@ -837,6 +1029,21 @@ def main(argv: list[str] | None = None) -> int:
     evaluate_cmd.add_argument("--out", default=None)
 
     args = parser.parse_args(argv)
+
+    if args.command == "evaluate-ladder":
+        payload = evaluate_ladder_positions(
+            args.positions,
+            args.playouts,
+            seed_start=args.seed_start,
+            workers=args.workers,
+            label_difficulty=args.label_difficulty,
+            include_confidence_guard=args.include_confidence_guard,
+        )
+        Path(args.out).write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print(json.dumps(payload["summary"], ensure_ascii=False))
+        return 0
 
     if args.command == "evaluate-diverse":
         payload = evaluate_diverse_positions(

@@ -3,7 +3,7 @@
 定义 `AIStrategy` 协议、工厂函数 `make_strategy`、异常 `AINotImplementedError`
 以及 `DIFFICULTY_NAMES` 表。
 
-M2 实现档 0/1/2，档 3/4 抛 `AINotImplementedError`。
+五档策略均已实现；编号保持与存档兼容。
 """
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ from ..engine.state import GameState
 class AIStrategy(Protocol):
     """AI 策略协议。
 
-    策略本身只决定 **出什么牌**（或不出 = 返回 None）。是否把"找到牌 → 仍选择过
-    牌"的概率过牌逻辑放在调用方共享的 `stochastic.should_pass` 中。
+    策略决定 **出什么牌**（或不出 = 返回 None）。旧策略可选择额外随机过牌；
+    当前五档均直接比较过牌与出牌，不再由调用方随机覆写。
     """
 
     name: str
@@ -39,7 +39,7 @@ class AINotImplementedError(NotImplementedError):
     """请求的 AI 档位尚未实现。"""
 
 
-# 档位 → 策略类。M2 支持 0/1/2，M3 支持 3，M4 支持 4。
+# 档位 → 策略类。
 _STRATEGIES: Dict[int, str] = {
     0: "guandan.ai.strategies.novice.NoviceStrategy",
     1: "guandan.ai.strategies.intermediate.IntermediateStrategy",

@@ -741,10 +741,10 @@ class TestStrategyDifferentiation:
         adv = AdvancedStrategy()
         p = adv.select_pattern(state, 1)
         assert p is None
-        # 新手/进阶 不考虑协作
+        # 新手也避免无意义地压制队友；高手会在危险局面作更细判断。
         nov = NoviceStrategy()
         p_nov = nov.select_pattern(state, 1)
-        assert p_nov is not None
+        assert p_nov is None
 
     def test_advanced_covers_teammate_single_when_opponent_has_one_card(self) -> None:
         """队友单张领先但对手报单时，高手 AI 应抬高桌顶而不是纯让牌。"""

@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "positions": 6,
+    "playouts_per_action": 16,
+    "seed_start": 33000,
+    "pool": "rule-enumerated exact-card actions, retained variants and pass",
+    "label_policy": "novice"
+  },
+  "summary": {
+    "best_action_recall": 1.0,
+    "mean_oracle_gap": 0.0,
+    "mean_legal_actions": 9.166666666666666,
+    "mean_current_actions": 6.166666666666667
+  },
+  "positions": [
+    {
+      "seed": 33001,
+      "hand_cards": 12,
+      "table_type": "lead",
+      "legal_actions": 24,
+      "current_actions": 11,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "bomb"
+    },
+    {
+      "seed": 33002,
+      "hand_cards": 12,
+      "table_type": "triple_pair",
+      "legal_actions": 6,
+      "current_actions": 6,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "bomb"
+    },
+    {
+      "seed": 33003,
+      "hand_cards": 11,
+      "table_type": "lead",
+      "legal_actions": 15,
+      "current_actions": 10,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "triple"
+    },
+    {
+      "seed": 33005,
+      "hand_cards": 10,
+      "table_type": "triple_pair",
+      "legal_actions": 2,
+      "current_actions": 2,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "pass"
+    },
+    {
+      "seed": 33006,
+      "hand_cards": 16,
+      "table_type": "single",
+      "legal_actions": 7,
+      "current_actions": 7,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "bomb"
+    },
+    {
+      "seed": 33007,
+      "hand_cards": 12,
+      "table_type": "triple_pair",
+      "legal_actions": 1,
+      "current_actions": 1,
+      "best_in_current": true,
+      "oracle_gap": 0.0,
+      "best_action_type": "pass"
+    }
+  ]
+}

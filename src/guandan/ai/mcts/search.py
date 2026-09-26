@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import copy
 import math
+import time
 from collections import Counter
 from typing import Optional
 
@@ -28,6 +29,7 @@ from ...engine.state import (
 from ...engine.trick import current_top_player
 from ..candidates import enumerate_legal_patterns, greedy_pattern_key, is_bomb_pattern
 from ..context import opponent_min_cards
+from ..hand_plan import estimate_remaining_plays
 from ..valuation import enumerate_candidate_plays
 from .node import MCTSNode
 
@@ -201,6 +203,7 @@ def simulate_state(
     rollout_strategy_level: int,
     max_turns: int,
     copy_state: bool = True,
+    deadline: float | None = None,
 ) -> float:
     """Roll out a state and return its value from ``root_player``'s team view."""
     sim_state = copy.deepcopy(state) if copy_state else state
@@ -209,6 +212,8 @@ def simulate_state(
     turn_count = 0
 
     while not sim_state.finished and turn_count < max_turns:
+        if deadline is not None and time.perf_counter() >= deadline:
+            break
         player = sim_state.current_player()
         pattern = _rollout_select_pattern(
             sim_state,
@@ -231,6 +236,10 @@ def simulate_state(
 
         turn_count += 1
 
+    # Higher-tier continuations use a hand-plan value at the cutoff. Once
+    # head place is known, retain the exact ranking/level-aware value path.
+    if rollout_strategy_level >= 2 and not sim_state.finish_order:
+        return planned_position_value(sim_state, root_player)
     # 评估结果
     return _evaluate_result(sim_state, root_player)
 
@@ -243,21 +252,29 @@ def _rollout_select_pattern(
 ) -> Optional[Pattern]:
     """MCTS rollout 的轻量出牌策略。
 
-    Rollout 会在搜索中被调用很多次，这里使用最小合法牌型近似完整 AI 策略，
-    避免每一步都运行昂贵的手牌结构估值。档 2+ 保留一个关键协作行为：
-    队友正在桌顶时选择过牌。
+    Rollout 会在搜索中被调用很多次；领出、复杂响应及短手牌会枚举完整
+    牌型，普通响应保留基础牌型快路径，并按局势让队友或保留炸弹。
     """
     finish = _legal_finish_pattern(state, player, max_cards=10)
     if finish is not None:
         return finish
 
-    if rollout_strategy_level == 2 and state.table:
+    if rollout_strategy_level >= 1 and state.table:
         top_player = current_top_player(state)
         if (
             top_player is not None
             and is_teammate(top_player, player)
             and opponent_min_cards(state, player) != 1
         ):
+            if state.hand_size(top_player) >= state.hand_size(player) + 5:
+                takeover = _structured_rollout_pattern(state, player)
+                if (
+                    takeover is not None
+                    and not is_bomb_pattern(takeover)
+                    and len(takeover.cards) >= 4
+                    and state.hand_size(player) - len(takeover.cards) <= 3
+                ):
+                    return takeover
             return None
 
     # A complete but bounded policy is affordable in the middle/end game and
@@ -269,19 +286,22 @@ def _rollout_select_pattern(
         PatternType.PAIR,
         PatternType.TRIPLE,
     )
-    if rollout_strategy_level == 3 and complex_response:
-        top_player = current_top_player(state)
-        if top_player is not None and is_teammate(top_player, player):
-            return None
-    # Level 3 is an isolated experiment: recognize legal responses to complex
-    # table patterns without changing the inexpensive lead/teammate policy.
-    if (
-        rollout_strategy_level == 2
-        and (state.hand_size(player) <= 8 or complex_response)
-    ) or (rollout_strategy_level == 3 and complex_response):
+    # Normal production rollouts must be able to shed real structures, rather
+    # than only singles/pairs/triples.  Keep the full enumeration to leads,
+    # complex responses and short hands to protect the search budget.
+    if rollout_strategy_level >= 1 and (
+        not state.table or state.hand_size(player) <= 10 or complex_response
+    ):
         structured = _structured_rollout_pattern(state, player)
         if structured is not None:
             return structured
+        if state.table:
+            return None
+    if state.table and opponent_min_cards(state, player) > 5:
+        basic = _smallest_rollout_pattern(state, player)
+        if basic is not None and is_bomb_pattern(basic):
+            return None
+        return basic
     return _smallest_rollout_pattern(state, player)
 
 
@@ -291,25 +311,43 @@ def _structured_rollout_pattern(state: GameState, player: int) -> Optional[Patte
     if not candidates:
         return None
     non_bombs = [pattern for pattern in candidates if not is_bomb_pattern(pattern)]
-    if not state.table and non_bombs:
-        return min(
-            non_bombs,
-            key=lambda pattern: (
-                -len(pattern.cards),
-                pattern.weight,
-                comparison_rank(pattern, state.level),
-                pattern.wild_used,
-            ),
-        )
     if non_bombs:
+        counts = Counter(card.rank for card in state.hands[player])
+        urgency = opponent_min_cards(state, player)
         return min(
             non_bombs,
-            key=lambda pattern: greedy_pattern_key(pattern, state.level),
+            key=lambda pattern: _rollout_material_cost(pattern, counts, state.level, urgency),
         )
+    if state.table and opponent_min_cards(state, player) > 5:
+        return None
     return min(
         candidates,
         key=lambda pattern: greedy_pattern_key(pattern, state.level),
     )
+
+
+def _rollout_material_cost(
+    pattern: Pattern, before: Counter[int], level: int, urgency: int
+) -> float:
+    """Cheap grouping preservation without a recursive planner per rollout."""
+    used = Counter(card.rank for card in pattern.cards)
+    cost = -0.85 * len(pattern.cards) + 2.5 * pattern.wild_used
+    for rank, count in used.items():
+        rest = before[rank] - count
+        if rest == 0:
+            continue
+        if before[rank] >= 4:
+            cost += 5.0
+        elif before[rank] >= 2 and rest == 1:
+            cost += 1.8
+        elif before[rank] == 3 and rest == 2:
+            cost += 1.2
+    strength = comparison_rank(pattern, level)
+    if urgency == 1 and pattern.type == PatternType.SINGLE:
+        cost -= 0.16 * strength
+    else:
+        cost += 0.035 * strength
+    return cost
 
 
 def _legal_finish_pattern(
@@ -349,7 +387,12 @@ def _smallest_rollout_pattern(state: GameState, player: int) -> Optional[Pattern
         and pattern.can_be_played_on(table_top, level=state.level)
     ]
     if same_type:
-        return min(same_type, key=lambda p: _rollout_pattern_key(p, state.level))
+        counts = Counter(card.rank for card in hand)
+        urgency = opponent_min_cards(state, player)
+        return min(
+            same_type,
+            key=lambda p: _rollout_material_cost(p, counts, state.level, urgency),
+        )
 
     bombs = [
         pattern
@@ -525,14 +568,10 @@ def _wild_cards_in(hand: list[Card], wild_card: Optional[Card]) -> list[Card]:
 
 
 def _evaluate_result(state: GameState, root_player: int) -> float:
-    """评估终局结果（从 root_player 视角），返回根队胜率。
+    """返回根队的 0..1 收益值，兼顾获胜和升级。
 
-    终局按比赛结果 / 升级收益映射到接近 0 或 1 的值；未完成的 rollout 走
-    拟合过的局面模型（见 `_POSITION_VALUE_WEIGHTS`）。
-
-    值域必须真正张开：UCB1 的探索项在典型访问次数下约 0.7，若各个动作的
-    价值只差 0.15，搜索无法区分好坏。此前未完成局面的取值实测仅落在
-    0.451-0.600，且与真实胜负呈负相关（r = -0.207）。
+    未定头游时使用局面模型；头游已定时，只估算剩余名次与升级收益，
+    不再让手牌张数把已定的获胜方反转。
     """
     if not state.finish_order:
         return _evaluate_unfinished(state, root_player)
@@ -570,13 +609,53 @@ def _evaluate_result(state: GameState, root_player: int) -> float:
                 score -= 0.04
         return max(0.0, min(1.0, score))
 
-    return _evaluate_unfinished(state, root_player)
+    return _evaluate_placed_race(state, root_player)
 
 
-# Per-level-terminal gain. A round is worth +1/+2/+3 levels, so the delta carries
-# only three values; 1/6 per level maps them to roughly 0.667/0.5/0.333, which
-# with the ±0.10 round bonus and the ±0.04 Ace term stays strictly inside (0, 1)
-# — a +3 round must not saturate at 1.0 or the search cannot prefer a match win.
+def _evaluate_placed_race(state: GameState, root_player: int) -> float:
+    """Respect the irreversible head-place result in a truncated continuation.
+
+    After head place, the only uncertainty is the partner's finishing place
+    (and therefore the level gain).  A generic card-count model can otherwise
+    prefer the losing team when its two players both have short hands.
+    """
+    head = state.finish_order[0]
+    root_won_head = is_teammate(head, root_player)
+    if len(state.finish_order) >= 2 and is_teammate(head, state.finish_order[1]):
+        return 1.0 if root_won_head else 0.0
+
+    remaining = [seat for seat in range(4) if seat not in state.finish_order]
+    plans = {
+        seat: estimate_remaining_plays(
+            state.hands[seat], state.wild_card, state.level, width=6
+        )
+        for seat in remaining
+    }
+
+    def finishes_before(first: int, second: int) -> float:
+        difference = max(-20.0, min(20.0, plans[first] - plans[second]))
+        return 1.0 / (1.0 + math.exp(difference))
+
+    own = [seat for seat in remaining if is_teammate(seat, root_player)]
+    opponents = [seat for seat in remaining if not is_teammate(seat, root_player)]
+    if len(remaining) == 2:
+        chance = finishes_before(own[0], opponents[0])
+        return (23.0 / 30.0 if root_won_head else 1.0 / 15.0) + chance / 6.0
+    if root_won_head:
+        first, second = (finishes_before(own[0], opponent) for opponent in opponents)
+        second_place = first * second
+        last_place = (1.0 - first) * (1.0 - second)
+        third_place = 1.0 - second_place - last_place
+        return second_place + third_place * 14.0 / 15.0 + last_place * 23.0 / 30.0
+    first, second = (finishes_before(seat, opponents[0]) for seat in own)
+    last_place = first * second
+    second_place = (1.0 - first) * (1.0 - second)
+    third_place = 1.0 - second_place - last_place
+    return last_place * 7.0 / 30.0 + third_place / 15.0
+
+
+# Add 1/6 per level to the neutral value, then apply the head-place bonus.
+# A one-level win is about 0.767, a two-level win 0.933, and a double-down 1.0.
 _TERMINAL_LEVEL_GAIN = 1.0 / 6.0
 
 # Logistic weights for the unfinished-position value, fitted by gradient descent
@@ -611,6 +690,55 @@ def _evaluate_unfinished(state: GameState, root_player: int) -> float:
         logit += weights[index] * feature
     logit = max(-30.0, min(30.0, logit))
     return 1.0 / (1.0 + math.exp(-logit))
+
+
+def planned_position_features(state: GameState, root_player: int) -> tuple[float, ...]:
+    """Sampled-world race features, accounting for groups rather than card count alone.
+
+    This evaluator is only used on determinized continuation states. Every
+    feature changes sign when the two teams are exchanged.
+    """
+    plans = [
+        estimate_remaining_plays(hand, state.wild_card, state.level, width=6)
+        for hand in state.hands
+    ]
+    own = [plans[seat] for seat in range(4) if is_teammate(seat, root_player)]
+    other = [plans[seat] for seat in range(4) if not is_teammate(seat, root_player)]
+    race = (min(other) - min(own)) / max(1.0, min(other) + min(own))
+    support = (sum(other) - sum(own)) / max(1.0, sum(other) + sum(own))
+    cards, _, control, _ = _position_features(state, root_player)
+    top = current_top_player(state)
+    lead = 0.0 if top is None else 1.0 if is_teammate(top, root_player) else -1.0
+    turn = 1.0 if is_teammate(state.current_player(), root_player) else -1.0
+    progress = 1.0 - sum(map(len, state.hands)) / 108.0
+    return (race, support, cards, control, lead, turn, race * progress, control * progress)
+
+
+# Fitted on 576 complete sampled deals, holding out a separate 192 deals
+# across 2/9/A and all starting seats. Soft-target log loss: 0.6002 versus
+# 0.6879 for the old value and 0.6618 after refitting without hand-plan features.
+# See scripts/fit_ai_value.py and benchmarks/ai-ladder-planned-value-fit.json.
+_PLANNED_VALUE_WEIGHTS = (
+    0.7596602735220546,
+    3.4928646496811773,
+    -2.063790535396573,
+    1.626351985134949,
+    0.17329406060248678,
+    0.005424167641161714,
+    1.6269419776540262,
+    -0.1569959244228077,
+)
+
+
+def planned_position_value(state: GameState, root_player: int) -> float:
+    """Calibrated symmetric team utility for an unfinished sampled world."""
+    logit = sum(
+        weight * feature
+        for weight, feature in zip(
+            _PLANNED_VALUE_WEIGHTS, planned_position_features(state, root_player)
+        )
+    )
+    return 1.0 / (1.0 + math.exp(-max(-30.0, min(30.0, logit))))
 
 
 def _position_features(state: GameState, root_player: int) -> tuple[float, float, float, float]:

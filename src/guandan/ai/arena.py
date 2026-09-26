@@ -2,13 +2,14 @@
 
 Each deal is played twice: the candidate controls team 0 in one leg and team 1
 in the other.  This cancels most deal and fixed-team bias before reporting a
-Wilson confidence interval, Elo estimate and candidate-only decision latency.
+seed-paired bootstrap interval, Elo estimate and candidate-only decision latency.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import math
+import random
 from dataclasses import dataclass
 from typing import Any, Callable, Optional, Sequence
 
@@ -24,7 +25,40 @@ from .strategies.dachangsheng import DaiChangshengStrategy
 from .strategies.professional import ProfessionalStrategy
 from .strategy import DIFFICULTY_NAMES, AIStrategy, make_strategy
 
-CALIBRATED_ITERATIONS = {3: 32, 4: 96}
+CALIBRATED_ITERATIONS = {3: 256, 4: 768}
+AI_POLICY_VERSION = "planned-cutoff-paired-confidence-v3"
+
+
+def paired_bootstrap_interval(
+    legs: Sequence["ArenaLegResult"], *, samples: int = 2000
+) -> tuple[float, float]:
+    """95% interval resampling complete two-leg deals as the independent unit."""
+    by_seed: dict[int, list[ArenaLegResult]] = {}
+    for leg in legs:
+        by_seed.setdefault(leg.seed, []).append(leg)
+    pairs = [
+        sum(int(leg.candidate_won) for leg in pair) / 2.0
+        for pair in by_seed.values()
+        if len(pair) == 2 and all(leg.match.finished for leg in pair)
+    ]
+    return paired_score_interval(pairs, samples=samples)
+
+
+def paired_score_interval(
+    pairs: Sequence[float], *, samples: int = 2000
+) -> tuple[float, float]:
+    """Bootstrap already paired seed scores (0, 0.5 or 1)."""
+    # Cluster bootstrap with only a few seeds can collapse to [1, 1] when
+    # every observed deal happens to win.  Report an uninformative interval
+    # until there are enough independent deals to estimate variation.
+    if len(pairs) < 10:
+        return (0.0, 1.0)
+    rng = random.Random(731)
+    estimates = sorted(
+        sum(pairs[rng.randrange(len(pairs))] for _ in pairs) / len(pairs)
+        for _ in range(samples)
+    )
+    return (estimates[int(0.025 * (samples - 1))], estimates[int(0.975 * (samples - 1))])
 
 
 @dataclass(frozen=True)
@@ -105,6 +139,7 @@ class ArenaSummary:
     def to_dict(self) -> dict[str, Any]:
         return {
             "candidate_difficulty": self.candidate_difficulty,
+            "policy_version": AI_POLICY_VERSION,
             "candidate_name": DIFFICULTY_NAMES[self.candidate_difficulty],
             "baseline_difficulty": self.baseline_difficulty,
             "baseline_name": DIFFICULTY_NAMES[self.baseline_difficulty],
@@ -112,6 +147,9 @@ class ArenaSummary:
             "games": self.games,
             "full_match": self.full_match,
             "deterministic_search": self.deterministic_search,
+            "fixed_root_evaluations": (
+                dict(CALIBRATED_ITERATIONS) if self.deterministic_search else None
+            ),
             "candidate_wins": self.candidate_wins,
             "baseline_wins": self.baseline_wins,
             "incomplete": self.incomplete,
@@ -120,6 +158,9 @@ class ArenaSummary:
                 round(self.confidence_low, 6),
                 round(self.confidence_high, 6),
             ],
+            "confidence_method": (
+                "paired seed bootstrap" if self.incomplete == 0 else "Wilson"
+            ),
             "elo_delta": round(self.elo_delta, 3),
             "average_level_margin": round(self.average_level_margin, 6),
             "candidate_decision_latency": _latency_payload(
@@ -257,7 +298,11 @@ def _summarize_legs(
     candidate_wins = sum(leg.candidate_won for leg in completed)
     baseline_wins = len(completed) - candidate_wins
     win_rate = candidate_wins / len(completed) if completed else 0.0
-    confidence_low, confidence_high = wilson_interval(candidate_wins, len(completed))
+    confidence_low, confidence_high = (
+        paired_bootstrap_interval(legs)
+        if len(completed) == len(legs)
+        else wilson_interval(candidate_wins, len(completed))
+    )
     decision_seconds = tuple(
         duration for leg in legs for duration in leg.candidate_decision_seconds
     )
@@ -317,8 +362,8 @@ def run_paired_comparison(
     if deals <= 0:
         raise ValueError("deals must be positive")
 
-    def seat_factory(_difficulty: int, player: int) -> AIStrategy:
-        return (candidate_factory if player % 2 == 0 else baseline_factory)(player)
+    def seat_factory(difficulty: int, player: int) -> AIStrategy:
+        return (candidate_factory if difficulty == 0 else baseline_factory)(player)
 
     # Seat tags: 0 marks the candidate's team, 1 the baseline's.
     legs = _paired_legs(

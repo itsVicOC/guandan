@@ -646,10 +646,10 @@ def test_ai_leader_continues_until_human_turn() -> None:
             await pilot.pause()
 
             screen._maybe_ai_turn()
-            for _ in range(20):
+            for _ in range(100):
                 await asyncio.sleep(0.01)
                 await pilot.pause()
-                if not screen._ai_running:
+                if state.turn_index == 0:
                     break
 
             assert state.turn_index == 0
@@ -687,10 +687,10 @@ def test_ai_turn_loop_uses_counterclockwise_order_for_every_human_seat() -> None
             await pilot.pause()
 
             screen._maybe_ai_turn()
-            for _ in range(20):
+            for _ in range(100):
                 await asyncio.sleep(0.01)
                 await pilot.pause()
-                if not screen._ai_running:
+                if state.turn_index == human:
                     break
 
             played_players = [
@@ -1106,6 +1106,10 @@ def test_finished_game_can_start_next_round_from_head_team_level() -> None:
                 assert "下一局级牌 5" in screen.sub_title
 
                 screen.action_next_game()
+                # This test advances the tribute stage explicitly below;
+                # CPU load must not let its animation timer race the assertion.
+                assert screen._tribute_timer is not None
+                screen._tribute_timer.stop()
                 await pilot.pause()
                 assert screen.state is state
                 dealt_state = screen._state()

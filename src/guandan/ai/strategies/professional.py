@@ -1,19 +1,20 @@
-"""档 3 职业策略：团队感知的配对根动作评估。
-
-每轮从根玩家的信息集重新采样隐藏牌，并让候选动作共享该隐藏世界。生产默认
-把预算均匀分给根动作；旧 SO-ISMCTS 保留为可切换的对照路径。
-"""
+"""档 3 职业策略：全局面团队感知配对根动作评估。"""
 from __future__ import annotations
 
 import random
+import time
 from typing import Optional
 
 from ...engine.hand import Pattern
+from ...engine.rules.comparator import is_bomb_type
 from ...engine.state import GameState
+from ..candidates import enumerate_legal_patterns, pattern_key
 from ..context import opponent_min_cards
 from ..endgame import legal_finish_pattern
 from ..mcts import MCTS_CONFIG
 from ..mcts.information_set import (
+    PASS_ACTION,
+    ActionStatistics,
     SearchResult,
     SearchStyle,
 )
@@ -33,6 +34,7 @@ DEFAULT_PRIOR_WEIGHT = float(MCTS_CONFIG["prior_weight"])
 DEFAULT_WIDENING_C = float(MCTS_CONFIG["widening_c"])
 DEFAULT_WIDENING_ALPHA = float(MCTS_CONFIG["widening_alpha"])
 DEFAULT_SEARCH_MODE = str(MCTS_CONFIG["search_mode"])
+DEFAULT_CRITICAL_TIME_BUDGET_MS = 2000
 
 
 class ProfessionalStrategy:
@@ -57,18 +59,19 @@ class ProfessionalStrategy:
         widening_c: float = DEFAULT_WIDENING_C,
         widening_alpha: float = DEFAULT_WIDENING_ALPHA,
         search_mode: str = DEFAULT_SEARCH_MODE,
+        critical_time_budget_ms: int | None = None,
     ):
         """初始化职业策略。
 
         Args:
-            iterations: 单次决策的最大根动作评估次数（默认 32）
+            iterations: 单次决策的最大根动作评估次数（默认 256）
             ucb_c: 信息集树探索常数（默认 1.20）
             max_actions: 根节点考虑的搜索候选上限（默认 6，另含过牌/greedy）
             rollout_strategy: rollout 策略档位（默认 1）
             rng: 随机数生成器（测试时可 seed）
-            mcts_hand_threshold: 手牌数不大于该值时启用搜索，前中期用快速策略
+            mcts_hand_threshold: 研究用闸门；默认 27 表示全局面搜索
             rollout_max_turns: 单次 rollout 最多模拟多少手
-            time_budget_ms: 单次决策时钟预算（默认 240ms，0 表示禁用）
+            time_budget_ms: 常规决策时钟预算（默认 1000ms，0 表示禁用）
             max_tree_depth: 单次模拟的最大树深度（默认 12）
             prior_weight: 动作先验在选择公式中的权重
             widening_c: 渐进扩展的规模系数
@@ -83,6 +86,11 @@ class ProfessionalStrategy:
         self.mcts_hand_threshold = mcts_hand_threshold
         self.rollout_max_turns = rollout_max_turns
         self.time_budget_ms = time_budget_ms
+        self.critical_time_budget_ms = (
+            DEFAULT_CRITICAL_TIME_BUDGET_MS
+            if critical_time_budget_ms is None and time_budget_ms > 0
+            else time_budget_ms if critical_time_budget_ms is None else critical_time_budget_ms
+        )
         self.max_tree_depth = max_tree_depth
         self.prior_weight = prior_weight
         self.widening_c = widening_c
@@ -111,59 +119,132 @@ class ProfessionalStrategy:
             最佳牌型（None 表示过牌）
         """
         self.last_search = None
-        finish = self._finish_now(state, player)
-        if finish is not None:
-            return finish
-
+        if self._forced_pass(state, player):
+            return None
         if not self._should_use_mcts(state, player):
             return self._fast_strategy.select_pattern(state, player)
 
-        if self.search_mode == "root":
-            result = root_action_search(
-                state,
-                player,
-                rng=self.rng,
-                iterations=self.iterations,
-                time_budget_ms=self.time_budget_ms,
-                max_actions=self.max_actions,
-                rollout_strategy=self.rollout_strategy,
-                rollout_max_turns=self.rollout_max_turns,
-                prior_weight=self.prior_weight,
-                style=self._search_style(),
-                adaptive=False,
-            )
-        else:
-            result = mcts_search(
-                state,
-                player,
-                rng=self.rng,
-                iterations=self.iterations,
-                time_budget_ms=self.time_budget_ms,
-                max_actions=self.max_actions,
-                max_tree_depth=self.max_tree_depth,
-                rollout_strategy=self.rollout_strategy,
-                rollout_max_turns=self.rollout_max_turns,
-                exploration=self.ucb_c,
-                prior_weight=self.prior_weight,
-                widening_c=self.widening_c,
-                widening_alpha=self.widening_alpha,
-                style=self._search_style(),
-            )
+        decision_started = time.perf_counter()
+        tactical = (
+            self._reference_action(state, player)
+            if self.search_mode == "root"
+            else None
+        )
+        budget = (
+            self.critical_time_budget_ms
+            if self._critical_decision(state, player)
+            else self.time_budget_ms
+        )
+        if budget > 0:
+            budget = max(1, budget - int((time.perf_counter() - decision_started) * 1000))
+
+        try:
+            if self.search_mode == "root":
+                result = root_action_search(
+                    state,
+                    player,
+                    rng=self.rng,
+                    iterations=self.iterations,
+                    time_budget_ms=budget,
+                    max_actions=self.max_actions,
+                    rollout_strategy=self.rollout_strategy,
+                    rollout_max_turns=self.rollout_max_turns,
+                    prior_weight=self.prior_weight,
+                    style=self._search_style(),
+                    adaptive=False,
+                    reference_actions=(tactical,),
+                )
+            else:
+                result = mcts_search(
+                    state,
+                    player,
+                    rng=self.rng,
+                    iterations=self.iterations,
+                    time_budget_ms=budget,
+                    max_actions=self.max_actions,
+                    max_tree_depth=self.max_tree_depth,
+                    rollout_strategy=self.rollout_strategy,
+                    rollout_max_turns=self.rollout_max_turns,
+                    exploration=self.ucb_c,
+                    prior_weight=self.prior_weight,
+                    widening_c=self.widening_c,
+                    widening_alpha=self.widening_alpha,
+                    style=self._search_style(),
+                )
+        except ValueError as exc:
+            # Hand-constructed test/replay states may lack a complete public
+            # deck accounting.  Keep the playable policy available there.
+            if "belief sampler has no remaining hand capacity" not in str(exc):
+                raise
+            return self._fast_strategy.select_pattern(state, player)
         if result is None:  # Test doubles and defensive compatibility.
             return None
         self.last_search = result
+        if self.search_mode == "root":
+            tactical_key = PASS_ACTION if tactical is None else pattern_key(tactical)
+            chosen_key = PASS_ACTION if result.pattern is None else pattern_key(result.pattern)
+            if chosen_key != tactical_key:
+                stats = {entry.action_key: entry for entry in result.actions}
+                chosen = stats.get(chosen_key)
+                reference = stats.get(tactical_key)
+                required_gain = self._minimum_search_gain(chosen, reference)
+                urgency = opponent_min_cards(state, player)
+                if tactical is None and urgency > 5:
+                    required_gain = 0.25
+                    if (
+                        result.pattern is not None
+                        and is_bomb_type(result.pattern.type)
+                        and state.hand_size(player) - len(result.pattern.cards) > 3
+                    ):
+                        required_gain = 0.40
+                # Sparse, clock-truncated rollouts should not replace a sound
+                # tactical move on a tiny, noisy lead.  Both actions were
+                # evaluated on the same hidden worlds.
+                if (
+                    chosen is None
+                    or reference is None
+                    or min(entry.visits for entry in result.actions) < 6
+                    or chosen.mean_value - reference.mean_value < required_gain
+                ):
+                    return tactical
         return result.pattern
+
+    def _minimum_search_gain(
+        self, chosen: ActionStatistics | None, reference: ActionStatistics | None
+    ) -> float:
+        return 0.14
+
+    def _reference_action(self, state: GameState, player: int) -> Optional[Pattern]:
+        """Lower-tier decision that additional search must demonstrably improve."""
+        return self._fast_strategy.select_pattern(state, player)
+
+    def _forced_pass(self, state: GameState, player: int) -> bool:
+        """An empty response set has no decision to sample or search."""
+        return (
+            player == state.current_player()
+            and bool(state.table)
+            and not enumerate_legal_patterns(state, player)
+        )
 
     def _search_style(self) -> SearchStyle:
         return SearchStyle()
 
     def _finish_now(self, state: GameState, player: int) -> Optional[Pattern]:
-        """如果有合法牌型能一次出完当前手牌，直接返回。"""
+        """Check whether a legal one-play finish exists for urgency detection."""
         return legal_finish_pattern(state, player)
 
     def _should_use_mcts(self, state: GameState, player: int) -> bool:
-        """M6 性能闸门：只在中后期或关键局面启用搜索。"""
+        """Search throughout a normal game; retain the threshold override for tests."""
+        if self.mcts_hand_threshold >= 27:
+            return True
         if state.hand_size(player) <= self.mcts_hand_threshold:
             return True
         opponent_min = opponent_min_cards(state, player)
         return 0 < opponent_min <= self.mcts_hand_threshold
+
+    def _critical_decision(self, state: GameState, player: int) -> bool:
+        if any(0 < state.hand_size(seat) <= 10 for seat in range(4)):
+            return True
+        if state.table and is_bomb_type(state.table[-1].type):
+            return True
+        return self._finish_now(state, player) is not None

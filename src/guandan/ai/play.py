@@ -1,4 +1,4 @@
-"""AI 行动：把"策略选牌 + 概率过牌 + 出牌/过牌"打包成一个可复用的动作。
+"""AI 行动：把策略选牌与合法出牌/过牌打包成一个可复用的动作。
 
 CLI 和 TUI 都通过 `play_or_pass` 调 AI，避免重复决策逻辑。
 """
@@ -29,7 +29,7 @@ def play_or_pass(
     1. `strategy.select_pattern(state, player)` 决定出哪手
        - 返回 None：策略选择"不出"（找不到能压 / 协作分让队友收）
     2. leader（table 空）→ 必须出
-    3. 找到牌型 → 概率过牌（避免 AIs 100% 压让真人被无限卡住）
+    3. 旧扩展策略可要求额外概率过牌；当前五档均不启用
 
     `rng` 注入是为了让测试可 seed。CLI 用 `random.Random(args.seed)`；
     TUI 用未 seed 的 `random.Random()`（系统熵）。

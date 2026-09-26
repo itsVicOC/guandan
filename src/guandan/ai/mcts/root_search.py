@@ -11,10 +11,12 @@ import math
 import random
 import time
 from dataclasses import dataclass, field
+from typing import Sequence
 
 from ...engine.hand import Pattern
 from ...engine.state import GameState, clone_state_for_search
-from ..candidates import observable_key, smallest_legal_pattern
+from ..candidates import material_variants, pattern_key, smallest_legal_pattern
+from ..tactics import select_heuristic_action
 from ..valuation import enumerate_search_candidates
 from .determinize import determinize
 from .information_set import (
@@ -49,6 +51,7 @@ def root_action_candidates(
     player: int,
     *,
     max_actions: int,
+    reference_actions: Sequence[Pattern | None] = (),
 ) -> list[Pattern | None]:
     """Return a deduplicated union covering search, pass, and greedy actions."""
     candidates: list[Pattern | None] = []
@@ -58,31 +61,58 @@ def root_action_candidates(
         player,
         max_candidates=max_actions,
     ):
-        key = observable_key(pattern)
+        key = pattern_key(pattern)
         if key not in seen:
             candidates.append(pattern)
             seen.add(key)
+
+    # A few alternate suits within an otherwise identical play may change
+    # the remaining hand substantially.  They remain exact legal root moves.
+    for base in tuple(candidates[:2]):
+        if base is None:
+            continue
+        for variant in material_variants(state, player, base, limit=1):
+            key = pattern_key(variant)
+            if key not in seen:
+                candidates.append(variant)
+                seen.add(key)
 
     if state.table:
         candidates.append(None)
         seen.add(PASS_ACTION)
 
     greedy = smallest_legal_pattern(state, player)
-    if greedy is not None and observable_key(greedy) not in seen:
+    if greedy is not None and pattern_key(greedy) not in seen:
         candidates.append(greedy)
+        seen.add(pattern_key(greedy))
+    references = reference_actions or (select_heuristic_action(state, player, 2),)
+    for tactical in references:
+        tactical_key = _arm_key(tactical)
+        if tactical_key not in seen:
+            candidates.append(tactical)
+            seen.add(tactical_key)
     return candidates
 
 
 def _arm_key(pattern: Pattern | None) -> tuple:
-    return PASS_ACTION if pattern is None else observable_key(pattern)
+    return PASS_ACTION if pattern is None else pattern_key(pattern)
 
 
-def _ranking_score(arm: _RootArm, prior_weight: float) -> float:
+def _ranking_score(
+    arm: _RootArm, prior_weight: float, common_visits: int | None = None
+) -> float:
     """Use style as a diminishing tie-breaker, never as a hard veto."""
-    if not arm.values:
+    values = arm.values if common_visits is None else arm.values[:common_visits]
+    if not values:
         return -math.inf
-    prior_adjustment = prior_weight * (arm.prior - 1.0) / max(2.0, arm.visits)
-    return arm.mean_value + prior_adjustment
+    # A one-standard-error style tie break is useful with a small number of
+    # paired worlds: it avoids spending a bomb for a noisy 1-2% lead while
+    # vanishing as the evidence grows.
+    # Raw priors include a deliberately large one-play-finish value; using
+    # them directly can overwhelm an entire 0..1 rollout result at low counts.
+    bounded_prior = math.tanh(math.log(max(0.01, arm.prior)))
+    prior_adjustment = prior_weight * bounded_prior / math.sqrt(max(2.0, len(values)))
+    return sum(values) / len(values) + prior_adjustment
 
 
 def root_action_search(
@@ -100,6 +130,7 @@ def root_action_search(
     adaptive: bool = False,
     min_samples: int = 2,
     finalists: int = 2,
+    reference_actions: Sequence[Pattern | None] = (),
 ) -> SearchResult:
     """Evaluate root actions with paired worlds and optional successive halving.
 
@@ -120,8 +151,12 @@ def root_action_search(
             f"player {player} is not to act (current player is {state.current_player()})"
         )
 
+    started = time.perf_counter()
+    deadline = started + time_budget_ms / 1000.0 if time_budget_ms > 0 else None
     search_style = style or SearchStyle()
-    patterns = root_action_candidates(state, player, max_actions=max_actions)
+    patterns = root_action_candidates(
+        state, player, max_actions=max_actions, reference_actions=reference_actions
+    )
     arms = [
         _RootArm(
             key=_arm_key(pattern),
@@ -140,8 +175,6 @@ def root_action_search(
             budget_limited=False,
         )
 
-    started = time.perf_counter()
-    deadline = started + time_budget_ms / 1000.0 if time_budget_ms > 0 else None
     active = list(arms)
     evaluations = 0
     sampled_worlds = 0
@@ -149,6 +182,9 @@ def root_action_search(
     stopped_by_clock = False
 
     while evaluations < iterations and active:
+        if deadline is not None and time.perf_counter() >= deadline:
+            stopped_by_clock = True
+            break
         sampled_world = determinize(state, player, rng)
         sampled_worlds += 1
         completed_round = True
@@ -160,7 +196,7 @@ def root_action_search(
             if evaluations >= iterations:
                 completed_round = False
                 break
-            if evaluations > 0 and deadline is not None and time.perf_counter() >= deadline:
+            if deadline is not None and time.perf_counter() >= deadline:
                 stopped_by_clock = True
                 completed_round = False
                 break
@@ -173,7 +209,12 @@ def root_action_search(
                 rollout_strategy_level=rollout_strategy,
                 max_turns=rollout_max_turns,
                 copy_state=False,
+                deadline=deadline,
             )
+            if deadline is not None and time.perf_counter() >= deadline:
+                stopped_by_clock = True
+                completed_round = False
+                break
             arm.values.append(value)
             evaluations += 1
         if stopped_by_clock:
@@ -194,19 +235,49 @@ def root_action_search(
             next_halving_at *= 2
 
     visited = [arm for arm in arms if arm.visits]
+    # A partial final round may contain an unusually easy or hard hidden
+    # world.  Compare all uniform arms on their common completed worlds so
+    # extra samples at the clock boundary cannot bias the decision.
+    common_visits = min(arm.visits for arm in arms) if not adaptive else None
+    comparison_visits = common_visits if common_visits else None
     best = max(
         visited,
-        key=lambda arm: _ranking_score(arm, prior_weight),
-        default=None,
+        key=lambda arm: _ranking_score(arm, prior_weight, comparison_visits),
+        default=arms[0],
     )
+    reference = next(
+        (arm for arm in arms if reference_actions and arm.key == _arm_key(reference_actions[0])),
+        None,
+    )
+
+    def paired_error(arm: _RootArm) -> float | None:
+        if reference is None or not common_visits or common_visits < 2:
+            return None
+        differences = [
+            value - baseline
+            for value, baseline in zip(
+                arm.values[:common_visits], reference.values[:common_visits]
+            )
+        ]
+        mean = sum(differences) / common_visits
+        return math.sqrt(
+            sum((value - mean) ** 2 for value in differences)
+            / (common_visits * (common_visits - 1))
+        )
+
     action_stats = tuple(
         ActionStatistics(
             action_key=arm.key,
             pattern=arm.pattern,
             visits=arm.visits,
             availability=sampled_worlds,
-            mean_value=arm.mean_value,
+            mean_value=(
+                sum(arm.values[:comparison_visits]) / comparison_visits
+                if comparison_visits else arm.mean_value
+            ),
             prior=arm.prior,
+            reference_key=reference.key if reference is not None else None,
+            paired_standard_error=paired_error(arm),
         )
         for arm in arms
     )

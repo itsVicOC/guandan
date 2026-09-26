@@ -1111,7 +1111,7 @@ class GameScreen(Screen):
     @work(thread=True, exclusive=True, group="ai-turns")
     def _run_ai_worker(self) -> None:
         try:
-            ai_actions = self.session.run_ai_until_human(limit=12)
+            ai_actions = self.session.run_ai_until_human(limit=1)
             if not any("AI 错误" in message for message in ai_actions) and not self.session.autosave_after_ai():
                 raise OSError(self.session.last_action)
             self.app.call_from_thread(self._finish_ai_turn, ai_actions, None)
@@ -1126,7 +1126,13 @@ class GameScreen(Screen):
             self._last_action = "；".join(ai_actions[-4:])
         self._refresh_all()
         state = self._state()
-        if not state.finished and state.turn_index != self.human and len(ai_actions) >= 12:
+        if (
+            not state.finished
+            and state.turn_index != self.human
+            and ai_actions
+            and error is None
+            and not any("AI 错误" in message for message in ai_actions)
+        ):
             self.set_timer(0.1, self._maybe_ai_turn)
         if state.finished:
             self.session.save_finished_if_needed()

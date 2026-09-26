@@ -24,6 +24,7 @@ from .candidates import (
     pattern_key,
 )
 from .context import opponent_min_cards as context_opponent_min_cards
+from .hand_plan import estimate_remaining_plays, remaining_cards
 
 
 def _hand_breakdown(cards: list) -> dict:
@@ -82,19 +83,19 @@ def _cached_structure_score(
     wild: Optional[Card],
     cache: Optional[_StructureCache],
 ) -> float:
-    if cache is None:
-        return _best_structure_score(cards, wild)
     key = _cards_key(cards)
-    if key not in cache:
-        memo_key = (key, wild)
-        memo = _structure_score_memo.get(memo_key)
-        if memo is None:
-            memo = _best_structure_score(cards, wild)
-            if len(_structure_score_memo) >= _STRUCTURE_SCORE_LIMIT:
-                _structure_score_memo.clear()
-            _structure_score_memo[memo_key] = memo
+    if cache is not None and key in cache:
+        return cache[key]
+    memo_key = (key, wild)
+    memo = _structure_score_memo.get(memo_key)
+    if memo is None:
+        memo = _best_structure_score(cards, wild)
+        if len(_structure_score_memo) >= _STRUCTURE_SCORE_LIMIT:
+            _structure_score_memo.clear()
+        _structure_score_memo[memo_key] = memo
+    if cache is not None:
         cache[key] = memo
-    return cache[key]
+    return memo
 
 
 def estimate_pattern_cost(
@@ -298,6 +299,17 @@ def enumerate_search_candidates(
 
     # Terminal actions must never be hidden by pruning.
     reserve(next((p for p in ranked if len(p.cards) == len(hand)), None))
+    reserve(
+        min(
+            ranked[:24],
+            key=lambda p: (
+                3.0 * estimate_remaining_plays(
+                    remaining_cards(hand, p.cards), state.wild_card, state.level, width=12
+                )
+                + 0.13 * cost(p)
+            ),
+        )
+    )
     reserve(ranked[0])
 
     non_bombs = [p for p in candidates if not is_bomb_pattern(p)]

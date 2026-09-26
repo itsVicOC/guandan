@@ -17,6 +17,7 @@ from typing import Any, Literal
 from ..ai import AINotImplementedError, make_strategy, play_or_pass
 from ..ai.candidates import enumerate_legal_patterns, greedy_pattern_key
 from ..ai.strategy import AIStrategy
+from ..ai.tribute import choose_ai_tribute_cards
 from ..engine.card import Card, Suit
 from ..engine.events import (
     Event,
@@ -579,11 +580,23 @@ class GameSession:
         next_state = pending.state
         next_level = next_state.level
         preview_hands = [list(hand) for hand in next_state.hands]
+        ai_difficulties = [
+            None if seat == self.human else self.difficulty for seat in range(4)
+        ]
+        tribute_choices, return_choices = choose_ai_tribute_cards(
+            pending.finish_order,
+            next_state.hands,
+            level=next_level,
+            wild_card=next_state.wild_card,
+            difficulties=ai_difficulties,
+        )
         preview = apply_tribute_flow(
             list(pending.finish_order),
             preview_hands,
             level=next_state.level,
             wild_card=next_state.wild_card,
+            tribute_choices=tribute_choices,
+            return_choices=return_choices,
         )
         human_choice: PendingCardChoice | None = None
         if any(exchange.from_player == self.human for exchange in preview.exchanges):
@@ -641,12 +654,22 @@ class GameSession:
             self.last_action = "所选牌不符合进贡规则"
             return SessionAction(False, self.last_action)
 
-        tribute_choices: dict[int, Card] = {}
-        return_choices: dict[int, Card] = {}
-        if selected_card is not None and choice is not None:
-            target = tribute_choices if choice.kind == "tribute" else return_choices
-            target[self.human] = selected_card
         try:
+            human_choice = (
+                (self.human, choice.kind, selected_card)
+                if selected_card is not None and choice is not None else None
+            )
+            ai_difficulties = [
+                None if seat == self.human else self.difficulty for seat in range(4)
+            ]
+            tribute_choices, return_choices = choose_ai_tribute_cards(
+                pending.finish_order,
+                pending.state.hands,
+                level=pending.state.level,
+                wild_card=pending.state.wild_card,
+                difficulties=ai_difficulties,
+                human_choice=human_choice,
+            )
             tribute_result = apply_tribute_flow(
                 list(pending.finish_order),
                 pending.state.hands,

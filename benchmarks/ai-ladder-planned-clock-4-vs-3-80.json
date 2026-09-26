@@ -1,0 +1,2901 @@
+{
+  "candidate_difficulty": 4,
+  "policy_version": "planned-cutoff-forced-pass-v2",
+  "baseline_difficulty": 3,
+  "deterministic_search": false,
+  "fixed_root_evaluations": null,
+  "prior": null,
+  "note": "Round-win evidence only. Newly added rounds stop at head place; do not infer level gain, completed games, pass-A rate or production latency.",
+  "deals": 80,
+  "games": 160,
+  "candidate_wins": 86,
+  "baseline_wins": 74,
+  "candidate_win_rate": 0.5375,
+  "confidence_95": [
+    0.475,
+    0.60625
+  ],
+  "confidence_method": "paired seed bootstrap",
+  "observations": [
+    {
+      "seed": 43000,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 72,
+      "duration_seconds": 86.05213837500196,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43000,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 80,
+      "duration_seconds": 113.73844233399723,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43001,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 40,
+      "duration_seconds": 46.708444292075,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43001,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 40,
+      "duration_seconds": 70.34978012507781,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43002,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 59,
+      "duration_seconds": 79.89460804197006,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43002,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 45,
+      "duration_seconds": 80.61722999997437,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43003,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 52,
+      "duration_seconds": 96.61843462497927,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43003,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 56,
+      "duration_seconds": 79.99875712499488,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43004,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 56,
+      "duration_seconds": 98.51289612497203,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43004,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 56,
+      "duration_seconds": 101.37274887505919,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43005,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 66,
+      "duration_seconds": 80.1172419579234,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43005,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 51,
+      "duration_seconds": 90.6763522089459,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43006,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 64,
+      "duration_seconds": 70.97263720899355,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43006,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 82,
+      "duration_seconds": 103.58785466698464,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43007,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 76,
+      "duration_seconds": 82.71738370798994,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43007,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 48,
+      "duration_seconds": 56.332723125000484,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43008,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 65,
+      "duration_seconds": 75.48034179210663,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43008,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 49,
+      "duration_seconds": 53.83001404197421,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43009,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 57,
+      "duration_seconds": 106.19817991694435,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43009,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 53,
+      "duration_seconds": 75.36006158392411,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43010,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 64,
+      "duration_seconds": 77.5402204580605,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43010,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 64,
+      "duration_seconds": 83.24201024998911,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43011,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 49,
+      "duration_seconds": 89.3483541670721,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43011,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 53,
+      "duration_seconds": 72.57560383307282,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43012,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 39,
+      "duration_seconds": 69.42983779206406,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43012,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 39,
+      "duration_seconds": 73.04108833300415,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43013,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 72,
+      "duration_seconds": 144.29526204103604,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43013,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 60,
+      "duration_seconds": 106.35695720801596,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43014,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 63,
+      "duration_seconds": 92.85214162501507,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43014,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 59,
+      "duration_seconds": 79.13169750000816,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43015,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 58,
+      "duration_seconds": 71.20975941594224,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43015,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 59,
+      "duration_seconds": 66.47220104199369,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43016,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 49,
+      "duration_seconds": 113.90833899995778,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43016,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 49,
+      "duration_seconds": 105.66445866704453,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43017,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 53,
+      "duration_seconds": 108.84005624998827,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43017,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 27,
+      "duration_seconds": 63.15131787501741,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43018,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 56,
+      "duration_seconds": 106.06328950007446,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43018,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 55,
+      "duration_seconds": 92.74674420803785,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43019,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 61,
+      "duration_seconds": 131.1330265830038,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43019,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 28,
+      "duration_seconds": 59.302160874940455,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43020,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 42,
+      "duration_seconds": 57.29941883299034,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43020,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 58,
+      "duration_seconds": 93.69940749998204,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43021,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 75,
+      "duration_seconds": 98.67420545907225,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43021,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 67,
+      "duration_seconds": 98.60975908406544,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43022,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 71,
+      "duration_seconds": 88.12873241701163,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43022,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 54,
+      "duration_seconds": 76.63278254203033,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43023,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 73,
+      "duration_seconds": 113.53181654203217,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43023,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 66,
+      "duration_seconds": 76.54320479102898,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43024,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 61,
+      "duration_seconds": 66.62293983390555,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43024,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 68,
+      "duration_seconds": 70.23630812496413,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43025,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 50,
+      "duration_seconds": 97.86263537500054,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43025,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 58,
+      "duration_seconds": 74.72554845793638,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43026,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 62,
+      "duration_seconds": 95.53576004202478,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43026,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 67,
+      "duration_seconds": 117.42831183294766,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43027,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 50,
+      "duration_seconds": 69.64592133299448,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43027,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 54,
+      "duration_seconds": 118.49811833305284,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43028,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 47,
+      "duration_seconds": 69.25689550000243,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43028,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 71,
+      "duration_seconds": 88.00034900009632,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43029,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 84,
+      "duration_seconds": 152.72458483395167,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43029,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 60,
+      "duration_seconds": 73.79737141693477,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43030,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 64,
+      "duration_seconds": 102.05324141599704,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43030,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 59,
+      "duration_seconds": 103.73137175000738,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43031,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 60,
+      "duration_seconds": 99.94721449993085,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43031,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 67,
+      "duration_seconds": 65.83348300005309,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43032,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 66,
+      "duration_seconds": 107.76783387502655,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43032,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 68,
+      "duration_seconds": 158.69128866691608,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43033,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 73,
+      "duration_seconds": 99.61130095901899,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43033,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 79,
+      "duration_seconds": 88.11044404201675,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43034,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 67,
+      "duration_seconds": 89.43127341696527,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43034,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 69,
+      "duration_seconds": 66.38324866699986,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43035,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 41,
+      "duration_seconds": 86.5521872920217,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43035,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 52,
+      "duration_seconds": 97.51217379199807,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43036,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 77,
+      "duration_seconds": 142.50573345902376,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43036,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 51,
+      "duration_seconds": 90.98050529102329,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43037,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 54,
+      "duration_seconds": 52.844236582983285,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43037,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 49,
+      "duration_seconds": 59.83561720803846,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43038,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 56,
+      "duration_seconds": 105.67196970793884,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43038,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 52,
+      "duration_seconds": 76.00934095901903,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43039,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 31,
+      "duration_seconds": 57.91451841592789,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43039,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 63,
+      "duration_seconds": 87.54489191703033,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43040,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 38,
+      "duration_seconds": 48.91335354105104,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43040,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 49,
+      "duration_seconds": 60.110887750051916,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43041,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 78,
+      "duration_seconds": 78.76516270905267,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43041,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 68,
+      "duration_seconds": 63.73328541603405,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43042,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 75,
+      "duration_seconds": 115.91509433300234,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43042,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 44,
+      "duration_seconds": 88.39129824994598,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43043,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 48,
+      "duration_seconds": 84.11916108301375,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43043,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 60,
+      "duration_seconds": 66.3231762079522,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43044,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 20,
+      "duration_seconds": 19.117491625016555,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43044,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 58,
+      "duration_seconds": 103.25250916706864,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43045,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 66,
+      "duration_seconds": 74.16569616599008,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43045,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 68,
+      "duration_seconds": 70.69860016705934,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43046,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 71,
+      "duration_seconds": 143.0314417919144,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43046,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 71,
+      "duration_seconds": 85.43306729197502,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43047,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 72,
+      "duration_seconds": 104.40063979197294,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43047,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 57,
+      "duration_seconds": 109.54298349993769,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43048,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 67,
+      "duration_seconds": 133.30922691710293,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43048,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 62,
+      "duration_seconds": 133.93516237509903,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43049,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 31,
+      "duration_seconds": 66.98835350002628,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43049,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 55,
+      "duration_seconds": 103.17969825002365,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43050,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 32,
+      "duration_seconds": 44.18397474999074,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43050,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 32,
+      "duration_seconds": 51.9534645419335,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43051,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 50,
+      "duration_seconds": 86.64339424995705,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43051,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 46,
+      "duration_seconds": 79.73829725000542,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43052,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 63,
+      "duration_seconds": 84.5589865410002,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43052,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 66,
+      "duration_seconds": 107.49843854201026,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43053,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 62,
+      "duration_seconds": 87.64750575006474,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43053,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 62,
+      "duration_seconds": 142.65629199997056,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43054,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 53,
+      "duration_seconds": 90.09076475002803,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43054,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 64,
+      "duration_seconds": 92.375240375055,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43055,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 37,
+      "duration_seconds": 74.76371591689531,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43055,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 62,
+      "duration_seconds": 113.94184308301192,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43056,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 75,
+      "duration_seconds": 95.93692033388652,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43056,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 68,
+      "duration_seconds": 78.1426009159768,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43057,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 63,
+      "duration_seconds": 102.42465770896524,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43057,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 71,
+      "duration_seconds": 97.47893333400134,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43058,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 49,
+      "duration_seconds": 92.91730095806997,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43058,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 66,
+      "duration_seconds": 90.89937429199927,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43059,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 49,
+      "duration_seconds": 87.93262262502685,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43059,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 37,
+      "duration_seconds": 50.293346833088435,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43060,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 63,
+      "duration_seconds": 67.71940991689917,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43060,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 64,
+      "duration_seconds": 132.78643162501976,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43061,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 70,
+      "duration_seconds": 104.5553308329545,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43061,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 71,
+      "duration_seconds": 86.8297062079655,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43062,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 61,
+      "duration_seconds": 98.9574697080534,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43062,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 57,
+      "duration_seconds": 70.59420100005809,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43063,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 56,
+      "duration_seconds": 80.02928320795763,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43063,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 59,
+      "duration_seconds": 55.03718029195443,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43064,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 62,
+      "duration_seconds": 99.8993833749555,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43064,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 71,
+      "duration_seconds": 66.76491479203105,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43065,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 45,
+      "duration_seconds": 86.5346118339803,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43065,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 41,
+      "duration_seconds": 91.40509854198899,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43066,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 61,
+      "duration_seconds": 115.41186712507624,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43066,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 57,
+      "duration_seconds": 95.36195875005797,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43067,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 44,
+      "duration_seconds": 53.38638925005216,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43067,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 56,
+      "duration_seconds": 116.67348637501709,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43068,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 42,
+      "duration_seconds": 49.421489333035424,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43068,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 50,
+      "duration_seconds": 58.72659225005191,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43069,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 77,
+      "duration_seconds": 115.61551683302969,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43069,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 56,
+      "duration_seconds": 114.63155575003475,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43070,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 56,
+      "duration_seconds": 65.17643408395816,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43070,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 56,
+      "duration_seconds": 71.22043770796154,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43071,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 70,
+      "duration_seconds": 149.51315174996853,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43071,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 54,
+      "duration_seconds": 88.20156020892318,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43072,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 55,
+      "duration_seconds": 91.34381266694982,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43072,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 58,
+      "duration_seconds": 82.66275779192802,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43073,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 71,
+      "duration_seconds": 152.48246224992909,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43073,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 47,
+      "duration_seconds": 87.37072874989826,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43074,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 75,
+      "duration_seconds": 96.76951895805541,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43074,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 70,
+      "duration_seconds": 111.87354395794682,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43075,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 65,
+      "duration_seconds": 114.27790154190734,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43075,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 64,
+      "duration_seconds": 87.83192600007169,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43076,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 42,
+      "duration_seconds": 65.54482866602484,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": false
+    },
+    {
+      "seed": 43076,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 3,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 46,
+      "duration_seconds": 80.71600058407057,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43077,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 67,
+      "duration_seconds": 102.93672808306292,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43077,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 1,
+      "winner_team": 1,
+      "head_determined": true,
+      "turns_until_head": 64,
+      "duration_seconds": 131.0844864579849,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": true
+    },
+    {
+      "seed": 43078,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 77,
+      "duration_seconds": 93.960040209,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43078,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 2,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 79,
+      "duration_seconds": 69.91417166602332,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    },
+    {
+      "seed": 43079,
+      "level": 2,
+      "difficulties": [
+        4,
+        3,
+        4,
+        3
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 25,
+      "duration_seconds": 28.932454332942143,
+      "observation": "head place only",
+      "candidate_team": 0,
+      "candidate_won": true
+    },
+    {
+      "seed": 43079,
+      "level": 2,
+      "difficulties": [
+        3,
+        4,
+        3,
+        4
+      ],
+      "head_player": 0,
+      "winner_team": 0,
+      "head_determined": true,
+      "turns_until_head": 25,
+      "duration_seconds": 27.53752487502061,
+      "observation": "head place only",
+      "candidate_team": 1,
+      "candidate_won": false
+    }
+  ]
+}

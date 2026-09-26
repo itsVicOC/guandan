@@ -6,12 +6,38 @@ import json
 import pytest
 
 from guandan.ai.arena import (
+    ArenaLegResult,
     elo_from_win_rate,
     evaluate_arena_gate,
     main,
+    paired_bootstrap_interval,
     run_arena,
+    run_paired_comparison,
     wilson_interval,
 )
+from guandan.ai.benchmark import MatchResult
+from guandan.ai.strategies.novice import NoviceStrategy
+
+
+def test_custom_policy_comparison_swaps_the_implementations() -> None:
+    constructed = []
+
+    def candidate(player):
+        constructed.append(("candidate", player))
+        return NoviceStrategy()
+
+    def baseline(player):
+        constructed.append(("baseline", player))
+        return NoviceStrategy()
+
+    result = run_paired_comparison(
+        deals=1, seed_start=909, candidate_factory=candidate, baseline_factory=baseline
+    )
+    assert result.incomplete == 0
+    assert constructed == [
+        ("candidate", 0), ("baseline", 1), ("candidate", 2), ("baseline", 3),
+        ("baseline", 0), ("candidate", 1), ("baseline", 2), ("candidate", 3),
+    ]
 
 
 def test_wilson_interval_and_elo_are_well_formed() -> None:
@@ -20,6 +46,29 @@ def test_wilson_interval_and_elo_are_well_formed() -> None:
     assert 0.0 < low < 0.60 < high < 1.0
     assert elo_from_win_rate(0.5) == pytest.approx(0.0)
     assert elo_from_win_rate(0.6) > 0.0
+
+
+def test_paired_interval_resamples_deals_not_individual_legs() -> None:
+    def leg(seed: int, team: int, won: bool) -> ArenaLegResult:
+        result = MatchResult(
+            seed=seed,
+            level=2,
+            difficulties=(0, 1, 0, 1),
+            turns=40,
+            finished=True,
+            finish_order=(team, (team + 2) % 4, (team + 1) % 4),
+            winner_team=team if won else 1 - team,
+            final_levels=(3, 2),
+            team_bomb_count=(0, 0),
+            drift=False,
+            duration_seconds=0.1,
+        )
+        return ArenaLegResult(seed, team, result)
+
+    interval = paired_bootstrap_interval(
+        [leg(1, 0, True), leg(1, 1, True), leg(2, 0, False), leg(2, 1, False)]
+    )
+    assert interval == (0.0, 1.0)
 
 
 def test_run_arena_swaps_candidate_team_on_same_deal() -> None:
@@ -69,24 +118,21 @@ def test_deterministic_arena_marks_fixed_iteration_mode() -> None:
 
 
 def test_fixed_iteration_factory_uses_the_documented_ceilings() -> None:
-    """The 32/96 branch must exercise both production root-search ceilings.
-
-    docs/ai.md advertises 32 evaluations for Professional and 96 for Dai
-    Changsheng in `--deterministic-search` mode; without an assertion the
-    branch could be deleted and the whole suite stayed green.
-    """
+    """Fixed-work validation exercises the new full production ceilings."""
     from guandan.ai.arena import CALIBRATED_ITERATIONS, fixed_iteration_strategy_factory
 
-    assert CALIBRATED_ITERATIONS == {3: 32, 4: 96}
+    assert CALIBRATED_ITERATIONS == {3: 256, 4: 768}
 
     professional = fixed_iteration_strategy_factory(3, 0)
-    assert professional.iterations == 32
+    assert professional.iterations == 256
     assert professional.time_budget_ms == 0
     assert professional.search_mode == "root"
 
     dai = fixed_iteration_strategy_factory(4, 0)
-    assert dai.iterations == 96
+    assert dai.iterations == 768
+    assert dai.reference_iterations == 0
     assert dai.time_budget_ms == 0
+    assert dai.critical_time_budget_ms == 0
 
     # Lower tiers fall through to the production factory unchanged.
     novice = fixed_iteration_strategy_factory(0, 0)
@@ -94,22 +140,23 @@ def test_fixed_iteration_factory_uses_the_documented_ceilings() -> None:
 
 
 def test_production_budgets_match_the_documented_values() -> None:
-    """docs/ai.md claims 240ms for level 3 and 420ms for level 4."""
+    """Production profiles carry the new normal and critical budgets."""
     from guandan.ai.mcts import MCTS_CONFIG
     from guandan.ai.profiles import load_profile
 
-    assert MCTS_CONFIG["time_budget_ms"] == 240
-    assert MCTS_CONFIG["iterations"] == 32
+    assert MCTS_CONFIG["time_budget_ms"] == 1000
+    assert MCTS_CONFIG["iterations"] == 256
     assert MCTS_CONFIG["search_mode"] == "root"
     assert MCTS_CONFIG["rollout_strategy"] == 1
     assert MCTS_CONFIG["top_actions"] == 6
 
     profile = load_profile("dachangsheng")
-    assert profile["mcts"]["time_budget_ms"] == 420
-    assert profile["mcts"]["iterations"] == 96
+    assert profile["mcts"]["time_budget_ms"] == 2000
+    assert profile["mcts"]["critical_time_budget_ms"] == 5000
+    assert profile["mcts"]["iterations"] == 768
     assert profile["mcts"]["search_mode"] == "root"
-    assert profile["mcts"]["rollout_strategy"] == 1
-    assert profile["mcts"]["top_actions"] == 6
+    assert profile["mcts"]["rollout_strategy"] == 2
+    assert profile["mcts"]["top_actions"] == 10
     assert profile["mcts"]["max_depth"] == 14
 
 
