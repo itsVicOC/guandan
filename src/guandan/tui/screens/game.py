@@ -28,6 +28,8 @@ from ...engine.state import (
 from ...engine.trick import (
     current_trick_actions,
 )
+from ...storage.savegame import SaveConflictError
+from ...ui.background import TurnResult, run_turn
 from ...ui.hand_organizer import HandOrganizer, remap_selected_indices
 from ...ui.session import GameSession, card_indices_for_selection
 from ..layout import RECOMMENDED_COLUMNS
@@ -401,6 +403,7 @@ class GameScreen(Screen):
         Binding("g", "select_group", "整组", priority=True),
         Binding("k", "toggle_lock", "锁牌", priority=True),
         Binding("n", "next_game", "下一局", priority=True),
+        Binding("r", "retry_background", "重试", priority=True),
         ("?", "rules", "规则"),
         ("escape", "back", "返回"),
     ]
@@ -408,6 +411,7 @@ class GameScreen(Screen):
     def __init__(
         self,
         *args,
+        session: GameSession | None = None,
         difficulty: int = 2,
         level: int = 2,
         human: int = 0,
@@ -420,7 +424,7 @@ class GameScreen(Screen):
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.session = GameSession(
+        self.session = session or GameSession(
             difficulty=difficulty,
             level=level,
             human=human,
@@ -439,6 +443,10 @@ class GameScreen(Screen):
         self._hand_group_starts: frozenset[int] = frozenset()
         self._hand_organizer = HandOrganizer()
         self._ai_running = False
+        self._saving = False
+        self._leave_requested = False
+        self._quit_after_save = False
+        self._failed_turn: TurnResult | None = None
         self._tribute_timer: Timer | None = None
 
     @property
@@ -531,7 +539,10 @@ class GameScreen(Screen):
     def on_mount(self) -> None:
         self.session.ensure_started()
         self._refresh_all()
-        self.set_timer(0.3, self._maybe_ai_turn)
+        if self.session.is_next_game_pending():
+            self._tribute_timer = self.set_timer(0.3, self._begin_next_game_tribute)
+        else:
+            self.set_timer(0.3, self._maybe_ai_turn)
 
     def _state(self) -> GameState:
         return self.session.display_state()
@@ -789,8 +800,8 @@ class GameScreen(Screen):
         lock_button = self.query_one("#btn-lock-hand", Button)
         back_button = self.query_one("#btn-game-back", Button)
         tribute_pending = self.session.is_next_game_pending()
-        back_button.disabled = self._ai_running or tribute_pending
-        next_button.disabled = tribute_pending or not s.finished or s.match_finished
+        back_button.disabled = self._ai_running or self._saving
+        next_button.disabled = self._saving or tribute_pending or not s.finished or s.match_finished
         organize_button.disabled = (
             tribute_pending or s.finished or not s.hands[self.human]
             or not self._hand_organizer.available
@@ -888,7 +899,7 @@ class GameScreen(Screen):
     def action_play(self) -> None:
         s = self._state()
         if (
-            self._ai_running
+            self._ai_running or self._saving or self._failed_turn is not None
             or self.session.is_next_game_pending()
             or s.finished
             or s.turn_index != self.human
@@ -911,7 +922,7 @@ class GameScreen(Screen):
     def action_pass(self) -> None:
         s = self._state()
         if (
-            self._ai_running
+            self._ai_running or self._saving or self._failed_turn is not None
             or self.session.is_next_game_pending()
             or s.finished
             or s.turn_index != self.human
@@ -928,7 +939,7 @@ class GameScreen(Screen):
     def action_hint(self) -> None:
         s = self._state()
         if (
-            self._ai_running
+            self._ai_running or self._saving or self._failed_turn is not None
             or self.session.is_next_game_pending()
             or s.finished
             or s.turn_index != self.human
@@ -990,7 +1001,7 @@ class GameScreen(Screen):
             self._refresh_all()
 
     def action_next_game(self) -> None:
-        if self._ai_running or self.session.is_next_game_pending():
+        if self._ai_running or self._saving or self.session.is_next_game_pending():
             return
         prepared = self.session.prepare_next_game()
         if not prepared.ok:
@@ -1005,6 +1016,8 @@ class GameScreen(Screen):
         if self._tribute_timer is not None:
             self._tribute_timer.stop()
             self._tribute_timer = None
+        if self._saving:
+            return
         if not self.session.is_next_game_pending():
             return
         started = self.session.begin_next_game_tribute()
@@ -1029,6 +1042,8 @@ class GameScreen(Screen):
         )
 
     def _finish_next_game(self, selected_card: Card | None) -> None:
+        if self._saving:
+            return
         if selected_card is None and self.session.pending_next_game_choice() is not None:
             self.session.cancel_next_game()
             self._refresh_all()
@@ -1048,34 +1063,52 @@ class GameScreen(Screen):
         self.app.push_screen(RuleScreen())
 
     def action_back(self) -> None:
-        if self._ai_running or self.session.is_next_game_pending():
-            from .error import ErrorModal
+        self.request_leave()
 
-            message = (
-                "请先完成当前贡还牌流程。"
-                if self.session.is_next_game_pending()
-                else "请等待当前 AI 行动完成后再离开。"
-            )
-            self.app.push_screen(ErrorModal(message, title="暂时无法离开"))
+    def request_leave(self, *, quit_app: bool = False) -> None:
+        self._leave_requested = True
+        self._quit_after_save = self._quit_after_save or quit_app
+        if self._ai_running or self._saving:
             return
-        # Storage I/O can block for up to LOCK_TIMEOUT_SECONDS when another
-        # Guandan process holds the lock, so it must not run on the event loop.
+        if self._tribute_timer is not None:
+            self._tribute_timer.stop()
+        self._saving = True
+        self._refresh_all()
         self._save_then_leave()
 
     @work(thread=True, exclusive=True, group="leave-save")
     def _save_then_leave(self) -> None:
         try:
-            if self._state().finished:
-                if not self.session.save_finished_if_needed():
-                    raise OSError(self.session.last_action)
-            else:
-                self.session.save_unfinished()
+            self.session.save_current()
+        except SaveConflictError as exc:
+            self.app.call_from_thread(self._leave_conflict, exc)
+            return
         except Exception as exc:
             self.app.call_from_thread(self._leave_failed, exc)
             return
-        self.app.call_from_thread(self.app.pop_screen)
+        self.app.call_from_thread(self._finish_leave)
+
+    def _leave_conflict(self, error: SaveConflictError) -> None:
+        from .error import ErrorModal
+
+        self.app.push_screen(
+            ErrorModal(f"{error}\n可在“继续上次的牌局”中恢复副本。", title="进度已另存"),
+            lambda _: self._finish_leave(),
+        )
+
+    def _finish_leave(self) -> None:
+        self._saving = False
+        self._leave_requested = False
+        if self._quit_after_save:
+            self.app.exit()
+        else:
+            self.app.pop_screen()
 
     def _leave_failed(self, error: Exception) -> None:
+        self._saving = False
+        self._leave_requested = False
+        self._quit_after_save = False
+        self._refresh_all()
         from .error import ErrorModal
 
         self.app.push_screen(ErrorModal(str(error), title="保存失败"))
@@ -1095,7 +1128,9 @@ class GameScreen(Screen):
             event.stop()
 
     def _maybe_ai_turn(self) -> None:
-        if self._ai_running or self.session.is_next_game_pending():
+        if self._failed_turn is not None:
+            return
+        if self._ai_running or self._saving or self.session.is_next_game_pending():
             return
         s = self._state()
         if s.finished:
@@ -1109,33 +1144,32 @@ class GameScreen(Screen):
         self._run_ai_worker()
 
     @work(thread=True, exclusive=True, group="ai-turns")
-    def _run_ai_worker(self) -> None:
-        try:
-            ai_actions = self.session.run_ai_until_human(limit=1)
-            if not any("AI 错误" in message for message in ai_actions) and not self.session.autosave_after_ai():
-                raise OSError(self.session.last_action)
-            self.app.call_from_thread(self._finish_ai_turn, ai_actions, None)
-        except Exception as exc:
-            self.app.call_from_thread(self._finish_ai_turn, [], exc)
+    def _run_ai_worker(self, save_only: bool = False) -> None:
+        result = run_turn(self.session, save_only=save_only)
+        self.app.call_from_thread(self._finish_ai_turn, result)
 
-    def _finish_ai_turn(self, ai_actions: list[str], error: Exception | None) -> None:
+    def _finish_ai_turn(self, result: TurnResult) -> None:
         self._ai_running = False
-        if error is not None:
-            self._last_action = f"后台操作失败：{error}"
-        elif ai_actions:
-            self._last_action = "；".join(ai_actions[-4:])
+        self._failed_turn = result if result.error is not None else None
+        if result.error is not None:
+            self._last_action = f"后台操作失败：{result.error}；按 R 重试或 Esc 返回"
+        elif result.messages:
+            self._last_action = "；".join(result.messages)
         self._refresh_all()
         state = self._state()
-        if (
-            not state.finished
-            and state.turn_index != self.human
-            and ai_actions
-            and error is None
-            and not any("AI 错误" in message for message in ai_actions)
-        ):
+        if self._leave_requested:
+            self.request_leave()
+        elif not state.finished and state.turn_index != self.human and result.error is None:
             self.set_timer(0.1, self._maybe_ai_turn)
-        if state.finished:
-            self.session.save_finished_if_needed()
+
+    def action_retry_background(self) -> None:
+        if self._ai_running or self._saving or self._failed_turn is None:
+            return
+        save_only = self._failed_turn.stage == "storage"
+        self._failed_turn = None
+        self._ai_running = True
+        self._refresh_all()
+        self._run_ai_worker(save_only)
 
     def _describe_ai_action(self, state: GameState, player: int, history_len_before: int) -> str:
         del state

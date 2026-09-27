@@ -206,22 +206,27 @@ QFrame#replayHand {
     border-radius: 10px;
 }
 QFrame#tributeBanner {
-    background: rgba(102, 73, 17, 205);
-    border: 1px solid #ba913a;
-    border-radius: 8px;
+    background: transparent;
+    border: 0;
 }
 QLabel#tributeText { color: #ffe59d; font-size: 11px; font-weight: 850; }
-QFrame#trickRow {
-    background: rgba(5, 61, 47, 175);
+QFrame#seatPlayArea {
+    background: rgba(5, 61, 47, 100);
     border: 1px solid rgba(104, 167, 143, 42);
     border-radius: 8px;
 }
-QFrame#trickRow[top="true"] {
+QFrame#seatPlayArea[top="true"] {
     background: rgba(93, 70, 21, 210);
     border: 1px solid #cda548;
 }
-QFrame#trickRow[turn="true"] { border-right: 3px solid #72d8c1; }
-QFrame#trickRow[recent="true"] { border: 2px solid #ffe18a; }
+QFrame#seatPlayArea[turn="true"] { border-bottom: 3px solid #72d8c1; }
+QFrame#seatPlayArea[recent="true"] { background: rgba(105, 85, 26, 190); }
+QPushButton#tableActivityButton {
+    min-height: 28px;
+    padding: 0 10px;
+    font-size: 11px;
+    background: rgba(5, 38, 29, 150);
+}
 QLabel#trickPhase {
     color: #aab7b0;
     background: rgba(28, 47, 40, 210);
@@ -267,16 +272,16 @@ QFrame#seatPanel {
     border-radius: 13px;
 }
 QFrame#seatPanel[active="true"] {
-    background: rgba(80, 59, 18, 225);
-    border: 2px solid #efc75f;
+    background: rgba(18, 60, 48, 225);
+    border: 2px solid #72d8c1;
 }
 QFrame#seatPanel[human="true"] {
     background: rgba(9, 33, 28, 235);
     border-color: #3b806d;
 }
 QFrame#seatPanel[human="true"][active="true"] {
-    background: rgba(77, 60, 22, 235);
-    border: 2px solid #f4cc68;
+    background: rgba(18, 60, 48, 235);
+    border: 2px solid #72d8c1;
 }
 QFrame#seatPanel[recent="true"] { border: 2px solid #ffe18a; }
 QLabel#seatAvatar {
@@ -293,8 +298,8 @@ QLabel#seatName { color: #f5f0e5; font-size: 14px; font-weight: 850; }
 QLabel#seatMeta { color: #91a198; font-size: 11px; }
 QLabel#seatMeta[active="true"] { color: #ffe08e; font-weight: 850; }
 QLabel#claimBadge {
-    min-width: 42px;
-    padding: 5px 7px;
+    min-width: 24px;
+    padding: 2px 4px;
     background: #785514;
     color: #ffebaa;
     border: 1px solid #b98c2e;

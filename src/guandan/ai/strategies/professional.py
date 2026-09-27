@@ -99,6 +99,7 @@ class ProfessionalStrategy:
             raise ValueError("search_mode must be 'root' or 'tree'")
         self.search_mode = search_mode
         self.last_search: SearchResult | None = None
+        self.last_decision_reason = "not_started"
         self._fast_strategy = AdvancedStrategy()
 
     def select_pattern(
@@ -119,9 +120,12 @@ class ProfessionalStrategy:
             最佳牌型（None 表示过牌）
         """
         self.last_search = None
+        self.last_decision_reason = "search"
         if self._forced_pass(state, player):
+            self.last_decision_reason = "forced_pass"
             return None
         if not self._should_use_mcts(state, player):
+            self.last_decision_reason = "threshold_fallback"
             return self._fast_strategy.select_pattern(state, player)
 
         decision_started = time.perf_counter()
@@ -176,6 +180,7 @@ class ProfessionalStrategy:
             # deck accounting.  Keep the playable policy available there.
             if "belief sampler has no remaining hand capacity" not in str(exc):
                 raise
+            self.last_decision_reason = "incomplete_state_fallback"
             return self._fast_strategy.select_pattern(state, player)
         if result is None:  # Test doubles and defensive compatibility.
             return None
@@ -206,7 +211,10 @@ class ProfessionalStrategy:
                     or min(entry.visits for entry in result.actions) < 6
                     or chosen.mean_value - reference.mean_value < required_gain
                 ):
+                    self.last_decision_reason = "tactical_guard"
                     return tactical
+            else:
+                self.last_decision_reason = "agrees_with_tactical"
         return result.pattern
 
     def _minimum_search_gain(

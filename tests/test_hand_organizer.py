@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from collections import Counter
 
+import pytest
+
 from guandan.engine.card import Card, Suit
 from guandan.engine.hand import PatternType, sort_cards
 from guandan.engine.rules.patterns import detect_patterns
@@ -36,7 +38,7 @@ def test_arrangements_are_distinct_full_hand_partitions_with_legal_groups() -> N
     layouts = build_hand_arrangements(hand, wild, 2)
 
     assert layouts
-    assert layouts[0].name == "牌型·综合"
+    assert layouts[0].name == "同花顺优先"
     assert len(layouts) <= len(PatternType) + 3
     assert {layout.kind for layout in layouts} >= {"pattern", "rank", "suit", "count"}
     for layout in layouts:
@@ -60,7 +62,7 @@ def test_arrangement_cycle_and_focus_survive_hand_changes() -> None:
     assert organizer.status == ""
 
     assert organizer.advance()
-    assert organizer.status.startswith("牌型·综合 ")
+    assert organizer.status.startswith("同花顺优先 ")
     pair_index = next(
         index for index, layout in enumerate(organizer.arrangements)
         if layout.focus == PatternType.PAIR
@@ -75,13 +77,13 @@ def test_arrangement_cycle_and_focus_survive_hand_changes() -> None:
 
     no_pair = sort_cards([card for card in base if card != Card(3, Suit.DIAMONDS)])
     organizer.sync(no_pair, None, 2)
-    assert organizer.status.startswith("牌型·综合 ")
+    assert organizer.status.startswith("同花顺优先 ")
     assert organizer.cards != pair_layout
 
     layouts = build_hand_arrangements(no_pair, None, 2)
     for _ in range(len(layouts)):
         assert organizer.advance()
-    assert organizer.status.startswith("牌型·综合 ")
+    assert organizer.status.startswith("同花顺优先 ")
 
 
 def test_arrangements_ignore_hand_with_only_singles() -> None:
@@ -102,7 +104,7 @@ def test_active_cycle_returns_to_first_layout_after_temporary_single_only_hand()
     organizer.sync([Card(9, Suit.CLUBS)], None, 2)
     assert not organizer.available
     organizer.sync(base, None, 2)
-    assert organizer.status.startswith("牌型·综合 ")
+    assert organizer.status.startswith("同花顺优先 ")
 
 
 def test_normal_deals_have_bounded_valid_arrangements() -> None:
@@ -123,7 +125,7 @@ def test_comprehensive_search_reduces_fragmentation_on_fixed_deal() -> None:
     assert plays <= 10
 
 
-def test_comprehensive_layout_keeps_power_groups_in_front() -> None:
+def test_default_keeps_flushes_first_and_retains_comprehensive_alternative() -> None:
     hand = sort_cards([
         Card(3, Suit.HEARTS), Card(3, Suit.DIAMONDS),
         Card(3, Suit.SPADES), Card(3, Suit.CLUBS),
@@ -134,12 +136,119 @@ def test_comprehensive_layout_keeps_power_groups_in_front() -> None:
     layouts = build_hand_arrangements(hand, None, 2)
 
     assert [group.pattern.type for group in layouts[0].groups] == [
-        PatternType.BOMB, PatternType.STRAIGHT_FLUSH,
+        PatternType.STRAIGHT_FLUSH, PatternType.BOMB,
     ]
-    # The bomb-first focus is identical to comprehensive and is skipped.
-    assert layouts[1].focus == PatternType.STRAIGHT_FLUSH
+    assert layouts[0].focus == PatternType.STRAIGHT_FLUSH
+    assert layouts[1].focus is None
+    assert layouts[1].groups[0].pattern.type == PatternType.BOMB
     assert next(index for index, item in enumerate(layouts) if item.kind == "rank") > 1
     assert Counter(layouts[0].cards) == Counter(hand)
+
+
+def _flushes(layout):
+    return [group.pattern for group in layout.groups
+            if group.pattern is not None and group.pattern.type == PatternType.STRAIGHT_FLUSH]
+
+
+@pytest.mark.parametrize("ranks,high", [([14, 2, 3, 4, 5], 5), ([10, 11, 12, 13, 14], 14)])
+def test_flush_display_follows_sequence_including_ace_windows(ranks, high) -> None:
+    hand = sort_cards([Card(rank, Suit.CLUBS) for rank in ranks])
+    layouts = build_hand_arrangements(hand, None, 8)
+    assert layouts[0].focus == PatternType.STRAIGHT_FLUSH
+    assert [card.rank for card in layouts[0].groups[0].cards] == ranks
+    assert _flushes(layouts[0])[0].rank == high
+    assert sum(layout.focus == PatternType.STRAIGHT_FLUSH for layout in layouts) == 1
+
+
+@pytest.mark.parametrize("wild_count", [1, 2])
+def test_flushes_use_real_wild_cards_to_fill_gaps(wild_count) -> None:
+    wild = Card(2, Suit.HEARTS)
+    hand = sort_cards([Card(rank, Suit.SPADES) for rank in range(3, 8 - wild_count)]
+                      + [wild] * wild_count)
+    layout = build_hand_arrangements(hand, wild, 2)[0]
+    assert len(_flushes(layout)) == 1
+    assert _flushes(layout)[0].wild_used == wild_count
+    assert Counter(layout.cards) == Counter(hand)
+
+
+def test_flush_search_reidentifies_windows_after_consuming_natural_cards() -> None:
+    wild = Card(2, Suit.HEARTS)
+    hand = sort_cards([Card(rank, Suit.CLUBS) for rank in [3, 3, 4, 4, 5, 5, 6, 7]]
+                      + [wild, wild])
+    layout = build_hand_arrangements(hand, wild, 2)[0]
+    assert len(_flushes(layout)) == 2
+    assert sum(pattern.wild_used for pattern in _flushes(layout)) == 2
+    assert Counter(layout.cards) == Counter(hand)
+    for group in layout.groups:
+        assert any(pattern.type == PatternType.STRAIGHT_FLUSH
+                   and Counter(pattern.cards) == Counter(group.cards)
+                   for pattern in detect_patterns(group.cards, wild))
+
+
+def test_flush_search_maximizes_disjoint_groups_before_the_highest_window() -> None:
+    hand = sort_cards([Card(rank, Suit.SPADES) for rank in range(2, 12)])
+    layout = build_hand_arrangements(hand, None, 2)[0]
+    assert [pattern.rank for pattern in _flushes(layout)] == [11, 6]
+    assert Counter(layout.cards) == Counter(hand)
+
+
+def test_duplicate_decks_can_make_two_identical_flushes() -> None:
+    hand = sort_cards([Card(rank, Suit.CLUBS) for rank in range(3, 8) for _ in range(2)])
+    layout = build_hand_arrangements(hand, None, 2)[0]
+    assert len(_flushes(layout)) == 2
+    assert Counter(layout.cards) == Counter(hand)
+
+
+def test_flush_default_can_split_a_large_unlocked_bomb() -> None:
+    hand = sort_cards([Card(3, suit) for suit in
+                       [Suit.HEARTS, Suit.CLUBS, Suit.SPADES, Suit.DIAMONDS] for _ in range(2)]
+                      + [Card(rank, Suit.CLUBS) for rank in range(4, 8)])
+    layout = build_hand_arrangements(hand, None, 2)[0]
+    assert len(_flushes(layout)) == 1
+    assert Counter(layout.cards) == Counter(hand)
+    organizer = HandOrganizer()
+    organizer.sync(hand, None, 2)
+    assert organizer.toggle_lock({i for i, card in enumerate(organizer.cards) if card.rank == 3})
+    organizer.advance()
+    assert not _flushes(organizer.current)
+    assert organizer.display_groups[0].locked
+
+
+def test_flush_ties_save_wilds_then_preserve_bombs_then_prefer_strength() -> None:
+    wild = Card(2, Suit.HEARTS)
+    hand = sort_cards([Card(rank, Suit.SPADES) for rank in range(3, 8)] + [wild])
+    chosen = _flushes(build_hand_arrangements(hand, wild, 2)[0])
+    assert len(chosen) == 1 and chosen[0].wild_used == 0
+
+    hand = sort_cards([Card(8, suit) for suit in
+                       [Suit.HEARTS, Suit.CLUBS, Suit.SPADES, Suit.DIAMONDS]]
+                      + [Card(rank, Suit.SPADES) for rank in range(3, 8)])
+    chosen = _flushes(build_hand_arrangements(hand, None, 2)[0])
+    assert chosen[0].rank == 7  # 4..8 is stronger but would split the bomb.
+
+    hand = sort_cards([Card(rank, Suit.SPADES) for rank in range(3, 9)]
+                      + [Card(8, Suit.HEARTS), Card(8, Suit.DIAMONDS), wild])
+    chosen = _flushes(build_hand_arrangements(hand, wild, 2)[0])
+    assert chosen[0].rank == 7  # Preserve three eights + the unused wild as a bomb.
+
+    hand = sort_cards([Card(rank, Suit.SPADES) for rank in range(3, 9)])
+    assert _flushes(build_hand_arrangements(hand, None, 2)[0])[0].rank == 8
+
+
+def test_flush_layout_is_deterministic_and_unchanged_hands_are_cached(monkeypatch) -> None:
+    hand = _example_hand()
+    expected = build_hand_arrangements(hand, None, 2)
+    assert build_hand_arrangements(hand, None, 2) == expected
+    organizer = HandOrganizer()
+    organizer.sync(hand, None, 2)
+    organizer.advance()
+
+    def unexpected_rebuild(*args):
+        pytest.fail("unchanged hand should not rebuild layouts")
+
+    monkeypatch.setattr("guandan.ui.hand_organizer.build_hand_arrangements", unexpected_rebuild)
+    organizer.sync(hand, None, 2)
+    assert organizer.current == expected[0]
 
 
 def test_bomb_is_kept_ahead_of_an_overlapping_plain_straight() -> None:

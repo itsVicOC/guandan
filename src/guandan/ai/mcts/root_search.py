@@ -176,6 +176,9 @@ def root_action_search(
         )
 
     active = list(arms)
+    candidate_seconds = time.perf_counter() - started
+    sampling_seconds = 0.0
+    rollout_seconds = 0.0
     evaluations = 0
     sampled_worlds = 0
     next_halving_at = min_samples
@@ -185,7 +188,9 @@ def root_action_search(
         if deadline is not None and time.perf_counter() >= deadline:
             stopped_by_clock = True
             break
+        sampling_started = time.perf_counter()
         sampled_world = determinize(state, player, rng)
+        sampling_seconds += time.perf_counter() - sampling_started
         sampled_worlds += 1
         completed_round = True
         # Rotate partial rounds so a clock cutoff does not always favour the
@@ -200,6 +205,7 @@ def root_action_search(
                 stopped_by_clock = True
                 completed_round = False
                 break
+            rollout_started = time.perf_counter()
             sampled = clone_state_for_search(sampled_world)
             if not _apply_action(sampled, player, arm.pattern):
                 continue
@@ -211,6 +217,7 @@ def root_action_search(
                 copy_state=False,
                 deadline=deadline,
             )
+            rollout_seconds += time.perf_counter() - rollout_started
             if deadline is not None and time.perf_counter() >= deadline:
                 stopped_by_clock = True
                 completed_round = False
@@ -288,4 +295,8 @@ def root_action_search(
         elapsed_seconds=time.perf_counter() - started,
         actions=action_stats,
         budget_limited=stopped_by_clock,
+        candidate_seconds=candidate_seconds,
+        sampling_seconds=sampling_seconds,
+        rollout_seconds=rollout_seconds,
+        common_samples=common_visits or 0,
     )

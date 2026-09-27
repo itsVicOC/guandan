@@ -1,0 +1,590 @@
+{
+  "compatibility": {
+    "schema": 1,
+    "corpus": "levels-2-9-A-v1",
+    "policy": "planned-cutoff-paired-confidence-v3",
+    "rules": 2,
+    "mode": "clock",
+    "config_sha256": "0b478fe9029d0f27cab59ab07702fbbc710090c096154da7d7fbdfcccbacbe03"
+  },
+  "environment": {
+    "code_sha": "86c9d3104acd121ec2c005fe9a5ef781e129ba27",
+    "python": "3.10.20",
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "workers": 1,
+    "cache": "process warm; sequential corpus order"
+  },
+  "records": [
+    {
+      "case": "level2-opening",
+      "difficulty": 3,
+      "player": 0,
+      "critical": false,
+      "budget_ms": 1000,
+      "action": [
+        "triple_pair",
+        10,
+        1,
+        0,
+        null,
+        [
+          [
+            8,
+            2,
+            1
+          ],
+          [
+            8,
+            3,
+            1
+          ],
+          [
+            10,
+            3,
+            1
+          ],
+          [
+            10,
+            4,
+            2
+          ]
+        ]
+      ],
+      "elapsed_seconds": 1.0010098329512402,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 144,
+        "sampled_worlds": 19,
+        "elapsed_seconds": 0.8761560840066522,
+        "budget_limited": true,
+        "candidate_seconds": 0.06684979191049933,
+        "sampling_seconds": 0.00588683201931417,
+        "rollout_seconds": 0.8032777876360342,
+        "common_samples": 18
+      },
+      "candidate_count": 8,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 55,
+      "plan_cache_size": 55
+    },
+    {
+      "case": "level2-opening",
+      "difficulty": 4,
+      "player": 0,
+      "critical": false,
+      "budget_ms": 2000,
+      "action": [
+        "straight",
+        13,
+        5,
+        0,
+        null,
+        [
+          [
+            9,
+            5,
+            1
+          ],
+          [
+            10,
+            4,
+            1
+          ],
+          [
+            11,
+            3,
+            1
+          ],
+          [
+            12,
+            4,
+            1
+          ],
+          [
+            13,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 2.005012541078031,
+      "reason": "search",
+      "search": {
+        "simulations": 314,
+        "sampled_worlds": 27,
+        "elapsed_seconds": 2.002554207923822,
+        "budget_limited": true,
+        "candidate_seconds": 0.004343832959420979,
+        "sampling_seconds": 0.008315204875543714,
+        "rollout_seconds": 1.989602045272477,
+        "common_samples": 26
+      },
+      "candidate_count": 12,
+      "plan_cache_hits": 385,
+      "plan_cache_misses": 921,
+      "plan_cache_size": 976
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 3,
+      "player": 0,
+      "critical": true,
+      "budget_ms": 2000,
+      "action": [
+        "single",
+        9,
+        1,
+        0,
+        null,
+        [
+          [
+            9,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.5191244999878109,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 256,
+        "sampled_worlds": 52,
+        "elapsed_seconds": 0.5184869170188904,
+        "budget_limited": false,
+        "candidate_seconds": 0.00042041693814098835,
+        "sampling_seconds": 0.026883708778768778,
+        "rollout_seconds": 0.49097912618890405,
+        "common_samples": 51
+      },
+      "candidate_count": 5,
+      "plan_cache_hits": 238,
+      "plan_cache_misses": 71,
+      "plan_cache_size": 1047
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 4,
+      "player": 0,
+      "critical": true,
+      "budget_ms": 5000,
+      "action": [
+        "single",
+        9,
+        1,
+        0,
+        null,
+        [
+          [
+            9,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 1.4440548330312595,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 768,
+        "sampled_worlds": 154,
+        "elapsed_seconds": 1.443911166046746,
+        "budget_limited": false,
+        "candidate_seconds": 0.00017787504475563765,
+        "sampling_seconds": 0.07855403958819807,
+        "rollout_seconds": 1.3646351948846132,
+        "common_samples": 153
+      },
+      "candidate_count": 5,
+      "plan_cache_hits": 201,
+      "plan_cache_misses": 6,
+      "plan_cache_size": 1053
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 3,
+      "player": 1,
+      "critical": false,
+      "budget_ms": 1000,
+      "action": [
+        "triple_pair",
+        4,
+        1,
+        0,
+        null,
+        [
+          [
+            4,
+            2,
+            1
+          ],
+          [
+            4,
+            4,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ],
+          [
+            11,
+            3,
+            1
+          ],
+          [
+            11,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 1.0004899579798803,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 111,
+        "sampled_worlds": 14,
+        "elapsed_seconds": 0.8830999999772757,
+        "budget_limited": true,
+        "candidate_seconds": 0.05896570906043053,
+        "sampling_seconds": 0.0041850407142192125,
+        "rollout_seconds": 0.8198269521817565,
+        "common_samples": 13
+      },
+      "candidate_count": 8,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 52,
+      "plan_cache_size": 1105
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 4,
+      "player": 1,
+      "critical": false,
+      "budget_ms": 2000,
+      "action": [
+        "single",
+        2,
+        1,
+        0,
+        null,
+        [
+          [
+            2,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 2.004122166079469,
+      "reason": "search",
+      "search": {
+        "simulations": 318,
+        "sampled_worlds": 27,
+        "elapsed_seconds": 2.0017996249953285,
+        "budget_limited": true,
+        "candidate_seconds": 0.0041447499534115195,
+        "sampling_seconds": 0.007747709983959794,
+        "rollout_seconds": 1.9896417394047603,
+        "common_samples": 26
+      },
+      "candidate_count": 12,
+      "plan_cache_hits": 366,
+      "plan_cache_misses": 940,
+      "plan_cache_size": 2045
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 3,
+      "player": 1,
+      "critical": true,
+      "budget_ms": 2000,
+      "action": [
+        "triple_pair",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            2,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ],
+          [
+            9,
+            3,
+            1
+          ],
+          [
+            9,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.4669422919396311,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 256,
+        "sampled_worlds": 43,
+        "elapsed_seconds": 0.46499654196668416,
+        "budget_limited": false,
+        "candidate_seconds": 0.0014102080604061484,
+        "sampling_seconds": 0.021544042509049177,
+        "rollout_seconds": 0.4418369702761993,
+        "common_samples": 42
+      },
+      "candidate_count": 6,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 22,
+      "plan_cache_size": 2067
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 4,
+      "player": 1,
+      "critical": true,
+      "budget_ms": 5000,
+      "action": [
+        "triple_pair",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            2,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ],
+          [
+            9,
+            3,
+            1
+          ],
+          [
+            9,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 1.0585475419647992,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 768,
+        "sampled_worlds": 77,
+        "elapsed_seconds": 1.058187959017232,
+        "budget_limited": false,
+        "candidate_seconds": 0.0005116250831633806,
+        "sampling_seconds": 0.0413558759028092,
+        "rollout_seconds": 1.0157284617889673,
+        "common_samples": 76
+      },
+      "candidate_count": 10,
+      "plan_cache_hits": 22,
+      "plan_cache_misses": 0,
+      "plan_cache_size": 2067
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 3,
+      "player": 2,
+      "critical": false,
+      "budget_ms": 1000,
+      "action": [
+        "triple_pair",
+        2,
+        1,
+        0,
+        null,
+        [
+          [
+            2,
+            3,
+            2
+          ],
+          [
+            2,
+            4,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 1.0009524159831926,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 102,
+        "sampled_worlds": 12,
+        "elapsed_seconds": 0.6681000830139965,
+        "budget_limited": true,
+        "candidate_seconds": 0.11333408299833536,
+        "sampling_seconds": 0.003318125265650451,
+        "rollout_seconds": 0.5513099569361657,
+        "common_samples": 11
+      },
+      "candidate_count": 9,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 52,
+      "plan_cache_size": 2119
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 4,
+      "player": 2,
+      "critical": false,
+      "budget_ms": 2000,
+      "action": [
+        "triple_pair",
+        2,
+        1,
+        0,
+        null,
+        [
+          [
+            2,
+            3,
+            2
+          ],
+          [
+            2,
+            4,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 2.003911249921657,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 310,
+        "sampled_worlds": 24,
+        "elapsed_seconds": 1.998797749984078,
+        "budget_limited": true,
+        "candidate_seconds": 0.010633833007887006,
+        "sampling_seconds": 0.007059913827106357,
+        "rollout_seconds": 1.9807517118752003,
+        "common_samples": 23
+      },
+      "candidate_count": 13,
+      "plan_cache_hits": 395,
+      "plan_cache_misses": 885,
+      "plan_cache_size": 3004
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 3,
+      "player": 0,
+      "critical": true,
+      "budget_ms": 2000,
+      "action": [
+        "single",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            3,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.6082772499648854,
+      "reason": "agrees_with_tactical",
+      "search": {
+        "simulations": 256,
+        "sampled_worlds": 86,
+        "elapsed_seconds": 0.6078412909992039,
+        "budget_limited": false,
+        "candidate_seconds": 0.0002613749820739031,
+        "sampling_seconds": 0.05431799858342856,
+        "rollout_seconds": 0.5528819240862504,
+        "common_samples": 85
+      },
+      "candidate_count": 3,
+      "plan_cache_hits": 88,
+      "plan_cache_misses": 34,
+      "plan_cache_size": 3038
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 4,
+      "player": 0,
+      "critical": true,
+      "budget_ms": 5000,
+      "action": [
+        "single",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            3,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 1.4859218340134248,
+      "reason": "agrees_with_tactical",
+      "search": {
+        "simulations": 768,
+        "sampled_worlds": 256,
+        "elapsed_seconds": 1.4857070839498192,
+        "budget_limited": false,
+        "candidate_seconds": 0.0001961669186130166,
+        "sampling_seconds": 0.1574927105102688,
+        "rollout_seconds": 1.3273179077077657,
+        "common_samples": 256
+      },
+      "candidate_count": 3,
+      "plan_cache_hits": 88,
+      "plan_cache_misses": 2,
+      "plan_cache_size": 3040
+    }
+  ],
+  "failures": [],
+  "passed": true
+}

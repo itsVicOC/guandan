@@ -31,6 +31,11 @@ def test_visual_qa_capture_is_nonblank_and_complete(tmp_path: Path) -> None:
 
     manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
     artifacts = manifest["artifacts"]
-    assert len(artifacts) == 21
+    assert len(artifacts) == 30
     assert {artifact["format"] for artifact in artifacts} == {"png", "svg"}
     assert all(Path(artifact["path"]).is_file() for artifact in artifacts)
+    names = {Path(artifact["path"]).name for artifact in artifacts}
+    for seat in range(4):
+        for size in ("1080x760", "1280x860"):
+            assert f"game-fourway-seat-{seat}-{size}.png" in names
+    assert "game-flush-first-1080x760.png" in names

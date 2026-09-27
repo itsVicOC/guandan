@@ -9,13 +9,16 @@
 from __future__ import annotations
 
 import json
+import os
+import uuid
 from collections import Counter
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Optional
 
 from ..engine.card import RANK_2, RANK_A, Card, Suit
 from ..engine.deck import make_deck
-from ..engine.events import TurnPlayed
+from ..engine.events import ShuffleDeal, TurnPlayed
 from ..engine.hand import Pattern, PatternType
 from ..engine.replay import replay_events
 from ..engine.state import (
@@ -24,12 +27,20 @@ from ..engine.state import (
     IllegalPlayError,
     TributeState,
 )
-from .jsonio import write_json_atomic
+from .jsonio import _fsync_directory, write_json_atomic
 from .locking import storage_lock
 from .paths import get_savegame_path, validate_game_id
 from .serialization import deserialize_events, serialize_events
 
-SAVEGAME_VERSION = "3.0"
+SAVEGAME_VERSION = "4.0"
+
+
+class SaveConflictError(OSError):
+    """Another session changed the save; both versions remain on disk."""
+
+    def __init__(self, recovery_path: Path) -> None:
+        self.recovery_path = recovery_path
+        super().__init__(f"存档已被其他会话更新，未覆盖。当前进度已另存至 {recovery_path}")
 
 
 def save_game(
@@ -41,7 +52,10 @@ def save_game(
     match_id: str | None = None,
     round_index: int = 1,
     elapsed_seconds: int = 0,
-) -> None:
+    *,
+    expected_revision: int = 0,
+    pending_round: dict[str, Any] | None = None,
+) -> int:
     """保存当前对局。
 
     Args:
@@ -57,6 +71,8 @@ def save_game(
         raise ValueError("round_index must be positive")
     if elapsed_seconds < 0:
         raise ValueError("elapsed_seconds must not be negative")
+    if type(expected_revision) is not int or expected_revision < 0:
+        raise ValueError("expected_revision must be a nonnegative integer")
     data = {
         "version": SAVEGAME_VERSION,
         "ruleset_version": state.ruleset_version,
@@ -65,6 +81,8 @@ def save_game(
         "match_id": match_id,
         "round_index": round_index,
         "elapsed_seconds": elapsed_seconds,
+        "revision": expected_revision + 1,
+        "pending_round": pending_round,
         "metadata": {
             "level": state.level,
             "player_seat": player_seat,
@@ -86,7 +104,27 @@ def save_game(
 
     path = get_savegame_path()
     with storage_lock(path):
+        existing: dict[str, Any] | None = None
+        if path.exists():
+            try:
+                raw = json.loads(path.read_text(encoding="utf-8"))
+                existing = raw if isinstance(raw, dict) else {}
+            except (ValueError, UnicodeError):
+                existing = {}
+        conflict = (
+            existing is None and expected_revision != 0
+        ) or (
+            existing is not None and (
+                existing.get("game_id") != game_id
+                or existing.get("revision", 0) != expected_revision
+            )
+        )
+        if conflict:
+            recovery = path.parent / "recovery" / f"{game_id}-{uuid.uuid4().hex}.json"
+            write_json_atomic(recovery, data)
+            raise SaveConflictError(recovery)
         write_json_atomic(path, data)
+    return expected_revision + 1
 
 
 def load_game() -> Optional[dict[str, Any]]:
@@ -114,7 +152,7 @@ def load_game() -> Optional[dict[str, Any]]:
             return data
         except FileNotFoundError:
             return None
-        except (KeyError, TypeError, ValueError):
+        except (IndexError, KeyError, TypeError, ValueError, IllegalPlayError):
             # 文件结构损坏
             return None
 
@@ -160,6 +198,13 @@ def _validate_loaded_savegame(savegame: dict[str, Any]) -> None:
     hand_sizes = snapshot.get("hand_sizes")
     if not isinstance(player_seat, int) or not 0 <= player_seat < 4:
         raise ValueError("savegame player seat is invalid")
+    difficulties = metadata.get("ai_difficulties")
+    if (not isinstance(difficulties, list) or len(difficulties) != 4
+            or any(d is not None and (type(d) is not int or d not in range(5)) for d in difficulties)
+            or difficulties[player_seat] is not None):
+        raise ValueError("savegame difficulties are invalid")
+    if type(metadata.get("seed")) is not int:
+        raise ValueError("savegame seed is invalid")
     if not isinstance(round_index, int) or isinstance(round_index, bool) or round_index < 1:
         raise ValueError("savegame round index is invalid")
     if (
@@ -192,6 +237,24 @@ def _validate_loaded_savegame(savegame: dict[str, Any]) -> None:
     if snapshot.get("finished") is not restored.finished:
         raise ValueError("savegame finished flag does not match its state")
     _validate_state_invariants(restored)
+    revision = savegame.get("revision")
+    if type(revision) is not int or revision < 0:
+        raise ValueError("savegame revision is invalid")
+    pending = savegame.get("pending_round")
+    if pending is not None:
+        if not isinstance(pending, dict) or type(pending.get("tribute_started")) is not bool:
+            raise ValueError("pending round is invalid")
+        validate_game_id(pending.get("previous_game_id"))
+        previous = replay_events(
+            deserialize_events(pending["previous_events"]),
+            ruleset_version=restored.ruleset_version,
+        )
+        if not previous.finished or previous.match_finished or round_index < 2:
+            raise ValueError("pending round has no completed predecessor")
+        if len(restored.history) != 1 or not isinstance(restored.history[0], ShuffleDeal):
+            raise ValueError("pending round has already been played")
+        if restored.team_levels != previous.team_levels_final:
+            raise ValueError("pending round levels disagree with its predecessor")
 
     events = savegame.get("events", [])
     replayed = replay_events(events, ruleset_version=restored.ruleset_version)
@@ -256,7 +319,7 @@ def _validate_state_invariants(state: GameState) -> None:
 
 def _migrate_savegame(savegame: dict[str, Any]) -> dict[str, Any]:
     version = str(savegame.get("version", "1.0"))
-    if version not in {"1.0", "2.0", SAVEGAME_VERSION}:
+    if version not in {"1.0", "2.0", "3.0", SAVEGAME_VERSION}:
         raise ValueError(f"unsupported savegame version: {version}")
     snapshot = savegame.get("state")
     ruleset_version = savegame.get(
@@ -295,11 +358,16 @@ def _migrate_savegame(savegame: dict[str, Any]) -> dict[str, Any]:
     metadata["match_id"] = match_id
     metadata["round_index"] = round_index
     metadata["elapsed_seconds"] = elapsed_seconds
+    if version != SAVEGAME_VERSION:
+        savegame.setdefault("revision", 0)
+        savegame.setdefault("pending_round", None)
     savegame["version"] = SAVEGAME_VERSION
     return savegame
 
 
-def delete_savegame(*, expected_game_id: str | None = None) -> bool:
+def delete_savegame(
+    *, expected_game_id: str | None = None, expected_revision: int | None = None
+) -> bool:
     """Delete the save, optionally only when it belongs to the expected round."""
     path = get_savegame_path()
     with storage_lock(path):
@@ -309,12 +377,15 @@ def delete_savegame(*, expected_game_id: str | None = None) -> bool:
             expected_game_id = validate_game_id(expected_game_id)
             try:
                 with open(path, encoding="utf-8") as file:
-                    stored_game_id = json.load(file).get("game_id")
+                    stored = json.load(file)
+                    stored_game_id = stored.get("game_id")
             except FileNotFoundError:
                 return False
             except (AttributeError, json.JSONDecodeError):
                 return False
             if stored_game_id != expected_game_id:
+                return False
+            if expected_revision is not None and stored.get("revision", 0) != expected_revision:
                 return False
         try:
             path.unlink()
@@ -334,8 +405,48 @@ def has_savegame() -> bool:
         return path.exists()
 
 
+def list_recovery_games() -> list[dict[str, str]]:
+    """List conflict copies without changing the current save."""
+    directory = get_savegame_path().parent / "recovery"
+    entries = []
+    for path in sorted(directory.glob("*.json"), reverse=True):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            entries.append({"name": path.stem, "saved_at": str(data["saved_at"]),
+                            "game_id": validate_game_id(data["game_id"])})
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    return sorted(entries, key=lambda entry: entry["saved_at"], reverse=True)[:10]
+
+
+def activate_recovery(name: str) -> None:
+    """Promote a conflict copy, preserving the current save as another copy."""
+    # Names include a game ID and a UUID and never accept directory components.
+    if not name or Path(name).name != name or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-" for c in name):
+        raise ValueError("invalid recovery name")
+    path = get_savegame_path()
+    with storage_lock(path):
+        source = path.parent / "recovery" / f"{name}.json"
+        raw = json.loads(source.read_text(encoding="utf-8"))
+        checked = dict(raw)
+        checked["events"] = deserialize_events(raw["events"])
+        _validate_loaded_savegame(_migrate_savegame(checked))
+        if path.exists():
+            # Keep exact bytes even if the current save cannot be parsed.
+            backup = path.parent / "recovery" / f"replaced-{uuid.uuid4().hex}.json"
+            with open(backup, "xb") as stream:
+                stream.write(path.read_bytes())
+                stream.flush()
+                os.fsync(stream.fileno())
+            _fsync_directory(backup.parent)
+        # Every activation uses a new revision, even when restoring the same game.
+        raw["revision"] = uuid.uuid4().int
+        write_json_atomic(path, raw)
+
+
 __all__ = [
     "SAVEGAME_VERSION",
+    "SaveConflictError",
     "delete_savegame",
     "has_savegame",
     "load_game",

@@ -124,12 +124,11 @@ def main(argv: list[str] | None = None) -> int:
     turn_count = 0
     max_turns = 200  # 防卡死
     while not state.finished and turn_count < max_turns:
-        turn_count += 1
         cur = state.turn_index
 
         if cur == args.human:
             # 真人
-            print(f"\n--- 第 {turn_count} 轮（你出牌）---")
+            print(f"\n--- 第 {turn_count + 1} 轮（你出牌）---")
             print(f"级牌：{args.level}  逢人配：{state.wild_card.short if state.wild_card else '（无）'}")
             print(f"本轮出牌：{_render_table_compact(state)}")
             print("你的手牌（从大到小）：")
@@ -140,8 +139,14 @@ def main(argv: list[str] | None = None) -> int:
                 # 报牌提示
                 print(f"⚠️ 你只剩 {state.hand_size(cur)} 张，必须报牌（自动报）")
 
-            prompt = "\n请出牌（输入序号，空格分隔）/ 过牌(p) / 报牌状态(b) > "
-            user_in = input(prompt).strip()
+            prompt = "\n请出牌（输入序号，空格分隔）/ 过牌(p) / 报牌状态(b) / 退出(q) > "
+            try:
+                user_in = input(prompt).strip()
+            except (EOFError, KeyboardInterrupt):
+                print("\n已退出单局 CLI。")
+                return 0
+            if user_in.lower() in ("q", "quit", "exit", "退出"):
+                return 0
 
             if user_in.lower() in ("p", "pass", "过牌", "过"):
                 try:
@@ -184,6 +189,8 @@ def main(argv: list[str] | None = None) -> int:
                         break
             else:
                 print(f"  {ai_name} 过牌")
+
+        turn_count += 1
 
     print("\n" + "=" * 60)
     if state.finished:

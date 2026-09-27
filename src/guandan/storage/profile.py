@@ -129,18 +129,24 @@ def _load_profile_unlocked(path: Path) -> dict[str, Any]:
         raise
     except (json.JSONDecodeError, UnicodeDecodeError):
         # Unparseable file: preserve it instead of overwriting it later.
-        _quarantine_corrupt_profile(path, "配置文件无法解析")
+        if _quarantine_corrupt_profile(path, "配置文件无法解析") is None:
+            raise OSError("无法备份损坏配置，已停止写入") from None
         return copy.deepcopy(DEFAULT_PROFILE)
 
     try:
         profile = _migrate_profile(data)
     except (KeyError, TypeError, ValueError) as exc:
-        # Parseable but structurally wrong (e.g. hand-edited statistics). The
-        # values are recoverable per field, so keep the file and fall back to
-        # defaults without quarantining.
-        _report_profile_error(f"配置内容异常（{exc}），已使用默认统计")
+        # Preserve the original before falling back from a structurally invalid
+        # profile. Recoverable counters are normalized separately below.
+        if _quarantine_corrupt_profile(path, f"配置内容异常（{exc}）") is None:
+            raise OSError("无法备份损坏配置，已停止写入") from exc
         return copy.deepcopy(DEFAULT_PROFILE)
+    original_statistics = copy.deepcopy(profile["statistics"])
     _validate_profile_statistics(profile)
+    if original_statistics != profile["statistics"]:
+        if _quarantine_corrupt_profile(path, "统计字段异常，已修复") is None:
+            raise OSError("无法备份异常统计，已停止写入")
+        write_json_atomic(path, profile)
     return profile
 
 
@@ -155,25 +161,35 @@ def _validate_profile_statistics(profile: dict[str, Any]) -> None:
     statistics = profile.get("statistics")
     if not isinstance(statistics, dict):
         raise ValueError("statistics must be an object")
-    for key in ("by_difficulty", "by_difficulty_rounds"):
+    for key, fields in (
+        ("by_difficulty", ("matches", "wins")),
+        ("by_difficulty_rounds", ("rounds", "heads")),
+    ):
         bucket = statistics.get(key)
         if not isinstance(bucket, dict):
             statistics[key] = {}
             continue
         for bucket_key, value in list(bucket.items()):
             if not isinstance(value, dict):
-                bucket[bucket_key] = {"matches": 0, "wins": 0, "rounds": 0}
+                value = {}
+                bucket[bucket_key] = value
+            for field in fields:
+                value[field] = _counter(value.get(field))
     for key in ("recorded_game_ids", "recorded_match_ids"):
         if not isinstance(statistics.get(key), list):
             statistics[key] = []
     for key in _COUNTED_STAT_KEYS:
-        value = statistics.get(key, 0)
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
-            try:
-                value = int(value)
-            except (TypeError, ValueError):
-                value = 0
-        statistics[key] = max(0, int(value))
+        if key in statistics:
+            statistics[key] = _counter(statistics[key])
+
+
+def _counter(value: object) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        return 0
+    try:
+        return max(0, int(value))
+    except (ValueError, OverflowError):
+        return 0
 
 
 def save_profile(profile: dict[str, Any]) -> None:
@@ -404,8 +420,8 @@ def _migrate_profile(data: Any) -> dict[str, Any]:
         if "total_matches" in source_stats and isinstance(source_by_difficulty, dict):
             profile["statistics"]["by_difficulty"] = source_by_difficulty
         if "total_rounds" not in source_stats and "total_games" in source_stats:
-            profile["statistics"]["total_rounds"] = int(source_stats.get("total_games", 0))
-            profile["statistics"]["head_rounds"] = int(source_stats.get("wins", 0))
+            profile["statistics"]["total_rounds"] = _counter(source_stats.get("total_games", 0))
+            profile["statistics"]["head_rounds"] = _counter(source_stats.get("wins", 0))
             total_rounds = profile["statistics"]["total_rounds"]
             profile["statistics"]["head_rate"] = (
                 profile["statistics"]["head_rounds"] / total_rounds if total_rounds else 0.0
@@ -413,8 +429,8 @@ def _migrate_profile(data: Any) -> dict[str, Any]:
             if isinstance(source_by_difficulty, dict):
                 profile["statistics"]["by_difficulty_rounds"] = {
                     str(key): {
-                        "rounds": int(value.get("games", 0)),
-                        "heads": int(value.get("wins", 0)),
+                        "rounds": _counter(value.get("games", 0)),
+                        "heads": _counter(value.get("wins", 0)),
                     }
                     for key, value in source_by_difficulty.items()
                     if isinstance(value, dict)

@@ -102,6 +102,16 @@ def capture_gui(output: Path) -> list[dict]:
         window.resize(width, height)
         window.show()
         app.processEvents()
+        # A load page renders its snapshot after background I/O completes.
+        from PySide6.QtCore import QEventLoop, QTimer
+        for _ in range(600):
+            if not getattr(window.stack.currentWidget(), "_loading", False):
+                break
+            loop = QEventLoop()
+            QTimer.singleShot(10, loop.quit)
+            loop.exec()
+        else:
+            raise RuntimeError("save page did not finish loading")
         path = output / f"{name}-{width}x{height}.png"
         if not window.grab().save(str(path)):
             raise RuntimeError(f"could not save GUI screenshot: {path}")
@@ -128,6 +138,38 @@ def capture_gui(output: Path) -> list[dict]:
         pass_turn(state, player)
         window.game_page.refresh()
     capture("game-collected-trick", 1080, 760)
+
+    # Four legal public plays, including the widest possible rank bomb, seen
+    # from every human seat. Keep the fixture independent of random deal luck.
+    for human in range(4):
+        wild = Card(2, Suit.HEARTS)
+        bomb = [Card(8, suit) for suit in
+                (Suit.HEARTS, Suit.DIAMONDS, Suit.SPADES, Suit.CLUBS) for _ in range(2)]
+        bomb.extend((wild, wild))
+        hands = [
+            [Card(3, Suit.CLUBS), Card(3, Suit.SPADES), Card(10, Suit.SPADES)],
+            [*bomb, Card(13, Suit.SPADES)],
+            [Card(5, Suit.CLUBS), Card(5, Suit.SPADES), Card(12, Suit.SPADES)],
+            [Card(4, Suit.CLUBS), Card(4, Suit.SPADES), Card(11, Suit.SPADES)],
+        ]
+        fourway = GameState(level=2, wild_card=wild, hands=hands, turn_index=0, leader=0)
+        for seat in (0, 3, 2, 1):
+            pattern = find_complete_pattern(hands[seat][:-1], wild)
+            assert pattern is not None
+            play_pattern(fourway, seat, pattern)
+        window.start_game(GameSession(difficulty=0, existing_state=fourway, human=human))
+        window.game_page.deactivate()
+        for size in ((1080, 760), (1280, 860)):
+            capture(f"game-fourway-seat-{human}", *size)
+
+    flush_hand = [Card(rank, Suit.CLUBS) for rank in (3, 3, 4, 4, 5, 5, 6, 7)]
+    flush_hand.extend((wild, wild))
+    flush_state = make_initial_state(level=2, first_player=0, seed=7)
+    flush_state.hands[0] = flush_hand
+    window.start_game(GameSession(difficulty=0, existing_state=flush_state, human=0))
+    window.game_page.deactivate()
+    window.game_page.organize_hand()
+    capture("game-flush-first", 1080, 760)
 
     finished = GameState(
         level=2,

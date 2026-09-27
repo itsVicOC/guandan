@@ -29,6 +29,7 @@ from ..engine.events import (
     TurnPlayed,
 )
 from ..engine.hand import Pattern
+from ..engine.replay import replay_events
 from ..engine.rules.patterns import find_complete_pattern
 from ..engine.rules.tributes import (
     TributeFlowResult,
@@ -54,11 +55,14 @@ from ..engine.trick import (
 from ..storage import (
     begin_settlement,
     delete_savegame,
+    deserialize_events,
     end_settlement,
     record_match_statistics,
     record_round_statistics,
+    restore_game_state,
     save_game,
     save_history,
+    serialize_events,
     update_profile,
 )
 from .formatting import (
@@ -97,6 +101,8 @@ class PendingNextGame:
     game_id: str
     seed: int
     round_index: int
+    started_at: float
+    elapsed_seconds: int = 0
     preview: TributeFlowResult | None = None
     human_choice: PendingCardChoice | None = None
 
@@ -161,10 +167,48 @@ class GameSession:
         self.last_action = "准备开始"
         self.displayed_table_actions: dict[int, tuple[str, Pattern | None]] = {}
         self.last_display_turn: int | None = None
+        self._trick_history_key: tuple | None = None
+        self._completed_tricks: list[list[Event]] = []
+        self._active_trick: list[Event] = []
         self._hint_state_key: tuple[object, ...] | None = None
         self._hint_candidates: tuple[Pattern, ...] = ()
         self._hint_index = 0
         self._pending_next_game: PendingNextGame | None = None
+        self._save_revision = 0
+        self._last_save_error: Exception | None = None
+
+    @classmethod
+    def from_savegame(cls, data: dict[str, Any]) -> GameSession:
+        """Restore the complete frontend session, including an unconfirmed deal."""
+        state = restore_game_state(data)
+        metadata = data["metadata"]
+        session = cls(
+            difficulty=next((d for d in metadata["ai_difficulties"] if d is not None), 2),
+            level=state.level, human=metadata["player_seat"], existing_state=state,
+            game_id=data["game_id"], match_id=data["match_id"],
+            round_index=data["round_index"], elapsed_seconds=data["elapsed_seconds"],
+            seed=metadata["seed"],
+        )
+        session._save_revision = data.get("revision", 0)
+        pending = data.get("pending_round")
+        if pending is not None:
+            previous = replay_events(
+                deserialize_events(pending["previous_events"]),
+                ruleset_version=state.ruleset_version,
+            )
+            session._pending_next_game = PendingNextGame(
+                state=state, display_state=state, finish_order=tuple(previous.finish_order),
+                game_id=session.game_id, seed=session.seed, round_index=session.round_index,
+                started_at=time.monotonic(), elapsed_seconds=data["elapsed_seconds"],
+            )
+            session.state = previous
+            session.game_id = pending["previous_game_id"]
+            session.round_index -= 1
+            session.game_saved = True
+            session.last_action = "下一局已恢复，请完成贡还牌"
+            if pending["tribute_started"]:
+                session.begin_next_game_tribute()
+        return session
 
     @staticmethod
     def _new_game_id() -> str:
@@ -280,7 +324,7 @@ class GameSession:
         *,
         preserve_completed_trick: bool = False,
     ) -> dict[int, tuple[str, Pattern | None]]:
-        """Display each seat's last action, clearing old passes after a new top play.
+        """Display public actions; the GUI preserves each seat's latest action.
 
         The desktop GUI opts into ``preserve_completed_trick`` so a collected
         trick remains readable during the pause before the next lead.  The TUI
@@ -289,16 +333,24 @@ class GameSession:
         if self.is_next_game_pending():
             return {}
         state = self.display_state()
-        if state.finished and not preserve_completed_trick:
+        if preserve_completed_trick:
+            self._index_public_tricks()
+            events = self._active_trick
+            if not events and self._completed_tricks:
+                events = self._completed_tricks[-1]
+            # Replace the whole snapshot, including on a new lead. A previous
+            # pass is historical information, not a lock on the next response.
+            return {
+                event.player: ("play", event.pattern) if isinstance(event, TurnPlayed)
+                else ("pass", None)
+                for event in events if isinstance(event, (TurnPlayed, Pass))
+            }
+        if state.finished:
             self.displayed_table_actions.clear()
             self.last_display_turn = None
             return {}
 
-        # In the GUI, a completed trick is intentionally kept on the table
-        # until the next lead is actually played.  Clearing it as soon as the
-        # engine advances makes the winning play impossible to see.
-        should_advance_display = bool(state.table) or not preserve_completed_trick
-        if should_advance_display and self.last_display_turn != state.turn_index:
+        if self.last_display_turn != state.turn_index:
             self.displayed_table_actions.pop(state.turn_index, None)
             self.last_display_turn = state.turn_index
 
@@ -314,42 +366,61 @@ class GameSession:
         for player in self.locked_passed_players():
             self.displayed_table_actions[player] = ("pass", None)
 
-        # The pass that closes a trick is followed immediately by the engine
-        # clearing ``table`` and ``passed_players``.  Recover that final public
-        # action from the event stream so the GUI can show a complete snapshot.
-        if preserve_completed_trick and not state.table:
-            last_public_action = next(
-                (
-                    event
-                    for event in reversed(state.history)
-                    if isinstance(event, (TurnPlayed, Pass))
-                ),
-                None,
-            )
-            if isinstance(last_public_action, Pass):
-                self.displayed_table_actions[last_public_action.player] = ("pass", None)
-
         return dict(self.displayed_table_actions)
+
+    def _index_public_tricks(self) -> None:
+        """Index public events without replaying deals or relying on UI refreshes.
+
+        Hand-remaining counts also cover restored/synthetic snapshots whose deal
+        cannot be replayed. A trick closes when all unfinished non-top seats have
+        passed; a third finisher ends the game without collecting the last trick.
+        """
+        state = self.require_state()
+        finish_events = {
+            event.player for event in state.history
+            if isinstance(event, TurnPlayed) and event.hand_remaining == 0
+        }
+        initially_finished = frozenset(
+            seat for seat in state.finish_order
+            if not state.hands[seat] and seat not in finish_events
+        )
+        key = (self.game_id, tuple(state.history), state.ruleset_version, initially_finished)
+        if key == self._trick_history_key:
+            return
+        completed: list[list[Event]] = []
+        active: list[Event] = []
+        finished = set(initially_finished)
+        passed: set[int] = set()
+        top: int | None = None
+        for event in state.history:
+            if not isinstance(event, (TurnPlayed, Pass)):
+                continue
+            active.append(event)
+            if isinstance(event, TurnPlayed):
+                top = event.player
+                if state.ruleset_version != LEGACY_RULESET_VERSION:
+                    passed.clear()
+                if event.hand_remaining == 0:
+                    finished.add(event.player)
+            else:
+                passed.add(event.player)
+            responders = set(range(4)) - finished - {top}
+            if top is not None and len(finished) < 3 and responders <= passed:
+                completed.append(active)
+                active = []
+                passed.clear()
+                top = None
+        self._trick_history_key = key
+        self._completed_tricks = completed
+        self._active_trick = active
 
     def previous_completed_trick(self) -> list[Event]:
         """Return the public actions in the last collected trick, including its closing pass."""
         state = self.require_state()
         if state.trick_number < 1:
             return []
-        from ..engine.replay import replay_event_states
-
-        snapshots = replay_event_states(state.history, ruleset_version=state.ruleset_version)
-        target = state.trick_number - 1
-        actions: list[Event] = []
-        previous_number = 0
-        for event, snapshot in zip(state.history, snapshots):
-            number = snapshot.trick_number
-            if isinstance(event, (TurnPlayed, Pass)):
-                action_trick = previous_number if number > previous_number else number
-                if action_trick == target:
-                    actions.append(event)
-            previous_number = number
-        return actions
+        self._index_public_tricks()
+        return list(self._completed_tricks[-1]) if self._completed_tricks else []
 
     def last_player_of(self, pattern: Pattern) -> int:
         return last_player_of_pattern(self.require_state(), pattern, default=0) or 0
@@ -557,6 +628,7 @@ class GameSession:
             game_id=self._new_game_id(),
             seed=next_seed,
             round_index=self.round_index + 1,
+            started_at=time.monotonic(),
         )
         self.last_action = (
             f"第 {self.round_index + 1} 局已发牌：本局级牌 {rank_value_label(next_level)}，"
@@ -635,7 +707,16 @@ class GameSession:
         """Discard a prepared round and keep displaying the completed round."""
         if self._pending_next_game is None:
             return SessionAction(False, "没有待确认的下一局")
+        pending = self._pending_next_game
+        # A saved pending round must not survive a deliberate cancellation.
+        try:
+            if self._save_revision:
+                delete_savegame(expected_game_id=pending.game_id, expected_revision=self._save_revision)
+        except OSError as exc:
+            self.last_action = f"取消失败：{exc}"
+            return SessionAction(False, self.last_action)
         self._pending_next_game = None
+        self._save_revision = 0
         self.last_action = "已取消开始下一局"
         return SessionAction(True, self.last_action)
 
@@ -702,7 +783,9 @@ class GameSession:
         self.game_id = pending.game_id
         self.round_index = pending.round_index
         self.start_time = time.time()
-        self._elapsed_before_start = 0
+        self._elapsed_before_start = pending.elapsed_seconds + max(
+            0, int(time.monotonic() - pending.started_at)
+        )
         self.game_saved = False
         self.displayed_table_actions.clear()
         self.last_display_turn = None
@@ -725,6 +808,7 @@ class GameSession:
         return self.finalize_next_game()
 
     def save_finished_if_needed(self) -> bool:
+        self._last_save_error = None
         if self.game_saved:
             return True
         state = self.require_state()
@@ -737,6 +821,16 @@ class GameSession:
             ai_difficulties = [
                 None if player == self.human else self.difficulty for player in range(4)
             ]
+            # Claim this revision before publishing history/statistics. A stale
+            # process must not settle a different ending of the same round.
+            # The durable finished checkpoint also repairs a crash before history.
+            if state.history and isinstance(state.history[0], ShuffleDeal):
+                self._save_revision = save_game(
+                    state=state, game_id=self.game_id, player_seat=self.human,
+                    ai_difficulties=ai_difficulties, seed=self.seed,
+                    match_id=self.match_id, round_index=self.round_index,
+                    elapsed_seconds=duration, expected_revision=self._save_revision,
+                )
             # Settlement is three independent durable writes (history,
             # statistics, delete save). Log the intent first so a crash in
             # between can be repaired on the next start instead of leaving a
@@ -774,9 +868,11 @@ class GameSession:
                     )
 
             update_profile(update_statistics)
-            delete_savegame(expected_game_id=self.game_id)
+            delete_savegame(expected_game_id=self.game_id, expected_revision=self._save_revision)
+            self._save_revision = 0
             end_settlement(self.game_id)
         except Exception as exc:
+            self._last_save_error = exc
             self.game_saved = False
             self.last_action = f"保存失败：{exc}"
             return False
@@ -814,7 +910,16 @@ class GameSession:
         ai_difficulties = [
             None if player == self.human else self.difficulty for player in range(4)
         ]
-        save_game(
+        pending = self._pending_next_game
+        checkpoint = None if pending is None else {
+            "previous_game_id": self.game_id,
+            "previous_events": serialize_events(self.require_state().history),
+            "tribute_started": pending.preview is not None,
+        }
+        elapsed = self.current_elapsed_seconds() if pending is None else (
+            pending.elapsed_seconds + max(0, int(time.monotonic() - pending.started_at))
+        )
+        self._save_revision = save_game(
             state=state,
             game_id=game_id,
             player_seat=self.human,
@@ -822,8 +927,18 @@ class GameSession:
             seed=seed,
             match_id=self.match_id,
             round_index=round_index,
-            elapsed_seconds=self.current_elapsed_seconds(),
+            elapsed_seconds=elapsed,
+            expected_revision=self._save_revision,
+            pending_round=checkpoint,
         )
+
+    def save_current(self) -> None:
+        """Persist the visible round; pending tribute takes priority over settlement."""
+        if not self.is_next_game_pending() and self.require_state().finished:
+            if not self.save_finished_if_needed():
+                raise self._last_save_error or OSError(self.last_action)
+        else:
+            self.save_unfinished()
 
     def autosave_after_ai(self) -> bool:
         """Persist a real dealt round after an AI batch while UI actions are locked."""

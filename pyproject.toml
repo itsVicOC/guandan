@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guandan"
-version = "0.8.4b1"
+version = "0.8.5b1"
 description = "本地掼蛋游戏（桌面 GUI / 终端 TUI），含戴长胜致敬档位的 5 档 AI"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -34,7 +34,8 @@ gui = [
 ]
 dev = [
     "pytest>=7.4",
-    "pytest-cov>=4.1",
+    "pytest-cov>=7.0",
+    "coverage>=7.10",
     "hypothesis>=6.92",
     "ruff>=0.3",
     "mypy>=1.8",
@@ -64,8 +65,11 @@ markers = [
 [tool.coverage.run]
 source = ["src/guandan"]
 omit = ["*/tests/*", "*/__main__.py"]
+branch = true
+patch = ["subprocess"]
 
 [tool.coverage.report]
+fail_under = 80
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",
@@ -101,3 +105,7 @@ warn_unused_ignores = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
 exclude = ["tests/", "build/", "dist/"]
+
+[[tool.mypy.overrides]]
+module = ["guandan.ui.background", "guandan.gui.workers"]
+disallow_untyped_defs = true

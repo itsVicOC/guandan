@@ -67,6 +67,71 @@ def _triple_pair(triple_rank: int, pair_rank: int) -> Pattern:
     return Pattern(PatternType.TRIPLE_PAIR, triple_rank, 1, cards, 0)
 
 
+def test_app_quit_from_tribute_modal_persists_pending_round() -> None:
+    from contextlib import suppress
+
+    from textual.worker import WorkerCancelled
+
+    from guandan.storage import load_game
+    from guandan.ui.session import GameSession
+    from tests.test_reliability import finished_round
+
+    async def run() -> None:
+        state = finished_round()
+        session = GameSession(difficulty=0, existing_state=state, human=state.finish_order[0])
+        with patch("guandan.ui.session.random.randint", return_value=9):
+            assert session.prepare_next_game().ok
+        assert session.begin_next_game_tribute().ok
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(session=session)
+            app.push_screen(screen)
+            await pilot.pause()
+            choice = session.pending_next_game_choice()
+            assert choice is not None
+            if not isinstance(app.screen, TributeChoiceModal):
+                screen._begin_next_game_tribute()
+            await pilot.pause()
+            assert isinstance(app.screen, TributeChoiceModal)
+            await app.action_quit()
+            # Textual cancels the leaving worker as app.exit tears down the app.
+            with suppress(WorkerCancelled):
+                await app.workers.wait_for_complete()
+        restored = GameSession.from_savegame(load_game())
+        assert restored.is_next_game_pending()
+        assert restored.pending_next_game_choice() == session.pending_next_game_choice()
+        assert restored.display_state() == session.display_state()
+
+    asyncio.run(run())
+
+
+def test_conflict_copy_allows_leaving_tui_table() -> None:
+    from guandan.storage import load_game
+    from guandan.storage.savegame import list_recovery_games
+    from guandan.tui.screens.error import ErrorModal
+    from guandan.ui.session import GameSession
+
+    async def run() -> None:
+        owner = GameSession(difficulty=0, seed=9)
+        owner.save_unfinished()
+        session = GameSession(difficulty=0, existing_state=make_initial_state(seed=10, first_player=0))
+        app = GuandanApp()
+        async with app.run_test() as pilot:
+            screen = GameScreen(session=session)
+            app.push_screen(screen)
+            await pilot.pause()
+            screen.action_back()
+            await app.workers.wait_for_complete()
+            assert isinstance(app.screen, ErrorModal)
+            await pilot.press("enter")
+            await pilot.pause()
+            assert screen not in app.screen_stack
+            assert load_game()["game_id"] == owner.game_id
+            assert session.game_id in {row["game_id"] for row in list_recovery_games()}
+
+    asyncio.run(run())
+
+
 def test_partner_cards_appear_after_human_finishes_and_hide_on_next_deal() -> None:
     async def run() -> None:
         partner_card = Card(RANK_7, Suit.CLUBS)
@@ -153,7 +218,7 @@ def test_tui_new_game_conflict_can_overwrite_existing_save() -> None:
 
                 # Overwrite must not delete a save written after this dialog
                 # was opened (GUI/TUI may run in parallel).
-                delete.assert_called_once_with(expected_game_id="game_shown")
+                delete.assert_called_once_with(expected_game_id="game_shown", expected_revision=0)
                 assert app.screen.__class__.__name__ == "DifficultySelectScreen"
 
     asyncio.run(run())
@@ -179,7 +244,7 @@ def test_tui_can_delete_a_corrupt_save_after_confirmation() -> None:
                 await pilot.pause()
 
                 # A corrupt save has no game_id, so the delete stays unscoped.
-                delete.assert_called_once_with(expected_game_id=None)
+                delete.assert_called_once_with(expected_game_id=None, expected_revision=None)
                 assert app.screen.__class__.__name__ == "MainMenuScreen"
 
     asyncio.run(run())
@@ -468,7 +533,7 @@ def test_tui_organizes_during_ai_turn_and_keeps_selection_and_cursor() -> None:
                 selected_card
             ]
             assert screen._hand_cards[screen._hand_cursor] == selected_card
-            assert screen._hand_organizer.status.startswith("牌型·综合 ")
+            assert screen._hand_organizer.status.startswith("同花顺优先 ")
             assert screen._hand_group_starts
             assert sort_button.region.width > 0
             hand_text = _plain(str(screen.query_one("#my-hand", Static).content))

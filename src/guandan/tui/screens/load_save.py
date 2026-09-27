@@ -7,7 +7,9 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
 from ...engine.state import SEAT_NAMES
-from ...storage import has_savegame, load_game, restore_game_state
+from ...storage import has_savegame, load_game
+from ...storage.savegame import activate_recovery, list_recovery_games
+from ...ui.session import GameSession
 
 
 class LoadSaveScreen(Screen):
@@ -22,6 +24,7 @@ class LoadSaveScreen(Screen):
         # Identity of the save currently displayed, so deleting cannot remove a
         # save another process wrote after this screen was built.
         self._savegame_id: str | None = None
+        self._savegame_revision: int | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -30,6 +33,7 @@ class LoadSaveScreen(Screen):
             has_save = has_savegame()
             savegame = load_game() if has_save else None
             self._savegame_id = savegame.get("game_id") if savegame else None
+            self._savegame_revision = savegame.get("revision", 0) if savegame else None
         except OSError as exc:
             with Center(), Vertical(id="load-box"):
                 yield Static("💾 断点续局", id="load-title")
@@ -68,6 +72,12 @@ class LoadSaveScreen(Screen):
                     yield Button("删除损坏存档", id="btn-delete", variant="error")
                     yield Button("← 返回", id="btn-back")
 
+        try:
+            for recovery in list_recovery_games():
+                yield Button(f"恢复副本 {recovery['saved_at'][:19]}（保留当前存档）",
+                             id=f"recover-{recovery['name']}")
+        except OSError:
+            pass
         yield Footer()
 
     def on_mount(self) -> None:
@@ -75,7 +85,15 @@ class LoadSaveScreen(Screen):
         self.query_one("#load-title", Static).styles.color = "yellow"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-continue":
+        if event.button.id and event.button.id.startswith("recover-"):
+            from .error import ErrorModal
+            try:
+                activate_recovery(event.button.id.removeprefix("recover-"))
+            except (OSError, ValueError) as exc:
+                self.app.push_screen(ErrorModal(str(exc), title="恢复失败"))
+                return
+            self.refresh(recompose=True)
+        elif event.button.id == "btn-continue":
             from .error import ErrorModal
 
             try:
@@ -89,26 +107,11 @@ class LoadSaveScreen(Screen):
             from .game import GameScreen
 
             try:
-                state = restore_game_state(savegame)
+                session = GameSession.from_savegame(savegame)
             except ValueError as exc:
                 self.app.push_screen(ErrorModal(str(exc), title="无法继续存档"))
                 return
-            metadata = savegame.get("metadata", {})
-            ai_difficulties = metadata.get("ai_difficulties", [None, 2, 2, 2])
-            difficulty = next((d for d in ai_difficulties if d is not None), 2)
-            self.app.push_screen(
-                GameScreen(
-                    difficulty=difficulty,
-                    level=metadata.get("level", state.level),
-                    human=metadata.get("player_seat", 0),
-                    existing_state=state,
-                    game_id=savegame.get("game_id"),
-                    match_id=savegame.get("match_id"),
-                    round_index=savegame.get("round_index", 1),
-                    elapsed_seconds=savegame.get("elapsed_seconds", 0),
-                    seed=metadata.get("seed"),
-                )
-            )
+            self.app.push_screen(GameScreen(session=session))
         elif event.button.id == "btn-delete":
             from .confirm import ConfirmModal
 
@@ -133,7 +136,8 @@ class LoadSaveScreen(Screen):
             # Only remove the save this screen is actually showing: another
             # Guandan process may have written a fresh one while the confirm
             # dialog was open, and that progress must not be deleted.
-            delete_savegame(expected_game_id=self._savegame_id)
+            delete_savegame(expected_game_id=self._savegame_id,
+                            expected_revision=self._savegame_revision)
         except OSError as exc:
             self.app.push_screen(ErrorModal(str(exc), title="删除失败"))
             return

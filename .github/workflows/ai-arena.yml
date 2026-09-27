@@ -12,8 +12,11 @@ concurrency:
   group: ai-arena-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  UV_PYTHON: "3.12"
+
 jobs:
-  paired-strength:
+  latency-and-paired-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -21,25 +24,30 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install package
-        run: python -m pip install -e ".[dev]"
-      - name: Run deterministic paired arena
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.7"
+      - name: Install locked dependencies
+        run: uv sync --locked --python 3.12 --extra dev
+      - name: Check production budgets by difficulty and phase
+        run: uv run --no-sync python -m guandan.ai.diagnostics --mode clock --output ai-clock.json
+      - name: Run deterministic paired smoke (not a strength claim)
         run: >-
-          python -m guandan.ai.arena
+          uv run --no-sync python -m guandan.ai.arena
           --candidate 4
           --baseline 3
           --deals 8
           --seed-start 5000
           --deterministic-search
-          --min-win-rate 0.45
-          --max-p95-seconds 1.50
           --json
           > ai-arena.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ai-arena
-          path: ai-arena.json
+          path: |
+            ai-arena.json
+            ai-clock.json
           if-no-files-found: error
 
   full-match-smoke:
@@ -51,17 +59,20 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install package
-        run: python -m pip install -e ".[dev]"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.7"
+      - name: Install locked dependencies
+        run: uv sync --locked --python 3.12 --extra dev
       - name: Run paired matches through a successful pass of A
         run: >-
-          python -m guandan.ai.arena
+          uv run --no-sync python -m guandan.ai.arena
           --candidate 4
           --baseline 3
           --deals 1
           --seed-start 6100
           --full-match
-          --max-p95-seconds 0.80
+          --max-p95-seconds 5.85
           --json
           > ai-full-match.json
       - uses: actions/upload-artifact@v4

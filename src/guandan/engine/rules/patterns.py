@@ -592,6 +592,18 @@ def _try_four_jokers(cards: Sequence[Card]) -> list[Pattern]:
 # ---- 顶层 API ----
 
 
+def straight_flush_patterns(
+    cards: Sequence[Card], wild_card: Card | None = None
+) -> list[Pattern]:
+    """Identify flush windows without enumerating unrelated hand combinations."""
+    normal, wild_count = _split_wild(cards, wild_card)
+    return [
+        pattern
+        for suit in (Suit.SPADES, Suit.HEARTS, Suit.CLUBS, Suit.DIAMONDS)
+        for pattern in _try_straight(normal, wild_count, wild_card, suit_filter=int(suit))
+    ]
+
+
 def detect_patterns(cards: Sequence[Card], wild_card: Card | None = None) -> list[Pattern]:
     """识别一组牌能构成的所有合法牌型。
 

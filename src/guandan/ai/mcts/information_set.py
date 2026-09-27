@@ -81,6 +81,10 @@ class SearchResult:
     # `iterations` alone does not describe the search that actually ran and
     # must not be used as a strength claim.
     budget_limited: bool = False
+    candidate_seconds: float = 0.0
+    sampling_seconds: float = 0.0
+    rollout_seconds: float = 0.0
+    common_samples: int = 0
 
 
 def _legal_action_map(

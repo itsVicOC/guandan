@@ -994,7 +994,8 @@ assert opening_page.round_level.text() == "本局级牌 A"
 assert "本局级牌 A" in opening.last_action
 assert opening_page.table.tribute_banner.isHidden() is False
 assert "首局无需贡还牌" in opening_page.table.tribute_text.text()
-assert "首局无需贡还牌" in opening_page.status.text()
+assert "逢人配" in opening_page.status.text()
+assert opening_page.table.tribute_banner.parent() is opening_page.status.parent()
 
 ai_exchange = GameState(
     level=RANK_5,
@@ -1012,7 +1013,7 @@ assert ai_page is not None
 assert "北家→南家进贡 大王" in ai_page.table.tribute_text.text()
 assert "南家→北家还贡 红4♥" in ai_page.table.tribute_text.text()
 assert "你未参与贡还牌" in ai_page.table.tribute_text.text()
-assert "你未参与贡还牌" in ai_page.status.text()
+assert "逢人配" in ai_page.status.text()
 
 finished = GameState(
     level=2,
@@ -1137,7 +1138,11 @@ page = window.game_page
 assert page is not None
 south = page.table.trick_rows[1]
 assert south.mapToGlobal(QPoint(0, south.height())).y() < page.me.mapToGlobal(QPoint(0, 0)).y()
-assert page.table.activity.mapToGlobal(QPoint(0, page.table.activity.height())).y() <= page.table.mapToGlobal(QPoint(0, page.table.height())).y()
+assert page.table.activity_popup.isHidden()
+page.table.show_activity()
+app.processEvents()
+assert page.table.activity_popup.isVisible()
+page.table.activity_popup.hide()
 
 first = next(i for i, card in enumerate(page.hand_cards) if card != state.wild_card)
 page.toggle_card(first)
@@ -1301,7 +1306,7 @@ with patch("guandan.gui.window.has_savegame", return_value=True), patch(
 ):
     assert window.confirm_start_new_game() is True
     # Overwrite must only discard the save the user was shown.
-    delete.assert_called_once_with(expected_game_id="game_current")
+    delete.assert_called_once_with(expected_game_id="game_current", expected_revision=0)
 
 state = make_initial_state(level=2, first_player=0, seed=7)
 session = GameSession(difficulty=0, existing_state=state, human=0)
@@ -1310,6 +1315,13 @@ with patch.object(session, "save_unfinished", side_effect=OSError("disk full")),
     QMessageBox, "warning"
 ) as warning:
     window.game_page.back_to_menu()
+    from PySide6.QtCore import QEventLoop, QTimer
+    for _ in range(200):
+        if warning.call_count:
+            break
+        loop = QEventLoop()
+        QTimer.singleShot(10, loop.quit)
+        loop.exec()
     assert window.stack.currentWidget() is window.game_page
     warning.assert_called_once()
 
@@ -1409,7 +1421,7 @@ assert page.organize_button.isEnabled()
 page.toggle_card(page.hand_cards.index(selected))
 page.organize_hand()
 assert page.selected_cards() == [selected]
-assert page.hand_title.text().startswith('我的手牌 · 牌型·综合 1/')
+assert page.hand_title.text().startswith('我的手牌 · 同花顺优先 1/')
 assert page.hand._group_starts
 assert page.hand._group_ranges[0][2].label
 first_end = page.hand._group_ranges[0][1]

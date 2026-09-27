@@ -434,7 +434,7 @@ profile_module.update_profile(mutate)
             assert load_profile()["statistics"]["total_rounds"] == 1
             assert quarantined[0].read_text(encoding="utf-8") == original[: len(original) // 2]
 
-    def test_hand_edited_profile_is_normalized_without_quarantine(self, tmp_path: Path):
+    def test_hand_edited_profile_is_normalized_with_recovery_backup(self, tmp_path: Path):
         """Wrong types degrade per field instead of aborting the transaction."""
         path = tmp_path / "profile.json"
         path.write_text(
@@ -459,8 +459,8 @@ profile_module.update_profile(mutate)
             assert profile["statistics"]["head_rounds"] == 0
             assert profile["statistics"]["recorded_game_ids"] == []
             assert profile["statistics"]["by_difficulty"] == {}
-            # A parseable-but-wrong file is repaired in place, not moved aside.
-            assert not list(tmp_path.glob("profile.json.corrupt-*"))
+            # Repair keeps the original bytes available for recovery.
+            assert list(tmp_path.glob("profile.json.corrupt-*"))
 
             def record(profile):
                 record_round_statistics(profile, got_head=True, difficulty=2, game_id="g1")
@@ -605,7 +605,7 @@ class TestSavegame:
                 loaded = load_game()
 
             assert loaded is not None
-            assert loaded["version"] == "3.0"
+            assert loaded["version"] == "4.0"
             assert loaded["ruleset_version"] == 1
             assert loaded["match_id"] == "legacy"
             assert loaded["round_index"] == 1
@@ -631,7 +631,7 @@ class TestSavegame:
                 loaded = load_game()
 
             assert loaded is not None
-            assert loaded["version"] == "3.0"
+            assert loaded["version"] == "4.0"
             assert loaded["ruleset_version"] == 1
             assert loaded["match_id"] == "legacy-v2"
 

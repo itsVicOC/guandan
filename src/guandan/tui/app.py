@@ -24,6 +24,15 @@ class GuandanApp(App):
             reconcile_settlements(history_has_game=history_exists)
         self.push_screen(MainMenuScreen())
 
+    async def action_quit(self) -> None:
+        from .screens.game import GameScreen
+
+        for screen in reversed(self.screen_stack):
+            if isinstance(screen, GameScreen):
+                screen.request_leave(quit_app=True)
+                return
+        self.exit()
+
 
 def run() -> int:
     """启动 TUI。"""

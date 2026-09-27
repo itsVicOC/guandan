@@ -4,12 +4,13 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Collection
 from dataclasses import dataclass
+from functools import cache
 from itertools import combinations, groupby
 from typing import Literal, Sequence
 
 from ..engine.card import Card
 from ..engine.hand import Pattern, PatternType, comparison_rank, effective_rank
-from ..engine.rules.patterns import detect_patterns, find_complete_pattern
+from ..engine.rules.patterns import detect_patterns, find_complete_pattern, straight_flush_patterns
 from .formatting import pattern_type_label, rank_value_label
 
 FOCUS_TYPES = (
@@ -230,8 +231,14 @@ def _search_partition(
 def _pattern_layout(
     cards: Sequence[Card], patterns: list[Pattern], focus: PatternType | None, level: int
 ) -> HandArrangement:
-    positions = {card: index for index, card in enumerate(cards)}
     chosen = _search_partition(cards, patterns, focus, level)
+    return _layout_from_patterns(cards, chosen, focus, level)
+
+
+def _layout_from_patterns(
+    cards: Sequence[Card], chosen: list[Pattern], focus: PatternType | None, level: int
+) -> HandArrangement:
+    positions = {card: index for index, card in enumerate(cards)}
     chosen.sort(key=lambda pattern: (
         0 if focus == pattern.type else 1,
         _DISPLAY_ORDER[pattern.type], -len(pattern.cards),
@@ -241,7 +248,10 @@ def _pattern_layout(
     groups: list[HandGroup] = []
     for pattern in chosen:
         remaining.subtract(Counter(pattern.cards))
-        group_cards = tuple(sorted(pattern.cards, key=lambda card: positions[card]))
+        group_cards = (
+            pattern.cards if pattern.type == PatternType.STRAIGHT_FLUSH
+            else tuple(sorted(pattern.cards, key=lambda card: positions[card]))
+        )
         groups.append(HandGroup(group_cards, pattern_type_label(pattern.type), pattern))
     loose: list[Card] = []
     for card in cards:
@@ -250,6 +260,84 @@ def _pattern_layout(
             remaining[card] -= 1
     groups.extend(HandGroup((card,), "散牌") for card in loose)
     return HandArrangement("pattern", tuple(groups), focus)
+
+
+def _straight_flush_layout(
+    cards: Sequence[Card], wild_card: Card | None, level: int
+) -> HandArrangement:
+    """Exact flush packing, followed by the ordinary search on the remainder.
+
+    Re-detecting each remaining multiset matters: a window may need a wild only
+    after another flush has consumed its natural card. A fixed candidate list
+    misses such partitions. Memoization also merges different extraction orders.
+    """
+    distinct = tuple(sorted(set(cards), key=_card_key))
+    indices = {card: index for index, card in enumerate(distinct)}
+    counts = Counter(cards)
+    initial = tuple(counts[card] for card in distinct)
+
+    def expand(remaining: tuple[int, ...]) -> tuple[Card, ...]:
+        return tuple(card for card, count in zip(distinct, remaining) for _ in range(count))
+
+    @cache
+    def bomb_score(remaining: tuple[int, ...]) -> int:
+        ranks: Counter[int] = Counter()
+        wilds = 0
+        for card, count in zip(distinct, remaining):
+            if card == wild_card:
+                wilds += count
+            elif not card.is_joker:
+                ranks[card.rank] += count
+        # Allocate each leftover wild at most once, including to a natural
+        # triple. Four jokers are unchanged by any flush allocation.
+        scores = [0] * (wilds + 1)
+        for count in ranks.values():
+            if not count:
+                continue
+            scores = [
+                max(scores[budget - used] + (
+                    (count + used - 1) * 100 + _TYPE_BONUS[PatternType.BOMB]
+                    if count + used >= 4 else 0
+                ) for used in range(budget + 1))
+                for budget in range(wilds + 1)
+            ]
+        return scores[-1]
+
+    def solution_key(patterns: tuple[Pattern, ...], remaining: tuple[int, ...]) -> tuple:
+        return (
+            len(patterns), -sum(pattern.wild_used for pattern in patterns),
+            bomb_score(remaining),
+            tuple(sorted((pattern.rank for pattern in patterns), reverse=True)),
+            tuple(sorted((-int(pattern.suit or 0),
+                          tuple((-card.rank, -int(card.suit)) for card in pattern.cards))
+                         for pattern in patterns)),
+        )
+
+    @cache
+    def solve(remaining: tuple[int, ...]) -> tuple[tuple[Pattern, ...], tuple[int, ...]]:
+        best: tuple[tuple[Pattern, ...], tuple[int, ...]] = ((), remaining)
+        best_key = solution_key(*best)
+        for pattern in straight_flush_patterns(expand(remaining), wild_card):
+            rest = list(remaining)
+            for card in pattern.cards:
+                rest[indices[card]] -= 1
+            tail, leftover = solve(tuple(rest))
+            proposal = ((pattern, *tail), leftover)
+            key = solution_key(*proposal)
+            if key > best_key:
+                best, best_key = proposal, key
+        return best
+
+    flushes, remaining = solve(initial)
+    # Keep the caller's order for loose cards and familiar non-sequence groups.
+    available = Counter(dict(zip(distinct, remaining)))
+    rest = []
+    for card in cards:
+        if available[card]:
+            rest.append(card)
+            available[card] -= 1
+    other = _search_partition(rest, _valid_candidates(rest, wild_card, level), None, level)
+    return _layout_from_patterns(cards, [*flushes, *other], PatternType.STRAIGHT_FLUSH, level)
 
 
 def _basic_layout(cards: Sequence[Card], kind: LayoutKind, level: int) -> HandArrangement:
@@ -290,10 +378,13 @@ def build_hand_arrangements(
     candidates = _valid_candidates(base_cards, wild_card, level)
     layouts: list[HandArrangement] = []
     if candidates:
-        layouts.append(_pattern_layout(base_cards, candidates, None, level))
-        seen = {tuple((group.cards, group.label) for group in layouts[0].groups)}
-        for focus in FOCUS_TYPES:
-            if not any(pattern.type == focus for pattern in candidates):
+        if any(pattern.type == PatternType.STRAIGHT_FLUSH for pattern in candidates):
+            layouts.append(_straight_flush_layout(base_cards, wild_card, level))
+        seen = {tuple((group.cards, group.label) for group in layout.groups) for layout in layouts}
+        for focus in (None, *FOCUS_TYPES):
+            if focus == PatternType.STRAIGHT_FLUSH:
+                continue
+            if focus is not None and not any(pattern.type == focus for pattern in candidates):
                 continue
             layout = _pattern_layout(base_cards, candidates, focus, level)
             signature = tuple((group.cards, group.label) for group in layout.groups)

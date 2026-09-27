@@ -89,6 +89,7 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         """
         if self._forced_pass(state, player):
             self.last_search = None
+            self.last_decision_reason = "forced_pass"
             return None
         total_remaining = sum(state.hand_size(seat) for seat in range(4))
         if total_remaining <= 12:
@@ -107,6 +108,7 @@ class DaiChangshengStrategy(ProfessionalStrategy):
             )
             if action is not UNSOLVED:
                 self.last_search = None
+                self.last_decision_reason = "endgame_solved"
                 return cast(Optional[Pattern], action)
             if self.time_budget_ms == 0:
                 # Fixed-work evaluation still exercises the endgame feature;
@@ -114,6 +116,8 @@ class DaiChangshengStrategy(ProfessionalStrategy):
                 return super().select_pattern(state, player)
             remaining_ms = max(0, full_budget_ms - int((time.perf_counter() - started) * 1000))
             if remaining_ms < 100:
+                self.last_search = None
+                self.last_decision_reason = "endgame_budget_fallback"
                 return self._fast_strategy.select_pattern(state, player)
             previous = self.critical_time_budget_ms
             self.critical_time_budget_ms = remaining_ms

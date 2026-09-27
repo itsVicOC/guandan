@@ -1,0 +1,3 @@
+# Build isolation must not resolve new backend versions at release time.
+setuptools==83.0.0
+wheel==0.45.1

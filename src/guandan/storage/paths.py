@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 
@@ -31,7 +32,8 @@ def get_storage_dir() -> Path:
     Returns:
         存储目录路径
     """
-    storage_dir = Path.home() / ".guandan"
+    configured = os.environ.get("GUANDAN_DATA_DIR")
+    storage_dir = Path(configured).expanduser() if configured else Path.home() / ".guandan"
     storage_dir.mkdir(parents=True, exist_ok=True)
     return storage_dir
 
