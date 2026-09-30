@@ -12,65 +12,12 @@ MCTS 将在这个确定化的世界中进行搜索。
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass
 from typing import List
 
 from ...engine.card import RANK_2, RANK_A, RANK_BIG_JOKER, RANK_SMALL_JOKER, Card, Suit
-from ...engine.events import Pass, TributeReturned, TributeSent, TurnPlayed
-from ...engine.hand import Pattern, PatternType, comparison_rank, effective_rank
-from ...engine.state import GameState, clone_state_for_search, is_teammate
-
-
-@dataclass(frozen=True)
-class PassEvidence:
-    """Public evidence attached to a pass on a particular table top."""
-
-    player: int
-    top_player: int
-    pattern: Pattern
-
-
-def collect_pass_evidence(state: GameState) -> tuple[PassEvidence, ...]:
-    """Extract contextual pass observations from the public event stream."""
-    top_player: int | None = None
-    top_pattern: Pattern | None = None
-    evidence: list[PassEvidence] = []
-    for event in state.history:
-        if isinstance(event, TurnPlayed):
-            top_player = event.player
-            top_pattern = event.pattern
-        elif isinstance(event, Pass) and top_player is not None and top_pattern is not None:
-            evidence.append(PassEvidence(event.player, top_player, top_pattern))
-    return tuple(evidence)
-
-
-def card_owner_likelihood(
-    card: Card,
-    owner: int,
-    evidence: tuple[PassEvidence, ...],
-    *,
-    level: int,
-) -> float:
-    """Return a soft likelihood for assigning ``card`` to ``owner``.
-
-    Passing while an opponent controls the trick is evidence, not proof.  A
-    player may deliberately hold back or let a teammate run, so likelihoods
-    stay strictly positive and only singles receive a strong update.
-    """
-    likelihood = 1.0
-    for observation in evidence:
-        if observation.player != owner or is_teammate(owner, observation.top_player):
-            continue
-        top = observation.pattern
-        card_rank = effective_rank(card.rank, level)
-        top_rank = comparison_rank(top, level)
-        if top.type == PatternType.SINGLE and card_rank > top_rank:
-            likelihood *= 0.58
-        elif top.type == PatternType.PAIR and card_rank > top_rank:
-            likelihood *= 0.82
-        elif top.type in (PatternType.TRIPLE, PatternType.TRIPLE_PAIR) and card_rank > top_rank:
-            likelihood *= 0.90
-    return max(0.05, likelihood)
+from ...engine.events import TributeReturned, TributeSent, TurnPlayed
+from ...engine.state import GameState, clone_state_for_search
+from ..belief import PassEvidence, card_owner_likelihood, collect_pass_evidence
 
 
 def _weighted_owner(

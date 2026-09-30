@@ -542,8 +542,79 @@ class TestGameCompletion_Document:
         assert state.guo_a_failed is True
         assert state.match_finished is False
         assert state.winner_team is None
-        # 头游方降回 2
-        assert state.team_levels_final[0] == 2
+        # 第一次未过 A 仍打 A；第三次才退回 2。
+        assert state.team_levels_final[0] == RANK_A
+        assert state.a_failure_counts == [1, 1]
+
+    @pytest.mark.parametrize("prior_failures,expected_level,expected_count", [
+        (0, RANK_A, 1), (1, RANK_A, 2), (2, RANK_2, 0),
+    ])
+    def test_three_a_failures_before_reset(self, prior_failures, expected_level, expected_count):
+        from guandan.engine.state import _finish_game
+
+        state = make_initial_state(
+            level=RANK_A, seed=42, a_failure_counts=[prior_failures, 0],
+        )
+        state.finish_order = [0, 1, 3]  # A 队头游、队友末游
+        _finish_game(state)
+        assert state.guo_a_failed and not state.match_finished
+        assert state.team_levels_final == [expected_level, RANK_A]
+        assert state.a_failure_counts == [expected_count, 1]
+
+    @pytest.mark.parametrize("prior_failures,expected_level,expected_count", [
+        (0, RANK_A, 1), (1, RANK_A, 2), (2, RANK_2, 0),
+    ])
+    def test_a_team_losing_head_also_counts_as_failed_pass(
+        self, prior_failures, expected_level, expected_count,
+    ):
+        from guandan.engine.state import _finish_game
+
+        state = make_initial_state(
+            level=RANK_A, seed=42, team_levels=[RANK_A, 5],
+            a_failure_counts=[prior_failures, 0],
+        )
+        state.finish_order = [1, 0, 3]  # 非 A 队头游、队友三游
+        _finish_game(state)
+        assert state.guo_a_failed and not state.match_finished
+        assert state.team_levels_final == [expected_level, 7]
+        assert state.a_failure_counts == [expected_count, 0]
+
+    def test_a_success_ends_match_after_two_prior_failures(self):
+        from guandan.engine.state import _finish_game
+
+        state = make_initial_state(level=RANK_A, seed=42, a_failure_counts=[2, 0])
+        state.finish_order = [0, 2, 1]
+        _finish_game(state)
+        assert state.guo_a and state.match_finished and state.winner_team == 0
+        assert state.a_failure_counts == [2, 0]
+
+    def test_historical_v2_failure_keeps_original_single_reset_for_replay(self):
+        from guandan.ai.benchmark import _prepare_next_round
+        from guandan.engine.state import _finish_game
+
+        state = make_initial_state(level=RANK_A, seed=42, ruleset_version=2)
+        state.finish_order = [0, 1, 3]
+        _finish_game(state)
+        assert state.team_levels_final == [RANK_2, RANK_A]
+        assert state.a_failure_counts == [0, 0]
+        next_state = _prepare_next_round(state, 43)
+        assert next_state.ruleset_version == 2 and next_state.level == RANK_2
+
+    def test_a_failure_count_carries_into_next_round_and_replays(self):
+        from guandan.ai.benchmark import _prepare_next_round
+        from guandan.engine.replay import replay_events
+        from guandan.engine.state import _finish_game
+
+        state = make_initial_state(
+            level=RANK_A, seed=42, team_levels=[RANK_A, 2],
+            a_failure_counts=[1, 0],
+        )
+        state.finish_order = [0, 1, 3]
+        _finish_game(state)
+        next_state = _prepare_next_round(state, 43)
+        assert next_state.level == RANK_A
+        assert next_state.a_failure_counts == [2, 0]
+        assert replay_events(next_state.history).a_failure_counts == [2, 0]
 
     def test_bomb_finish_does_not_add_extra_level(self):
         """漂牌扩展玩法不启用：5 张以上含级牌炸弹也不额外升级。"""

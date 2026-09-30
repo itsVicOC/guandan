@@ -112,3 +112,37 @@ def test_legacy_pass_lockout_stream_replays_with_its_original_ruleset() -> None:
     assert ReplayCursor(state.history, ruleset_version=1).state.hands == state.hands
     with pytest.raises(IllegalPlayError, match="not player's turn"):
         replay_events(state.history, ruleset_version=2)
+
+
+def test_historical_single_failure_reset_replays_under_ruleset_2() -> None:
+    state = make_initial_state(level=14, first_player=0, seed=1, ruleset_version=2)
+    strategy = make_strategy(0)
+    rng = random.Random(1)
+    for _ in range(200):
+        if state.finished:
+            break
+        play_or_pass(state, state.turn_index, strategy, rng)
+    assert state.guo_a_failed and state.team_levels_final == [2, 14]
+    assert replay_events(state.history, ruleset_version=2) == state
+    with pytest.raises(ValueError, match="match"):
+        replay_events(state.history, ruleset_version=3)
+
+
+@pytest.mark.parametrize("prior,expected_level,expected_count", [
+    (0, 14, 1), (1, 14, 2), (2, 2, 0),
+])
+def test_three_failure_a_settlement_replays_exactly(prior, expected_level, expected_count) -> None:
+    state = make_initial_state(
+        level=14, first_player=0, seed=1, team_levels=[14, 2],
+        a_failure_counts=[prior, 0],
+    )
+    strategy = make_strategy(0)
+    rng = random.Random(1)
+    for _ in range(200):
+        if state.finished:
+            break
+        play_or_pass(state, state.turn_index, strategy, rng)
+    assert state.guo_a_failed and not state.match_finished
+    assert state.team_levels_final == [expected_level, 2]
+    assert state.a_failure_counts == [expected_count, 0]
+    assert replay_events(state.history) == state

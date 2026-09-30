@@ -3,7 +3,8 @@
 ## 为什么需要它
 
 评估一次「选牌是否更好」需要可复现的参考标签。做法是：固定一批局面，对每个候选动作
-从根玩家视角打完该局（隐藏手牌按公开信息重采样），估算该续局策略下的获胜概率。
+从根玩家视角打完该局（隐藏手牌按公开信息重采样），估算完整名次结算后的团队收益。
+第 3 版规则使用跨局代理估值；它不是直接观测的整场胜率。
 标签依赖续局策略与样本量，不是动作的无偏真值。
 
 问题是所需样本量很大。历史结论（见 README「搜索能力上限」）：
@@ -38,6 +39,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import math
 import multiprocessing as mp
@@ -63,7 +65,7 @@ from guandan.ai.mcts.search import simulate_state
 from guandan.ai.play import play_or_pass
 from guandan.ai.strategies.novice import NoviceStrategy
 from guandan.ai.strategy import make_strategy
-from guandan.engine.state import make_initial_state, team_of
+from guandan.engine.state import make_initial_state
 
 # 独立于搜索所用的随机流，避免标签与待评估方法共享采样
 PLAYOUT_SEED = 500_000
@@ -73,6 +75,12 @@ _POSITIONS: dict[int, object] = {}
 _CANDIDATES: dict[int, list] = {}
 _ROOT_PLAYERS: dict[int, int] = {}
 _LABEL_DIFFICULTY = 0
+
+
+def label_metadata() -> dict:
+    from guandan.ai.match_value import MODEL_PATH
+
+    return {"value_model_sha256": hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest()}
 
 
 def _action_key(pattern) -> tuple:
@@ -129,7 +137,7 @@ def sample_positions(
 
 
 def _playout(job):
-    """执行动作并续局到头游确定；其队伍已决定本局胜负。"""
+    """Complete the round and score rankings on the shared match objective."""
     seed, action_index, playout_index = job
     state = _POSITIONS[seed]
     action = _CANDIDATES[seed][action_index]
@@ -140,14 +148,14 @@ def _playout(job):
     rng = random.Random(PLAYOUT_POLICY_SEED + playout_index)
     strategy = make_strategy(_LABEL_DIFFICULTY)
     turns = 0
-    while not sampled.finish_order and not sampled.finished and turns < 4000:
+    while not sampled.finished and turns < 4000:
         play_or_pass(sampled, sampled.current_player(), strategy, rng)
         turns += 1
-    win = int(bool(
-        sampled.finish_order
-        and team_of(sampled.finish_order[0]) == team_of(root_player)
-    ))
-    return (seed, action_index, win)
+    if not sampled.finished:
+        raise RuntimeError("action-label continuation did not finish")
+    from guandan.ai.mcts.search import _evaluate_result
+
+    return (seed, action_index, _evaluate_result(sampled, root_player))
 
 
 def _init_worker(positions, candidates, root_players=None, label_difficulty=0):
@@ -210,7 +218,7 @@ def build_baseline(
     ]
     print(f"total playouts: {len(jobs):,}", flush=True)
 
-    wins: dict[tuple[int, int], list[int]] = {}
+    wins: dict[tuple[int, int], list[float]] = {}
     done = 0
     report_every = max(1, len(jobs) // 20)
     with mp.Pool(
@@ -230,6 +238,10 @@ def build_baseline(
 
     payload = {
         "meta": {
+            "label_schema": 2,
+            **label_metadata(),
+            "objective": "full-round ranks mapped to ruleset3 proxy match utility",
+            "legacy_fields": "wins/win_rate are aliases for utility_sum/mean_utility",
             "positions": len(seeds),
             "actions": actions,
             "min_candidates": 3,
@@ -248,7 +260,7 @@ def build_baseline(
             results = wins.get((seed, action_index), [])
             n = len(results)
             w = sum(results)
-            low, high = wilson_interval(w, n)
+            low, high = (mean_ci95(results)[2:4] if n >= 2 else (0.0, 1.0))
             entries.append(
                 {
                     "action_index": action_index,
@@ -260,6 +272,8 @@ def build_baseline(
                     "playouts": n,
                     "wins": w,
                     "win_rate": round(w / n, 4) if n else None,
+                    "utility_sum": w,
+                    "mean_utility": round(w / n, 4) if n else None,
                     "ci95": [round(low, 4), round(high, 4)],
                 }
             )
@@ -302,7 +316,7 @@ def audit_candidate_recall(
         for index in range(len(candidates[seed]))
         for k in range(playouts)
     ]
-    wins: dict[tuple[int, int], list[int]] = {}
+    wins: dict[tuple[int, int], list[float]] = {}
     with mp.Pool(workers, initializer=_init_worker, initargs=(states, candidates)) as pool:
         for seed, index, result in pool.imap_unordered(_playout, jobs, chunksize=64):
             if result is None:
@@ -338,6 +352,10 @@ def audit_candidate_recall(
         })
     return {
         "meta": {
+            "label_schema": 2,
+            **label_metadata(),
+            "objective": "full-round ranks mapped to ruleset3 proxy match utility",
+            "legacy_fields": "wins/win_rate are aliases for utility_sum/mean_utility",
             "positions": positions,
             "playouts_per_action": playouts,
             "seed_start": seed_start,
@@ -355,7 +373,8 @@ def audit_candidate_recall(
 
 
 def sample_diverse_positions(
-    count: int, *, seed_start: int, stratify_phases: bool = False
+    count: int, *, seed_start: int, stratify_phases: bool = False,
+    match_states: bool = True, include_placed: bool = False,
 ) -> list[dict]:
     """Sample held-out decisions across levels, seats and source policies."""
     recipes = [
@@ -371,9 +390,17 @@ def sample_diverse_positions(
             (("opening", 20, 27), ("middle", 10, 19), ("endgame", 1, 9))[index % 3]
             if stratify_phases else ("middle", 8, 16)
         )
+        placed = include_placed and (index + index // 8) % 4 == 3
+        if placed:
+            phase, minimum, maximum = "placed", 1, 27
         for attempt in range(100):
             seed = seed_start + index + attempt * max(1, count)
-            state = make_initial_state(level=level, first_player=seed % 4, seed=seed)
+            levels, counts = [level, level], [0, 0]
+            if match_states:
+                levels[1 - seat % 2] = level if (index // 4) % 2 == 0 else 9 if level == 14 else 2
+                counts = [(index // 4 + team) % 3 if levels[team] == 14 else 0 for team in (0, 1)]
+            state = make_initial_state(level=level, first_player=seed % 4, seed=seed,
+                                       team_levels=levels, a_failure_counts=counts)
             rng = random.Random(seed)
             strategy = make_strategy(source)
             for _turn in range(700):
@@ -383,7 +410,7 @@ def sample_diverse_positions(
                     state.current_player() == seat
                     and minimum <= state.hand_size(seat) <= maximum
                     and 0 < opponent_min_cards(state, seat) <= (27 if stratify_phases else 12)
-                    and (not stratify_phases or not state.finish_order)
+                    and (bool(state.finish_order) if placed else not stratify_phases or not state.finish_order)
                     and len(root_action_candidates(state, seat, max_actions=6)) >= 2
                 ):
                     positions.append({
@@ -393,6 +420,8 @@ def sample_diverse_positions(
                         "seat": seat,
                         "source_difficulty": source,
                         "phase": phase,
+                        "team_levels": list(state.team_levels),
+                        "a_failure_counts": list(state.a_failure_counts),
                         "state": copy.deepcopy(state),
                     })
                     break
@@ -447,7 +476,7 @@ def evaluate_diverse_positions(
         for action_index in range(len(actions))
         for k in range(playouts)
     ]
-    wins: dict[tuple[int, int], list[int]] = {}
+    wins: dict[tuple[int, int], list[float]] = {}
     with mp.Pool(
         workers,
         initializer=_init_worker,
@@ -496,6 +525,10 @@ def evaluate_diverse_positions(
         summary[f"{first}_minus_{second}"] = {"mean": mean, "ci95": [low, high]}
     return {
         "meta": {
+            "label_schema": 2,
+            **label_metadata(),
+            "objective": "full-round ranks mapped to ruleset3 proxy match utility",
+            "legacy_fields": "wins/win_rate are aliases for utility_sum/mean_utility",
             "positions": positions,
             "playouts_per_action": playouts,
             "seed_start": seed_start,
@@ -518,6 +551,8 @@ def evaluate_ladder_positions(
     workers: int,
     label_difficulty: int = 0,
     include_confidence_guard: bool = False,
+    include_placed: bool = False,
+    fixed_iterations: int | None = None,
 ) -> dict:
     """Audit all five production picks against paired, noisy action labels.
 
@@ -537,7 +572,7 @@ def evaluate_ladder_positions(
     if include_confidence_guard:
         methods.append(("4_confidence", 4, True))
     sampled = sample_diverse_positions(
-        positions, seed_start=seed_start, stratify_phases=True
+        positions, seed_start=seed_start, stratify_phases=True, include_placed=include_placed,
     )
     states = {row["id"]: row["state"] for row in sampled}
     roots = {row["id"]: row["seat"] for row in sampled}
@@ -558,11 +593,15 @@ def evaluate_ladder_positions(
         work = {}
         for name, tier, confidence_guard in methods:
             if tier == 3:
-                strategy = ProfessionalStrategy(rng=random.Random(31_000 + index))
+                strategy = ProfessionalStrategy(rng=random.Random(31_000 + index), **(
+                    {} if fixed_iterations is None else {"time_budget_ms": 0, "iterations": fixed_iterations}
+                ))
             elif tier == 4:
                 strategy = DaiChangshengStrategy(
                     rng=random.Random(41_000 + index),
-                    mcts_overrides={"confidence_guard": 1} if confidence_guard else None,
+                    mcts_overrides={**({"confidence_guard": 1} if confidence_guard else {}), **(
+                        {} if fixed_iterations is None else {"time_budget_ms": 0, "iterations": fixed_iterations}
+                    )},
                 )
             else:
                 strategy = make_strategy(tier)
@@ -588,7 +627,7 @@ def evaluate_ladder_positions(
         for action_index in range(len(actions))
         for k in range(playouts)
     ]
-    wins: dict[tuple[int, int], list[int]] = {}
+    wins: dict[tuple[int, int], list[float]] = {}
     report_every = max(1, len(jobs) // 20)
     print(f"ladder positions: {positions}; total label playouts: {len(jobs)}", flush=True)
     with mp.Pool(
@@ -630,6 +669,8 @@ def evaluate_ladder_positions(
             "seat": row["seat"],
             "source_difficulty": row["source_difficulty"],
             "phase": row["phase"],
+            "team_levels": row["team_levels"],
+            "a_failure_counts": row["a_failure_counts"],
             "hand_cards": row["state"].hand_size(row["seat"]),
             "candidate_count": len(actions),
             "enumerated_legal_count": legal_counts[index],
@@ -643,6 +684,8 @@ def evaluate_ladder_positions(
                 {
                     "key": _exact_action_key(action),
                     "wins": sum(wins[index, action_index]),
+                    "utility_sum": sum(wins[index, action_index]),
+                    "mean_utility": rates[action_index],
                     "samples": len(wins[index, action_index]),
                     "in_root_pool": _exact_action_key(action) in core_keys[index],
                 }
@@ -662,6 +705,10 @@ def evaluate_ladder_positions(
     }
     return {
         "meta": {
+            "label_schema": 2,
+            **label_metadata(),
+            "objective": "full-round ranks mapped to ruleset3 proxy match utility",
+            "legacy_fields": "wins/win_rate are aliases for utility_sum/mean_utility",
             "positions": positions,
             "playouts_per_action": playouts,
             "seed_start": seed_start,
@@ -669,7 +716,9 @@ def evaluate_ladder_positions(
             "seats": [0, 1, 2, 3],
             "source_difficulties": [0, 2],
             "phases": ["opening", "middle", "endgame"],
-            "head_undetermined_at_sampling": True,
+            "head_undetermined_at_sampling": not include_placed,
+            "selection_mode": "production clock" if fixed_iterations is None else "fixed work",
+            "fixed_iterations": fixed_iterations,
             "policy_version": AI_POLICY_VERSION,
             "methods": [name for name, _, _ in methods],
             "label_difficulty": label_difficulty,
@@ -846,6 +895,10 @@ METHODS = {
 def evaluate(payload: dict, method_names: list[str], *, pairwise: bool) -> dict:
     evaluation_started = time.perf_counter()
     meta = payload["meta"]
+    if meta.get("label_schema") != 2:
+        raise ValueError("legacy head-place labels cannot evaluate the full-ranking objective; rebuild the baseline")
+    if meta.get("value_model_sha256") != label_metadata()["value_model_sha256"]:
+        raise ValueError("match-value model differs from the labels; rebuild the baseline")
     rows = [
         (
             entry["seed"],
@@ -961,6 +1014,10 @@ def evaluate(payload: dict, method_names: list[str], *, pairwise: bool) -> dict:
                 )
     return {
         "meta": {
+            "label_schema": 2,
+            **label_metadata(),
+            "objective": "full-round ranks mapped to ruleset3 proxy match utility",
+            "legacy_fields": "wins/win_rate are aliases for utility_sum/mean_utility",
             "positions": len(rows),
             "methods": list(results),
             "pairwise": pairwise,
@@ -1014,6 +1071,8 @@ def main(argv: list[str] | None = None) -> int:
     ladder.add_argument("--seed-start", type=int, default=27_000)
     ladder.add_argument("--label-difficulty", type=int, choices=(0, 2), default=0)
     ladder.add_argument("--include-confidence-guard", action="store_true")
+    ladder.add_argument("--include-placed", action="store_true", help="include known-head partner-place decisions")
+    ladder.add_argument("--fixed-iterations", type=int, help="disable clock for reproducible offline picks")
     ladder.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     ladder.add_argument("--out", default="action-value-ladder.json")
 
@@ -1038,6 +1097,8 @@ def main(argv: list[str] | None = None) -> int:
             workers=args.workers,
             label_difficulty=args.label_difficulty,
             include_confidence_guard=args.include_confidence_guard,
+            include_placed=args.include_placed,
+            fixed_iterations=args.fixed_iterations,
         )
         Path(args.out).write_text(
             json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"

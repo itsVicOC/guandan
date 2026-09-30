@@ -1,0 +1,182 @@
+{
+  "against": "ai-regression-v5.json",
+  "new_source_sha256": "07a39b82a70f78f5eaa7afe33965f2debd49a37f358bd1015896c1fa3d5d4b53",
+  "changes": [
+    {
+      "case": "level2-endgame",
+      "difficulty": 4,
+      "before_action": [
+        "single",
+        9,
+        1,
+        0,
+        null,
+        [
+          [
+            9,
+            5,
+            1
+          ]
+        ]
+      ],
+      "after_action": [
+        "single",
+        9,
+        1,
+        0,
+        null,
+        [
+          [
+            9,
+            5,
+            1
+          ]
+        ]
+      ],
+      "before_reason": "tactical_guard",
+      "after_reason": "agrees_with_tactical",
+      "after_guard": null,
+      "review": "Ruleset-3 successor match utility replaces head-only/round-only cutoff; choices remain legal. Reason-only changes reflect calibrated gain units."
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 4,
+      "before_action": [
+        "triple_pair",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            2,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ],
+          [
+            9,
+            3,
+            1
+          ],
+          [
+            9,
+            4,
+            1
+          ]
+        ]
+      ],
+      "after_action": [
+        "triple",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            2,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ]
+        ]
+      ],
+      "before_reason": "tactical_guard",
+      "after_reason": "search",
+      "after_guard": {
+        "required_gain": 0.010148980954459139,
+        "observed_gain": 0.014220245912443974,
+        "payoff_span": 0.2537245238614785,
+        "common_samples": 76,
+        "paired_standard_error": 0.0036437091783329666
+      },
+      "review": "Ruleset-3 successor match utility replaces head-only/round-only cutoff; choices remain legal. Reason-only changes reflect calibrated gain units."
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 3,
+      "before_action": [
+        "triple_pair",
+        2,
+        1,
+        0,
+        null,
+        [
+          [
+            2,
+            3,
+            2
+          ],
+          [
+            2,
+            4,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ]
+        ]
+      ],
+      "after_action": [
+        "triple_pair",
+        2,
+        1,
+        0,
+        null,
+        [
+          [
+            2,
+            3,
+            2
+          ],
+          [
+            2,
+            4,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ]
+        ]
+      ],
+      "before_reason": "tactical_guard",
+      "after_reason": "agrees_with_tactical",
+      "after_guard": null,
+      "review": "Ruleset-3 successor match utility replaces head-only/round-only cutoff; choices remain legal. Reason-only changes reflect calibrated gain units."
+    }
+  ],
+  "decisions": 30,
+  "final_review_against_prior_v6": "all 30 actions/reasons unchanged; config gains an explicitly false partner_bomb_guard"
+}

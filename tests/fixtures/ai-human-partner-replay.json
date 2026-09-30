@@ -1,0 +1,1285 @@
+{
+  "ruleset_version": 2,
+  "ai_difficulties": [
+    null,
+    4,
+    4,
+    4
+  ],
+  "decision_events": [
+    10,
+    21,
+    58,
+    65,
+    72,
+    87
+  ],
+  "events": [
+    {
+      "level": 2,
+      "wild_card": {
+        "rank": 2,
+        "suit": 2
+      },
+      "hand_sizes": [
+        27,
+        27,
+        27,
+        27
+      ],
+      "first_player": 2,
+      "seed": 5172,
+      "team_levels": [
+        2,
+        2
+      ],
+      "_type": "ShuffleDeal"
+    },
+    {
+      "player": 2,
+      "pattern": {
+        "type": "straight",
+        "rank": 10,
+        "length": 5,
+        "cards": [
+          {
+            "rank": 6,
+            "suit": 2
+          },
+          {
+            "rank": 7,
+            "suit": 5
+          },
+          {
+            "rank": 8,
+            "suit": 3
+          },
+          {
+            "rank": 9,
+            "suit": 5
+          },
+          {
+            "rank": 10,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 22,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 1,
+      "hand_remaining": 27,
+      "_type": "Pass"
+    },
+    {
+      "player": 0,
+      "hand_remaining": 27,
+      "_type": "Pass"
+    },
+    {
+      "player": 3,
+      "pattern": {
+        "type": "straight",
+        "rank": 13,
+        "length": 5,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 4
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          },
+          {
+            "rank": 12,
+            "suit": 4
+          },
+          {
+            "rank": 13,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 22,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 2,
+      "hand_remaining": 22,
+      "_type": "Pass"
+    },
+    {
+      "player": 1,
+      "hand_remaining": 27,
+      "_type": "Pass"
+    },
+    {
+      "player": 0,
+      "pattern": {
+        "type": "straight",
+        "rank": 14,
+        "length": 5,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 11,
+            "suit": 2
+          },
+          {
+            "rank": 12,
+            "suit": 4
+          },
+          {
+            "rank": 13,
+            "suit": 2
+          },
+          {
+            "rank": 14,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 22,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 3,
+      "pattern": {
+        "type": "bomb",
+        "rank": 3,
+        "length": 4,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          },
+          {
+            "rank": 3,
+            "suit": 5
+          },
+          {
+            "rank": 3,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 18,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 2,
+      "hand_remaining": 22,
+      "_type": "Pass"
+    },
+    {
+      "player": 1,
+      "pattern": {
+        "type": "bomb",
+        "rank": 4,
+        "length": 4,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 23,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 0,
+      "hand_remaining": 22,
+      "_type": "Pass"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 18,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "hand_remaining": 22,
+      "_type": "Pass"
+    },
+    {
+      "player": 1,
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 12,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 12,
+            "suit": 2
+          },
+          {
+            "rank": 12,
+            "suit": 5
+          },
+          {
+            "rank": 12,
+            "suit": 5
+          },
+          {
+            "rank": 7,
+            "suit": 3
+          },
+          {
+            "rank": 7,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 18,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 0,
+      "hand_remaining": 22,
+      "_type": "Pass"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 18,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 14,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 3
+          },
+          {
+            "rank": 14,
+            "suit": 2
+          },
+          {
+            "rank": 14,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          },
+          {
+            "rank": 11,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 17,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 1,
+      "hand_remaining": 18,
+      "_type": "Pass"
+    },
+    {
+      "player": 0,
+      "hand_remaining": 22,
+      "_type": "Pass"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 18,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 3
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 5,
+            "suit": 4
+          },
+          {
+            "rank": 5,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 12,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 1,
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 3
+          },
+          {
+            "rank": 9,
+            "suit": 5
+          },
+          {
+            "rank": 9,
+            "suit": 2
+          },
+          {
+            "rank": 6,
+            "suit": 5
+          },
+          {
+            "rank": 6,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 13,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 0,
+      "hand_remaining": 22,
+      "_type": "Pass"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 18,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "hand_remaining": 12,
+      "_type": "Pass"
+    },
+    {
+      "player": 1,
+      "pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 12,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 0,
+      "pattern": {
+        "type": "single",
+        "rank": 10,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 21,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 3,
+      "pattern": {
+        "type": "single",
+        "rank": 11,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 11,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 17,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 2,
+      "pattern": {
+        "type": "single",
+        "rank": 12,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 12,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 11,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 1,
+      "pattern": {
+        "type": "single",
+        "rank": 14,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 11,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 0,
+      "pattern": {
+        "type": "single",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 20,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 3,
+      "pattern": {
+        "type": "single",
+        "rank": 101,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 101,
+            "suit": 1
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 16,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 2,
+      "hand_remaining": 11,
+      "_type": "Pass"
+    },
+    {
+      "player": 1,
+      "hand_remaining": 11,
+      "_type": "Pass"
+    },
+    {
+      "player": 0,
+      "hand_remaining": 20,
+      "_type": "Pass"
+    },
+    {
+      "player": 3,
+      "pattern": {
+        "type": "pair_sequence",
+        "rank": 14,
+        "length": 3,
+        "cards": [
+          {
+            "rank": 12,
+            "suit": 3
+          },
+          {
+            "rank": 12,
+            "suit": 3
+          },
+          {
+            "rank": 13,
+            "suit": 3
+          },
+          {
+            "rank": 13,
+            "suit": 5
+          },
+          {
+            "rank": 14,
+            "suit": 5
+          },
+          {
+            "rank": 14,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 10,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 3,
+      "count": 10,
+      "_type": "Claim"
+    },
+    {
+      "player": 2,
+      "hand_remaining": 11,
+      "_type": "Pass"
+    },
+    {
+      "player": 1,
+      "hand_remaining": 11,
+      "_type": "Pass"
+    },
+    {
+      "player": 0,
+      "pattern": {
+        "type": "bomb",
+        "rank": 5,
+        "length": 5,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 2
+          },
+          {
+            "rank": 5,
+            "suit": 3
+          },
+          {
+            "rank": 5,
+            "suit": 3
+          },
+          {
+            "rank": 5,
+            "suit": 5
+          },
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 15,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 10,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "hand_remaining": 11,
+      "_type": "Pass"
+    },
+    {
+      "player": 1,
+      "hand_remaining": 11,
+      "_type": "Pass"
+    },
+    {
+      "player": 0,
+      "pattern": {
+        "type": "pair_sequence",
+        "rank": 9,
+        "length": 3,
+        "cards": [
+          {
+            "rank": 7,
+            "suit": 2
+          },
+          {
+            "rank": 7,
+            "suit": 3
+          },
+          {
+            "rank": 8,
+            "suit": 4
+          },
+          {
+            "rank": 8,
+            "suit": 4
+          },
+          {
+            "rank": 9,
+            "suit": 3
+          },
+          {
+            "rank": 9,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 9,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 0,
+      "count": 9,
+      "_type": "Claim"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 10,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "hand_remaining": 11,
+      "_type": "Pass"
+    },
+    {
+      "player": 1,
+      "hand_remaining": 11,
+      "_type": "Pass"
+    },
+    {
+      "player": 0,
+      "pattern": {
+        "type": "single",
+        "rank": 6,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 6,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 8,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 0,
+      "count": 8,
+      "_type": "Claim"
+    },
+    {
+      "player": 3,
+      "pattern": {
+        "type": "single",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 9,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 3,
+      "count": 9,
+      "_type": "Claim"
+    },
+    {
+      "player": 2,
+      "pattern": {
+        "type": "single",
+        "rank": 100,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 100,
+            "suit": 0
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 10,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 2,
+      "count": 10,
+      "_type": "Claim"
+    },
+    {
+      "player": 1,
+      "hand_remaining": 11,
+      "_type": "Pass"
+    },
+    {
+      "player": 0,
+      "hand_remaining": 8,
+      "_type": "Pass"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 9,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 8,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 8,
+            "suit": 5
+          },
+          {
+            "rank": 8,
+            "suit": 2
+          },
+          {
+            "rank": 8,
+            "suit": 5
+          },
+          {
+            "rank": 13,
+            "suit": 4
+          },
+          {
+            "rank": 13,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 5,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 2,
+      "count": 5,
+      "_type": "Claim"
+    },
+    {
+      "player": 1,
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 11,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 11,
+            "suit": 2
+          },
+          {
+            "rank": 11,
+            "suit": 4
+          },
+          {
+            "rank": 11,
+            "suit": 5
+          },
+          {
+            "rank": 13,
+            "suit": 5
+          },
+          {
+            "rank": 13,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 6,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 1,
+      "count": 6,
+      "_type": "Claim"
+    },
+    {
+      "player": 0,
+      "hand_remaining": 8,
+      "_type": "Pass"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 9,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "hand_remaining": 5,
+      "_type": "Pass"
+    },
+    {
+      "player": 1,
+      "pattern": {
+        "type": "single",
+        "rank": 10,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 5,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 1,
+      "count": 5,
+      "_type": "Claim"
+    },
+    {
+      "player": 0,
+      "pattern": {
+        "type": "single",
+        "rank": 100,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 100,
+            "suit": 0
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 7,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 0,
+      "count": 7,
+      "_type": "Claim"
+    },
+    {
+      "player": 3,
+      "pattern": {
+        "type": "bomb",
+        "rank": 6,
+        "length": 4,
+        "cards": [
+          {
+            "rank": 6,
+            "suit": 2
+          },
+          {
+            "rank": 6,
+            "suit": 4
+          },
+          {
+            "rank": 6,
+            "suit": 3
+          },
+          {
+            "rank": 6,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 5,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 3,
+      "count": 5,
+      "_type": "Claim"
+    },
+    {
+      "player": 2,
+      "hand_remaining": 5,
+      "_type": "Pass"
+    },
+    {
+      "player": 1,
+      "pattern": {
+        "type": "bomb",
+        "rank": 10,
+        "length": 4,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 3
+          },
+          {
+            "rank": 10,
+            "suit": 3
+          },
+          {
+            "rank": 10,
+            "suit": 5
+          },
+          {
+            "rank": 2,
+            "suit": 2
+          }
+        ],
+        "wild_used": 1,
+        "suit": null
+      },
+      "hand_remaining": 1,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 1,
+      "count": 1,
+      "_type": "Claim"
+    },
+    {
+      "player": 0,
+      "pattern": {
+        "type": "straight_flush",
+        "rank": 5,
+        "length": 5,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 4
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 5,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": 4
+      },
+      "hand_remaining": 2,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 0,
+      "count": 2,
+      "_type": "Claim"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 5,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "hand_remaining": 5,
+      "_type": "Pass"
+    },
+    {
+      "player": 1,
+      "hand_remaining": 1,
+      "_type": "Pass"
+    },
+    {
+      "player": 0,
+      "pattern": {
+        "type": "pair",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 2
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 0,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 0,
+      "count": 0,
+      "_type": "Claim"
+    },
+    {
+      "player": 3,
+      "pattern": {
+        "type": "pair",
+        "rank": 8,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 8,
+            "suit": 3
+          },
+          {
+            "rank": 8,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 3,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 3,
+      "count": 3,
+      "_type": "Claim"
+    },
+    {
+      "player": 2,
+      "pattern": {
+        "type": "pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 5
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 3,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 2,
+      "count": 3,
+      "_type": "Claim"
+    },
+    {
+      "player": 1,
+      "hand_remaining": 1,
+      "_type": "Pass"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 3,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "pattern": {
+        "type": "single",
+        "rank": 7,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 7,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 2,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 2,
+      "count": 2,
+      "_type": "Claim"
+    },
+    {
+      "player": 1,
+      "pattern": {
+        "type": "single",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 0,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 1,
+      "count": 0,
+      "_type": "Claim"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 3,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "pattern": {
+        "type": "single",
+        "rank": 101,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 101,
+            "suit": 1
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 1,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 2,
+      "count": 1,
+      "_type": "Claim"
+    },
+    {
+      "player": 3,
+      "hand_remaining": 3,
+      "_type": "Pass"
+    },
+    {
+      "player": 2,
+      "pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "hand_remaining": 0,
+      "_type": "TurnPlayed"
+    },
+    {
+      "player": 2,
+      "count": 0,
+      "_type": "Claim"
+    },
+    {
+      "team": 0,
+      "new_level": 4,
+      "delta": 2,
+      "_type": "LevelUp"
+    },
+    {
+      "finish_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "team_levels": [
+        4,
+        2
+      ],
+      "drift": false,
+      "guo_a": false,
+      "winner_team": null,
+      "_type": "GameOver"
+    }
+  ]
+}

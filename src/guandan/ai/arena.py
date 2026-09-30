@@ -26,7 +26,7 @@ from .strategies.professional import ProfessionalStrategy
 from .strategy import DIFFICULTY_NAMES, AIStrategy, make_strategy
 
 CALIBRATED_ITERATIONS = {3: 256, 4: 768}
-AI_POLICY_VERSION = "planned-cutoff-paired-confidence-v3"
+AI_POLICY_VERSION = "match-team-v6"
 
 
 def paired_bootstrap_interval(

@@ -12,7 +12,7 @@ import copy
 import math
 import time
 from collections import Counter
-from typing import Optional
+from typing import Optional, Sequence
 
 from ...engine.card import RANK_A, Card
 from ...engine.hand import Pattern, PatternType, comparison_rank
@@ -22,14 +22,15 @@ from ...engine.state import (
     GameState,
     IllegalPlayError,
     is_teammate,
+    partner_of,
     pass_turn,
     play_pattern,
     team_of,
 )
 from ...engine.trick import current_top_player
 from ..candidates import enumerate_legal_patterns, greedy_pattern_key, is_bomb_pattern
-from ..context import opponent_min_cards
-from ..hand_plan import estimate_remaining_plays
+from ..context import PublicTacticalContext, opponent_min_cards
+from ..hand_plan import estimate_remaining_plays, remaining_cards
 from ..valuation import enumerate_candidate_plays
 from .node import MCTSNode
 
@@ -204,6 +205,7 @@ def simulate_state(
     max_turns: int,
     copy_state: bool = True,
     deadline: float | None = None,
+    styles: Sequence[str] | None = None,
 ) -> float:
     """Roll out a state and return its value from ``root_player``'s team view."""
     sim_state = copy.deepcopy(state) if copy_state else state
@@ -219,6 +221,7 @@ def simulate_state(
             sim_state,
             player,
             rollout_strategy_level=rollout_strategy_level,
+            **({"style": styles[player]} if styles is not None else {}),
         )
 
         try:
@@ -239,7 +242,7 @@ def simulate_state(
     # Higher-tier continuations use a hand-plan value at the cutoff. Once
     # head place is known, retain the exact ranking/level-aware value path.
     if rollout_strategy_level >= 2 and not sim_state.finish_order:
-        return planned_position_value(sim_state, root_player)
+        return planned_position_value(sim_state, root_player, team_value=rollout_strategy_level >= 3)
     # 评估结果
     return _evaluate_result(sim_state, root_player)
 
@@ -249,6 +252,7 @@ def _rollout_select_pattern(
     player: int,
     *,
     rollout_strategy_level: int,
+    style: str = "balanced",
 ) -> Optional[Pattern]:
     """MCTS rollout 的轻量出牌策略。
 
@@ -259,7 +263,14 @@ def _rollout_select_pattern(
     if finish is not None:
         return finish
 
-    if rollout_strategy_level >= 1 and state.table:
+    context = PublicTacticalContext.from_state(state, player) if rollout_strategy_level >= 3 else None
+    if (
+        context is not None and state.table and context.top_player == context.partner
+        and not context.partner_needs_cover()
+    ):
+        return _structured_rollout_pattern(state, player, context=context, takeover_only=True, style=style)
+
+    if context is None and rollout_strategy_level >= 1 and state.table:
         top_player = current_top_player(state)
         if (
             top_player is not None
@@ -291,8 +302,9 @@ def _rollout_select_pattern(
     # complex responses and short hands to protect the search budget.
     if rollout_strategy_level >= 1 and (
         not state.table or state.hand_size(player) <= 10 or complex_response
+        or (context is not None and opponent_min_cards(state, player) <= 3)
     ):
-        structured = _structured_rollout_pattern(state, player)
+        structured = _structured_rollout_pattern(state, player, context=context, style=style)
         if structured is not None:
             return structured
         if state.table:
@@ -305,18 +317,46 @@ def _rollout_select_pattern(
     return _smallest_rollout_pattern(state, player)
 
 
-def _structured_rollout_pattern(state: GameState, player: int) -> Optional[Pattern]:
+def _structured_rollout_pattern(
+    state: GameState, player: int, *, context: PublicTacticalContext | None = None,
+    takeover_only: bool = False,
+    style: str = "balanced",
+) -> Optional[Pattern]:
     """One-pass full-pattern policy for complex responses and short hands."""
     candidates = enumerate_legal_patterns(state, player)
+    if takeover_only:
+        if context is None:
+            return None
+        candidates = [p for p in candidates if context.can_takeover_in_two(
+            p, remaining_cards(state.hands[player], p.cards),
+        )]
     if not candidates:
         return None
     non_bombs = [pattern for pattern in candidates if not is_bomb_pattern(pattern)]
-    if non_bombs:
+    if non_bombs or context is not None:
         counts = Counter(card.rank for card in state.hands[player])
         urgency = opponent_min_cards(state, player)
+
+        def cost(pattern: Pattern) -> float:
+            value = _rollout_material_cost(pattern, counts, state.level, urgency)
+            if style == "conservative" and is_bomb_pattern(pattern) and urgency > 2:
+                value += 4.0
+            elif style == "shedding":
+                value -= 0.25 * len(pattern.cards)
+            if context is not None:
+                value += context.lead_adjustment(pattern) if not state.table else 12.0 * context.finish_risk(pattern)
+                if is_bomb_pattern(pattern):
+                    value += 3.5 if urgency > 5 else 1.2
+                if not state.table and state.hand_size(player) <= 10:
+                    rest = remaining_cards(state.hands[player], pattern.cards)
+                    if find_complete_pattern(list(rest), state.wild_card) is not None:
+                        response = max((context.response_risk(pattern, seat) for seat in context.opponents), default=0.0)
+                        value -= 2.5 * (1.0 - response)
+            return value
+
         return min(
-            non_bombs,
-            key=lambda pattern: _rollout_material_cost(pattern, counts, state.level, urgency),
+            candidates if context is not None and (not state.table or urgency <= 5) else non_bombs or candidates,
+            key=cost,
         )
     if state.table and opponent_min_cards(state, player) > 5:
         return None
@@ -578,12 +618,21 @@ def _evaluate_result(state: GameState, root_player: int) -> float:
 
     if state.finished:
         root_team = team_of(root_player)
+        if state.ruleset_version >= 3:
+            from ..match_value import terminal_match_value
+
+            return terminal_match_value(state, root_team)
         if state.match_finished and state.winner_team is not None:
             return 1.0 if state.winner_team == root_team else 0.0
 
         full_order = list(state.finish_order)
         full_order.extend(player for player in range(4) if player not in full_order)
         head, second, third, last = full_order[:4]
+        if state.team_levels[team_of(head)] == RANK_A:
+            # Taking head place is not an A pass when the partner is last.
+            # The first two failed attempts stay at A; the third resets to 2.
+            head_succeeded = last != partner_of(head)
+            return float(head_succeeded == is_teammate(head, root_player))
         deltas = compute_level_change(
             head, second, third, last, state.team_bomb_count
         )
@@ -619,9 +668,17 @@ def _evaluate_placed_race(state: GameState, root_player: int) -> float:
     (and therefore the level gain).  A generic card-count model can otherwise
     prefer the losing team when its two players both have short hands.
     """
+    if state.ruleset_version >= 3:
+        exact = _immediate_finish_value(state, root_player)
+        if exact is not None:
+            return exact
     head = state.finish_order[0]
     root_won_head = is_teammate(head, root_player)
     if len(state.finish_order) >= 2 and is_teammate(head, state.finish_order[1]):
+        if state.ruleset_version >= 3:
+            from ..match_value import outcome_value
+
+            return outcome_value(state, team_of(root_player), team_of(head), 2)
         return 1.0 if root_won_head else 0.0
 
     remaining = [seat for seat in range(4) if seat not in state.finish_order]
@@ -635,6 +692,29 @@ def _evaluate_placed_race(state: GameState, root_player: int) -> float:
     def finishes_before(first: int, second: int) -> float:
         difference = max(-20.0, min(20.0, plans[first] - plans[second]))
         return 1.0 / (1.0 + math.exp(difference))
+
+    if state.ruleset_version >= 3:
+        from ..match_value import outcome_value
+
+        partner = partner_of(head)
+        opponents = [seat for seat in remaining if seat != partner]
+        before = [finishes_before(partner, seat) for seat in opponents]
+        places: tuple[tuple[int, float], ...]
+        if len(before) == 1:
+            places = ((3, before[0]), (4, 1.0 - before[0]))
+        else:
+            second = math.prod(before)
+            last = math.prod(1.0 - chance for chance in before)
+            places = ((2, second), (3, 1.0 - second - last), (4, last))
+        return sum(chance * outcome_value(state, team_of(root_player), team_of(head), place) for place, chance in places)
+
+    if state.team_levels[team_of(head)] == RANK_A:
+        partner = partner_of(head)
+        last_chance = math.prod(
+            1.0 - finishes_before(partner, seat)
+            for seat in remaining if seat != partner
+        )
+        return 1.0 - last_chance if root_won_head else last_chance
 
     own = [seat for seat in remaining if is_teammate(seat, root_player)]
     opponents = [seat for seat in remaining if not is_teammate(seat, root_player)]
@@ -684,6 +764,8 @@ _POSITION_VALUE_INTERCEPT = 0.227
 
 def _evaluate_unfinished(state: GameState, root_player: int) -> float:
     """rollout 未完成时的局面胜率估计（拟合模型）。"""
+    if state.ruleset_version >= 3:
+        return planned_position_value(state, root_player)
     weights = _POSITION_VALUE_WEIGHTS
     logit = _POSITION_VALUE_INTERCEPT
     for index, feature in enumerate(_position_features(state, root_player)):
@@ -711,7 +793,13 @@ def planned_position_features(state: GameState, root_player: int) -> tuple[float
     lead = 0.0 if top is None else 1.0 if is_teammate(top, root_player) else -1.0
     turn = 1.0 if is_teammate(state.current_player(), root_player) else -1.0
     progress = 1.0 - sum(map(len, state.hands)) / 108.0
-    return (race, support, cards, control, lead, turn, race * progress, control * progress)
+    own_level = state.team_levels[team_of(root_player)]
+    other_level = state.team_levels[1 - team_of(root_player)]
+    a_round = float(own_level == RANK_A or other_level == RANK_A)
+    return (
+        race, support, cards, control, lead, turn, race * progress, control * progress,
+        (own_level - other_level) / 12.0, race * a_round, support * a_round,
+    )
 
 
 # Fitted on 576 complete sampled deals, holding out a separate 192 deals
@@ -729,16 +817,63 @@ _PLANNED_VALUE_WEIGHTS = (
     -0.1569959244228077,
 )
 
+# Fitted on 576 whole deals, 192 independent holdout deals (90000..90767),
+# using the public team-aware continuation and corrected A-round utility.
+# Features 8..10 add level difference and A-round race/support interactions.
+# See benchmarks/ai-team-value-fit-v3.json. Used only by experimental level-3
+# continuations until the separately declared paired strength gate passes.
+_TEAM_VALUE_WEIGHTS = (
+    1.3828467791648302, 3.104752911551853, -2.149251371612721,
+    1.037728158662135, 0.12812715777954006, 0.12993121598476276,
+    0.8064204940229135, -0.17850848204963007, 0.0,
+    -0.22276735533081174, 0.6544864600877628,
+)
 
-def planned_position_value(state: GameState, root_player: int) -> float:
+
+def planned_position_value(state: GameState, root_player: int, *, team_value: bool = False) -> float:
     """Calibrated symmetric team utility for an unfinished sampled world."""
+    if state.ruleset_version >= 3:
+        from ..match_value import OUTCOMES, outcome_probabilities, outcome_value
+
+        exact = _immediate_finish_value(state, root_player)
+        if exact is not None:
+            return exact
+        root_team = team_of(root_player)
+        probabilities = outcome_probabilities(rank_position_features(state, root_player))
+        return sum(
+            probability * outcome_value(state, root_team, root_team ^ relative_team, place)
+            for probability, (relative_team, place) in zip(probabilities, OUTCOMES)
+        )
     logit = sum(
         weight * feature
         for weight, feature in zip(
-            _PLANNED_VALUE_WEIGHTS, planned_position_features(state, root_player)
+            _TEAM_VALUE_WEIGHTS if team_value else _PLANNED_VALUE_WEIGHTS,
+            planned_position_features(state, root_player),
         )
     )
     return 1.0 / (1.0 + math.exp(-max(-30.0, min(30.0, logit))))
+
+
+def rank_position_features(state: GameState, root_player: int) -> tuple[float, ...]:
+    """Odd features for a six-outcome rank model, including A pressure."""
+    features = planned_position_features(state, root_player)
+    team = team_of(root_player)
+    own = state.a_failure_counts[team] if state.team_levels[team] == RANK_A else 0
+    other = state.a_failure_counts[1 - team] if state.team_levels[1 - team] == RANK_A else 0
+    return (*features, (own - other) / 2.0, features[1] * (own + other) / 4.0)
+
+
+def _immediate_finish_value(state: GameState, root_player: int) -> float | None:
+    """Resolve the continuation policy's irreversible legal one-play exit."""
+    seat = state.current_player()
+    finish = _legal_finish_pattern(state, seat, max_cards=10)
+    if finish is None:
+        return None
+    from ...engine.state import clone_state_for_search
+
+    child = clone_state_for_search(state)
+    play_pattern(child, seat, finish)
+    return _evaluate_result(child, root_player)
 
 
 def _position_features(state: GameState, root_player: int) -> tuple[float, float, float, float]:

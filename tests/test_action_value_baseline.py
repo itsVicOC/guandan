@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 SCRIPT = Path(__file__).parents[1] / "scripts" / "action_value_baseline.py"
 
 
@@ -20,10 +22,10 @@ def test_ladder_samples_only_positions_with_undecided_winner():
     assert rows[17]["seed"] != 47017
 
 
-def test_action_label_stops_after_head_place(monkeypatch):
+def test_action_label_completes_ranking_after_head_place(monkeypatch):
     from guandan.ai.play import play_or_pass
     from guandan.ai.strategy import make_strategy
-    from guandan.engine.state import make_initial_state, team_of
+    from guandan.engine.state import make_initial_state
     from scripts import action_value_baseline as audit
 
     state = make_initial_state(seed=17)
@@ -35,13 +37,16 @@ def test_action_label_stops_after_head_place(monkeypatch):
     action = strategy.select_pattern(state, player)
     audit._init_worker({17: state}, {17: [action]}, {17: player})
 
-    def unexpected(*args, **kwargs):
-        raise AssertionError("head place already determines the round-win label")
+    continuations = []
+    def record(sim, *args, **kwargs):
+        continuations.append(sim)
+        return play_or_pass(sim, *args, **kwargs)
 
-    monkeypatch.setattr(audit, "play_or_pass", unexpected)
-    assert audit._playout((17, 0, 0)) == (
-        17, 0, int(team_of(state.finish_order[0]) == team_of(player))
-    )
+    monkeypatch.setattr(audit, "play_or_pass", record)
+    label = audit._playout((17, 0, 0))
+    assert continuations and continuations[-1].finished
+    assert label[:2] == (17, 0)
+    assert 0.0 < label[2] < 1.0
 
 
 def test_diverse_evaluation_covers_multiple_seats_and_source_policies(tmp_path):
@@ -86,4 +91,22 @@ def test_ladder_preserves_reusable_action_labels_and_variant_picks(tmp_path):
     }
     best = max(values.values())
     for method, key in row["selected_action_keys"].items():
-        assert row["regret"][method] == best - values[json.dumps(key)]
+        assert row["regret"][method] == pytest.approx(best - values[json.dumps(key)], abs=0.00005)
+
+
+def test_placed_and_match_state_sampler_covers_counters_and_all_seats():
+    from scripts.action_value_baseline import sample_diverse_positions
+
+    rows = sample_diverse_positions(36, seed_start=126000, stratify_phases=True, include_placed=True)
+    placed = [r for r in rows if r["phase"] == "placed"]
+    assert {r["seat"] for r in placed} == set(range(4))
+    assert all(r["state"].finish_order for r in placed)
+    assert any(r["team_levels"][0] != r["team_levels"][1] for r in rows)
+    assert {c for r in rows for c in r["a_failure_counts"]} == {0, 1, 2}
+
+
+def test_legacy_head_labels_are_rejected_for_new_objective():
+    from scripts.action_value_baseline import evaluate
+
+    with pytest.raises(ValueError, match="legacy head-place"):
+        evaluate({"meta": {}, "positions": []}, [], pairwise=True)

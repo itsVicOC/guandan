@@ -249,7 +249,7 @@ class TestActionValueBaselineTool:
         first = [_playout((seed, 0, k)) for k in range(5)]
         second = [_playout((seed, 0, k)) for k in range(5)]
         assert first == second
-        assert all(r[2] in (0, 1, None) for r in first)
+        assert all(r[2] is None or 0.0 <= r[2] <= 1.0 for r in first)
 
     def test_baseline_candidates_cover_pass_and_greedy(self):
         """Paired evaluation must not drop actions a measured policy can choose."""

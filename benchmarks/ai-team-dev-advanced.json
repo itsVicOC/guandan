@@ -1,0 +1,6192 @@
+{
+  "config": {
+    "baseline_root": "/Users/itsvic/.codex/worktrees/ai-baseline/guandan",
+    "baseline_sha": "3f687c8d14189bfc99df6b61e23cd5c2716ef91f",
+    "suite": "dev",
+    "variant": "team",
+    "mode": "fixed",
+    "difficulty": 2,
+    "deals": 32,
+    "seed_start": 91000,
+    "source_sha256": "b81e585411a1a2c62c171e3c2a6265fe520ee13f0ec347aeefb47cf4a184b4eb",
+    "fixed_iterations": 128
+  },
+  "workers": 2,
+  "elapsed_seconds": 59.509650625055656,
+  "pairs": 32,
+  "games": 64,
+  "mean_paired_gain": -0.003124999999999989,
+  "gain_confidence_95": [
+    -0.12916666666666668,
+    0.12604166666666666
+  ],
+  "strength_gate_passed": false,
+  "head_win_rate": 0.515625,
+  "budget_gate_passed": true,
+  "by_level": {
+    "2": {
+      "games": 22,
+      "mean_gain": -0.17575757575757578,
+      "head_win_rate": 0.4090909090909091,
+      "a_success_rate": null
+    },
+    "9": {
+      "games": 22,
+      "mean_gain": 0.07575757575757573,
+      "head_win_rate": 0.5454545454545454,
+      "a_success_rate": null
+    },
+    "14": {
+      "games": 20,
+      "mean_gain": 0.1,
+      "head_win_rate": 0.6,
+      "a_success_rate": 0.55
+    }
+  },
+  "observations": [
+    {
+      "seed": 91000,
+      "level": 2,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.06666666666666665,
+      "gain": -0.8666666666666667,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 29,
+        "average_seconds": 0.051964,
+        "p50_seconds": 0.001025,
+        "p95_seconds": 0.072108,
+        "max_seconds": 1.256299
+      },
+      "baseline_intrinsic_latency": {
+        "count": 28,
+        "average_seconds": 0.010525,
+        "p50_seconds": 0.000257,
+        "p95_seconds": 0.078612,
+        "max_seconds": 0.104455
+      },
+      "decision_reasons": {
+        "heuristic": 29
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91000,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 57,
+        "finished": true,
+        "finish_order": [
+          1,
+          0,
+          3
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          2,
+          4
+        ],
+        "team_bomb_count": [
+          0,
+          3
+        ],
+        "drift": false,
+        "duration_seconds": 1.84239,
+        "decision_latency": {
+          "count": 57,
+          "average_seconds": 0.032322,
+          "p50_seconds": 0.00211,
+          "p95_seconds": 0.079869,
+          "max_seconds": 1.256299
+        },
+        "seat_decision_latency": [
+          {
+            "count": 15,
+            "average_seconds": 0.095276,
+            "p50_seconds": 0.003075,
+            "p95_seconds": 1.256299,
+            "max_seconds": 1.256299
+          },
+          {
+            "count": 13,
+            "average_seconds": 0.01246,
+            "p50_seconds": 0.001812,
+            "p95_seconds": 0.105589,
+            "max_seconds": 0.105589
+          },
+          {
+            "count": 14,
+            "average_seconds": 0.005558,
+            "p50_seconds": 0.00077,
+            "p95_seconds": 0.028442,
+            "max_seconds": 0.028442
+          },
+          {
+            "count": 15,
+            "average_seconds": 0.011563,
+            "p50_seconds": 0.00256,
+            "p95_seconds": 0.079869,
+            "max_seconds": 0.079869
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91000,
+      "level": 2,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.7666666666666666,
+      "gain": 0.5333333333333332,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 31,
+        "average_seconds": 0.011818,
+        "p50_seconds": 0.000651,
+        "p95_seconds": 0.076713,
+        "max_seconds": 0.13666
+      },
+      "baseline_intrinsic_latency": {
+        "count": 34,
+        "average_seconds": 0.033976,
+        "p50_seconds": 0.001094,
+        "p95_seconds": 0.048937,
+        "max_seconds": 0.908517
+      },
+      "decision_reasons": {
+        "heuristic": 31
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91000,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 65,
+        "finished": true,
+        "finish_order": [
+          3,
+          0,
+          2
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          2,
+          3
+        ],
+        "team_bomb_count": [
+          0,
+          3
+        ],
+        "drift": false,
+        "duration_seconds": 1.578332,
+        "decision_latency": {
+          "count": 65,
+          "average_seconds": 0.024282,
+          "p50_seconds": 0.002359,
+          "p95_seconds": 0.068881,
+          "max_seconds": 0.909498
+        },
+        "seat_decision_latency": [
+          {
+            "count": 15,
+            "average_seconds": 0.072202,
+            "p50_seconds": 0.003254,
+            "p95_seconds": 0.909498,
+            "max_seconds": 0.909498
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.010132,
+            "p50_seconds": 0.000305,
+            "p95_seconds": 0.13666,
+            "max_seconds": 0.13666
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.006786,
+            "p50_seconds": 0.002913,
+            "p95_seconds": 0.037954,
+            "max_seconds": 0.037954
+          },
+          {
+            "count": 13,
+            "average_seconds": 0.014151,
+            "p50_seconds": 0.00205,
+            "p95_seconds": 0.076713,
+            "max_seconds": 0.076713
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91001,
+      "level": 9,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 31,
+        "average_seconds": 0.019005,
+        "p50_seconds": 0.002363,
+        "p95_seconds": 0.09153,
+        "max_seconds": 0.197676
+      },
+      "baseline_intrinsic_latency": {
+        "count": 34,
+        "average_seconds": 0.038209,
+        "p50_seconds": 0.001137,
+        "p95_seconds": 0.395941,
+        "max_seconds": 0.546831
+      },
+      "decision_reasons": {
+        "heuristic": 31
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91001,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 65,
+        "finished": true,
+        "finish_order": [
+          0,
+          2,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          12,
+          9
+        ],
+        "team_bomb_count": [
+          2,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.947852,
+        "decision_latency": {
+          "count": 65,
+          "average_seconds": 0.029966,
+          "p50_seconds": 0.003012,
+          "p95_seconds": 0.13725,
+          "max_seconds": 0.548124
+        },
+        "seat_decision_latency": [
+          {
+            "count": 15,
+            "average_seconds": 0.020296,
+            "p50_seconds": 0.002363,
+            "p95_seconds": 0.197676,
+            "max_seconds": 0.197676
+          },
+          {
+            "count": 17,
+            "average_seconds": 0.009548,
+            "p50_seconds": 0.003031,
+            "p95_seconds": 0.044749,
+            "max_seconds": 0.044749
+          },
+          {
+            "count": 16,
+            "average_seconds": 0.017795,
+            "p50_seconds": 0.001847,
+            "p95_seconds": 0.09153,
+            "max_seconds": 0.09153
+          },
+          {
+            "count": 17,
+            "average_seconds": 0.070374,
+            "p50_seconds": 0.003095,
+            "p95_seconds": 0.548124,
+            "max_seconds": 0.548124
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91001,
+      "level": 9,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.06666666666666665,
+      "gain": -0.8666666666666667,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 37,
+        "average_seconds": 0.047916,
+        "p50_seconds": 0.002352,
+        "p95_seconds": 0.474767,
+        "max_seconds": 0.903295
+      },
+      "baseline_intrinsic_latency": {
+        "count": 36,
+        "average_seconds": 0.013702,
+        "p50_seconds": 0.000665,
+        "p95_seconds": 0.091455,
+        "max_seconds": 0.156777
+      },
+      "decision_reasons": {
+        "heuristic": 37
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91001,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 73,
+        "finished": true,
+        "finish_order": [
+          0,
+          3,
+          2
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          11,
+          9
+        ],
+        "team_bomb_count": [
+          2,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 2.336883,
+        "decision_latency": {
+          "count": 73,
+          "average_seconds": 0.032012,
+          "p50_seconds": 0.002826,
+          "p95_seconds": 0.132682,
+          "max_seconds": 0.903295
+        },
+        "seat_decision_latency": [
+          {
+            "count": 16,
+            "average_seconds": 0.016844,
+            "p50_seconds": 0.002739,
+            "p95_seconds": 0.158831,
+            "max_seconds": 0.158831
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.007393,
+            "p50_seconds": 0.001497,
+            "p95_seconds": 0.028187,
+            "max_seconds": 0.037492
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.014723,
+            "p50_seconds": 0.002882,
+            "p95_seconds": 0.066518,
+            "max_seconds": 0.093792
+          },
+          {
+            "count": 17,
+            "average_seconds": 0.09559,
+            "p50_seconds": 0.002352,
+            "p95_seconds": 0.903295,
+            "max_seconds": 0.903295
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91002,
+      "level": 14,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": true,
+      "candidate_latency": {
+        "count": 41,
+        "average_seconds": 0.03602,
+        "p50_seconds": 0.000763,
+        "p95_seconds": 0.184341,
+        "max_seconds": 0.411389
+      },
+      "baseline_intrinsic_latency": {
+        "count": 42,
+        "average_seconds": 0.007384,
+        "p50_seconds": 0.000206,
+        "p95_seconds": 0.042103,
+        "max_seconds": 0.088338
+      },
+      "decision_reasons": {
+        "heuristic": 41
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91002,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 83,
+        "finished": true,
+        "finish_order": [
+          0,
+          2,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          1,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.869371,
+        "decision_latency": {
+          "count": 83,
+          "average_seconds": 0.022522,
+          "p50_seconds": 0.002262,
+          "p95_seconds": 0.143619,
+          "max_seconds": 0.411389
+        },
+        "seat_decision_latency": [
+          {
+            "count": 20,
+            "average_seconds": 0.023837,
+            "p50_seconds": 0.000967,
+            "p95_seconds": 0.146707,
+            "max_seconds": 0.184341
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.009709,
+            "p50_seconds": 0.003005,
+            "p95_seconds": 0.022444,
+            "max_seconds": 0.069921
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.047622,
+            "p50_seconds": 0.000745,
+            "p95_seconds": 0.365762,
+            "max_seconds": 0.411389
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.008982,
+            "p50_seconds": 0.002316,
+            "p95_seconds": 0.043193,
+            "max_seconds": 0.089262
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91002,
+      "level": 14,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": false,
+      "candidate_latency": {
+        "count": 41,
+        "average_seconds": 0.010705,
+        "p50_seconds": 0.00056,
+        "p95_seconds": 0.06225,
+        "max_seconds": 0.116597
+      },
+      "baseline_intrinsic_latency": {
+        "count": 37,
+        "average_seconds": 0.026026,
+        "p50_seconds": 0.002109,
+        "p95_seconds": 0.181242,
+        "max_seconds": 0.361946
+      },
+      "decision_reasons": {
+        "heuristic": 41
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91002,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 78,
+        "finished": true,
+        "finish_order": [
+          2,
+          1,
+          0
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          1,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.471678,
+        "decision_latency": {
+          "count": 78,
+          "average_seconds": 0.018867,
+          "p50_seconds": 0.002519,
+          "p95_seconds": 0.116597,
+          "max_seconds": 0.363123
+        },
+        "seat_decision_latency": [
+          {
+            "count": 22,
+            "average_seconds": 0.01242,
+            "p50_seconds": 0.00239,
+            "p95_seconds": 0.028534,
+            "max_seconds": 0.182608
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.012798,
+            "p50_seconds": 0.001007,
+            "p95_seconds": 0.046566,
+            "max_seconds": 0.116597
+          },
+          {
+            "count": 15,
+            "average_seconds": 0.050633,
+            "p50_seconds": 0.01891,
+            "p95_seconds": 0.363123,
+            "max_seconds": 0.363123
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.008711,
+            "p50_seconds": 0.00043,
+            "p95_seconds": 0.06225,
+            "max_seconds": 0.084731
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91003,
+      "level": 2,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.9333333333333333,
+      "gain": 0.8666666666666667,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 39,
+        "average_seconds": 0.013811,
+        "p50_seconds": 0.001777,
+        "p95_seconds": 0.09227,
+        "max_seconds": 0.233897
+      },
+      "baseline_intrinsic_latency": {
+        "count": 44,
+        "average_seconds": 0.031462,
+        "p50_seconds": 0.000459,
+        "p95_seconds": 0.244779,
+        "max_seconds": 0.366977
+      },
+      "decision_reasons": {
+        "heuristic": 39
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91003,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 83,
+        "finished": true,
+        "finish_order": [
+          2,
+          3,
+          0
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          4,
+          2
+        ],
+        "team_bomb_count": [
+          3,
+          0
+        ],
+        "drift": false,
+        "duration_seconds": 2.004124,
+        "decision_latency": {
+          "count": 83,
+          "average_seconds": 0.024146,
+          "p50_seconds": 0.002521,
+          "p95_seconds": 0.161421,
+          "max_seconds": 0.369682
+        },
+        "seat_decision_latency": [
+          {
+            "count": 24,
+            "average_seconds": 0.015089,
+            "p50_seconds": 0.001157,
+            "p95_seconds": 0.029924,
+            "max_seconds": 0.233897
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.036784,
+            "p50_seconds": 0.00254,
+            "p95_seconds": 0.355862,
+            "max_seconds": 0.369682
+          },
+          {
+            "count": 15,
+            "average_seconds": 0.011765,
+            "p50_seconds": 0.003312,
+            "p95_seconds": 0.09227,
+            "max_seconds": 0.09227
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.029828,
+            "p50_seconds": 0.002646,
+            "p95_seconds": 0.161421,
+            "max_seconds": 0.246206
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91003,
+      "level": 2,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 45,
+        "average_seconds": 0.034949,
+        "p50_seconds": 0.000731,
+        "p95_seconds": 0.261355,
+        "max_seconds": 0.441376
+      },
+      "baseline_intrinsic_latency": {
+        "count": 37,
+        "average_seconds": 0.011581,
+        "p50_seconds": 0.001535,
+        "p95_seconds": 0.082455,
+        "max_seconds": 0.149454
+      },
+      "decision_reasons": {
+        "heuristic": 45
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91003,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 82,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          5,
+          2
+        ],
+        "team_bomb_count": [
+          3,
+          0
+        ],
+        "drift": false,
+        "duration_seconds": 2.066858,
+        "decision_latency": {
+          "count": 82,
+          "average_seconds": 0.025205,
+          "p50_seconds": 0.002392,
+          "p95_seconds": 0.161693,
+          "max_seconds": 0.441376
+        },
+        "seat_decision_latency": [
+          {
+            "count": 22,
+            "average_seconds": 0.014556,
+            "p50_seconds": 0.002764,
+            "p95_seconds": 0.037365,
+            "max_seconds": 0.150359
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.038831,
+            "p50_seconds": 0.000503,
+            "p95_seconds": 0.303601,
+            "max_seconds": 0.441376
+          },
+          {
+            "count": 15,
+            "average_seconds": 0.011592,
+            "p50_seconds": 0.00376,
+            "p95_seconds": 0.083904,
+            "max_seconds": 0.083904
+          },
+          {
+            "count": 23,
+            "average_seconds": 0.031236,
+            "p50_seconds": 0.000768,
+            "p95_seconds": 0.222145,
+            "max_seconds": 0.261355
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91004,
+      "level": 9,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 38,
+        "average_seconds": 0.024262,
+        "p50_seconds": 0.000954,
+        "p95_seconds": 0.194319,
+        "max_seconds": 0.371262
+      },
+      "baseline_intrinsic_latency": {
+        "count": 40,
+        "average_seconds": 0.016244,
+        "p50_seconds": 0.001113,
+        "p95_seconds": 0.100139,
+        "max_seconds": 0.192331
+      },
+      "decision_reasons": {
+        "heuristic": 38
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91004,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 78,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          12,
+          9
+        ],
+        "team_bomb_count": [
+          2,
+          0
+        ],
+        "drift": false,
+        "duration_seconds": 1.63097,
+        "decision_latency": {
+          "count": 78,
+          "average_seconds": 0.020909,
+          "p50_seconds": 0.00197,
+          "p95_seconds": 0.109162,
+          "max_seconds": 0.371262
+        },
+        "seat_decision_latency": [
+          {
+            "count": 20,
+            "average_seconds": 0.037568,
+            "p50_seconds": 0.000976,
+            "p95_seconds": 0.194319,
+            "max_seconds": 0.371262
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.012252,
+            "p50_seconds": 0.002116,
+            "p95_seconds": 0.109162,
+            "max_seconds": 0.109162
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.009477,
+            "p50_seconds": 0.000586,
+            "p95_seconds": 0.104272,
+            "max_seconds": 0.104272
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.022676,
+            "p50_seconds": 0.002985,
+            "p95_seconds": 0.100708,
+            "max_seconds": 0.193752
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91004,
+      "level": 9,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 40,
+        "average_seconds": 0.023333,
+        "p50_seconds": 0.000911,
+        "p95_seconds": 0.129946,
+        "max_seconds": 0.228268
+      },
+      "baseline_intrinsic_latency": {
+        "count": 38,
+        "average_seconds": 0.016562,
+        "p50_seconds": 0.000601,
+        "p95_seconds": 0.120363,
+        "max_seconds": 0.239625
+      },
+      "decision_reasons": {
+        "heuristic": 40
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91004,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 78,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          12,
+          9
+        ],
+        "team_bomb_count": [
+          2,
+          0
+        ],
+        "drift": false,
+        "duration_seconds": 1.629453,
+        "decision_latency": {
+          "count": 78,
+          "average_seconds": 0.02089,
+          "p50_seconds": 0.002203,
+          "p95_seconds": 0.129946,
+          "max_seconds": 0.240885
+        },
+        "seat_decision_latency": [
+          {
+            "count": 20,
+            "average_seconds": 0.027168,
+            "p50_seconds": 0.002442,
+            "p95_seconds": 0.12261,
+            "max_seconds": 0.240885
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.020533,
+            "p50_seconds": 0.000434,
+            "p95_seconds": 0.228268,
+            "max_seconds": 0.228268
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.008484,
+            "p50_seconds": 0.002676,
+            "p95_seconds": 0.070255,
+            "max_seconds": 0.070255
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.025867,
+            "p50_seconds": 0.003524,
+            "p95_seconds": 0.129946,
+            "max_seconds": 0.196708
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91005,
+      "level": 14,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": false,
+      "a_succeeded": true,
+      "candidate_latency": {
+        "count": 33,
+        "average_seconds": 0.017058,
+        "p50_seconds": 0.001269,
+        "p95_seconds": 0.128146,
+        "max_seconds": 0.19764
+      },
+      "baseline_intrinsic_latency": {
+        "count": 30,
+        "average_seconds": 0.041924,
+        "p50_seconds": 0.004808,
+        "p95_seconds": 0.179435,
+        "max_seconds": 0.32186
+      },
+      "decision_reasons": {
+        "heuristic": 33
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91005,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 63,
+        "finished": true,
+        "finish_order": [
+          3,
+          2,
+          0
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          14,
+          2
+        ],
+        "team_bomb_count": [
+          0,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.873269,
+        "decision_latency": {
+          "count": 63,
+          "average_seconds": 0.029734,
+          "p50_seconds": 0.003896,
+          "p95_seconds": 0.164697,
+          "max_seconds": 0.324305
+        },
+        "seat_decision_latency": [
+          {
+            "count": 19,
+            "average_seconds": 0.017305,
+            "p50_seconds": 0.003896,
+            "p95_seconds": 0.19764,
+            "max_seconds": 0.19764
+          },
+          {
+            "count": 17,
+            "average_seconds": 0.012868,
+            "p50_seconds": 0.002209,
+            "p95_seconds": 0.103367,
+            "max_seconds": 0.103367
+          },
+          {
+            "count": 14,
+            "average_seconds": 0.016723,
+            "p50_seconds": 0.000349,
+            "p95_seconds": 0.128146,
+            "max_seconds": 0.128146
+          },
+          {
+            "count": 13,
+            "average_seconds": 0.083967,
+            "p50_seconds": 0.05267,
+            "p95_seconds": 0.324305,
+            "max_seconds": 0.324305
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91005,
+      "level": 14,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": true,
+      "a_succeeded": false,
+      "candidate_latency": {
+        "count": 33,
+        "average_seconds": 0.041843,
+        "p50_seconds": 0.00441,
+        "p95_seconds": 0.316629,
+        "max_seconds": 0.340727
+      },
+      "baseline_intrinsic_latency": {
+        "count": 39,
+        "average_seconds": 0.011576,
+        "p50_seconds": 0.000327,
+        "p95_seconds": 0.116068,
+        "max_seconds": 0.152279
+      },
+      "decision_reasons": {
+        "heuristic": 33
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91005,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 72,
+        "finished": true,
+        "finish_order": [
+          3,
+          2,
+          0
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          14,
+          2
+        ],
+        "team_bomb_count": [
+          0,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.915182,
+        "decision_latency": {
+          "count": 72,
+          "average_seconds": 0.026599,
+          "p50_seconds": 0.002798,
+          "p95_seconds": 0.154515,
+          "max_seconds": 0.340727
+        },
+        "seat_decision_latency": [
+          {
+            "count": 21,
+            "average_seconds": 0.014124,
+            "p50_seconds": 0.00281,
+            "p95_seconds": 0.041993,
+            "max_seconds": 0.154515
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.01064,
+            "p50_seconds": 0.000394,
+            "p95_seconds": 0.086626,
+            "max_seconds": 0.086626
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.013206,
+            "p50_seconds": 0.00239,
+            "p95_seconds": 0.118582,
+            "max_seconds": 0.118582
+          },
+          {
+            "count": 14,
+            "average_seconds": 0.08419,
+            "p50_seconds": 0.022135,
+            "p95_seconds": 0.340727,
+            "max_seconds": 0.340727
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91006,
+      "level": 2,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 45,
+        "average_seconds": 0.011473,
+        "p50_seconds": 0.000501,
+        "p95_seconds": 0.082109,
+        "max_seconds": 0.200533
+      },
+      "baseline_intrinsic_latency": {
+        "count": 38,
+        "average_seconds": 0.011988,
+        "p50_seconds": 0.000245,
+        "p95_seconds": 0.08796,
+        "max_seconds": 0.192
+      },
+      "decision_reasons": {
+        "heuristic": 45
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91006,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 83,
+        "finished": true,
+        "finish_order": [
+          1,
+          3,
+          0
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          2,
+          5
+        ],
+        "team_bomb_count": [
+          1,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.027395,
+        "decision_latency": {
+          "count": 83,
+          "average_seconds": 0.012378,
+          "p50_seconds": 0.001179,
+          "p95_seconds": 0.082109,
+          "max_seconds": 0.200533
+        },
+        "seat_decision_latency": [
+          {
+            "count": 23,
+            "average_seconds": 0.011546,
+            "p50_seconds": 0.000373,
+            "p95_seconds": 0.032618,
+            "max_seconds": 0.200533
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.021768,
+            "p50_seconds": 0.002107,
+            "p95_seconds": 0.193086,
+            "max_seconds": 0.193086
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.011397,
+            "p50_seconds": 0.000641,
+            "p95_seconds": 0.082109,
+            "max_seconds": 0.116639
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.005962,
+            "p50_seconds": 0.001922,
+            "p95_seconds": 0.026039,
+            "max_seconds": 0.041885
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91006,
+      "level": 2,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.23333333333333334,
+      "gain": -0.5333333333333333,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 38,
+        "average_seconds": 0.016841,
+        "p50_seconds": 0.000533,
+        "p95_seconds": 0.0798,
+        "max_seconds": 0.344885
+      },
+      "baseline_intrinsic_latency": {
+        "count": 38,
+        "average_seconds": 0.011161,
+        "p50_seconds": 0.000524,
+        "p95_seconds": 0.089549,
+        "max_seconds": 0.143525
+      },
+      "decision_reasons": {
+        "heuristic": 38
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91006,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 76,
+        "finished": true,
+        "finish_order": [
+          2,
+          1,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          3,
+          2
+        ],
+        "team_bomb_count": [
+          1,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.128892,
+        "decision_latency": {
+          "count": 76,
+          "average_seconds": 0.014853,
+          "p50_seconds": 0.002072,
+          "p95_seconds": 0.091231,
+          "max_seconds": 0.344885
+        },
+        "seat_decision_latency": [
+          {
+            "count": 20,
+            "average_seconds": 0.01102,
+            "p50_seconds": 0.002154,
+            "p95_seconds": 0.022445,
+            "max_seconds": 0.144572
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.030506,
+            "p50_seconds": 0.000668,
+            "p95_seconds": 0.344885,
+            "max_seconds": 0.344885
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.014917,
+            "p50_seconds": 0.003409,
+            "p95_seconds": 0.09213,
+            "max_seconds": 0.09213
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.004542,
+            "p50_seconds": 0.000415,
+            "p95_seconds": 0.025027,
+            "max_seconds": 0.030502
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91007,
+      "level": 9,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.7666666666666666,
+      "gain": 0.5333333333333332,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 35,
+        "average_seconds": 0.029912,
+        "p50_seconds": 0.001631,
+        "p95_seconds": 0.108252,
+        "max_seconds": 0.522578
+      },
+      "baseline_intrinsic_latency": {
+        "count": 40,
+        "average_seconds": 0.015744,
+        "p50_seconds": 0.000302,
+        "p95_seconds": 0.114599,
+        "max_seconds": 0.219281
+      },
+      "decision_reasons": {
+        "heuristic": 35
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91007,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 75,
+        "finished": true,
+        "finish_order": [
+          2,
+          1,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          10,
+          9
+        ],
+        "team_bomb_count": [
+          2,
+          0
+        ],
+        "drift": false,
+        "duration_seconds": 1.759592,
+        "decision_latency": {
+          "count": 75,
+          "average_seconds": 0.023461,
+          "p50_seconds": 0.002553,
+          "p95_seconds": 0.115772,
+          "max_seconds": 0.522578
+        },
+        "seat_decision_latency": [
+          {
+            "count": 20,
+            "average_seconds": 0.038023,
+            "p50_seconds": 0.001631,
+            "p95_seconds": 0.106585,
+            "max_seconds": 0.522578
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.012473,
+            "p50_seconds": 0.003215,
+            "p95_seconds": 0.115772,
+            "max_seconds": 0.115772
+          },
+          {
+            "count": 15,
+            "average_seconds": 0.019096,
+            "p50_seconds": 0.001327,
+            "p95_seconds": 0.108252,
+            "max_seconds": 0.108252
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.022651,
+            "p50_seconds": 0.002525,
+            "p95_seconds": 0.116074,
+            "max_seconds": 0.221992
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91007,
+      "level": 9,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.23333333333333334,
+      "gain": -0.5333333333333333,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 38,
+        "average_seconds": 0.020164,
+        "p50_seconds": 0.000896,
+        "p95_seconds": 0.185705,
+        "max_seconds": 0.219528
+      },
+      "baseline_intrinsic_latency": {
+        "count": 34,
+        "average_seconds": 0.026089,
+        "p50_seconds": 0.006133,
+        "p95_seconds": 0.112085,
+        "max_seconds": 0.287634
+      },
+      "decision_reasons": {
+        "heuristic": 38
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91007,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 72,
+        "finished": true,
+        "finish_order": [
+          0,
+          1,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          10,
+          9
+        ],
+        "team_bomb_count": [
+          2,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.715919,
+        "decision_latency": {
+          "count": 72,
+          "average_seconds": 0.023832,
+          "p50_seconds": 0.004218,
+          "p95_seconds": 0.114231,
+          "max_seconds": 0.288949
+        },
+        "seat_decision_latency": [
+          {
+            "count": 15,
+            "average_seconds": 0.036876,
+            "p50_seconds": 0.011346,
+            "p95_seconds": 0.288949,
+            "max_seconds": 0.288949
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.012161,
+            "p50_seconds": 0.000896,
+            "p95_seconds": 0.114231,
+            "max_seconds": 0.114231
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.020868,
+            "p50_seconds": 0.00764,
+            "p95_seconds": 0.113018,
+            "max_seconds": 0.113018
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.027368,
+            "p50_seconds": 0.000852,
+            "p95_seconds": 0.185705,
+            "max_seconds": 0.219528
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91008,
+      "level": 14,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": true,
+      "candidate_latency": {
+        "count": 31,
+        "average_seconds": 0.024267,
+        "p50_seconds": 0.001206,
+        "p95_seconds": 0.169639,
+        "max_seconds": 0.177639
+      },
+      "baseline_intrinsic_latency": {
+        "count": 43,
+        "average_seconds": 0.012904,
+        "p50_seconds": 0.000203,
+        "p95_seconds": 0.047575,
+        "max_seconds": 0.256099
+      },
+      "decision_reasons": {
+        "heuristic": 31
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91008,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 74,
+        "finished": true,
+        "finish_order": [
+          0,
+          2,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          2,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.393873,
+        "decision_latency": {
+          "count": 74,
+          "average_seconds": 0.018836,
+          "p50_seconds": 0.002334,
+          "p95_seconds": 0.140129,
+          "max_seconds": 0.257807
+        },
+        "seat_decision_latency": [
+          {
+            "count": 11,
+            "average_seconds": 0.02401,
+            "p50_seconds": 0.003279,
+            "p95_seconds": 0.177639,
+            "max_seconds": 0.177639
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.021834,
+            "p50_seconds": 0.002798,
+            "p95_seconds": 0.140129,
+            "max_seconds": 0.257807
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.024409,
+            "p50_seconds": 0.001179,
+            "p95_seconds": 0.129517,
+            "max_seconds": 0.169639
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.007676,
+            "p50_seconds": 0.002276,
+            "p95_seconds": 0.035025,
+            "max_seconds": 0.048893
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91008,
+      "level": 14,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": false,
+      "candidate_latency": {
+        "count": 43,
+        "average_seconds": 0.01629,
+        "p50_seconds": 0.00034,
+        "p95_seconds": 0.087575,
+        "max_seconds": 0.358999
+      },
+      "baseline_intrinsic_latency": {
+        "count": 32,
+        "average_seconds": 0.015993,
+        "p50_seconds": 0.000576,
+        "p95_seconds": 0.087668,
+        "max_seconds": 0.136778
+      },
+      "decision_reasons": {
+        "heuristic": 43
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91008,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 75,
+        "finished": true,
+        "finish_order": [
+          0,
+          2,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          2,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.270143,
+        "decision_latency": {
+          "count": 75,
+          "average_seconds": 0.016935,
+          "p50_seconds": 0.001653,
+          "p95_seconds": 0.091548,
+          "max_seconds": 0.358999
+        },
+        "seat_decision_latency": [
+          {
+            "count": 11,
+            "average_seconds": 0.020907,
+            "p50_seconds": 0.003441,
+            "p95_seconds": 0.138233,
+            "max_seconds": 0.138233
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.024407,
+            "p50_seconds": 0.000825,
+            "p95_seconds": 0.135584,
+            "max_seconds": 0.358999
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.016175,
+            "p50_seconds": 0.002673,
+            "p95_seconds": 0.077608,
+            "max_seconds": 0.091548
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.007785,
+            "p50_seconds": 0.000274,
+            "p95_seconds": 0.029564,
+            "max_seconds": 0.087575
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91009,
+      "level": 2,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 34,
+        "average_seconds": 0.028783,
+        "p50_seconds": 0.000588,
+        "p95_seconds": 0.180142,
+        "max_seconds": 0.37691
+      },
+      "baseline_intrinsic_latency": {
+        "count": 41,
+        "average_seconds": 0.007216,
+        "p50_seconds": 0.000384,
+        "p95_seconds": 0.036629,
+        "max_seconds": 0.101112
+      },
+      "decision_reasons": {
+        "heuristic": 34
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91009,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 75,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          5,
+          2
+        ],
+        "team_bomb_count": [
+          1,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.35688,
+        "decision_latency": {
+          "count": 75,
+          "average_seconds": 0.018091,
+          "p50_seconds": 0.002457,
+          "p95_seconds": 0.102999,
+          "max_seconds": 0.37691
+        },
+        "seat_decision_latency": [
+          {
+            "count": 18,
+            "average_seconds": 0.013777,
+            "p50_seconds": 0.00048,
+            "p95_seconds": 0.180142,
+            "max_seconds": 0.180142
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.010243,
+            "p50_seconds": 0.002868,
+            "p95_seconds": 0.037872,
+            "max_seconds": 0.102999
+          },
+          {
+            "count": 16,
+            "average_seconds": 0.045666,
+            "p50_seconds": 0.002327,
+            "p95_seconds": 0.37691,
+            "max_seconds": 0.37691
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.008255,
+            "p50_seconds": 0.002556,
+            "p95_seconds": 0.013896,
+            "max_seconds": 0.100947
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91009,
+      "level": 2,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 38,
+        "average_seconds": 0.00928,
+        "p50_seconds": 0.000618,
+        "p95_seconds": 0.085244,
+        "max_seconds": 0.145165
+      },
+      "baseline_intrinsic_latency": {
+        "count": 34,
+        "average_seconds": 0.022533,
+        "p50_seconds": 0.000344,
+        "p95_seconds": 0.131357,
+        "max_seconds": 0.254774
+      },
+      "decision_reasons": {
+        "heuristic": 38
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91009,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 72,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          5,
+          2
+        ],
+        "team_bomb_count": [
+          1,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.181723,
+        "decision_latency": {
+          "count": 72,
+          "average_seconds": 0.016412,
+          "p50_seconds": 0.002055,
+          "p95_seconds": 0.106771,
+          "max_seconds": 0.256996
+        },
+        "seat_decision_latency": [
+          {
+            "count": 18,
+            "average_seconds": 0.012488,
+            "p50_seconds": 0.002421,
+            "p95_seconds": 0.132918,
+            "max_seconds": 0.132918
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.011872,
+            "p50_seconds": 0.000618,
+            "p95_seconds": 0.145165,
+            "max_seconds": 0.145165
+          },
+          {
+            "count": 16,
+            "average_seconds": 0.037767,
+            "p50_seconds": 0.003224,
+            "p95_seconds": 0.256996,
+            "max_seconds": 0.256996
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.006947,
+            "p50_seconds": 0.000578,
+            "p95_seconds": 0.01993,
+            "max_seconds": 0.085244
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91010,
+      "level": 9,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 37,
+        "average_seconds": 0.016046,
+        "p50_seconds": 0.000588,
+        "p95_seconds": 0.16456,
+        "max_seconds": 0.193174
+      },
+      "baseline_intrinsic_latency": {
+        "count": 30,
+        "average_seconds": 0.032922,
+        "p50_seconds": 0.00804,
+        "p95_seconds": 0.126668,
+        "max_seconds": 0.25061
+      },
+      "decision_reasons": {
+        "heuristic": 37
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91010,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 67,
+        "finished": true,
+        "finish_order": [
+          3,
+          1,
+          0
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          9,
+          12
+        ],
+        "team_bomb_count": [
+          0,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.63068,
+        "decision_latency": {
+          "count": 67,
+          "average_seconds": 0.024338,
+          "p50_seconds": 0.002145,
+          "p95_seconds": 0.128104,
+          "max_seconds": 0.251397
+        },
+        "seat_decision_latency": [
+          {
+            "count": 19,
+            "average_seconds": 0.014846,
+            "p50_seconds": 0.000314,
+            "p95_seconds": 0.193174,
+            "max_seconds": 0.193174
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.022099,
+            "p50_seconds": 0.005133,
+            "p95_seconds": 0.128104,
+            "max_seconds": 0.128104
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.017312,
+            "p50_seconds": 0.000686,
+            "p95_seconds": 0.16456,
+            "max_seconds": 0.16456
+          },
+          {
+            "count": 12,
+            "average_seconds": 0.053265,
+            "p50_seconds": 0.022652,
+            "p95_seconds": 0.251397,
+            "max_seconds": 0.251397
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91010,
+      "level": 9,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.7666666666666666,
+      "gain": 0.5333333333333332,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 35,
+        "average_seconds": 0.031445,
+        "p50_seconds": 0.001206,
+        "p95_seconds": 0.219911,
+        "max_seconds": 0.244918
+      },
+      "baseline_intrinsic_latency": {
+        "count": 36,
+        "average_seconds": 0.013058,
+        "p50_seconds": 0.000321,
+        "p95_seconds": 0.143594,
+        "max_seconds": 0.144619
+      },
+      "decision_reasons": {
+        "heuristic": 35
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91010,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 71,
+        "finished": true,
+        "finish_order": [
+          1,
+          0,
+          2
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          9,
+          10
+        ],
+        "team_bomb_count": [
+          0,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.633526,
+        "decision_latency": {
+          "count": 71,
+          "average_seconds": 0.023007,
+          "p50_seconds": 0.00162,
+          "p95_seconds": 0.155334,
+          "max_seconds": 0.244918
+        },
+        "seat_decision_latency": [
+          {
+            "count": 15,
+            "average_seconds": 0.015539,
+            "p50_seconds": 0.001379,
+            "p95_seconds": 0.145172,
+            "max_seconds": 0.145172
+          },
+          {
+            "count": 14,
+            "average_seconds": 0.028,
+            "p50_seconds": 0.001533,
+            "p95_seconds": 0.199644,
+            "max_seconds": 0.199644
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.014278,
+            "p50_seconds": 0.002824,
+            "p95_seconds": 0.071704,
+            "max_seconds": 0.155334
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.033741,
+            "p50_seconds": 0.000617,
+            "p95_seconds": 0.219911,
+            "max_seconds": 0.244918
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91011,
+      "level": 14,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": true,
+      "a_succeeded": false,
+      "candidate_latency": {
+        "count": 41,
+        "average_seconds": 0.028656,
+        "p50_seconds": 0.001256,
+        "p95_seconds": 0.131396,
+        "max_seconds": 0.628326
+      },
+      "baseline_intrinsic_latency": {
+        "count": 42,
+        "average_seconds": 0.012502,
+        "p50_seconds": 0.000788,
+        "p95_seconds": 0.083998,
+        "max_seconds": 0.16814
+      },
+      "decision_reasons": {
+        "heuristic": 41
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91011,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 83,
+        "finished": true,
+        "finish_order": [
+          2,
+          1,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          0,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.783182,
+        "decision_latency": {
+          "count": 83,
+          "average_seconds": 0.021484,
+          "p50_seconds": 0.002738,
+          "p95_seconds": 0.117187,
+          "max_seconds": 0.628326
+        },
+        "seat_decision_latency": [
+          {
+            "count": 21,
+            "average_seconds": 0.044012,
+            "p50_seconds": 0.000796,
+            "p95_seconds": 0.162241,
+            "max_seconds": 0.628326
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.012708,
+            "p50_seconds": 0.002738,
+            "p95_seconds": 0.046919,
+            "max_seconds": 0.117187
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.012531,
+            "p50_seconds": 0.002888,
+            "p95_seconds": 0.029451,
+            "max_seconds": 0.131396
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.016095,
+            "p50_seconds": 0.002591,
+            "p95_seconds": 0.085735,
+            "max_seconds": 0.17057
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91011,
+      "level": 14,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": true,
+      "candidate_latency": {
+        "count": 39,
+        "average_seconds": 0.02338,
+        "p50_seconds": 0.000775,
+        "p95_seconds": 0.211743,
+        "max_seconds": 0.291939
+      },
+      "baseline_intrinsic_latency": {
+        "count": 43,
+        "average_seconds": 0.016003,
+        "p50_seconds": 0.000624,
+        "p95_seconds": 0.099463,
+        "max_seconds": 0.316446
+      },
+      "decision_reasons": {
+        "heuristic": 39
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91011,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 82,
+        "finished": true,
+        "finish_order": [
+          3,
+          1,
+          0
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          14,
+          2
+        ],
+        "team_bomb_count": [
+          2,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.677913,
+        "decision_latency": {
+          "count": 82,
+          "average_seconds": 0.020462,
+          "p50_seconds": 0.002343,
+          "p95_seconds": 0.103452,
+          "max_seconds": 0.317104
+        },
+        "seat_decision_latency": [
+          {
+            "count": 22,
+            "average_seconds": 0.024543,
+            "p50_seconds": 0.002517,
+            "p95_seconds": 0.103452,
+            "max_seconds": 0.317104
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.015038,
+            "p50_seconds": 0.0007,
+            "p95_seconds": 0.05116,
+            "max_seconds": 0.129084
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.010768,
+            "p50_seconds": 0.002463,
+            "p95_seconds": 0.030188,
+            "max_seconds": 0.100739
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.032161,
+            "p50_seconds": 0.000775,
+            "p95_seconds": 0.291939,
+            "max_seconds": 0.291939
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91012,
+      "level": 2,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.06666666666666665,
+      "gain": -0.8666666666666667,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 37,
+        "average_seconds": 0.025936,
+        "p50_seconds": 0.000647,
+        "p95_seconds": 0.195407,
+        "max_seconds": 0.447754
+      },
+      "baseline_intrinsic_latency": {
+        "count": 37,
+        "average_seconds": 0.010355,
+        "p50_seconds": 0.000204,
+        "p95_seconds": 0.086181,
+        "max_seconds": 0.090763
+      },
+      "decision_reasons": {
+        "heuristic": 37
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91012,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 74,
+        "finished": true,
+        "finish_order": [
+          3,
+          2,
+          1
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          2,
+          4
+        ],
+        "team_bomb_count": [
+          2,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.401343,
+        "decision_latency": {
+          "count": 74,
+          "average_seconds": 0.018937,
+          "p50_seconds": 0.001834,
+          "p95_seconds": 0.091776,
+          "max_seconds": 0.447754
+        },
+        "seat_decision_latency": [
+          {
+            "count": 19,
+            "average_seconds": 0.012941,
+            "p50_seconds": 0.00039,
+            "p95_seconds": 0.195407,
+            "max_seconds": 0.195407
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.012528,
+            "p50_seconds": 0.00225,
+            "p95_seconds": 0.091776,
+            "max_seconds": 0.091776
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.039653,
+            "p50_seconds": 0.000709,
+            "p95_seconds": 0.447754,
+            "max_seconds": 0.447754
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.011313,
+            "p50_seconds": 0.002125,
+            "p95_seconds": 0.073529,
+            "max_seconds": 0.073529
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91012,
+      "level": 2,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 41,
+        "average_seconds": 0.009103,
+        "p50_seconds": 0.000304,
+        "p95_seconds": 0.057217,
+        "max_seconds": 0.104146
+      },
+      "baseline_intrinsic_latency": {
+        "count": 33,
+        "average_seconds": 0.017316,
+        "p50_seconds": 0.001851,
+        "p95_seconds": 0.146764,
+        "max_seconds": 0.149825
+      },
+      "decision_reasons": {
+        "heuristic": 41
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91012,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 74,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          5,
+          2
+        ],
+        "team_bomb_count": [
+          2,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 0.997138,
+        "decision_latency": {
+          "count": 74,
+          "average_seconds": 0.013474,
+          "p50_seconds": 0.001543,
+          "p95_seconds": 0.104146,
+          "max_seconds": 0.150897
+        },
+        "seat_decision_latency": [
+          {
+            "count": 20,
+            "average_seconds": 0.011257,
+            "p50_seconds": 0.00225,
+            "p95_seconds": 0.025245,
+            "max_seconds": 0.150897
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.01007,
+            "p50_seconds": 0.000281,
+            "p95_seconds": 0.057217,
+            "max_seconds": 0.104146
+          },
+          {
+            "count": 13,
+            "average_seconds": 0.030674,
+            "p50_seconds": 0.014071,
+            "p95_seconds": 0.148404,
+            "max_seconds": 0.148404
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.008181,
+            "p50_seconds": 0.000374,
+            "p95_seconds": 0.039354,
+            "max_seconds": 0.084177
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91013,
+      "level": 9,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.23333333333333334,
+      "gain": -0.5333333333333333,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 32,
+        "average_seconds": 0.017695,
+        "p50_seconds": 0.000566,
+        "p95_seconds": 0.155593,
+        "max_seconds": 0.220547
+      },
+      "baseline_intrinsic_latency": {
+        "count": 30,
+        "average_seconds": 0.017344,
+        "p50_seconds": 0.000611,
+        "p95_seconds": 0.052666,
+        "max_seconds": 0.242765
+      },
+      "decision_reasons": {
+        "heuristic": 32
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91013,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 62,
+        "finished": true,
+        "finish_order": [
+          3,
+          0,
+          2
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          9,
+          10
+        ],
+        "team_bomb_count": [
+          1,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.143217,
+        "decision_latency": {
+          "count": 62,
+          "average_seconds": 0.018438,
+          "p50_seconds": 0.002222,
+          "p95_seconds": 0.102736,
+          "max_seconds": 0.245047
+        },
+        "seat_decision_latency": [
+          {
+            "count": 15,
+            "average_seconds": 0.019289,
+            "p50_seconds": 0.000506,
+            "p95_seconds": 0.220547,
+            "max_seconds": 0.220547
+          },
+          {
+            "count": 16,
+            "average_seconds": 0.00892,
+            "p50_seconds": 0.00226,
+            "p95_seconds": 0.052085,
+            "max_seconds": 0.052085
+          },
+          {
+            "count": 17,
+            "average_seconds": 0.016289,
+            "p50_seconds": 0.000625,
+            "p95_seconds": 0.155593,
+            "max_seconds": 0.155593
+          },
+          {
+            "count": 14,
+            "average_seconds": 0.031016,
+            "p50_seconds": 0.004024,
+            "p95_seconds": 0.245047,
+            "max_seconds": 0.245047
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91013,
+      "level": 9,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.06666666666666665,
+      "gain": -0.8666666666666667,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 31,
+        "average_seconds": 0.015232,
+        "p50_seconds": 0.000947,
+        "p95_seconds": 0.07238,
+        "max_seconds": 0.174097
+      },
+      "baseline_intrinsic_latency": {
+        "count": 32,
+        "average_seconds": 0.01273,
+        "p50_seconds": 0.00022,
+        "p95_seconds": 0.134327,
+        "max_seconds": 0.155234
+      },
+      "decision_reasons": {
+        "heuristic": 31
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91013,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 63,
+        "finished": true,
+        "finish_order": [
+          0,
+          3,
+          2
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          11,
+          9
+        ],
+        "team_bomb_count": [
+          1,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 0.927766,
+        "decision_latency": {
+          "count": 63,
+          "average_seconds": 0.014726,
+          "p50_seconds": 0.001923,
+          "p95_seconds": 0.077391,
+          "max_seconds": 0.174097
+        },
+        "seat_decision_latency": [
+          {
+            "count": 15,
+            "average_seconds": 0.012484,
+            "p50_seconds": 0.002127,
+            "p95_seconds": 0.136094,
+            "max_seconds": 0.136094
+          },
+          {
+            "count": 16,
+            "average_seconds": 0.009544,
+            "p50_seconds": 0.000298,
+            "p95_seconds": 0.07238,
+            "max_seconds": 0.07238
+          },
+          {
+            "count": 17,
+            "average_seconds": 0.015782,
+            "p50_seconds": 0.002289,
+            "p95_seconds": 0.157074,
+            "max_seconds": 0.157074
+          },
+          {
+            "count": 15,
+            "average_seconds": 0.021299,
+            "p50_seconds": 0.001847,
+            "p95_seconds": 0.174097,
+            "max_seconds": 0.174097
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91014,
+      "level": 14,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": true,
+      "candidate_latency": {
+        "count": 43,
+        "average_seconds": 0.017813,
+        "p50_seconds": 0.000992,
+        "p95_seconds": 0.127032,
+        "max_seconds": 0.229353
+      },
+      "baseline_intrinsic_latency": {
+        "count": 47,
+        "average_seconds": 0.020968,
+        "p50_seconds": 0.000249,
+        "p95_seconds": 0.143369,
+        "max_seconds": 0.340429
+      },
+      "decision_reasons": {
+        "heuristic": 43
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91014,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 90,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          1,
+          0
+        ],
+        "drift": false,
+        "duration_seconds": 1.832887,
+        "decision_latency": {
+          "count": 90,
+          "average_seconds": 0.020365,
+          "p50_seconds": 0.002094,
+          "p95_seconds": 0.144927,
+          "max_seconds": 0.341679
+        },
+        "seat_decision_latency": [
+          {
+            "count": 22,
+            "average_seconds": 0.01424,
+            "p50_seconds": 0.000643,
+            "p95_seconds": 0.041655,
+            "max_seconds": 0.229353
+          },
+          {
+            "count": 23,
+            "average_seconds": 0.036296,
+            "p50_seconds": 0.002585,
+            "p95_seconds": 0.281245,
+            "max_seconds": 0.341679
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.021556,
+            "p50_seconds": 0.001103,
+            "p95_seconds": 0.127032,
+            "max_seconds": 0.210699
+          },
+          {
+            "count": 24,
+            "average_seconds": 0.00967,
+            "p50_seconds": 0.002278,
+            "p95_seconds": 0.045683,
+            "max_seconds": 0.119222
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91014,
+      "level": 14,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": false,
+      "candidate_latency": {
+        "count": 48,
+        "average_seconds": 0.024186,
+        "p50_seconds": 0.000447,
+        "p95_seconds": 0.211206,
+        "max_seconds": 0.497651
+      },
+      "baseline_intrinsic_latency": {
+        "count": 42,
+        "average_seconds": 0.014392,
+        "p50_seconds": 0.00061,
+        "p95_seconds": 0.075048,
+        "max_seconds": 0.204058
+      },
+      "decision_reasons": {
+        "heuristic": 48
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91014,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 90,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          1,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.828397,
+        "decision_latency": {
+          "count": 90,
+          "average_seconds": 0.020315,
+          "p50_seconds": 0.001782,
+          "p95_seconds": 0.142716,
+          "max_seconds": 0.497651
+        },
+        "seat_decision_latency": [
+          {
+            "count": 23,
+            "average_seconds": 0.009973,
+            "p50_seconds": 0.002635,
+            "p95_seconds": 0.021205,
+            "max_seconds": 0.142716
+          },
+          {
+            "count": 23,
+            "average_seconds": 0.041595,
+            "p50_seconds": 0.000447,
+            "p95_seconds": 0.229104,
+            "max_seconds": 0.497651
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.023055,
+            "p50_seconds": 0.002376,
+            "p95_seconds": 0.205615,
+            "max_seconds": 0.205615
+          },
+          {
+            "count": 25,
+            "average_seconds": 0.00817,
+            "p50_seconds": 0.000507,
+            "p95_seconds": 0.068072,
+            "max_seconds": 0.105236
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91015,
+      "level": 2,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.9333333333333333,
+      "gain": 0.8666666666666667,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 38,
+        "average_seconds": 0.028454,
+        "p50_seconds": 0.00253,
+        "p95_seconds": 0.205338,
+        "max_seconds": 0.482794
+      },
+      "baseline_intrinsic_latency": {
+        "count": 40,
+        "average_seconds": 0.009747,
+        "p50_seconds": 0.000512,
+        "p95_seconds": 0.068795,
+        "max_seconds": 0.094944
+      },
+      "decision_reasons": {
+        "heuristic": 38
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91015,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 78,
+        "finished": true,
+        "finish_order": [
+          0,
+          1,
+          2
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          4,
+          2
+        ],
+        "team_bomb_count": [
+          2,
+          3
+        ],
+        "drift": false,
+        "duration_seconds": 1.550889,
+        "decision_latency": {
+          "count": 78,
+          "average_seconds": 0.019883,
+          "p50_seconds": 0.002705,
+          "p95_seconds": 0.085581,
+          "max_seconds": 0.482794
+        },
+        "seat_decision_latency": [
+          {
+            "count": 17,
+            "average_seconds": 0.046409,
+            "p50_seconds": 0.013354,
+            "p95_seconds": 0.482794,
+            "max_seconds": 0.482794
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.00941,
+            "p50_seconds": 0.002567,
+            "p95_seconds": 0.071542,
+            "max_seconds": 0.071542
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.013919,
+            "p50_seconds": 0.000564,
+            "p95_seconds": 0.028143,
+            "max_seconds": 0.205338
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.013849,
+            "p50_seconds": 0.002756,
+            "p95_seconds": 0.085581,
+            "max_seconds": 0.096059
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91015,
+      "level": 2,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 43,
+        "average_seconds": 0.01434,
+        "p50_seconds": 0.000552,
+        "p95_seconds": 0.070842,
+        "max_seconds": 0.258226
+      },
+      "baseline_intrinsic_latency": {
+        "count": 41,
+        "average_seconds": 0.019273,
+        "p50_seconds": 0.00069,
+        "p95_seconds": 0.068601,
+        "max_seconds": 0.297833
+      },
+      "decision_reasons": {
+        "heuristic": 43
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91015,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 84,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          5,
+          2
+        ],
+        "team_bomb_count": [
+          2,
+          3
+        ],
+        "drift": false,
+        "duration_seconds": 1.464887,
+        "decision_latency": {
+          "count": 84,
+          "average_seconds": 0.017439,
+          "p50_seconds": 0.001778,
+          "p95_seconds": 0.070842,
+          "max_seconds": 0.298712
+        },
+        "seat_decision_latency": [
+          {
+            "count": 21,
+            "average_seconds": 0.02638,
+            "p50_seconds": 0.002568,
+            "p95_seconds": 0.070046,
+            "max_seconds": 0.298712
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.0091,
+            "p50_seconds": 0.00134,
+            "p95_seconds": 0.069791,
+            "max_seconds": 0.070842
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.014714,
+            "p50_seconds": 0.001834,
+            "p95_seconds": 0.032446,
+            "max_seconds": 0.188734
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.019341,
+            "p50_seconds": 0.000411,
+            "p95_seconds": 0.091156,
+            "max_seconds": 0.258226
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91016,
+      "level": 9,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.23333333333333334,
+      "gain": -0.5333333333333333,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 34,
+        "average_seconds": 0.012988,
+        "p50_seconds": 0.000888,
+        "p95_seconds": 0.10219,
+        "max_seconds": 0.206931
+      },
+      "baseline_intrinsic_latency": {
+        "count": 28,
+        "average_seconds": 0.044774,
+        "p50_seconds": 0.001247,
+        "p95_seconds": 0.225183,
+        "max_seconds": 0.232351
+      },
+      "decision_reasons": {
+        "heuristic": 34
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91016,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 62,
+        "finished": true,
+        "finish_order": [
+          1,
+          0,
+          2
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          9,
+          10
+        ],
+        "team_bomb_count": [
+          1,
+          0
+        ],
+        "drift": false,
+        "duration_seconds": 1.744649,
+        "decision_latency": {
+          "count": 62,
+          "average_seconds": 0.028139,
+          "p50_seconds": 0.002536,
+          "p95_seconds": 0.206931,
+          "max_seconds": 0.23425
+        },
+        "seat_decision_latency": [
+          {
+            "count": 14,
+            "average_seconds": 0.020093,
+            "p50_seconds": 0.000888,
+            "p95_seconds": 0.206931,
+            "max_seconds": 0.206931
+          },
+          {
+            "count": 8,
+            "average_seconds": 0.084591,
+            "p50_seconds": 0.005846,
+            "p95_seconds": 0.23425,
+            "max_seconds": 0.23425
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.008014,
+            "p50_seconds": 0.000725,
+            "p95_seconds": 0.015625,
+            "max_seconds": 0.10219
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.031315,
+            "p50_seconds": 0.003238,
+            "p95_seconds": 0.131468,
+            "max_seconds": 0.210233
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91016,
+      "level": 9,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.7666666666666666,
+      "gain": 0.5333333333333332,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 33,
+        "average_seconds": 0.044445,
+        "p50_seconds": 0.001134,
+        "p95_seconds": 0.277108,
+        "max_seconds": 0.291265
+      },
+      "baseline_intrinsic_latency": {
+        "count": 38,
+        "average_seconds": 0.008769,
+        "p50_seconds": 0.000174,
+        "p95_seconds": 0.074887,
+        "max_seconds": 0.15405
+      },
+      "decision_reasons": {
+        "heuristic": 33
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91016,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 71,
+        "finished": true,
+        "finish_order": [
+          1,
+          0,
+          2
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          9,
+          10
+        ],
+        "team_bomb_count": [
+          1,
+          0
+        ],
+        "drift": false,
+        "duration_seconds": 1.878107,
+        "decision_latency": {
+          "count": 71,
+          "average_seconds": 0.026452,
+          "p50_seconds": 0.002168,
+          "p95_seconds": 0.217464,
+          "max_seconds": 0.291265
+        },
+        "seat_decision_latency": [
+          {
+            "count": 18,
+            "average_seconds": 0.01396,
+            "p50_seconds": 0.002241,
+            "p95_seconds": 0.155575,
+            "max_seconds": 0.155575
+          },
+          {
+            "count": 13,
+            "average_seconds": 0.052039,
+            "p50_seconds": 0.000547,
+            "p95_seconds": 0.277108,
+            "max_seconds": 0.277108
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.008006,
+            "p50_seconds": 0.002655,
+            "p95_seconds": 0.026528,
+            "max_seconds": 0.07615
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.039509,
+            "p50_seconds": 0.001134,
+            "p95_seconds": 0.217464,
+            "max_seconds": 0.291265
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91017,
+      "level": 14,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": true,
+      "candidate_latency": {
+        "count": 26,
+        "average_seconds": 0.033733,
+        "p50_seconds": 0.004834,
+        "p95_seconds": 0.162925,
+        "max_seconds": 0.344454
+      },
+      "baseline_intrinsic_latency": {
+        "count": 39,
+        "average_seconds": 0.008788,
+        "p50_seconds": 0.000563,
+        "p95_seconds": 0.071795,
+        "max_seconds": 0.077385
+      },
+      "decision_reasons": {
+        "heuristic": 26
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91017,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 65,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          2,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.28953,
+        "decision_latency": {
+          "count": 65,
+          "average_seconds": 0.019838,
+          "p50_seconds": 0.002981,
+          "p95_seconds": 0.07922,
+          "max_seconds": 0.344454
+        },
+        "seat_decision_latency": [
+          {
+            "count": 18,
+            "average_seconds": 0.0204,
+            "p50_seconds": 0.003407,
+            "p95_seconds": 0.162925,
+            "max_seconds": 0.162925
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.007969,
+            "p50_seconds": 0.002606,
+            "p95_seconds": 0.0743,
+            "max_seconds": 0.0743
+          },
+          {
+            "count": 8,
+            "average_seconds": 0.063734,
+            "p50_seconds": 0.016862,
+            "p95_seconds": 0.344454,
+            "max_seconds": 0.344454
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.013051,
+            "p50_seconds": 0.002563,
+            "p95_seconds": 0.072215,
+            "max_seconds": 0.07922
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91017,
+      "level": 14,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": false,
+      "a_succeeded": true,
+      "candidate_latency": {
+        "count": 42,
+        "average_seconds": 0.010379,
+        "p50_seconds": 0.000705,
+        "p95_seconds": 0.072795,
+        "max_seconds": 0.097427
+      },
+      "baseline_intrinsic_latency": {
+        "count": 32,
+        "average_seconds": 0.029591,
+        "p50_seconds": 0.000504,
+        "p95_seconds": 0.181237,
+        "max_seconds": 0.315799
+      },
+      "decision_reasons": {
+        "heuristic": 42
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91017,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 74,
+        "finished": true,
+        "finish_order": [
+          2,
+          3,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          1,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.432407,
+        "decision_latency": {
+          "count": 74,
+          "average_seconds": 0.019356,
+          "p50_seconds": 0.00202,
+          "p95_seconds": 0.097427,
+          "max_seconds": 0.316942
+        },
+        "seat_decision_latency": [
+          {
+            "count": 24,
+            "average_seconds": 0.013304,
+            "p50_seconds": 0.002251,
+            "p95_seconds": 0.047712,
+            "max_seconds": 0.182504
+          },
+          {
+            "count": 23,
+            "average_seconds": 0.007272,
+            "p50_seconds": 0.000637,
+            "p95_seconds": 0.01943,
+            "max_seconds": 0.097427
+          },
+          {
+            "count": 8,
+            "average_seconds": 0.084647,
+            "p50_seconds": 0.039773,
+            "p95_seconds": 0.316942,
+            "max_seconds": 0.316942
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.014139,
+            "p50_seconds": 0.001266,
+            "p95_seconds": 0.093408,
+            "max_seconds": 0.093408
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91018,
+      "level": 2,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.06666666666666665,
+      "gain": -0.8666666666666667,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 39,
+        "average_seconds": 0.012048,
+        "p50_seconds": 0.000476,
+        "p95_seconds": 0.066083,
+        "max_seconds": 0.167121
+      },
+      "baseline_intrinsic_latency": {
+        "count": 32,
+        "average_seconds": 0.019184,
+        "p50_seconds": 0.000738,
+        "p95_seconds": 0.179433,
+        "max_seconds": 0.24057
+      },
+      "decision_reasons": {
+        "heuristic": 39
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91018,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 71,
+        "finished": true,
+        "finish_order": [
+          1,
+          0,
+          3
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          2,
+          4
+        ],
+        "team_bomb_count": [
+          1,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.146098,
+        "decision_latency": {
+          "count": 71,
+          "average_seconds": 0.016142,
+          "p50_seconds": 0.002217,
+          "p95_seconds": 0.066083,
+          "max_seconds": 0.242367
+        },
+        "seat_decision_latency": [
+          {
+            "count": 17,
+            "average_seconds": 0.017468,
+            "p50_seconds": 0.001667,
+            "p95_seconds": 0.167121,
+            "max_seconds": 0.167121
+          },
+          {
+            "count": 10,
+            "average_seconds": 0.051833,
+            "p50_seconds": 0.006217,
+            "p95_seconds": 0.242367,
+            "max_seconds": 0.242367
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.00786,
+            "p50_seconds": 0.00031,
+            "p95_seconds": 0.040496,
+            "max_seconds": 0.066083
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.007175,
+            "p50_seconds": 0.002317,
+            "p95_seconds": 0.036075,
+            "max_seconds": 0.039858
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91018,
+      "level": 2,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.9333333333333333,
+      "gain": 0.8666666666666667,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 32,
+        "average_seconds": 0.028984,
+        "p50_seconds": 0.000987,
+        "p95_seconds": 0.183395,
+        "max_seconds": 0.473617
+      },
+      "baseline_intrinsic_latency": {
+        "count": 39,
+        "average_seconds": 0.010249,
+        "p50_seconds": 0.000199,
+        "p95_seconds": 0.066215,
+        "max_seconds": 0.132024
+      },
+      "decision_reasons": {
+        "heuristic": 32
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91018,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 71,
+        "finished": true,
+        "finish_order": [
+          1,
+          0,
+          3
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          2,
+          4
+        ],
+        "team_bomb_count": [
+          1,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.401388,
+        "decision_latency": {
+          "count": 71,
+          "average_seconds": 0.019737,
+          "p50_seconds": 0.002086,
+          "p95_seconds": 0.067763,
+          "max_seconds": 0.473617
+        },
+        "seat_decision_latency": [
+          {
+            "count": 17,
+            "average_seconds": 0.017009,
+            "p50_seconds": 0.002943,
+            "p95_seconds": 0.134823,
+            "max_seconds": 0.134823
+          },
+          {
+            "count": 10,
+            "average_seconds": 0.076365,
+            "p50_seconds": 0.007085,
+            "p95_seconds": 0.473617,
+            "max_seconds": 0.473617
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.008396,
+            "p50_seconds": 0.002086,
+            "p95_seconds": 0.031559,
+            "max_seconds": 0.067763
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.007447,
+            "p50_seconds": 0.000434,
+            "p95_seconds": 0.040553,
+            "max_seconds": 0.056325
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91019,
+      "level": 9,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 32,
+        "average_seconds": 0.041503,
+        "p50_seconds": 0.005167,
+        "p95_seconds": 0.179503,
+        "max_seconds": 0.674409
+      },
+      "baseline_intrinsic_latency": {
+        "count": 41,
+        "average_seconds": 0.023209,
+        "p50_seconds": 0.003249,
+        "p95_seconds": 0.12142,
+        "max_seconds": 0.278645
+      },
+      "decision_reasons": {
+        "heuristic": 32
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91019,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 73,
+        "finished": true,
+        "finish_order": [
+          0,
+          2,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          12,
+          9
+        ],
+        "team_bomb_count": [
+          0,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 2.357108,
+        "decision_latency": {
+          "count": 73,
+          "average_seconds": 0.032289,
+          "p50_seconds": 0.005167,
+          "p95_seconds": 0.172352,
+          "max_seconds": 0.674409
+        },
+        "seat_decision_latency": [
+          {
+            "count": 13,
+            "average_seconds": 0.08769,
+            "p50_seconds": 0.018991,
+            "p95_seconds": 0.674409,
+            "max_seconds": 0.674409
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.035951,
+            "p50_seconds": 0.00515,
+            "p95_seconds": 0.172352,
+            "max_seconds": 0.27972
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.0099,
+            "p50_seconds": 0.002024,
+            "p95_seconds": 0.082985,
+            "max_seconds": 0.082985
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.013701,
+            "p50_seconds": 0.002808,
+            "p95_seconds": 0.029445,
+            "max_seconds": 0.114133
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91019,
+      "level": 9,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 54,
+        "average_seconds": 0.021089,
+        "p50_seconds": 0.000687,
+        "p95_seconds": 0.117783,
+        "max_seconds": 0.350488
+      },
+      "baseline_intrinsic_latency": {
+        "count": 44,
+        "average_seconds": 0.016481,
+        "p50_seconds": 0.000496,
+        "p95_seconds": 0.07053,
+        "max_seconds": 0.279416
+      },
+      "decision_reasons": {
+        "heuristic": 54
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91019,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 98,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          12,
+          9
+        ],
+        "team_bomb_count": [
+          0,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.915074,
+        "decision_latency": {
+          "count": 98,
+          "average_seconds": 0.019541,
+          "p50_seconds": 0.001399,
+          "p95_seconds": 0.117783,
+          "max_seconds": 0.350488
+        },
+        "seat_decision_latency": [
+          {
+            "count": 23,
+            "average_seconds": 0.027618,
+            "p50_seconds": 0.001214,
+            "p95_seconds": 0.119099,
+            "max_seconds": 0.281147
+          },
+          {
+            "count": 26,
+            "average_seconds": 0.034617,
+            "p50_seconds": 0.000687,
+            "p95_seconds": 0.279249,
+            "max_seconds": 0.350488
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.006716,
+            "p50_seconds": 0.002699,
+            "p95_seconds": 0.020808,
+            "max_seconds": 0.066193
+          },
+          {
+            "count": 28,
+            "average_seconds": 0.008527,
+            "p50_seconds": 0.000606,
+            "p95_seconds": 0.053555,
+            "max_seconds": 0.096103
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91020,
+      "level": 14,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": true,
+      "candidate_latency": {
+        "count": 37,
+        "average_seconds": 0.031917,
+        "p50_seconds": 0.004239,
+        "p95_seconds": 0.070029,
+        "max_seconds": 0.648121
+      },
+      "baseline_intrinsic_latency": {
+        "count": 43,
+        "average_seconds": 0.008761,
+        "p50_seconds": 0.000247,
+        "p95_seconds": 0.061534,
+        "max_seconds": 0.155307
+      },
+      "decision_reasons": {
+        "heuristic": 37
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91020,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 80,
+        "finished": true,
+        "finish_order": [
+          0,
+          2,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          1,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.640799,
+        "decision_latency": {
+          "count": 80,
+          "average_seconds": 0.02051,
+          "p50_seconds": 0.002688,
+          "p95_seconds": 0.062776,
+          "max_seconds": 0.648121
+        },
+        "seat_decision_latency": [
+          {
+            "count": 16,
+            "average_seconds": 0.060574,
+            "p50_seconds": 0.011795,
+            "p95_seconds": 0.648121,
+            "max_seconds": 0.648121
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.007606,
+            "p50_seconds": 0.00269,
+            "p95_seconds": 0.027881,
+            "max_seconds": 0.062558
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.010083,
+            "p50_seconds": 0.002328,
+            "p95_seconds": 0.056229,
+            "max_seconds": 0.061652
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.013929,
+            "p50_seconds": 0.002578,
+            "p95_seconds": 0.062776,
+            "max_seconds": 0.15652
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91020,
+      "level": 14,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": false,
+      "candidate_latency": {
+        "count": 41,
+        "average_seconds": 0.011819,
+        "p50_seconds": 0.00041,
+        "p95_seconds": 0.085394,
+        "max_seconds": 0.151205
+      },
+      "baseline_intrinsic_latency": {
+        "count": 34,
+        "average_seconds": 0.021336,
+        "p50_seconds": 0.002235,
+        "p95_seconds": 0.076629,
+        "max_seconds": 0.351735
+      },
+      "decision_reasons": {
+        "heuristic": 41
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91020,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 75,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          2,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.264668,
+        "decision_latency": {
+          "count": 75,
+          "average_seconds": 0.016862,
+          "p50_seconds": 0.002024,
+          "p95_seconds": 0.085394,
+          "max_seconds": 0.353002
+        },
+        "seat_decision_latency": [
+          {
+            "count": 19,
+            "average_seconds": 0.031709,
+            "p50_seconds": 0.003188,
+            "p95_seconds": 0.353002,
+            "max_seconds": 0.353002
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.009325,
+            "p50_seconds": 0.00041,
+            "p95_seconds": 0.059864,
+            "max_seconds": 0.085394
+          },
+          {
+            "count": 15,
+            "average_seconds": 0.011838,
+            "p50_seconds": 0.004606,
+            "p95_seconds": 0.055932,
+            "max_seconds": 0.055932
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.014195,
+            "p50_seconds": 0.000376,
+            "p95_seconds": 0.103068,
+            "max_seconds": 0.151205
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91021,
+      "level": 2,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 34,
+        "average_seconds": 0.081551,
+        "p50_seconds": 0.017196,
+        "p95_seconds": 0.458912,
+        "max_seconds": 1.289469
+      },
+      "baseline_intrinsic_latency": {
+        "count": 48,
+        "average_seconds": 0.010674,
+        "p50_seconds": 0.000259,
+        "p95_seconds": 0.086847,
+        "max_seconds": 0.114574
+      },
+      "decision_reasons": {
+        "heuristic": 34
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91021,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 82,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          5,
+          2
+        ],
+        "team_bomb_count": [
+          1,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 3.3816,
+        "decision_latency": {
+          "count": 82,
+          "average_seconds": 0.041239,
+          "p50_seconds": 0.003468,
+          "p95_seconds": 0.099419,
+          "max_seconds": 1.289469
+        },
+        "seat_decision_latency": [
+          {
+            "count": 20,
+            "average_seconds": 0.12586,
+            "p50_seconds": 0.022106,
+            "p95_seconds": 0.458912,
+            "max_seconds": 1.289469
+          },
+          {
+            "count": 23,
+            "average_seconds": 0.017642,
+            "p50_seconds": 0.003515,
+            "p95_seconds": 0.099419,
+            "max_seconds": 0.11677
+          },
+          {
+            "count": 14,
+            "average_seconds": 0.018252,
+            "p50_seconds": 0.004585,
+            "p95_seconds": 0.073828,
+            "max_seconds": 0.073828
+          },
+          {
+            "count": 25,
+            "average_seconds": 0.008123,
+            "p50_seconds": 0.002671,
+            "p95_seconds": 0.033295,
+            "max_seconds": 0.088365
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91021,
+      "level": 2,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 42,
+        "average_seconds": 0.015539,
+        "p50_seconds": 0.000624,
+        "p95_seconds": 0.09798,
+        "max_seconds": 0.162824
+      },
+      "baseline_intrinsic_latency": {
+        "count": 36,
+        "average_seconds": 0.042,
+        "p50_seconds": 0.007628,
+        "p95_seconds": 0.141849,
+        "max_seconds": 0.831037
+      },
+      "decision_reasons": {
+        "heuristic": 42
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91021,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 78,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          5,
+          2
+        ],
+        "team_bomb_count": [
+          1,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 2.228539,
+        "decision_latency": {
+          "count": 78,
+          "average_seconds": 0.028571,
+          "p50_seconds": 0.003125,
+          "p95_seconds": 0.121211,
+          "max_seconds": 0.832349
+        },
+        "seat_decision_latency": [
+          {
+            "count": 20,
+            "average_seconds": 0.064679,
+            "p50_seconds": 0.008853,
+            "p95_seconds": 0.14408,
+            "max_seconds": 0.832349
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.022192,
+            "p50_seconds": 0.000528,
+            "p95_seconds": 0.09798,
+            "max_seconds": 0.162824
+          },
+          {
+            "count": 16,
+            "average_seconds": 0.017643,
+            "p50_seconds": 0.005525,
+            "p95_seconds": 0.07673,
+            "max_seconds": 0.07673
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.009491,
+            "p50_seconds": 0.000624,
+            "p95_seconds": 0.026319,
+            "max_seconds": 0.121211
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91022,
+      "level": 9,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 35,
+        "average_seconds": 0.01636,
+        "p50_seconds": 0.000573,
+        "p95_seconds": 0.100616,
+        "max_seconds": 0.179744
+      },
+      "baseline_intrinsic_latency": {
+        "count": 42,
+        "average_seconds": 0.020314,
+        "p50_seconds": 0.001108,
+        "p95_seconds": 0.067146,
+        "max_seconds": 0.395346
+      },
+      "decision_reasons": {
+        "heuristic": 35
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91022,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 77,
+        "finished": true,
+        "finish_order": [
+          0,
+          2,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          12,
+          9
+        ],
+        "team_bomb_count": [
+          1,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.506317,
+        "decision_latency": {
+          "count": 77,
+          "average_seconds": 0.019562,
+          "p50_seconds": 0.002368,
+          "p95_seconds": 0.100616,
+          "max_seconds": 0.396387
+        },
+        "seat_decision_latency": [
+          {
+            "count": 17,
+            "average_seconds": 0.017031,
+            "p50_seconds": 0.001076,
+            "p95_seconds": 0.179744,
+            "max_seconds": 0.179744
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.032838,
+            "p50_seconds": 0.003534,
+            "p95_seconds": 0.154012,
+            "max_seconds": 0.396387
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.015727,
+            "p50_seconds": 0.000493,
+            "p95_seconds": 0.100616,
+            "max_seconds": 0.100616
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.011622,
+            "p50_seconds": 0.002819,
+            "p95_seconds": 0.042258,
+            "max_seconds": 0.068492
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91022,
+      "level": 9,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 45,
+        "average_seconds": 0.02552,
+        "p50_seconds": 0.000378,
+        "p95_seconds": 0.102852,
+        "max_seconds": 0.697586
+      },
+      "baseline_intrinsic_latency": {
+        "count": 43,
+        "average_seconds": 0.008126,
+        "p50_seconds": 0.000195,
+        "p95_seconds": 0.024786,
+        "max_seconds": 0.137658
+      },
+      "decision_reasons": {
+        "heuristic": 45
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91022,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 88,
+        "finished": true,
+        "finish_order": [
+          0,
+          2,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          12,
+          9
+        ],
+        "team_bomb_count": [
+          0,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.575299,
+        "decision_latency": {
+          "count": 88,
+          "average_seconds": 0.017901,
+          "p50_seconds": 0.002049,
+          "p95_seconds": 0.091839,
+          "max_seconds": 0.697586
+        },
+        "seat_decision_latency": [
+          {
+            "count": 21,
+            "average_seconds": 0.010629,
+            "p50_seconds": 0.002857,
+            "p95_seconds": 0.026083,
+            "max_seconds": 0.138994
+          },
+          {
+            "count": 23,
+            "average_seconds": 0.042915,
+            "p50_seconds": 0.000378,
+            "p95_seconds": 0.152364,
+            "max_seconds": 0.697586
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.009257,
+            "p50_seconds": 0.002262,
+            "p95_seconds": 0.026958,
+            "max_seconds": 0.091839
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.007334,
+            "p50_seconds": 0.000364,
+            "p95_seconds": 0.023217,
+            "max_seconds": 0.102852
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91023,
+      "level": 14,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": false,
+      "candidate_latency": {
+        "count": 39,
+        "average_seconds": 0.032923,
+        "p50_seconds": 0.001702,
+        "p95_seconds": 0.134042,
+        "max_seconds": 0.791156
+      },
+      "baseline_intrinsic_latency": {
+        "count": 28,
+        "average_seconds": 0.030181,
+        "p50_seconds": 0.001704,
+        "p95_seconds": 0.171896,
+        "max_seconds": 0.217654
+      },
+      "decision_reasons": {
+        "heuristic": 39
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91023,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 67,
+        "finished": true,
+        "finish_order": [
+          1,
+          3,
+          2
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          14,
+          2
+        ],
+        "team_bomb_count": [
+          2,
+          3
+        ],
+        "drift": false,
+        "duration_seconds": 2.170438,
+        "decision_latency": {
+          "count": 67,
+          "average_seconds": 0.032394,
+          "p50_seconds": 0.002498,
+          "p95_seconds": 0.16017,
+          "max_seconds": 0.791156
+        },
+        "seat_decision_latency": [
+          {
+            "count": 19,
+            "average_seconds": 0.056465,
+            "p50_seconds": 0.000856,
+            "p95_seconds": 0.791156,
+            "max_seconds": 0.791156
+          },
+          {
+            "count": 12,
+            "average_seconds": 0.049615,
+            "p50_seconds": 0.003483,
+            "p95_seconds": 0.218859,
+            "max_seconds": 0.218859
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.010558,
+            "p50_seconds": 0.001812,
+            "p95_seconds": 0.031092,
+            "max_seconds": 0.053114
+          },
+          {
+            "count": 16,
+            "average_seconds": 0.01819,
+            "p50_seconds": 0.002498,
+            "p95_seconds": 0.119417,
+            "max_seconds": 0.119417
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91023,
+      "level": 14,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": true,
+      "candidate_latency": {
+        "count": 30,
+        "average_seconds": 0.040584,
+        "p50_seconds": 0.002013,
+        "p95_seconds": 0.263152,
+        "max_seconds": 0.366767
+      },
+      "baseline_intrinsic_latency": {
+        "count": 42,
+        "average_seconds": 0.020622,
+        "p50_seconds": 0.000696,
+        "p95_seconds": 0.052159,
+        "max_seconds": 0.512614
+      },
+      "decision_reasons": {
+        "heuristic": 30
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91023,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 72,
+        "finished": true,
+        "finish_order": [
+          1,
+          3,
+          0
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          14,
+          2
+        ],
+        "team_bomb_count": [
+          1,
+          3
+        ],
+        "drift": false,
+        "duration_seconds": 2.156965,
+        "decision_latency": {
+          "count": 72,
+          "average_seconds": 0.029957,
+          "p50_seconds": 0.002819,
+          "p95_seconds": 0.175422,
+          "max_seconds": 0.513475
+        },
+        "seat_decision_latency": [
+          {
+            "count": 21,
+            "average_seconds": 0.032026,
+            "p50_seconds": 0.002735,
+            "p95_seconds": 0.054308,
+            "max_seconds": 0.513475
+          },
+          {
+            "count": 13,
+            "average_seconds": 0.067445,
+            "p50_seconds": 0.002013,
+            "p95_seconds": 0.366767,
+            "max_seconds": 0.366767
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.012708,
+            "p50_seconds": 0.006822,
+            "p95_seconds": 0.052069,
+            "max_seconds": 0.053933
+          },
+          {
+            "count": 17,
+            "average_seconds": 0.020043,
+            "p50_seconds": 0.004767,
+            "p95_seconds": 0.119288,
+            "max_seconds": 0.119288
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91024,
+      "level": 2,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 32,
+        "average_seconds": 0.03235,
+        "p50_seconds": 0.001007,
+        "p95_seconds": 0.106135,
+        "max_seconds": 0.565524
+      },
+      "baseline_intrinsic_latency": {
+        "count": 42,
+        "average_seconds": 0.015246,
+        "p50_seconds": 0.00027,
+        "p95_seconds": 0.10083,
+        "max_seconds": 0.193901
+      },
+      "decision_reasons": {
+        "heuristic": 32
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91024,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 74,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          5,
+          2
+        ],
+        "team_bomb_count": [
+          2,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.755193,
+        "decision_latency": {
+          "count": 74,
+          "average_seconds": 0.023718,
+          "p50_seconds": 0.002486,
+          "p95_seconds": 0.106135,
+          "max_seconds": 0.565524
+        },
+        "seat_decision_latency": [
+          {
+            "count": 19,
+            "average_seconds": 0.042893,
+            "p50_seconds": 0.000575,
+            "p95_seconds": 0.565524,
+            "max_seconds": 0.565524
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.022533,
+            "p50_seconds": 0.002571,
+            "p95_seconds": 0.167484,
+            "max_seconds": 0.195774
+          },
+          {
+            "count": 13,
+            "average_seconds": 0.016942,
+            "p50_seconds": 0.004642,
+            "p95_seconds": 0.072315,
+            "max_seconds": 0.072315
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.01224,
+            "p50_seconds": 0.002319,
+            "p95_seconds": 0.07476,
+            "max_seconds": 0.10265
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91024,
+      "level": 2,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.23333333333333334,
+      "gain": -0.5333333333333333,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 43,
+        "average_seconds": 0.020345,
+        "p50_seconds": 0.001166,
+        "p95_seconds": 0.164481,
+        "max_seconds": 0.300326
+      },
+      "baseline_intrinsic_latency": {
+        "count": 37,
+        "average_seconds": 0.018063,
+        "p50_seconds": 0.000308,
+        "p95_seconds": 0.077303,
+        "max_seconds": 0.342122
+      },
+      "decision_reasons": {
+        "heuristic": 43
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91024,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 80,
+        "finished": true,
+        "finish_order": [
+          2,
+          3,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          3,
+          2
+        ],
+        "team_bomb_count": [
+          2,
+          0
+        ],
+        "drift": false,
+        "duration_seconds": 1.593415,
+        "decision_latency": {
+          "count": 80,
+          "average_seconds": 0.019917,
+          "p50_seconds": 0.001796,
+          "p95_seconds": 0.079912,
+          "max_seconds": 0.343523
+        },
+        "seat_decision_latency": [
+          {
+            "count": 24,
+            "average_seconds": 0.024,
+            "p50_seconds": 0.00176,
+            "p95_seconds": 0.079912,
+            "max_seconds": 0.343523
+          },
+          {
+            "count": 23,
+            "average_seconds": 0.023577,
+            "p50_seconds": 0.002015,
+            "p95_seconds": 0.164481,
+            "max_seconds": 0.300326
+          },
+          {
+            "count": 13,
+            "average_seconds": 0.010966,
+            "p50_seconds": 0.00412,
+            "p95_seconds": 0.05939,
+            "max_seconds": 0.05939
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.016629,
+            "p50_seconds": 0.000578,
+            "p95_seconds": 0.073961,
+            "max_seconds": 0.182154
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91025,
+      "level": 9,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 33,
+        "average_seconds": 0.020698,
+        "p50_seconds": 0.001591,
+        "p95_seconds": 0.080188,
+        "max_seconds": 0.452439
+      },
+      "baseline_intrinsic_latency": {
+        "count": 39,
+        "average_seconds": 0.015639,
+        "p50_seconds": 0.000258,
+        "p95_seconds": 0.089791,
+        "max_seconds": 0.25128
+      },
+      "decision_reasons": {
+        "heuristic": 33
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91025,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 72,
+        "finished": true,
+        "finish_order": [
+          0,
+          2,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          12,
+          9
+        ],
+        "team_bomb_count": [
+          1,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.357884,
+        "decision_latency": {
+          "count": 72,
+          "average_seconds": 0.018859,
+          "p50_seconds": 0.002032,
+          "p95_seconds": 0.088323,
+          "max_seconds": 0.452439
+        },
+        "seat_decision_latency": [
+          {
+            "count": 16,
+            "average_seconds": 0.038069,
+            "p50_seconds": 0.003302,
+            "p95_seconds": 0.452439,
+            "max_seconds": 0.452439
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.008485,
+            "p50_seconds": 0.002338,
+            "p95_seconds": 0.030439,
+            "max_seconds": 0.091144
+          },
+          {
+            "count": 17,
+            "average_seconds": 0.00435,
+            "p50_seconds": 0.000686,
+            "p95_seconds": 0.040922,
+            "max_seconds": 0.040922
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.026584,
+            "p50_seconds": 0.002354,
+            "p95_seconds": 0.252725,
+            "max_seconds": 0.252725
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91025,
+      "level": 9,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.23333333333333334,
+      "gain": -0.5333333333333333,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 39,
+        "average_seconds": 0.019584,
+        "p50_seconds": 0.00057,
+        "p95_seconds": 0.175634,
+        "max_seconds": 0.25035
+      },
+      "baseline_intrinsic_latency": {
+        "count": 35,
+        "average_seconds": 0.013395,
+        "p50_seconds": 0.000637,
+        "p95_seconds": 0.087002,
+        "max_seconds": 0.260819
+      },
+      "decision_reasons": {
+        "heuristic": 39
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91025,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 74,
+        "finished": true,
+        "finish_order": [
+          0,
+          1,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          10,
+          9
+        ],
+        "team_bomb_count": [
+          1,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.294124,
+        "decision_latency": {
+          "count": 74,
+          "average_seconds": 0.017488,
+          "p50_seconds": 0.002117,
+          "p95_seconds": 0.125398,
+          "max_seconds": 0.26266
+        },
+        "seat_decision_latency": [
+          {
+            "count": 15,
+            "average_seconds": 0.028416,
+            "p50_seconds": 0.005814,
+            "p95_seconds": 0.26266,
+            "max_seconds": 0.26266
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.008921,
+            "p50_seconds": 0.00057,
+            "p95_seconds": 0.125398,
+            "max_seconds": 0.125398
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.005203,
+            "p50_seconds": 0.002388,
+            "p95_seconds": 0.020066,
+            "max_seconds": 0.032123
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.029714,
+            "p50_seconds": 0.000493,
+            "p95_seconds": 0.175634,
+            "max_seconds": 0.25035
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91026,
+      "level": 14,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": true,
+      "candidate_latency": {
+        "count": 37,
+        "average_seconds": 0.0284,
+        "p50_seconds": 0.002666,
+        "p95_seconds": 0.147155,
+        "max_seconds": 0.402464
+      },
+      "baseline_intrinsic_latency": {
+        "count": 39,
+        "average_seconds": 0.022814,
+        "p50_seconds": 0.000999,
+        "p95_seconds": 0.130729,
+        "max_seconds": 0.222862
+      },
+      "decision_reasons": {
+        "heuristic": 37
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91026,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 76,
+        "finished": true,
+        "finish_order": [
+          0,
+          2,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          2,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 2.016311,
+        "decision_latency": {
+          "count": 76,
+          "average_seconds": 0.02653,
+          "p50_seconds": 0.003164,
+          "p95_seconds": 0.133995,
+          "max_seconds": 0.402464
+        },
+        "seat_decision_latency": [
+          {
+            "count": 18,
+            "average_seconds": 0.040718,
+            "p50_seconds": 0.003718,
+            "p95_seconds": 0.402464,
+            "max_seconds": 0.402464
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.014601,
+            "p50_seconds": 0.002434,
+            "p95_seconds": 0.080039,
+            "max_seconds": 0.098045
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.01673,
+            "p50_seconds": 0.001678,
+            "p95_seconds": 0.147155,
+            "max_seconds": 0.147155
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.035446,
+            "p50_seconds": 0.007227,
+            "p95_seconds": 0.225702,
+            "max_seconds": 0.225702
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91026,
+      "level": 14,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": true,
+      "a_succeeded": false,
+      "candidate_latency": {
+        "count": 39,
+        "average_seconds": 0.032344,
+        "p50_seconds": 0.001878,
+        "p95_seconds": 0.205573,
+        "max_seconds": 0.280885
+      },
+      "baseline_intrinsic_latency": {
+        "count": 44,
+        "average_seconds": 0.017926,
+        "p50_seconds": 0.001504,
+        "p95_seconds": 0.078192,
+        "max_seconds": 0.281991
+      },
+      "decision_reasons": {
+        "heuristic": 39
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91026,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 83,
+        "finished": true,
+        "finish_order": [
+          3,
+          0,
+          2
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          14,
+          2
+        ],
+        "team_bomb_count": [
+          2,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 2.135354,
+        "decision_latency": {
+          "count": 83,
+          "average_seconds": 0.025727,
+          "p50_seconds": 0.003246,
+          "p95_seconds": 0.140682,
+          "max_seconds": 0.283515
+        },
+        "seat_decision_latency": [
+          {
+            "count": 22,
+            "average_seconds": 0.02627,
+            "p50_seconds": 0.003356,
+            "p95_seconds": 0.078203,
+            "max_seconds": 0.283515
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.016749,
+            "p50_seconds": 0.000543,
+            "p95_seconds": 0.084575,
+            "max_seconds": 0.132196
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.013453,
+            "p50_seconds": 0.002985,
+            "p95_seconds": 0.079948,
+            "max_seconds": 0.140682
+          },
+          {
+            "count": 17,
+            "average_seconds": 0.052526,
+            "p50_seconds": 0.018975,
+            "p95_seconds": 0.280885,
+            "max_seconds": 0.280885
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91027,
+      "level": 2,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.06666666666666665,
+      "gain": -0.8666666666666667,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 35,
+        "average_seconds": 0.017011,
+        "p50_seconds": 0.001104,
+        "p95_seconds": 0.120818,
+        "max_seconds": 0.194864
+      },
+      "baseline_intrinsic_latency": {
+        "count": 33,
+        "average_seconds": 0.021957,
+        "p50_seconds": 0.002316,
+        "p95_seconds": 0.090004,
+        "max_seconds": 0.235382
+      },
+      "decision_reasons": {
+        "heuristic": 35
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91027,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 68,
+        "finished": true,
+        "finish_order": [
+          1,
+          2,
+          3
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          2,
+          4
+        ],
+        "team_bomb_count": [
+          1,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 1.383217,
+        "decision_latency": {
+          "count": 68,
+          "average_seconds": 0.020341,
+          "p50_seconds": 0.002958,
+          "p95_seconds": 0.091028,
+          "max_seconds": 0.23659
+        },
+        "seat_decision_latency": [
+          {
+            "count": 19,
+            "average_seconds": 0.016102,
+            "p50_seconds": 0.000536,
+            "p95_seconds": 0.194864,
+            "max_seconds": 0.194864
+          },
+          {
+            "count": 13,
+            "average_seconds": 0.04078,
+            "p50_seconds": 0.025258,
+            "p95_seconds": 0.23659,
+            "max_seconds": 0.23659
+          },
+          {
+            "count": 16,
+            "average_seconds": 0.018091,
+            "p50_seconds": 0.001773,
+            "p95_seconds": 0.120818,
+            "max_seconds": 0.120818
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.012882,
+            "p50_seconds": 0.002958,
+            "p95_seconds": 0.059833,
+            "max_seconds": 0.091028
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91027,
+      "level": 2,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.7666666666666666,
+      "gain": 0.5333333333333332,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 29,
+        "average_seconds": 0.031163,
+        "p50_seconds": 0.003249,
+        "p95_seconds": 0.176745,
+        "max_seconds": 0.221493
+      },
+      "baseline_intrinsic_latency": {
+        "count": 32,
+        "average_seconds": 0.015278,
+        "p50_seconds": 0.00042,
+        "p95_seconds": 0.120222,
+        "max_seconds": 0.139922
+      },
+      "decision_reasons": {
+        "heuristic": 29
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91027,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 61,
+        "finished": true,
+        "finish_order": [
+          1,
+          2,
+          0
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          2,
+          3
+        ],
+        "team_bomb_count": [
+          2,
+          0
+        ],
+        "drift": false,
+        "duration_seconds": 1.457722,
+        "decision_latency": {
+          "count": 61,
+          "average_seconds": 0.023897,
+          "p50_seconds": 0.002765,
+          "p95_seconds": 0.123093,
+          "max_seconds": 0.221493
+        },
+        "seat_decision_latency": [
+          {
+            "count": 17,
+            "average_seconds": 0.014762,
+            "p50_seconds": 0.002702,
+            "p95_seconds": 0.141876,
+            "max_seconds": 0.141876
+          },
+          {
+            "count": 13,
+            "average_seconds": 0.041486,
+            "p50_seconds": 0.02153,
+            "p95_seconds": 0.221493,
+            "max_seconds": 0.221493
+          },
+          {
+            "count": 15,
+            "average_seconds": 0.0202,
+            "p50_seconds": 0.003024,
+            "p95_seconds": 0.123093,
+            "max_seconds": 0.123093
+          },
+          {
+            "count": 16,
+            "average_seconds": 0.022776,
+            "p50_seconds": 0.000656,
+            "p95_seconds": 0.176745,
+            "max_seconds": 0.176745
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91028,
+      "level": 9,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.7666666666666666,
+      "gain": 0.5333333333333332,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 44,
+        "average_seconds": 0.022845,
+        "p50_seconds": 0.000388,
+        "p95_seconds": 0.121039,
+        "max_seconds": 0.344423
+      },
+      "baseline_intrinsic_latency": {
+        "count": 45,
+        "average_seconds": 0.024936,
+        "p50_seconds": 0.001221,
+        "p95_seconds": 0.117134,
+        "max_seconds": 0.254499
+      },
+      "decision_reasons": {
+        "heuristic": 44
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91028,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 89,
+        "finished": true,
+        "finish_order": [
+          0,
+          3,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          10,
+          9
+        ],
+        "team_bomb_count": [
+          0,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 2.231815,
+        "decision_latency": {
+          "count": 89,
+          "average_seconds": 0.025076,
+          "p50_seconds": 0.002423,
+          "p95_seconds": 0.121039,
+          "max_seconds": 0.344423
+        },
+        "seat_decision_latency": [
+          {
+            "count": 22,
+            "average_seconds": 0.021839,
+            "p50_seconds": 0.000403,
+            "p95_seconds": 0.091499,
+            "max_seconds": 0.344423
+          },
+          {
+            "count": 23,
+            "average_seconds": 0.008419,
+            "p50_seconds": 0.003068,
+            "p95_seconds": 0.0282,
+            "max_seconds": 0.047011
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.023852,
+            "p50_seconds": 0.000334,
+            "p95_seconds": 0.121039,
+            "max_seconds": 0.157526
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.046952,
+            "p50_seconds": 0.011792,
+            "p95_seconds": 0.222076,
+            "max_seconds": 0.25536
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91028,
+      "level": 9,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 43,
+        "average_seconds": 0.02441,
+        "p50_seconds": 0.001981,
+        "p95_seconds": 0.112604,
+        "max_seconds": 0.248017
+      },
+      "baseline_intrinsic_latency": {
+        "count": 46,
+        "average_seconds": 0.019164,
+        "p50_seconds": 0.00015,
+        "p95_seconds": 0.148637,
+        "max_seconds": 0.20467
+      },
+      "decision_reasons": {
+        "heuristic": 43
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91028,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 89,
+        "finished": true,
+        "finish_order": [
+          3,
+          1,
+          0
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          9,
+          12
+        ],
+        "team_bomb_count": [
+          0,
+          1
+        ],
+        "drift": false,
+        "duration_seconds": 2.024191,
+        "decision_latency": {
+          "count": 89,
+          "average_seconds": 0.022743,
+          "p50_seconds": 0.002591,
+          "p95_seconds": 0.149876,
+          "max_seconds": 0.248017
+        },
+        "seat_decision_latency": [
+          {
+            "count": 24,
+            "average_seconds": 0.011438,
+            "p50_seconds": 0.002591,
+            "p95_seconds": 0.064319,
+            "max_seconds": 0.141408
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.006906,
+            "p50_seconds": 0.000781,
+            "p95_seconds": 0.029744,
+            "max_seconds": 0.047447
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.031818,
+            "p50_seconds": 0.002488,
+            "p95_seconds": 0.171668,
+            "max_seconds": 0.205887
+          },
+          {
+            "count": 21,
+            "average_seconds": 0.042747,
+            "p50_seconds": 0.020608,
+            "p95_seconds": 0.222587,
+            "max_seconds": 0.248017
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91029,
+      "level": 14,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": true,
+      "candidate_latency": {
+        "count": 30,
+        "average_seconds": 0.089633,
+        "p50_seconds": 0.005879,
+        "p95_seconds": 0.494309,
+        "max_seconds": 1.123446
+      },
+      "baseline_intrinsic_latency": {
+        "count": 36,
+        "average_seconds": 0.01194,
+        "p50_seconds": 0.000318,
+        "p95_seconds": 0.078275,
+        "max_seconds": 0.124231
+      },
+      "decision_reasons": {
+        "heuristic": 30
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91029,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 66,
+        "finished": true,
+        "finish_order": [
+          0,
+          3,
+          2
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          2,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 3.192666,
+        "decision_latency": {
+          "count": 66,
+          "average_seconds": 0.048373,
+          "p50_seconds": 0.003021,
+          "p95_seconds": 0.172797,
+          "max_seconds": 1.123446
+        },
+        "seat_decision_latency": [
+          {
+            "count": 11,
+            "average_seconds": 0.204556,
+            "p50_seconds": 0.046875,
+            "p95_seconds": 1.123446,
+            "max_seconds": 1.123446
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.012655,
+            "p50_seconds": 0.001965,
+            "p95_seconds": 0.079794,
+            "max_seconds": 0.079794
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.023099,
+            "p50_seconds": 0.002006,
+            "p95_seconds": 0.137912,
+            "max_seconds": 0.137912
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.015325,
+            "p50_seconds": 0.004498,
+            "p95_seconds": 0.125515,
+            "max_seconds": 0.125515
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91029,
+      "level": 14,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": false,
+      "candidate_latency": {
+        "count": 39,
+        "average_seconds": 0.013493,
+        "p50_seconds": 0.000686,
+        "p95_seconds": 0.109444,
+        "max_seconds": 0.126316
+      },
+      "baseline_intrinsic_latency": {
+        "count": 30,
+        "average_seconds": 0.055061,
+        "p50_seconds": 0.00603,
+        "p95_seconds": 0.222953,
+        "max_seconds": 0.657768
+      },
+      "decision_reasons": {
+        "heuristic": 39
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91029,
+        "level": 14,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 69,
+        "finished": true,
+        "finish_order": [
+          0,
+          2,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          2,
+          14
+        ],
+        "team_bomb_count": [
+          2,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 2.226867,
+        "decision_latency": {
+          "count": 69,
+          "average_seconds": 0.032273,
+          "p50_seconds": 0.002697,
+          "p95_seconds": 0.13165,
+          "max_seconds": 0.659055
+        },
+        "seat_decision_latency": [
+          {
+            "count": 11,
+            "average_seconds": 0.121177,
+            "p50_seconds": 0.023903,
+            "p95_seconds": 0.659055,
+            "max_seconds": 0.659055
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.01458,
+            "p50_seconds": 0.000321,
+            "p95_seconds": 0.099299,
+            "max_seconds": 0.109444
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.01935,
+            "p50_seconds": 0.003244,
+            "p95_seconds": 0.13165,
+            "max_seconds": 0.13165
+          },
+          {
+            "count": 19,
+            "average_seconds": 0.012349,
+            "p50_seconds": 0.001407,
+            "p95_seconds": 0.126316,
+            "max_seconds": 0.126316
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91030,
+      "level": 2,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 1.0,
+      "gain": 1.0,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 33,
+        "average_seconds": 0.024709,
+        "p50_seconds": 0.005147,
+        "p95_seconds": 0.130229,
+        "max_seconds": 0.213743
+      },
+      "baseline_intrinsic_latency": {
+        "count": 38,
+        "average_seconds": 0.024416,
+        "p50_seconds": 0.000351,
+        "p95_seconds": 0.221325,
+        "max_seconds": 0.222655
+      },
+      "decision_reasons": {
+        "heuristic": 33
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91030,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 71,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          5,
+          2
+        ],
+        "team_bomb_count": [
+          2,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.806931,
+        "decision_latency": {
+          "count": 71,
+          "average_seconds": 0.025449,
+          "p50_seconds": 0.003221,
+          "p95_seconds": 0.130229,
+          "max_seconds": 0.223797
+        },
+        "seat_decision_latency": [
+          {
+            "count": 19,
+            "average_seconds": 0.027025,
+            "p50_seconds": 0.015053,
+            "p95_seconds": 0.213743,
+            "max_seconds": 0.213743
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.013785,
+            "p50_seconds": 0.002187,
+            "p95_seconds": 0.100316,
+            "max_seconds": 0.100316
+          },
+          {
+            "count": 14,
+            "average_seconds": 0.021566,
+            "p50_seconds": 0.001277,
+            "p95_seconds": 0.130229,
+            "max_seconds": 0.130229
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.037168,
+            "p50_seconds": 0.004939,
+            "p95_seconds": 0.223567,
+            "max_seconds": 0.223797
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91030,
+      "level": 2,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.0,
+      "gain": -1.0,
+      "head_won": false,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 38,
+        "average_seconds": 0.035319,
+        "p50_seconds": 0.000729,
+        "p95_seconds": 0.239905,
+        "max_seconds": 0.473724
+      },
+      "baseline_intrinsic_latency": {
+        "count": 33,
+        "average_seconds": 0.021217,
+        "p50_seconds": 0.004704,
+        "p95_seconds": 0.135245,
+        "max_seconds": 0.139743
+      },
+      "decision_reasons": {
+        "heuristic": 38
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91030,
+        "level": 2,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 71,
+        "finished": true,
+        "finish_order": [
+          2,
+          0,
+          3
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          5,
+          2
+        ],
+        "team_bomb_count": [
+          2,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 2.099344,
+        "decision_latency": {
+          "count": 71,
+          "average_seconds": 0.029568,
+          "p50_seconds": 0.003041,
+          "p95_seconds": 0.14125,
+          "max_seconds": 0.473724
+        },
+        "seat_decision_latency": [
+          {
+            "count": 19,
+            "average_seconds": 0.023128,
+            "p50_seconds": 0.00651,
+            "p95_seconds": 0.14125,
+            "max_seconds": 0.14125
+          },
+          {
+            "count": 18,
+            "average_seconds": 0.011891,
+            "p50_seconds": 0.000323,
+            "p95_seconds": 0.100375,
+            "max_seconds": 0.100375
+          },
+          {
+            "count": 14,
+            "average_seconds": 0.022697,
+            "p50_seconds": 0.003304,
+            "p95_seconds": 0.136956,
+            "max_seconds": 0.136956
+          },
+          {
+            "count": 20,
+            "average_seconds": 0.056405,
+            "p50_seconds": 0.005967,
+            "p95_seconds": 0.239905,
+            "max_seconds": 0.473724
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91031,
+      "level": 9,
+      "candidate_team": 0,
+      "companion_difficulty": null,
+      "utility": 0.7666666666666666,
+      "gain": 0.5333333333333332,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 40,
+        "average_seconds": 0.028103,
+        "p50_seconds": 0.004105,
+        "p95_seconds": 0.049446,
+        "max_seconds": 0.596898
+      },
+      "baseline_intrinsic_latency": {
+        "count": 47,
+        "average_seconds": 0.011276,
+        "p50_seconds": 0.000253,
+        "p95_seconds": 0.103166,
+        "max_seconds": 0.163473
+      },
+      "decision_reasons": {
+        "heuristic": 40
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91031,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 87,
+        "finished": true,
+        "finish_order": [
+          0,
+          3,
+          1
+        ],
+        "winner_team": 0,
+        "final_levels": [
+          10,
+          9
+        ],
+        "team_bomb_count": [
+          3,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.750162,
+        "decision_latency": {
+          "count": 87,
+          "average_seconds": 0.020116,
+          "p50_seconds": 0.002585,
+          "p95_seconds": 0.10256,
+          "max_seconds": 0.596898
+        },
+        "seat_decision_latency": [
+          {
+            "count": 16,
+            "average_seconds": 0.054453,
+            "p50_seconds": 0.007641,
+            "p95_seconds": 0.596898,
+            "max_seconds": 0.596898
+          },
+          {
+            "count": 25,
+            "average_seconds": 0.008633,
+            "p50_seconds": 0.002426,
+            "p95_seconds": 0.021481,
+            "max_seconds": 0.104499
+          },
+          {
+            "count": 24,
+            "average_seconds": 0.010536,
+            "p50_seconds": 0.000902,
+            "p95_seconds": 0.033608,
+            "max_seconds": 0.049446
+          },
+          {
+            "count": 22,
+            "average_seconds": 0.018645,
+            "p50_seconds": 0.002531,
+            "p95_seconds": 0.115333,
+            "max_seconds": 0.164821
+          }
+        ]
+      }
+    },
+    {
+      "seed": 91031,
+      "level": 9,
+      "candidate_team": 1,
+      "companion_difficulty": null,
+      "utility": 0.9333333333333333,
+      "gain": 0.8666666666666667,
+      "head_won": true,
+      "a_succeeded": null,
+      "candidate_latency": {
+        "count": 34,
+        "average_seconds": 0.02294,
+        "p50_seconds": 0.000973,
+        "p95_seconds": 0.130536,
+        "max_seconds": 0.157345
+      },
+      "baseline_intrinsic_latency": {
+        "count": 43,
+        "average_seconds": 0.021858,
+        "p50_seconds": 0.001738,
+        "p95_seconds": 0.066445,
+        "max_seconds": 0.352817
+      },
+      "decision_reasons": {
+        "heuristic": 34
+      },
+      "budget_failures": [],
+      "clock_decisions": null,
+      "endgame_reasons": {},
+      "endgame_samples": {},
+      "result": {
+        "seed": 91031,
+        "level": 9,
+        "difficulties": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "turns": 77,
+        "finished": true,
+        "finish_order": [
+          3,
+          0,
+          1
+        ],
+        "winner_team": 1,
+        "final_levels": [
+          9,
+          11
+        ],
+        "team_bomb_count": [
+          1,
+          2
+        ],
+        "drift": false,
+        "duration_seconds": 1.797909,
+        "decision_latency": {
+          "count": 77,
+          "average_seconds": 0.023349,
+          "p50_seconds": 0.00255,
+          "p95_seconds": 0.129642,
+          "max_seconds": 0.354125
+        },
+        "seat_decision_latency": [
+          {
+            "count": 20,
+            "average_seconds": 0.041676,
+            "p50_seconds": 0.005578,
+            "p95_seconds": 0.116868,
+            "max_seconds": 0.354125
+          },
+          {
+            "count": 24,
+            "average_seconds": 0.014227,
+            "p50_seconds": 0.000577,
+            "p95_seconds": 0.069921,
+            "max_seconds": 0.129642
+          },
+          {
+            "count": 23,
+            "average_seconds": 0.008017,
+            "p50_seconds": 0.002454,
+            "p95_seconds": 0.038792,
+            "max_seconds": 0.06078
+          },
+          {
+            "count": 10,
+            "average_seconds": 0.04385,
+            "p50_seconds": 0.002618,
+            "p95_seconds": 0.157345,
+            "max_seconds": 0.157345
+          }
+        ]
+      }
+    }
+  ]
+}

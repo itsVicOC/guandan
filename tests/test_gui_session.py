@@ -552,6 +552,24 @@ def test_session_cancel_prepared_next_game_keeps_completed_round() -> None:
     assert session.round_index == 2
 
 
+@pytest.mark.parametrize("ruleset,failures", [(2, [0, 0]), (3, [2, 0])])
+def test_session_next_round_keeps_ruleset_and_a_failure_count(ruleset, failures) -> None:
+    finished = GameState(
+        level=RANK_A, wild_card=None, hands=[[], [], [], []],
+        turn_index=0, finish_order=[0, 1, 3], finished=True,
+        team_levels=[RANK_A, 2],
+        team_levels_final=[2, 2] if ruleset == 2 else [RANK_A, 2],
+        ruleset_version=ruleset, a_failure_counts=failures,
+    )
+    session = GameSession(difficulty=0, existing_state=finished, human=0)
+    session.game_saved = True
+    assert session.prepare_next_game().ok
+    next_state = session.display_state()
+    assert next_state.ruleset_version == ruleset
+    assert next_state.a_failure_counts == failures
+    assert next_state.history[0].a_failure_counts == tuple(failures)
+
+
 def test_session_keeps_match_id_and_advances_round_and_game_ids() -> None:
     finished = GameState(
         level=2,

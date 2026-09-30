@@ -7,13 +7,16 @@ from ..engine.rules.comparator import is_bomb_type
 from ..engine.state import GameState, is_teammate
 from ..engine.trick import current_top_player
 from .candidates import enumerate_legal_patterns, pattern_key
-from .context import opponent_min_cards
+from .context import PublicTacticalContext, opponent_min_cards
 from .hand_plan import estimate_remaining_plays, remaining_cards
 from .memory import PlayedTracker
 from .valuation import estimate_pattern_cost
 
 
-def _shortlist(state: GameState, player: int, limit: int) -> list[Pattern]:
+def _shortlist(
+    state: GameState, player: int, limit: int,
+    context: PublicTacticalContext | None = None,
+) -> list[Pattern]:
     legal = enumerate_legal_patterns(state, player)
     if len(legal) <= limit:
         return legal
@@ -26,6 +29,8 @@ def _shortlist(state: GameState, player: int, limit: int) -> list[Pattern]:
 
     hand_size = state.hand_size(player)
     keep(next((p for p in ranked if len(p.cards) == hand_size), None))
+    if context is not None and not state.table:
+        keep(min(ranked[:48], key=lambda p: context.lead_adjustment(p) + 0.13 * estimate_pattern_cost(state, player, p)))
     keep(ranked[0])
     keep(max(legal, key=lambda p: (len(p.cards), -p.wild_used)))
     normal = [p for p in legal if not is_bomb_type(p.type)]
@@ -66,6 +71,7 @@ def _pattern_score(
     *,
     tier: int,
     tracker: PlayedTracker | None,
+    context: PublicTacticalContext | None = None,
 ) -> float:
     remaining = remaining_cards(state.hands[player], pattern.cards)
     width = 6 if tier == 1 else 24
@@ -81,12 +87,24 @@ def _pattern_score(
         score += control if urgency > 3 else -control
     if not state.table:
         score -= 0.36 * (len(pattern.cards) - 1)
+        if context is not None and remaining:
+            score += context.lead_adjustment(pattern)
+            # A two-play finish needs the first play to come back; merely
+            # partitioning the hand into two groups does not establish that.
+            if estimate_remaining_plays(remaining, state.wild_card, state.level, width=6) <= 1.3:
+                response = max((context.response_risk(pattern, seat) for seat in context.opponents), default=0.0)
+                score -= 2.5 * (1.0 - response)
+    elif context is not None and remaining:
+        score += 12.0 * context.finish_risk(pattern)
     if not remaining:
         score -= 8.0
     return score
 
 
-def select_heuristic_action(state: GameState, player: int, tier: int) -> Pattern | None:
+def select_heuristic_action(
+    state: GameState, player: int, tier: int, *, team_tactics: bool = False,
+    lead_chain: bool = False, partner_bomb_guard: bool = False, deadline: float | None = None,
+) -> Pattern | None:
     """Select a legal play or intentional pass without hidden-hand access."""
     if tier not in (0, 1, 2):
         raise ValueError("heuristic tier must be 0, 1, or 2")
@@ -109,14 +127,20 @@ def select_heuristic_action(state: GameState, player: int, tier: int) -> Pattern
                 return None
         return min(candidates, key=lambda p: estimate_pattern_cost(state, player, p))
 
-    candidates = _shortlist(state, player, 12 if tier == 1 else 28)
+    context = PublicTacticalContext.from_state(state, player) if tier == 2 and team_tactics else None
+    candidates = _shortlist(state, player, 12 if tier == 1 else 28, context)
     if not candidates:
         return None
     tracker = PlayedTracker.from_history(state) if tier == 2 else None
     scored = [
-        (_pattern_score(state, player, p, tier=tier, tracker=tracker), p)
+        (_pattern_score(state, player, p, tier=tier, tracker=tracker, context=context), p)
         for p in candidates
     ]
+    if lead_chain and not state.table:
+        from .lead_chain import evaluate_leads
+
+        reports = evaluate_leads(state, player, candidates, deadline=deadline)
+        scored = [(score + reports[pattern_key(p)].adjustment if pattern_key(p) in reports else score, p) for score, p in scored]
     best_score, best = min(scored, key=lambda item: item[0])
     if not state.table:
         return best
@@ -126,7 +150,33 @@ def select_heuristic_action(state: GameState, player: int, tier: int) -> Pattern
     pass_score = 3.0 * current_plan
     top = current_top_player(state)
     urgency = opponent_min_cards(state, player)
+    pass_urgency = context.current_opponent_min_cards if context is not None else urgency
     if top is not None and is_teammate(top, player):
+        # A long residual hand cannot close in two legal plays, and opponents
+        # with >10 cards cannot immediately exit. Preserve the partner's
+        # initiative; paired search can still justify a profitable takeover.
+        if (partner_bomb_guard and tier == 2 and urgency > 10
+                and is_bomb_type(best.type)
+                and state.hand_size(player) - len(best.cards) > 10):
+            return None
+        if context is not None:
+            finish = next((p for p in candidates if len(p.cards) == state.hand_size(player)), None)
+            if finish is not None:
+                return finish
+            cover = context.partner_needs_cover()
+            if cover:
+                # Prefer a real block, rather than the cheapest card that
+                # still leaves the same opponent able to exit.
+                return min(candidates, key=lambda p: (
+                    context.finish_risk(p),
+                    _pattern_score(state, player, p, tier=tier, tracker=tracker),
+                ))
+            takeovers = [p for p in candidates if context.can_takeover_in_two(
+                p, remaining_cards(state.hands[player], p.cards),
+            )]
+            return min(takeovers, key=lambda p: _pattern_score(
+                state, player, p, tier=tier, tracker=tracker, context=context,
+            )) if takeovers else None
         teammate_cards = state.hand_size(top)
         if (
             tier == 2
@@ -140,11 +190,11 @@ def select_heuristic_action(state: GameState, player: int, tier: int) -> Pattern
         pass_score -= 5.0 if teammate_cards <= 3 and urgency > 1 else 3.3
         if urgency == 1 and state.table[-1].type == PatternType.SINGLE:
             pass_score += 6.0
-    elif urgency == 1:
+    elif pass_urgency == 1:
         pass_score += 9.0
-    elif 0 < urgency <= 3:
+    elif 0 < pass_urgency <= 3:
         pass_score += 5.0
-    elif 0 < urgency <= 5:
+    elif 0 < pass_urgency <= 5:
         pass_score += 2.0
     # Passing is a legitimate alternative.  A good multi-card shed or an
     # urgent block can outweigh it; expensive speculative bombs usually do not.

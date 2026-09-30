@@ -100,10 +100,12 @@ def dict_to_event(d: dict[str, Any]) -> Event:
             d["hand_sizes"] = tuple(d["hand_sizes"])
             if d.get("team_levels") is not None:
                 d["team_levels"] = tuple(d["team_levels"])
+            d["a_failure_counts"] = tuple(d.get("a_failure_counts", (0, 0)))
         elif event_type == "GameOver":
             d["finish_order"] = tuple(d["finish_order"])
             d["team_levels"] = tuple(d["team_levels"])
             d.setdefault("winner_team", None)
+            d["a_failure_counts"] = tuple(d.get("a_failure_counts", (0, 0)))
         elif event_type == "TributeResisted":
             d.setdefault("team", -1)
             d.setdefault("reason", "resist")

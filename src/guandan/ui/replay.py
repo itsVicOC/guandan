@@ -59,6 +59,10 @@ def replay_event_text(event: Event) -> str:
         return f"{SEAT_NAMES[event.player]}家漂牌"
     if isinstance(event, LevelUp):
         team = "东西" if event.team == 0 else "南北"
+        if event.delta < 0:
+            return f"{team}方退回 {rank_value_label(event.new_level)}"
+        if event.delta == 0:
+            return f"{team}方级牌保持 {rank_value_label(event.new_level)}"
         return f"{team}方升级至 {rank_value_label(event.new_level)}"
     if isinstance(event, GameOver):
         order = " > ".join(SEAT_NAMES[player] for player in event.finish_order)

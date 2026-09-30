@@ -38,7 +38,7 @@ from PySide6.QtWidgets import (
 
 from .. import version_label
 from ..ai import AINotImplementedError, make_strategy
-from ..engine.card import Card
+from ..engine.card import RANK_A, Card
 from ..engine.events import Pass, TurnPlayed
 from ..engine.rules.patterns import find_complete_pattern
 from ..engine.state import SEAT_NAMES, GameState
@@ -938,6 +938,11 @@ class GamePage(QWidget):
             after = final_levels[team]
             delta = after - before
             change = f"升级 {delta} 级" if delta > 0 else "级牌不变" if delta == 0 else "重置级牌"
+            if state.ruleset_version >= 3 and before == RANK_A and not state.match_finished:
+                if after == RANK_A:
+                    change = f"冲 A 失败 {state.a_failure_counts[team]}/3"
+                else:
+                    change = "三次未过 A，退回 2"
             score_lines.append(
                 f"{name}队  {rank_value_label(before)} → {rank_value_label(after)}  ·  {change}"
             )

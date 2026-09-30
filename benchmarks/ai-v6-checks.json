@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "source_sha256": "c9135123187f93670a1dd024a4abb311bda8b2a7fc5e8f855ae4527842214317",
+  "pytest": {
+    "command": "QT_QPA_PLATFORM=offscreen pytest --cov=guandan --cov-report=term --cov-report=json -q",
+    "passed": 785,
+    "failed": 0
+  },
+  "coverage_percent": 84.43883235534427,
+  "coverage_boundary_percent": {
+    "storage": 84.64,
+    "ui_session": 82.28,
+    "engine_replay": 76.12
+  },
+  "ruff": {
+    "command": "ruff check src tests scripts packaging",
+    "passed": true
+  },
+  "mypy": {
+    "command": "mypy src",
+    "source_files": 91,
+    "passed": true
+  },
+  "git_diff_check": true,
+  "fixed_regression": {
+    "decisions": 30,
+    "passed": true,
+    "baseline": "ai-regression-v6.json",
+    "review": "ai-v6-regression-review.json"
+  },
+  "complete_src_sha256": "27e72766c846195372ae41917a51891e6ec9617d5db6643611d94c6a03447db1"
+}

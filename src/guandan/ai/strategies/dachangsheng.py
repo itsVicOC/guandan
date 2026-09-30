@@ -11,7 +11,8 @@ from typing import Mapping, Optional, cast
 
 from ...engine.hand import Pattern
 from ...engine.state import GameState
-from ..mcts.endgame_solver import UNSOLVED, solve_endgame
+from ..match_value import round_value_span
+from ..mcts.endgame_solver import UNSOLVED, EndgameSearchResult, solve_endgame
 from ..mcts.information_set import ActionStatistics, SearchStyle
 from ..profiles import load_profile
 from .professional import ProfessionalStrategy
@@ -64,12 +65,19 @@ class DaiChangshengStrategy(ProfessionalStrategy):
             widening_c=mcts_config.get("widening_c", 2.0),
             widening_alpha=mcts_config.get("widening_alpha", 0.5),
             search_mode=str(mcts_config.get("search_mode", "root")),
+            team_tactics=bool(mcts_config.get("team_tactics", False)),
+            lead_chain=bool(mcts_config.get("lead_chain", False)),
+            partner_bomb_guard=bool(mcts_config.get("partner_bomb_guard", False)),
+            heterogeneous_rollouts=bool(mcts_config.get("heterogeneous_rollouts", False)),
         )
         self.reference_iterations = int(mcts_config.get(
             "reference_iterations",
             0,
         ))
         self.confidence_guard = bool(mcts_config.get("confidence_guard", False))
+        self.endgame_confidence = bool(mcts_config.get("endgame_confidence", False))
+        self.endgame_policy = bool(mcts_config.get("endgame_policy", False))
+        self.last_endgame: EndgameSearchResult | None = None
 
     def select_pattern(
         self, state: GameState, player: int
@@ -87,6 +95,8 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         Returns:
             最佳牌型（None 表示过牌）
         """
+        self.last_endgame = None
+        self.last_guard = None
         if self._forced_pass(state, player):
             self.last_search = None
             self.last_decision_reason = "forced_pass"
@@ -99,16 +109,28 @@ class DaiChangshengStrategy(ProfessionalStrategy):
                 started + full_budget_ms * 0.7 / 1000.0
                 if self.time_budget_ms > 0 else float("inf")
             )
+            reports: list[EndgameSearchResult] = []
             action = solve_endgame(
                 state,
                 player,
                 rng=self.rng,
                 deadline=deadline,
                 max_actions=self.max_actions,
+                worlds=8 if self.endgame_confidence else 2,
+                min_worlds=6 if self.endgame_confidence else 2,
+                confidence_guard=self.endgame_confidence,
+                team_tactics=self.team_tactics,
+                information_safe=self.endgame_policy,
+                reports=reports,
             )
+            self.last_endgame = reports[0] if reports else None
             if action is not UNSOLVED:
                 self.last_search = None
-                self.last_decision_reason = "endgame_solved"
+                self.last_decision_reason = (
+                    "endgame_exact" if self.last_endgame and self.last_endgame.exact
+                    else "endgame_tactical_guard" if self.last_endgame and self.last_endgame.reason == "tactical_guard"
+                    else "endgame_sampled"
+                )
                 return cast(Optional[Pattern], action)
             if self.time_budget_ms == 0:
                 # Fixed-work evaluation still exercises the endgame feature;
@@ -172,3 +194,9 @@ class DaiChangshengStrategy(ProfessionalStrategy):
             teammate_awareness=float(self.style["teammate_awareness"]),
             control_priority=float(self.style["control_priority"]),
         )
+
+    def _gain_threshold(self, state: GameState, chosen: ActionStatistics | None, reference: ActionStatistics | None) -> float:
+        if (self.confidence_guard and chosen is not None and reference is not None
+                and chosen.reference_key == reference.action_key and chosen.paired_standard_error is not None):
+            return max(0.04 * round_value_span(state), 1.64 * chosen.paired_standard_error)
+        return super()._gain_threshold(state, chosen, reference)

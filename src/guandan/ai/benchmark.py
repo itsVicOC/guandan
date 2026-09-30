@@ -47,6 +47,12 @@ class MatchResult:
         tuple[float, ...],
         tuple[float, ...],
     ] = ((), (), (), ())
+    initial_levels: tuple[int, int] | None = None
+    initial_a_failures: tuple[int, int] = (0, 0)
+    final_a_failures: tuple[int, int] = (0, 0)
+    ruleset_version: int = 3
+    match_finished: bool = False
+    match_winner_team: int | None = None
 
     @property
     def decision_seconds(self) -> tuple[float, ...]:
@@ -69,6 +75,12 @@ class MatchResult:
             "final_levels": list(self.final_levels) if self.final_levels else None,
             "team_bomb_count": list(self.team_bomb_count),
             "drift": self.drift,
+            "initial_levels": self.initial_levels,
+            "initial_a_failures": self.initial_a_failures,
+            "final_a_failures": self.final_a_failures,
+            "ruleset_version": self.ruleset_version,
+            "match_finished": self.match_finished,
+            "match_winner_team": self.match_winner_team,
             "duration_seconds": round(self.duration_seconds, 6),
             "decision_latency": _latency_payload(self.decision_seconds),
             "seat_decision_latency": [
@@ -334,10 +346,16 @@ def run_match(
     difficulties: Sequence[int] | int = (0, 1, 2, 3),
     max_turns: int = 2000,
     strategy_factory: StrategyFactory | None = None,
+    team_levels: Sequence[int] | None = None,
+    a_failure_counts: Sequence[int] | None = None,
+    first_player: int = 0,
 ) -> MatchResult:
     """运行一局 4 AI 对战。"""
     seat_difficulties = _normalize_difficulties(difficulties)
-    state = make_initial_state(level=level, first_player=0, seed=seed)
+    state = make_initial_state(level=level, first_player=first_player, seed=seed,
+                               team_levels=list(team_levels) if team_levels is not None else None,
+                               a_failure_counts=list(a_failure_counts) if a_failure_counts is not None else None)
+    initial_counts = tuple(state.a_failure_counts)
     factory = strategy_factory or (lambda difficulty, _player: make_strategy(difficulty))
     strategies = [
         factory(difficulty, player)
@@ -358,6 +376,8 @@ def run_match(
         turns += 1
 
     duration = time.perf_counter() - start
+    if state.finished and replay_events(state.history) != state:
+        raise RuntimeError("trial round failed exact event replay")
     winner_team = team_of(state.finish_order[0]) if state.finish_order else None
     final_levels = getattr(state, "team_levels_final", None)
     if final_levels is not None:
@@ -376,6 +396,11 @@ def run_match(
         drift=state.drift,
         duration_seconds=duration,
         decision_seconds_by_player=_freeze_decision_seconds(decision_seconds),
+        initial_levels=(state.team_levels[0], state.team_levels[1]),
+        initial_a_failures=(initial_counts[0], initial_counts[1]),
+        final_a_failures=(state.a_failure_counts[0], state.a_failure_counts[1]),
+        ruleset_version=state.ruleset_version, match_finished=state.match_finished,
+        match_winner_team=state.winner_team,
     )
 
 
@@ -394,6 +419,8 @@ def _prepare_next_round(
         first_player=previous.finish_order[0],
         seed=seed,
         team_levels=levels,
+        ruleset_version=previous.ruleset_version,
+        a_failure_counts=previous.a_failure_counts,
     )
     tribute_choices, return_choices = choose_ai_tribute_cards(
         previous.finish_order,
@@ -451,6 +478,7 @@ def run_full_match(
     match_started = time.perf_counter()
 
     for round_offset in range(max_rounds):
+        initial_counts = tuple(state.a_failure_counts)
         round_started = time.perf_counter()
         round_turns = 0
         decision_seconds: list[list[float]] = [[], [], [], []]
@@ -482,6 +510,11 @@ def run_full_match(
                 drift=state.drift,
                 duration_seconds=round_duration,
                 decision_seconds_by_player=_freeze_decision_seconds(decision_seconds),
+                initial_levels=(state.team_levels[0], state.team_levels[1]),
+                initial_a_failures=(initial_counts[0], initial_counts[1]),
+                final_a_failures=(state.a_failure_counts[0], state.a_failure_counts[1]),
+                ruleset_version=state.ruleset_version, match_finished=state.match_finished,
+                match_winner_team=state.winner_team,
             )
         )
         if not state.finished:

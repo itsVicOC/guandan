@@ -487,6 +487,17 @@ profile_module.update_profile(mutate)
 class TestSavegame:
     """测试 Savegame 管理。"""
 
+    def test_a_failure_count_survives_save_and_replay(self, tmp_path):
+        state = make_initial_state(
+            level=14, first_player=0, seed=42,
+            team_levels=[14, 5], a_failure_counts=[2, 0],
+        )
+        with patch("guandan.storage.savegame.get_savegame_path", return_value=tmp_path / "savegame.json"):
+            save_game(state, "a-failures", 0, [None, 2, 2, 2], 42)
+            restored = restore_game_state(load_game())
+        assert restored.a_failure_counts == [2, 0]
+        assert restored.history[0].a_failure_counts == (2, 0)
+
     def test_save_and_load_game(self):
         """保存并加载游戏。"""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -524,7 +535,7 @@ class TestSavegame:
                 assert loaded["game_id"] == "test_game_001"
                 assert loaded["metadata"]["player_seat"] == 0
                 assert loaded["metadata"]["seed"] == 42
-                assert loaded["ruleset_version"] == 2
+                assert loaded["ruleset_version"] == 3
                 assert isinstance(loaded["events"], list)
                 assert len(loaded["events"]) > 0
                 assert "state" in loaded
@@ -568,7 +579,7 @@ class TestSavegame:
                 assert restored.team_levels_final is None
                 assert restored.match_finished is False
                 assert restored.winner_team is None
-                assert restored.ruleset_version == 2
+                assert restored.ruleset_version == 3
 
     def test_restore_game_state_replays_tribute_events_without_snapshot(self):
         state = make_initial_state(level=5, first_player=0, seed=42)
@@ -857,7 +868,7 @@ class TestHistory:
                 detail = load_history_detail("game001")
                 assert detail is not None
                 assert detail["game_id"] == "game001"
-                assert detail["ruleset_version"] == 2
+                assert detail["ruleset_version"] == 3
                 assert isinstance(detail["events"], list)
                 assert len(detail["events"]) > 0
 

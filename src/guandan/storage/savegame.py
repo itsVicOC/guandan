@@ -255,6 +255,8 @@ def _validate_loaded_savegame(savegame: dict[str, Any]) -> None:
             raise ValueError("pending round has already been played")
         if restored.team_levels != previous.team_levels_final:
             raise ValueError("pending round levels disagree with its predecessor")
+        if restored.a_failure_counts != previous.a_failure_counts:
+            raise ValueError("pending round A failure counts disagree with its predecessor")
 
     events = savegame.get("events", [])
     replayed = replay_events(events, ruleset_version=restored.ruleset_version)
@@ -295,6 +297,10 @@ def _validate_state_invariants(state: GameState) -> None:
         raise ValueError("savegame team levels are invalid")
     if len(state.team_bomb_count) != 2 or any(count < 0 for count in state.team_bomb_count):
         raise ValueError("savegame bomb counts are invalid")
+    if len(state.a_failure_counts) != 2 or any(
+        type(count) is not int or count not in range(3) for count in state.a_failure_counts
+    ):
+        raise ValueError("savegame A failure counts are invalid")
     if len(state.has_played_ace) != 2:
         raise ValueError("savegame ace flags are invalid")
     if (
@@ -517,6 +523,7 @@ def _state_to_dict(state: GameState) -> dict[str, Any]:
         "leader": state.leader,
         "finish_order": list(state.finish_order),
         "team_bomb_count": list(state.team_bomb_count),
+        "a_failure_counts": list(state.a_failure_counts),
         "has_played_ace": list(state.has_played_ace),
         "finished": state.finished,
         "tribute_state": _tribute_state_to_dict(state.tribute_state),
@@ -550,6 +557,7 @@ def _dict_to_state(
         history=list(events),
         finish_order=list(data.get("finish_order", [])),
         team_bomb_count=list(data.get("team_bomb_count", [0, 0])),
+        a_failure_counts=list(data.get("a_failure_counts", [0, 0])),
         has_played_ace=list(data.get("has_played_ace", [False, False])),
         finished=data.get("finished", False),
         tribute_state=_dict_to_tribute_state(data.get("tribute_state", {})),

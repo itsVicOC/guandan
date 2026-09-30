@@ -15,7 +15,15 @@ from typing import Sequence
 
 from ...engine.hand import Pattern
 from ...engine.state import GameState, clone_state_for_search
-from ..candidates import material_variants, pattern_key, smallest_legal_pattern
+from ..candidates import (
+    enumerate_legal_patterns,
+    material_variants,
+    pattern_key,
+    smallest_legal_pattern,
+)
+from ..context import PublicTacticalContext
+from ..match_value import round_value_span
+from ..partner_model import sample_styles
 from ..tactics import select_heuristic_action
 from ..valuation import enumerate_search_candidates
 from .determinize import determinize
@@ -131,6 +139,7 @@ def root_action_search(
     min_samples: int = 2,
     finalists: int = 2,
     reference_actions: Sequence[Pattern | None] = (),
+    heterogeneous_rollouts: bool = False,
 ) -> SearchResult:
     """Evaluate root actions with paired worlds and optional successive halving.
 
@@ -154,9 +163,28 @@ def root_action_search(
     started = time.perf_counter()
     deadline = started + time_budget_ms / 1000.0 if time_budget_ms > 0 else None
     search_style = style or SearchStyle()
+    prior_weight *= round_value_span(state)
     patterns = root_action_candidates(
         state, player, max_actions=max_actions, reference_actions=reference_actions
     )
+    if rollout_strategy >= 3 and not state.table:
+        # Reserve a control/support lead by replacing the weakest ordinary
+        # representative; required finishes and reference moves remain present.
+        context = PublicTacticalContext.from_state(state, player)
+        legal = enumerate_legal_patterns(state, player)
+        if legal:
+            safety = min(legal[:48], key=lambda p: context.lead_adjustment(p))
+            if all(p is None or pattern_key(p) != pattern_key(safety) for p in patterns):
+                protected = {_arm_key(p) for p in reference_actions}
+                protected.add(_arm_key(smallest_legal_pattern(state, player)))
+                replace_at = next((
+                    i for i, candidate in reversed(list(enumerate(patterns)))
+                    if candidate is not None
+                    and len(candidate.cards) != state.hand_size(player)
+                    and _arm_key(candidate) not in protected
+                ), None)
+                if replace_at is not None:
+                    patterns[replace_at] = safety
     arms = [
         _RootArm(
             key=_arm_key(pattern),
@@ -192,6 +220,7 @@ def root_action_search(
         sampled_world = determinize(state, player, rng)
         sampling_seconds += time.perf_counter() - sampling_started
         sampled_worlds += 1
+        styles = sample_styles(state, rng) if heterogeneous_rollouts else None
         completed_round = True
         # Rotate partial rounds so a clock cutoff does not always favour the
         # first candidate in the deterministic ordering.
@@ -216,6 +245,7 @@ def root_action_search(
                 max_turns=rollout_max_turns,
                 copy_state=False,
                 deadline=deadline,
+                **({"styles": styles} if styles is not None else {}),
             )
             rollout_seconds += time.perf_counter() - rollout_started
             if deadline is not None and time.perf_counter() >= deadline:

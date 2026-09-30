@@ -38,7 +38,8 @@ from .hand import Pattern, PatternType
 
 # 队伍：0=东-西（player 0 & 2），1=南-北（player 1 & 3）
 LEGACY_RULESET_VERSION = 1  # 旧局：过牌锁定至整墩结束
-CURRENT_RULESET_VERSION = 2  # 新局：每次压牌后重新询问其他在场玩家
+PASS_RESET_RULESET_VERSION = 2  # 历史局：重新询问过牌者，但一次冲 A 失败退 2
+CURRENT_RULESET_VERSION = 3  # 新局：累计三次未过 A 才退 2
 
 
 def team_of(player: int) -> int:
@@ -94,6 +95,7 @@ class GameState:
     history: list[Event] = field(default_factory=list)
     finish_order: list[int] = field(default_factory=list)
     team_bomb_count: list[int] = field(default_factory=lambda: [0, 0])
+    a_failure_counts: list[int] = field(default_factory=lambda: [0, 0])
     # 兼容旧存档/旧统计字段；当前过 A 只看 A 级局名次，不要求先出过 A。
     has_played_ace: list[bool] = field(default_factory=lambda: [False, False])
     finished: bool = False
@@ -130,9 +132,15 @@ class GameState:
             self.team_levels = [self.level, self.level]
         if type(self.ruleset_version) is not int or self.ruleset_version not in (
             LEGACY_RULESET_VERSION,
+            PASS_RESET_RULESET_VERSION,
             CURRENT_RULESET_VERSION,
         ):
             raise ValueError("unsupported ruleset version")
+        if len(self.a_failure_counts) != 2 or any(
+            type(count) is not int or count not in range(3)
+            for count in self.a_failure_counts
+        ):
+            raise ValueError("A failure counts must be two integers from 0 to 2")
 
 
 # ---- 玩家行动 ----
@@ -212,7 +220,7 @@ def play_pattern(state: GameState, player: int, pattern: Pattern) -> None:
         state.leader = player
     # 一次过牌只回应当时的桌顶。有人压牌后，各家重新获得回应机会。
     # 旧局保持原有锁定行为，确保旧存档与事件流可按原规则重建。
-    if state.ruleset_version == CURRENT_RULESET_VERSION:
+    if state.ruleset_version != LEGACY_RULESET_VERSION:
         state.passed_players.clear()
 
     # 累计本队炸弹数
@@ -473,10 +481,20 @@ def _finish_game(state: GameState) -> None:
         else:
             # 队友是末游 → 冲 A 失败
             guo_a_failed = True
-            # 文档说"退回级牌2重打或重新打A"
-            # 我们这里简化为：上游方降回 2
-            new_levels[upstream_team] = RANK_2
-            # 另一方不变
+            if state.ruleset_version < CURRENT_RULESET_VERSION:
+                new_levels[upstream_team] = RANK_2
+
+    if state.ruleset_version >= CURRENT_RULESET_VERSION and not guo_a:
+        # 每副 A 级牌都算一次过 A 机会；未拿头游同样未能过 A。
+        # 两队可以同时在 A，失败次数各自累计。第三次失败才回到 2。
+        for team in (0, 1):
+            if base_levels[team] != RANK_A:
+                continue
+            guo_a_failed = True
+            state.a_failure_counts[team] += 1
+            if state.a_failure_counts[team] == 3:
+                new_levels[team] = RANK_2
+                state.a_failure_counts[team] = 0
 
     state.team_levels_final = new_levels
     state.drift_flag = drift
@@ -489,7 +507,8 @@ def _finish_game(state: GameState) -> None:
     from .events import GameOver, LevelUp
 
     # 即使过 A 成功或失败也记录 LevelUp（用于显示）
-    if delta_team0 != 0 or guo_a or guo_a_failed:
+    if (new_levels[0] != base_levels[0] if state.ruleset_version >= CURRENT_RULESET_VERSION
+            else delta_team0 != 0 or guo_a or guo_a_failed):
         state.history.append(
             LevelUp(
                 team=0,
@@ -497,7 +516,8 @@ def _finish_game(state: GameState) -> None:
                 delta=new_levels[0] - base_levels[0],
             )
         )
-    if delta_team1 != 0 or guo_a or guo_a_failed:
+    if (new_levels[1] != base_levels[1] if state.ruleset_version >= CURRENT_RULESET_VERSION
+            else delta_team1 != 0 or guo_a or guo_a_failed):
         state.history.append(
             LevelUp(
                 team=1,
@@ -512,6 +532,7 @@ def _finish_game(state: GameState) -> None:
             drift=drift,
             guo_a=guo_a,
             winner_team=state.winner_team,
+            a_failure_counts=(state.a_failure_counts[0], state.a_failure_counts[1]),
         )
     )
 
@@ -522,6 +543,7 @@ def make_initial_state(
     seed: Optional[int] = None,
     team_levels: Optional[list[int] | tuple[int, int]] = None,
     ruleset_version: int = CURRENT_RULESET_VERSION,
+    a_failure_counts: Optional[list[int] | tuple[int, int]] = None,
 ) -> GameState:
     """构造一局的初始状态（发牌完毕）。
 
@@ -530,7 +552,8 @@ def make_initial_state(
         first_player: 首发起家索引
         seed: 随机种子（用于复现）
         team_levels: 本局开始时两队各自级牌。未传入时两队都视为 level。
-        ruleset_version: 规则版本。旧存档重放传 1，新局默认 2。
+        ruleset_version: 规则版本。旧存档重放传 1/2，新局默认 3。
+        a_failure_counts: 两队此前累计的冲 A 失败次数。
     """
     if not RANK_2 <= level <= RANK_A:
         raise ValueError(f"level must be 2..14, got {level}")
@@ -568,6 +591,7 @@ def make_initial_state(
         hands=hands,
         turn_index=first_player,
         team_levels=initial_team_levels,
+        a_failure_counts=list(a_failure_counts) if a_failure_counts is not None else [0, 0],
         leader=first_player,
         ruleset_version=ruleset_version,
     )
@@ -580,6 +604,7 @@ def make_initial_state(
             first_player=first_player,
             seed=resolved_seed,
             team_levels=(initial_team_levels[0], initial_team_levels[1]),
+            a_failure_counts=(state.a_failure_counts[0], state.a_failure_counts[1]),
         )
     )
     return state
@@ -622,6 +647,7 @@ _SEARCH_MUTATED_CONTAINERS = (
     "history",
     "finish_order",
     "team_bomb_count",
+    "a_failure_counts",
     "has_played_ace",
     "team_levels",
 )

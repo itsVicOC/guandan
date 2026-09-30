@@ -52,6 +52,18 @@ def _plain(markup: str) -> str:
     return Text.from_markup(markup).plain
 
 
+def test_ai_completion_does_not_refresh_a_detached_screen() -> None:
+    from guandan.ui.background import TurnResult
+
+    screen = GameScreen(difficulty=0)
+    screen._ai_running = True
+    with patch.object(screen, "_refresh_all") as refresh:
+        screen._finish_ai_turn(TurnResult())
+        screen._maybe_ai_turn()
+    assert not screen._ai_running
+    refresh.assert_not_called()
+
+
 def _single(card: Card) -> Pattern:
     return Pattern(PatternType.SINGLE, card.rank, 1, (card,), 0)
 

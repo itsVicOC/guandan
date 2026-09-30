@@ -1,0 +1,54 @@
+{
+  "frozen_at_utc": "2026-09-29T05:33:48.155443+00:00",
+  "source_sha256": "e7fe32a6546e237110877ca5fbfc471ede3c400502ea2b0337588e877b8aeb28",
+  "baseline_sha": "3f687c8d14189bfc99df6b61e23cd5c2716ef91f",
+  "selected_variant": "team",
+  "selection_rule": "largest final 32-pair development mean; tie chooses combined",
+  "development_means": {
+    "team": 0.13125,
+    "combined": 0.058333333333
+  },
+  "planned_suites": {
+    "holdout": {
+      "pairs": 240,
+      "seed_start": 92000,
+      "levels": [
+        2,
+        9,
+        14
+      ]
+    },
+    "mixed": {
+      "pairs": 60,
+      "seed_start": 93000,
+      "styles": [
+        0,
+        1,
+        2
+      ]
+    },
+    "full": {
+      "pairs": 4,
+      "seed_start": 95000
+    },
+    "clock": {
+      "pairs": 8,
+      "seed_start": 94000,
+      "serial": true
+    }
+  },
+  "fixed_iterations": 128,
+  "no_holdout_tuning_or_sample_extension": true,
+  "enable_requires": [
+    "holdout lower 95% paired bound > 0",
+    "mixed lower 95% paired bound > 0",
+    "serial production budget gate",
+    "4 complete swapped match pairs and strict replay",
+    "tests, ruff, mypy, fixed regression"
+  ],
+  "selected_flags": {
+    "team_tactics": true,
+    "endgame_confidence": false,
+    "rollout_strategy": 3
+  }
+}

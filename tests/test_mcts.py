@@ -421,6 +421,7 @@ class TestMCTSEvaluation:
 
     def test_finished_double_up_scores_best_for_root_team(self):
         state = _make_test_state()
+        state.ruleset_version = 2  # Historical single-round reward contract.
         state.finished = True
         state.finish_order = [0, 2, 1]
 
@@ -458,6 +459,7 @@ class TestMCTSEvaluation:
         scores = {}
         for level_gain, order in orders.items():
             state = _make_test_state()
+            state.ruleset_version = 2
             state.finished = True
             state.finish_order = order
             scores[level_gain] = _evaluate_result(state, root_player=0)

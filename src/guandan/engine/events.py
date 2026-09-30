@@ -35,6 +35,7 @@ class ShuffleDeal:
     # 出于反作弊：保存种子，让他人能复现
     seed: int
     team_levels: Optional[tuple[int, int]] = None  # 本局开始时两队各自级牌
+    a_failure_counts: tuple[int, int] = (0, 0)  # 累计未过 A 次数；旧事件默认为零
 
 
 @dataclass(frozen=True)
@@ -113,6 +114,7 @@ class GameOver:
     drift: bool
     guo_a: bool  # 是否过 A
     winner_team: Optional[int] = None
+    a_failure_counts: tuple[int, int] = (0, 0)
 
 
 # 所有事件类型

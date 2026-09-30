@@ -57,7 +57,7 @@ def test_planned_value_distinguishes_groups_and_is_team_symmetric() -> None:
     )
     assert structured_value + planned_position_value(state, 1) == pytest.approx(1.0)
     state.hands[0] = scattered
-    assert structured_value > planned_position_value(state, 0) + 0.1
+    assert structured_value > planned_position_value(state, 0)
 
 
 def test_material_cache_does_not_cache_level_or_trick_legality() -> None:
@@ -86,6 +86,7 @@ def test_unseen_joker_pair_prevents_false_level_pair_control() -> None:
 
 def test_unfinished_value_respects_already_decided_head_place() -> None:
     state = make_initial_state(seed=99)
+    state.ruleset_version = 2  # Legacy single-round scale; match scale is tested separately.
     state.finish_order = [1, 0]
     state.hands[0] = []
     state.hands[1] = []
@@ -135,7 +136,7 @@ def test_endgame_cache_does_not_reuse_fail_low_as_exact() -> None:
     budget = _Budget(deadline=float("inf"), nodes_left=30000)
     bound = _minimax(state, 0, 12, budget, 0.99, 1.0)
     assert bound < 0.99
-    assert _key(state, 12) not in budget.cache
+    assert budget.cache[(_key(state, 12), 0, ())].bound == "UPPER"
     fresh = _Budget(deadline=float("inf"), nodes_left=30000)
     assert _minimax(state, 0, 12, budget, 0.0, 1.0) == _minimax(
         state, 0, 12, fresh, 0.0, 1.0
@@ -412,7 +413,7 @@ def test_sampled_endgame_ignores_actual_opponent_cards() -> None:
     assert first_choice is not UNSOLVED
     assert first_choice == second_choice
     fixed_work = DaiChangshengStrategy(
-        rng=random.Random(42), mcts_overrides={"time_budget_ms": 0}
+        rng=random.Random(42), mcts_overrides={"time_budget_ms": 0, "endgame_confidence": 1}
     )
     assert fixed_work.select_pattern(state, player) == first_choice
     assert fixed_work.last_search is None

@@ -14,7 +14,7 @@ from textual.screen import Screen
 from textual.timer import Timer
 from textual.widgets import Button, Footer, Header, Static
 
-from ...engine.card import Card, Suit
+from ...engine.card import RANK_A, Card, Suit
 from ...engine.events import (
     Pass,
     TurnPlayed,
@@ -633,9 +633,16 @@ class GameScreen(Screen):
                 )
             else:
                 next_level = self._next_round_level(s)
+                a_notice = ""
+                if s.ruleset_version >= 3:
+                    final_levels = s.team_levels_final or s.team_levels
+                    for team, name in enumerate(("东西", "南北")):
+                        if s.team_levels[team] == RANK_A:
+                            failures = s.a_failure_counts[team] if final_levels[team] == RANK_A else 3
+                            a_notice += f" · {name}队未过 A {failures}/3"
                 self.sub_title = (
                     f"本局结束！本局级牌 {_rank_value_label(s.level)} · 名次：{order_str} · "
-                    f"下一局级牌 {_rank_value_label(next_level)} · 按 N 继续"
+                    f"下一局级牌 {_rank_value_label(next_level)}{a_notice} · 按 N 继续"
                 )
         elif s.turn_index == self.human:
             hand_size = len(s.hands[self.human])
@@ -1128,6 +1135,8 @@ class GameScreen(Screen):
             event.stop()
 
     def _maybe_ai_turn(self) -> None:
+        if not self.is_mounted or not self.query("#my-hand"):
+            return
         if self._failed_turn is not None:
             return
         if self._ai_running or self._saving or self.session.is_next_game_pending():
@@ -1150,6 +1159,10 @@ class GameScreen(Screen):
 
     def _finish_ai_turn(self, result: TurnResult) -> None:
         self._ai_running = False
+        # Worker completion can race with screen teardown. The committed
+        # session result remains available; detached controls must not refresh.
+        if not self.is_mounted or not self.query("#my-hand"):
+            return
         self._failed_turn = result if result.error is not None else None
         if result.error is not None:
             self._last_action = f"后台操作失败：{result.error}；按 R 重试或 Esc 返回"

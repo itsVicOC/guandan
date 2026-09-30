@@ -2,13 +2,16 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import multiprocessing as mp
+import platform
 from pathlib import Path
 
 from guandan.ai.mcts.information_set import _apply_action
 from guandan.ai.mcts.search import (
+    _PLANNED_VALUE_WEIGHTS,
     _evaluate_result,
     _evaluate_unfinished,
     _rollout_select_pattern,
@@ -18,7 +21,7 @@ from guandan.engine.state import make_initial_state
 
 
 def collect(job):
-    index, seed = job
+    index, seed, rollout_level = job
     level = (2, 9, 14)[index % 3]
     state = make_initial_state(seed=seed, level=level, first_player=index % 4)
     rows = []
@@ -36,7 +39,7 @@ def collect(job):
                 'old_estimate': _evaluate_unfinished(state, 0),
             })
         seat = state.current_player()
-        pattern = _rollout_select_pattern(state, seat, rollout_strategy_level=1)
+        pattern = _rollout_select_pattern(state, seat, rollout_strategy_level=rollout_level)
         if not _apply_action(state, seat, pattern):
             raise RuntimeError('illegal training continuation')
     raise RuntimeError('training game did not complete')
@@ -74,13 +77,19 @@ def main():
     parser.add_argument('--seed-start', type=int, default=40000)
     parser.add_argument('--workers', type=int, default=8)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--rollout-level', type=int, choices=(1, 3), default=1)
     args = parser.parse_args()
     if args.deals < 16 or args.workers < 1:
         parser.error('at least 16 deals and a positive worker count are required')
     rows = []
+    root = Path(__file__).resolve().parents[1]
+    digest = hashlib.sha256()
+    for path in sorted((root / "src/guandan/ai").rglob("*.py")):
+        digest.update(str(path.relative_to(root)).encode())
+        digest.update(path.read_bytes())
     with mp.Pool(args.workers) as pool:
         for index, new_rows in enumerate(pool.imap_unordered(
-            collect, enumerate(range(args.seed_start, args.seed_start + args.deals))
+            collect, ((i, seed, args.rollout_level) for i, seed in enumerate(range(args.seed_start, args.seed_start + args.deals)))
         ), 1):
             rows.extend(new_rows)
             if index % 64 == 0:
@@ -99,13 +108,16 @@ def main():
         'meta': {
             'deals': args.deals, 'seed_start': args.seed_start,
             'levels': [2, 9, 14], 'holdout': 'every fourth block of four whole deals; balanced starting seats',
-            'target': 'terminal team utility under the current level-1 rollout policy',
+            'target': f'terminal team utility under the current level-{args.rollout_level} rollout policy',
+            'rollout_level': args.rollout_level,
+            'source_sha256': digest.hexdigest(), 'python': platform.python_version(),
             'intercept': 0.0, 'ridge': 0.0005,
         },
         'weights': weights,
         'summary': {
             'training_positions': len(train), 'holdout_positions': len(holdout),
             'old_holdout_loss': loss(holdout, lambda row: row['old_estimate']),
+            'previous_planned_holdout_loss': loss(holdout, lambda row: probability(_PLANNED_VALUE_WEIGHTS, row['features'])),
             'new_holdout_loss': loss(holdout, lambda row: probability(weights, row['features'])),
         },
         'positions': rows,

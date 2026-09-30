@@ -5,8 +5,11 @@ AI 不再手写各牌型枚举，而是复用规则层的 `detect_patterns()`：
 """
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, OrderedDict
+from collections.abc import Callable
 from functools import lru_cache
+from itertools import product
+from threading import Lock
 from typing import List, Optional, TypeAlias
 
 from ..engine.card import Card
@@ -123,6 +126,60 @@ def enumerate_legal_patterns(
         candidates.append(pattern)
 
     return candidates
+
+
+_exact_material_cache: OrderedDict[tuple, tuple[Pattern, ...]] = OrderedDict()
+_exact_material_lock = Lock()
+
+
+def _exact_small_hand_patterns(
+    hand: tuple[Card, ...], wild: Card | None, check: Callable[[], None] | None = None,
+) -> tuple[Pattern, ...]:
+    """Enumerate every material subset, including all natural suit variants.
+
+    This is confined to <=12-card endgames. Equal copies of the same card are
+    indistinguishable; multiset enumeration avoids duplicate physical subsets.
+    """
+    if len(hand) > 12:
+        raise ValueError("exact material enumeration requires at most 12 cards")
+    if check is not None:
+        check()
+    cache_key = (hand, wild)
+    with _exact_material_lock:
+        cached = _exact_material_cache.get(cache_key)
+        if cached is not None:
+            _exact_material_cache.move_to_end(cache_key)
+            return cached
+    counts = Counter(hand)
+    cards = tuple(sorted(counts))
+    patterns: dict[PatternKey, Pattern] = {}
+    for index, quantities in enumerate(product(*(range(counts[card] + 1) for card in cards))):
+        if check is not None and index % 16 == 0:
+            check()
+        material = tuple(card for card, count in zip(cards, quantities) for _ in range(count))
+        if not material:
+            continue
+        for pattern in detect_patterns(material, wild):
+            if len(pattern.cards) == len(material):
+                patterns.setdefault(pattern_key(pattern), pattern)
+    result = tuple(patterns.values())
+    with _exact_material_lock:
+        _exact_material_cache[cache_key] = result
+        _exact_material_cache.move_to_end(cache_key)
+        if len(_exact_material_cache) > 2048:
+            _exact_material_cache.popitem(last=False)
+    return result
+
+
+def enumerate_exact_small_hand_patterns(
+    state: GameState, player: int, *, check: Callable[[], None] | None = None,
+) -> list[Pattern]:
+    """All legal material choices, rather than the detector's representatives."""
+    top = state.table[-1] if state.table else None
+    return [
+        pattern for pattern in _exact_small_hand_patterns(tuple(sorted(state.hands[player])), state.wild_card, check)
+        if top is None or pattern.can_be_played_on(top, level=state.level)
+    ]
 
 
 def material_variants(

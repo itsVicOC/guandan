@@ -2,7 +2,7 @@
 
 **今晚，开一桌。** 一款开源、离线的单机掼蛋游戏：你与 AI 队友搭档，对阵另外两名 AI，从 2 一路打到过 A。支持原生桌面 GUI 和终端 TUI，无需注册账号。
 
-**当前版本：[v0.8.5-beta.1 公测版](https://github.com/itsVicOC/guandan/releases/tag/v0.8.5-beta.1)** · Windows / macOS / Linux · Python 3.10+ · MIT
+**当前版本：[v0.8.6-beta.1 公测版](https://github.com/itsVicOC/guandan/releases/tag/v0.8.6-beta.1)** · Windows / macOS / Linux · Python 3.10+ · MIT
 
 [下载安装](#下载安装) · [游戏画面](#游戏画面) · [开始第一局](#开始第一局) · [操作速查](#操作速查) · [完整规则](docs/rules.md) · [更新日志](CHANGELOG.md)
 
@@ -53,14 +53,14 @@
 
 ### 直接运行桌面包
 
-从 [v0.8.5-beta.1 下载页](https://github.com/itsVicOC/guandan/releases/tag/v0.8.5-beta.1) 的 **Assets** 中选择对应平台压缩包。桌面包已包含 Python、PySide6 和运行依赖，解压后即可运行：
+从 [v0.8.6-beta.1 下载页](https://github.com/itsVicOC/guandan/releases/tag/v0.8.6-beta.1) 的 **Assets** 中选择对应平台压缩包。桌面包已包含 Python、PySide6 和运行依赖，解压后即可运行：
 
 | 系统 | 下载文件 | 启动方式 |
 | --- | --- | --- |
-| Windows x64 | `Guandan-v0.8.5-beta.1-windows-x64.zip` | 解压整个文件夹，运行 `Guandan/Guandan.exe` |
-| macOS Apple Silicon（M 系列） | `Guandan-v0.8.5-beta.1-macos-arm64.zip` | 解压后打开 `Guandan.app` |
-| macOS Intel | `Guandan-v0.8.5-beta.1-macos-x64.zip` | 解压后打开 `Guandan.app` |
-| Linux x64 | `Guandan-v0.8.5-beta.1-linux-x64.tar.gz` | 解压后运行 `./Guandan/Guandan` |
+| Windows x64 | `Guandan-v0.8.6-beta.1-windows-x64.zip` | 解压整个文件夹，运行 `Guandan/Guandan.exe` |
+| macOS Apple Silicon（M 系列） | `Guandan-v0.8.6-beta.1-macos-arm64.zip` | 解压后打开 `Guandan.app` |
+| macOS Intel | `Guandan-v0.8.6-beta.1-macos-x64.zip` | 解压后打开 `Guandan.app` |
+| Linux x64 | `Guandan-v0.8.6-beta.1-linux-x64.tar.gz` | 解压后运行 `./Guandan/Guandan` |
 
 Linux 若执行位丢失，可先执行 `chmod +x Guandan/Guandan`。发布页的 `SHA256SUMS.txt` 可用于校验下载文件。`Source code` 是源码归档；直接游玩请选择上表中的桌面包。
 
@@ -73,7 +73,7 @@ Linux 若执行位丢失，可先执行 `chmod +x Guandan/Guandan`。发布页�
 ```bash
 git clone https://github.com/itsVicOC/guandan.git
 cd guandan
-git checkout v0.8.5-beta.1
+git checkout v0.8.6-beta.1
 
 # 按锁文件安装开发工具、终端界面和桌面界面
 uv sync --locked --extra dev --extra gui
@@ -227,6 +227,7 @@ guandan/
 - [x] **M9** AI 能力重构：团队感知 SO-ISMCTS、软证据信念采样、分层候选、结构化 rollout、镜像 Arena 与自对弈调参
 - [x] **M10** GUI 视觉与规则校准：翡翠牌桌视觉系统、矢量牌面与大厅重构、固定三连对/钢板及连牌自然点数规则
 - [x] **v0.8.5 beta** 四方出牌展示、同花顺优先理牌、存档冲突恢复与发布质量门禁
+- [x] **v0.8.6 beta** 三次冲 A 规则、整场 AI 估值与限时残局可靠性；协作实验按独立验收保留开关
 - [~] v1.0 发布前调优：更强残局策略、更多 TUI 细节、文档/回放体验完善
 
 </details>
@@ -293,7 +294,9 @@ CI 使用 `uv sync --locked` 安装依赖，Python 3.10/3.12 执行质量检查�
 
 当前实现、信息边界、可复现评测命令与策略参考见 [AI 文档](docs/ai.md)。旧版本的 240/420ms 搜索读数和动作价值实验保存在 [研究记录](docs/ai-history.md)及[历史基准](benchmarks/history.md)，不代表这轮修改后的强度。
 
-v0.8.4 的同种子换队复赛中，进阶/高手/职业/戴长胜对前一档的小局胜率为 66.88% / 59.38% / 54.38% / 54.79%，按种子配对的 95% 区间均高于 50%。其中两个高档采用实际思考时限。这些是扩样后的描述性结果，v0.8.5 保持默认策略与预算，未新增棋力提升结论；完整比赛完成率、延迟与评测局限见 [验收记录](benchmarks/README.md)。
+v0.8.4 的同种子换队复赛中，进阶/高手/职业/戴长胜对前一档的小局胜率为 66.88% / 59.38% / 54.38% / 54.79%，按种子配对的 95% 区间均高于 50%。其中两个高档采用实际思考时限。这些是历史版本的描述性结果。
+
+v0.8.6 修正三次冲 A 的整场估值、公开过牌证据和限时残局回退，保持五档及思考预算。协作与领出实验在 240 对整队代理评测中通过，但 60 对不同风格队友未证实改善，因此实验开关保持默认关闭；代理收益不能直接解释为真人搭档胜率。实现、默认配置及完整验收见 [本轮报告](docs/ai-comprehensive-optimization.md)和[验收记录](benchmarks/README.md)。
 
 ## 反馈问题
 

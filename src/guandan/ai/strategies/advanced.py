@@ -18,5 +18,10 @@ class AdvancedStrategy:
     difficulty = 2
     uses_stochastic_pass = False
 
+    def __init__(self, *, team_tactics: bool = False, lead_chain: bool = False, partner_bomb_guard: bool = False):
+        self.team_tactics = team_tactics
+        self.lead_chain = lead_chain
+        self.partner_bomb_guard = partner_bomb_guard
+
     def select_pattern(self, state: GameState, player: int) -> Pattern | None:
-        return select_heuristic_action(state, player, 2)
+        return select_heuristic_action(state, player, 2, team_tactics=self.team_tactics, lead_chain=self.lead_chain, partner_bomb_guard=self.partner_bomb_guard)

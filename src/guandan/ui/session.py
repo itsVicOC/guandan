@@ -620,6 +620,8 @@ class GameSession:
             first_player=self.human,
             seed=next_seed,
             team_levels=next_team_levels,
+            ruleset_version=state.ruleset_version,
+            a_failure_counts=state.a_failure_counts,
         )
         self._pending_next_game = PendingNextGame(
             state=next_state,

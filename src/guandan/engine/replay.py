@@ -79,6 +79,7 @@ def _replay_events(
         seed=shuffle.seed,
         team_levels=shuffle.team_levels,
         ruleset_version=ruleset_version,
+        a_failure_counts=shuffle.a_failure_counts,
     )
     if state.history[0] != shuffle:
         raise ValueError("ShuffleDeal does not match the reproducible deal")

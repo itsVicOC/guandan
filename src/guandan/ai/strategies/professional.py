@@ -11,6 +11,7 @@ from ...engine.state import GameState
 from ..candidates import enumerate_legal_patterns, pattern_key
 from ..context import opponent_min_cards
 from ..endgame import legal_finish_pattern
+from ..match_value import round_value_span
 from ..mcts import MCTS_CONFIG
 from ..mcts.information_set import (
     PASS_ACTION,
@@ -20,6 +21,7 @@ from ..mcts.information_set import (
 )
 from ..mcts.information_set import information_set_search as mcts_search
 from ..mcts.root_search import root_action_search
+from ..tactics import select_heuristic_action
 from .advanced import AdvancedStrategy
 
 DEFAULT_ITERATIONS = int(MCTS_CONFIG["iterations"])
@@ -60,6 +62,10 @@ class ProfessionalStrategy:
         widening_alpha: float = DEFAULT_WIDENING_ALPHA,
         search_mode: str = DEFAULT_SEARCH_MODE,
         critical_time_budget_ms: int | None = None,
+        team_tactics: bool = False,
+        lead_chain: bool = False,
+        heterogeneous_rollouts: bool = False,
+        partner_bomb_guard: bool = False,
     ):
         """初始化职业策略。
 
@@ -81,7 +87,7 @@ class ProfessionalStrategy:
         self.iterations = iterations
         self.ucb_c = ucb_c
         self.max_actions = max_actions
-        self.rollout_strategy = rollout_strategy
+        self.rollout_strategy = max(3, rollout_strategy) if team_tactics else rollout_strategy
         self.rng = rng if rng is not None else random.Random()
         self.mcts_hand_threshold = mcts_hand_threshold
         self.rollout_max_turns = rollout_max_turns
@@ -100,7 +106,13 @@ class ProfessionalStrategy:
         self.search_mode = search_mode
         self.last_search: SearchResult | None = None
         self.last_decision_reason = "not_started"
-        self._fast_strategy = AdvancedStrategy()
+        self.team_tactics = team_tactics
+        self.lead_chain = lead_chain
+        self.partner_bomb_guard = partner_bomb_guard
+        self.heterogeneous_rollouts = heterogeneous_rollouts
+        self.last_guard: dict | None = None
+        self._tactical_deadline: float | None = None
+        self._fast_strategy = AdvancedStrategy(team_tactics=team_tactics, lead_chain=lead_chain, partner_bomb_guard=partner_bomb_guard)
 
     def select_pattern(
         self, state: GameState, player: int
@@ -120,6 +132,7 @@ class ProfessionalStrategy:
             最佳牌型（None 表示过牌）
         """
         self.last_search = None
+        self.last_guard = None
         self.last_decision_reason = "search"
         if self._forced_pass(state, player):
             self.last_decision_reason = "forced_pass"
@@ -129,6 +142,11 @@ class ProfessionalStrategy:
             return self._fast_strategy.select_pattern(state, player)
 
         decision_started = time.perf_counter()
+        budget = (
+            self.critical_time_budget_ms
+            if self._critical_decision(state, player) else self.time_budget_ms
+        )
+        self._tactical_deadline = decision_started + budget * 0.10 / 1000.0 if budget > 0 else None
         tactical = (
             self._reference_action(state, player)
             if self.search_mode == "root"
@@ -157,6 +175,7 @@ class ProfessionalStrategy:
                     style=self._search_style(),
                     adaptive=False,
                     reference_actions=(tactical,),
+                    heterogeneous_rollouts=self.heterogeneous_rollouts,
                 )
             else:
                 result = mcts_search(
@@ -192,16 +211,23 @@ class ProfessionalStrategy:
                 stats = {entry.action_key: entry for entry in result.actions}
                 chosen = stats.get(chosen_key)
                 reference = stats.get(tactical_key)
-                required_gain = self._minimum_search_gain(chosen, reference)
+                required_gain = self._gain_threshold(state, chosen, reference)
                 urgency = opponent_min_cards(state, player)
                 if tactical is None and urgency > 5:
-                    required_gain = 0.25
+                    required_gain = max(required_gain, 0.25 * round_value_span(state))
                     if (
                         result.pattern is not None
                         and is_bomb_type(result.pattern.type)
                         and state.hand_size(player) - len(result.pattern.cards) > 3
                     ):
-                        required_gain = 0.40
+                        required_gain = max(required_gain, 0.40 * round_value_span(state))
+                self.last_guard = {
+                    "required_gain": required_gain,
+                    "observed_gain": chosen.mean_value - reference.mean_value if chosen and reference else None,
+                    "payoff_span": round_value_span(state),
+                    "common_samples": result.common_samples,
+                    "paired_standard_error": chosen.paired_standard_error if chosen else None,
+                }
                 # Sparse, clock-truncated rollouts should not replace a sound
                 # tactical move on a tiny, noisy lead.  Both actions were
                 # evaluated on the same hidden worlds.
@@ -222,9 +248,13 @@ class ProfessionalStrategy:
     ) -> float:
         return 0.14
 
+    def _gain_threshold(self, state: GameState, chosen: ActionStatistics | None, reference: ActionStatistics | None) -> float:
+        return self._minimum_search_gain(chosen, reference) * round_value_span(state)
+
     def _reference_action(self, state: GameState, player: int) -> Optional[Pattern]:
         """Lower-tier decision that additional search must demonstrably improve."""
-        return self._fast_strategy.select_pattern(state, player)
+        return select_heuristic_action(state, player, 2, team_tactics=self.team_tactics,
+                                       lead_chain=self.lead_chain, partner_bomb_guard=self.partner_bomb_guard, deadline=self._tactical_deadline)
 
     def _forced_pass(self, state: GameState, player: int) -> bool:
         """An empty response set has no decision to sample or search."""

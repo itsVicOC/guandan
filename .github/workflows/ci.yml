@@ -76,7 +76,7 @@ jobs:
       - name: Check fixed-work decisions against the current baseline
         run: >-
           uv run --no-sync python -m guandan.ai.diagnostics
-          --mode fixed --baseline benchmarks/ai-regression-v1.json --output current.json
+          --mode fixed --baseline benchmarks/ai-regression-v6.json --output current.json
       - name: Verify a complete match and its event streams
         run: uv run --no-sync python -m guandan.ai.benchmark --full-match --difficulties 0 --json
       - name: Upload the comparison
