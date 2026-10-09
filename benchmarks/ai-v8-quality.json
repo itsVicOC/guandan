@@ -1,0 +1,29 @@
+{
+  "source_sha256": "17bac68f7bbf499cf0bc62d6b2f2a7a79b925530e03535a85454b49e21f592e7",
+  "full_suite": {
+    "passed": 903,
+    "coverage_percent": 84.90309661732103,
+    "seconds": 249.84
+  },
+  "ruff": "src tests scripts packaging: passed",
+  "mypy": {
+    "source_files": 93,
+    "passed": true
+  },
+  "fixed_regression": {
+    "decisions": 30,
+    "actions_and_reasons_match_v7": true,
+    "review": "ai-v8-regression-review.json"
+  },
+  "coverage_module_gates": "storage>=80%, ui/session>=78%, engine/replay>=72% passed",
+  "note": "Production latency gates are reserved for serial execution after collection. Model remains default disabled.",
+  "off_controls": {
+    "pairs": 4,
+    "zero_gain_and_same_completed_ranks": true,
+    "reports": [
+      "action-ranker-v1/off-control-3.json",
+      "action-ranker-v1/off-control-4.json"
+    ]
+  },
+  "numerical_verification": "action-ranker-v1/numerical-verification.json"
+}

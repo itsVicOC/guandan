@@ -15,7 +15,7 @@ from ..engine.events import (
     TurnPlayed,
 )
 from ..engine.replay import replay_event_states
-from ..engine.state import CURRENT_RULESET_VERSION, SEAT_NAMES, GameState
+from ..engine.state import CURRENT_RULESET_VERSION, SEAT_NAMES, GameState, IllegalPlayError
 from .formatting import card_label, pattern_type_label, rank_value_label
 
 
@@ -36,6 +36,17 @@ class ReplayCursor:
     def set_index(self, index: int) -> int:
         self.index = max(0, min(index, len(self.events) - 1))
         return self.index
+
+
+def prepare_replay(history: dict | None) -> tuple[dict, ReplayCursor]:
+    """Read/validate in a worker; navigation receives an already built timeline."""
+    if history is None or not history.get("events"):
+        raise ValueError("这局历史记录无法读取。")
+    try:
+        cursor = ReplayCursor(list(history["events"]), ruleset_version=history.get("ruleset_version", 1))
+    except (IllegalPlayError, ValueError) as exc:
+        raise ValueError("history event stream cannot be replayed") from exc
+    return history, cursor
 
 
 def replay_event_text(event: Event) -> str:

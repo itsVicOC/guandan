@@ -1,0 +1,42 @@
+{
+  "source_sha256": "1bc3810316071947d41e93be1064ca086adb8b09f44b78e9ffe69885d9bc0eeb",
+  "full_suite": {
+    "passed": 834,
+    "coverage_percent": 84.75733798314444,
+    "seconds": 304.19
+  },
+  "additional_cases_after_collection": {
+    "passed": 7,
+    "targeted_file_total_passed": 44,
+    "file": "tests/test_partner_adaptation.py",
+    "seconds": 2.81
+  },
+  "current_total_collected": 841,
+  "ruff": "src tests scripts packaging: passed",
+  "mypy": {
+    "source_files": 92,
+    "passed": true
+  },
+  "coverage_module_gates": {
+    "storage": {
+      "percent": 84.64,
+      "minimum": 80
+    },
+    "ui_session": {
+      "percent": 81.75,
+      "minimum": 78
+    },
+    "replay": {
+      "percent": 76.12,
+      "minimum": 72
+    }
+  },
+  "fixed_regression": {
+    "decisions": 30,
+    "actions_and_reasons_match_v6": true,
+    "baseline_self_check_passed": true,
+    "review": "ai-v7-regression-review.json"
+  },
+  "diff_whitespace": "passed",
+  "note": "All current 841 cases passed: 834 in full coverage run plus seven added actor-information/shared-style cases validated in the 44-case targeted run. Fixed-work timings are not production-clock evidence."
+}

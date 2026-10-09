@@ -1,0 +1,6 @@
+{
+  "python": "3.10.20",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "workers": 8,
+  "policy": "independent spawned frozen source; standard-library label collector"
+}

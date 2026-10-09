@@ -1,0 +1,45 @@
+{
+  "release_tag": "v0.8.7-beta.1",
+  "package_version": "0.8.7b1",
+  "validated_at": "2026-10-09T02:38:24.041727+00:00",
+  "environment": "macOS ARM64 / Python 3.10.20",
+  "scope": "local validation before release commit; remote CI and packaging run against the tag",
+  "tests": {
+    "passed": 1052,
+    "skipped": 0,
+    "elapsed_seconds": 180.59
+  },
+  "coverage": {
+    "covered_lines": 9882,
+    "num_statements": 11269,
+    "percent_covered": 85.02781314925274,
+    "percent_covered_display": "85",
+    "missing_lines": 1387,
+    "excluded_lines": 22,
+    "percent_statements_covered": 87.6918981276067,
+    "percent_statements_covered_display": "88",
+    "num_branches": 3652,
+    "num_partial_branches": 569,
+    "covered_branches": 2805,
+    "missing_branches": 847,
+    "percent_branches_covered": 76.80722891566265,
+    "percent_branches_covered_display": "77"
+  },
+  "checks": {
+    "ruff": "passed",
+    "mypy_source_files": 100,
+    "uv_lock_offline": "passed",
+    "recovery_boundary_coverage": "passed",
+    "version_metadata": "passed"
+  },
+  "fixed_regression": {
+    "passed": true,
+    "decisions": 30,
+    "failures": []
+  },
+  "research_export": {
+    "from_staged_checkout": true,
+    "verified_files": 892,
+    "raw_bytes": 124075761
+  }
+}

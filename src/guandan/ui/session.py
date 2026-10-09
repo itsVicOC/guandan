@@ -30,6 +30,7 @@ from ..engine.events import (
 )
 from ..engine.hand import Pattern
 from ..engine.replay import replay_events
+from ..engine.rounds import deal_next_round, set_dealt_round_starter
 from ..engine.rules.patterns import find_complete_pattern
 from ..engine.rules.tributes import (
     TributeFlowResult,
@@ -612,17 +613,9 @@ class GameSession:
             return SessionAction(False, self.last_action)
 
         next_level = self.next_round_level(state)
-        next_team_levels = self.next_round_team_levels(state)
         next_seed = random.randint(1, 10000)
 
-        next_state = make_initial_state(
-            level=next_level,
-            first_player=self.human,
-            seed=next_seed,
-            team_levels=next_team_levels,
-            ruleset_version=state.ruleset_version,
-            a_failure_counts=state.a_failure_counts,
-        )
+        next_state = deal_next_round(state, seed=next_seed, first_player=self.human)
         self._pending_next_game = PendingNextGame(
             state=next_state,
             display_state=next_state,
@@ -767,18 +760,7 @@ class GameSession:
 
         next_state = pending.state
         next_state.history.extend(tribute_result.events)
-        next_state.turn_index = tribute_result.first_player
-        next_state.leader = tribute_result.first_player
-        if next_state.history and isinstance(next_state.history[0], ShuffleDeal):
-            shuffle = next_state.history[0]
-            next_state.history[0] = ShuffleDeal(
-                level=shuffle.level,
-                wild_card=shuffle.wild_card,
-                hand_sizes=shuffle.hand_sizes,
-                first_player=tribute_result.first_player,
-                seed=shuffle.seed,
-                team_levels=shuffle.team_levels,
-            )
+        set_dealt_round_starter(next_state, tribute_result.first_player)
 
         self.level = next_state.level
         self.seed = pending.seed

@@ -1,0 +1,18 @@
+{
+  "source_sha256": "a25a0932358696a864539a87780e0bf0116475418cf464ed797032eebc6636a2",
+  "baseline_sha256": "57b73f80bec93eb6f6bf638c4a5487fc9d93125ef80b17a992d728f66f25751e",
+  "counts": {
+    "dev-team": 32,
+    "dev-mixed": 32,
+    "holdout": 240,
+    "mixed": 240,
+    "full": 48
+  },
+  "methods": [
+    "refined"
+  ],
+  "namespace": "budget-refinement-v11",
+  "selection": "largest minimum of team/mixed dev mean; both positive and serial clock must pass",
+  "promotion": "both 240-pair intervals >0, all partners >=0, 48 full-pair interval >50%, replay and clock pass",
+  "refinement_max_pairs": 8
+}

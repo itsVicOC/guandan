@@ -1,0 +1,10 @@
+{
+  "deals": 576,
+  "compared_estimates": 11272,
+  "exact_values_equal": true,
+  "elapsed_seconds": 43.78774420800255,
+  "purpose": "production equivalence, not serial throughput",
+  "planner_sha256": "65b767201b7b5c1843c50e4bc40b674a5ae9c2c43f937db2c492fa4edc88fcf3",
+  "reference_sha256": "5fdfa60366e5ab0e54c8dc9b0fd4231db687c427a15e7ec4b86e15665b5783ca",
+  "cache_layers": 1
+}

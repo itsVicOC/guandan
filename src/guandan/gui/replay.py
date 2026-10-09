@@ -87,7 +87,7 @@ class ReplayCenterPanel(QFrame):
 class ReplayPage(QWidget):
     """Table-shaped event replay with full hands, timeline and autoplay."""
 
-    def __init__(self, window: "GuandanMainWindow", history: dict) -> None:
+    def __init__(self, window: "GuandanMainWindow", history: dict, *, cursor: ReplayCursor | None = None) -> None:
         super().__init__()
         self._main_window = window
         self.setObjectName("page")
@@ -96,7 +96,7 @@ class ReplayPage(QWidget):
         if not self.events:
             raise ValueError("history has no events")
         try:
-            self._replay_cursor = ReplayCursor(
+            self._replay_cursor = cursor or ReplayCursor(
                 self.events, ruleset_version=history.get("ruleset_version", 1)
             )
         except (IllegalPlayError, ValueError) as exc:

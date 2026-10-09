@@ -1,0 +1,1 @@
+{"method": "refined", "passed": true, "reasons": {"agrees_with_tactical": 24, "tactical_guard": 5, "search": 2, "endgame_exact": 6, "endgame_sampled": 5}}

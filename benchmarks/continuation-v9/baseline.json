@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source_sha256": "4834f59bdf4d0553131e2fbb9e26fa135ff2cff4e9b368031b308bb61b05d40a",
+  "source_files": 96,
+  "baseline": "current workspace defaults; all v7/v8 research flags disabled"
+}

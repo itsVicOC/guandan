@@ -462,7 +462,7 @@ def test_session_next_game_uses_selected_human_return_and_records_events() -> No
 
     session = GameSession(difficulty=0, existing_state=finished, human=0)
     session.game_saved = True
-    with patch("guandan.ui.session.make_initial_state", fake_initial_state):
+    with patch("guandan.engine.rounds.make_initial_state", fake_initial_state):
         prepared = session.prepare_next_game()
         assert session.state is finished
         dealt_state = session.display_state()
@@ -953,6 +953,10 @@ difficulty_buttons = window.stack.currentWidget().findChildren(
 assert len(difficulty_buttons) == 5
 with patch("guandan.gui.window.has_savegame", return_value=False):
     QTest.mouseClick(difficulty_buttons[1], Qt.MouseButton.LeftButton)
+    for _ in range(200):
+        if window.game_page is not None:
+            break
+        QTest.qWait(10)
 
 assert window.stack.currentWidget() is window.game_page
 assert window.game_page is not None
@@ -1075,7 +1079,7 @@ def fake_initial_state(**kwargs):
         team_levels=list(kwargs["team_levels"]),
     )
 
-with patch("guandan.ui.session.make_initial_state", fake_initial_state):
+with patch("guandan.engine.rounds.make_initial_state", fake_initial_state):
     page.next_game()
     assert session.state is finished
     assert set(page.hand_cards) == set(fixed_hands[0])
@@ -1290,12 +1294,23 @@ window = GuandanMainWindow()
 with patch("guandan.gui.window.load_history_list", return_value=[]):
     window.show_history()
     history = window.stack.currentWidget()
+    from PySide6.QtCore import QEventLoop, QTimer
+    def wait_until(predicate):
+        for _ in range(200):
+            if predicate():
+                return
+            loop = QEventLoop()
+            QTimer.singleShot(10, loop.quit)
+            loop.exec()
+        raise AssertionError("background operation did not finish")
+    wait_until(lambda: not history._storage_busy)
     assert history.table.isVisible() is False
     assert history.empty.isHidden() is False
     assert history.replay_button.isEnabled() is False
 
 with patch("guandan.gui.window.load_history_list", side_effect=OSError("storage busy")):
     history.refresh()
+    wait_until(lambda: not history._storage_busy)
     assert "无法读取历史记录" in history.empty.text()
     assert "storage busy" in history.empty.text()
 
@@ -1308,7 +1323,9 @@ with patch.object(
 ) as delete_warning:
     window.show_load()
     load_page = window.stack.currentWidget()
+    wait_until(lambda: not load_page._storage_busy)
     load_page._delete_save()
+    wait_until(lambda: delete_warning.call_count > 0 and not load_page._storage_busy)
     delete_warning.assert_called_once()
     assert window.stack.currentWidget() is load_page
 

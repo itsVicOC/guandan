@@ -1,0 +1,26 @@
+{
+  "reason": "Shared summary requires A-level fields omitted from rows; reporting-only fix.",
+  "old_harness_sha256": "e5e05e4b21fd39a63078049d78888a9f24e823433ab3489017791da11b2839df",
+  "new_harness_sha256": "879fb0dcf2079d8e96c7ef8961221f1438767ecb090c1988c6a0c12d3cb5dc5b",
+  "unchanged_candidate_sha256": "c6425214bbde66c36045b485ae5a479ffd41a76dab78d46f0c1261de5569e49a",
+  "unchanged_baseline_sha256": "0fc39f1dcf2ab652c4c218061760f9301b2b003b29f588c84c346b2d194aa8d0",
+  "completed_pairs_preserved": 32,
+  "independent_pairs_observed": 0,
+  "all_original_observation_fields_unchanged": true,
+  "seed_schedule_unchanged": true,
+  "worker_source_unchanged": true,
+  "new_fields": [
+    "a_attempted",
+    "a_succeeded",
+    "opponent_a_failed",
+    "a_utility_won",
+    "a_failure_before",
+    "a_failure_after",
+    "a_reset"
+  ],
+  "preserved_archive": "pre-a-metadata-fix.zip",
+  "preserved_archive_sha256": "63112a72eb2084911a0d8908e650b5a75066a7f6e77f666939594bedf1bf8107",
+  "intermediate_harness_sha256": "d4f887c437be3fd6d6582ff878e3badc15b95744e3d545c7aa41c11dea900a69",
+  "additional_consistency_check": "Verify all shared scripts and public replay corpus against frozen manifest before resuming; execution dependencies unchanged.",
+  "additional_archive": "pre-dependency-verification-fix.zip"
+}

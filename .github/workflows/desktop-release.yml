@@ -125,6 +125,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.11.7"
+      - name: Export verified research evidence
+        run: python scripts/ai_research_archive.py export --output release-assets/research-20261009.zip
       - name: Build Python wheel with pinned backends
         run: uv build --wheel --out-dir release-assets --build-constraints packaging/build-constraints.txt
       - name: Create checksums

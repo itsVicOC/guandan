@@ -17,6 +17,7 @@ from ...engine.rules.comparator import is_bomb_type
 from ...engine.state import GameState, IllegalPlayError, pass_turn, play_pattern, team_of
 from ...engine.trick import current_top_player
 from ..candidates import ObservableKey, PatternKey, observable_key, pattern_key
+from ..config import DecisionBudget
 from ..context import opponent_min_cards
 from ..valuation import enumerate_search_candidates
 from .determinize import determinize
@@ -85,6 +86,14 @@ class SearchResult:
     sampling_seconds: float = 0.0
     rollout_seconds: float = 0.0
     common_samples: int = 0
+    terminal_rollouts: int = 0
+    cutoff_rollouts: int = 0
+    discarded_rollouts: int = 0
+    terminal_common_samples: int = 0
+    partner_probabilities: tuple[tuple[float, float, float], ...] = ()
+    response_chain: dict | None = None
+    action_ranker: dict | None = None
+    reference_refinement: dict | None = None
 
 
 def _legal_action_map(
@@ -287,6 +296,7 @@ def information_set_search(
     widening_c: float = 1.8,
     widening_alpha: float = 0.5,
     style: SearchStyle | None = None,
+    decision_budget: DecisionBudget | None = None,
 ) -> SearchResult:
     """Search one public information set using a fresh world per simulation."""
     if iterations <= 0:
@@ -312,11 +322,11 @@ def information_set_search(
         state, player, max_actions=max_actions, node_keyed=True
     )
     started = time.perf_counter()
-    deadline = started + time_budget_ms / 1000.0 if time_budget_ms > 0 else None
+    deadline = (decision_budget or DecisionBudget.start(time_budget_ms, started=started)).deadline
     simulations = 0
 
     while simulations < iterations:
-        if simulations > 0 and deadline is not None and time.perf_counter() >= deadline:
+        if deadline is not None and time.perf_counter() >= deadline:
             break
         sampled_state = determinize(state, player, rng)
         node = root
@@ -392,7 +402,10 @@ def information_set_search(
             rollout_strategy_level=rollout_strategy,
             max_turns=rollout_max_turns,
             copy_state=False,
+            deadline=deadline,
         )
+        if deadline is not None and time.perf_counter() >= deadline:
+            break
         for visited in path:
             visited.visits += 1
             visited.value_sum += value

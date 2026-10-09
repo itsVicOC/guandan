@@ -1,0 +1,21 @@
+{
+  "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+  "full_suite": {
+    "passed": 843,
+    "coverage_percent": 84.77503628447025,
+    "seconds": 324.22
+  },
+  "ruff": "src tests scripts packaging: passed",
+  "mypy": {
+    "source_files": 92,
+    "passed": true
+  },
+  "fixed_regression": {
+    "decisions": 30,
+    "actions_and_reasons_match_v6": true,
+    "baseline_self_check_passed": true,
+    "review": "ai-v7-regression-review.json"
+  },
+  "coverage_module_gates": "storage>=80%, ui/session>=78%, replay>=72% passed",
+  "note": "Revised source after deadline early exit and per-tier promotion gates. No default action or reason changed; timing-only branch fixes are disabled in fixed default regression."
+}

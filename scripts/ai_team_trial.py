@@ -22,6 +22,8 @@ from guandan.ai.strategies.professional import ProfessionalStrategy
 from guandan.engine.events import ShuffleDeal
 from guandan.storage.savegame import _state_to_dict
 from guandan.storage.serialization import _dict_to_pattern, serialize_events
+from scripts.ai_manifest import evaluation_manifest, manifest_fingerprint
+from scripts.ai_rpc import PolicyClient
 
 SUITES = {"dev": (32, 91000), "holdout": (240, 92000), "mixed": (60, 93000), "clock": (8, 94000), "full": (4, 95000)}
 BASELINE_SHA = "3f687c8d14189bfc99df6b61e23cd5c2716ef91f"
@@ -29,13 +31,7 @@ BASELINE_SHA = "3f687c8d14189bfc99df6b61e23cd5c2716ef91f"
 
 def source_fingerprint():
     root = Path(__file__).resolve().parents[1]
-    paths = sorted((root / "src/guandan/ai").rglob("*.py")) + sorted((root / "src/guandan/ai/profiles").glob("*.json"))
-    paths += [Path(__file__).resolve(), Path(__file__).with_name("ai_frozen_worker.py")]
-    digest = hashlib.sha256()
-    for path in paths:
-        digest.update(path.relative_to(root).as_posix().encode())
-        digest.update(path.read_bytes())
-    return digest.hexdigest()
+    return manifest_fingerprint(evaluation_manifest(root))
 
 
 def public_request(state, player, ruleset_version=2):
@@ -63,35 +59,13 @@ def companion_difficulty(index):
     return (index + index // 3) % 3
 
 
-class FrozenClient:
+class FrozenClient(PolicyClient):
     def __init__(self, root):
-        self.process = subprocess.Popen(
+        super().__init__(
             [sys.executable, "-u", "-B", str(Path(__file__).with_name("ai_frozen_worker.py")), "--root", str(root)],
-            cwd=root, env={**os.environ, "PYTHONPATH": str(Path(root) / "src"), "PYTHONDONTWRITEBYTECODE": "1"},
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            root=Path(root),
         )
-        ready = self.process.stdout.readline()
-        if not ready or not json.loads(ready).get("ready"):
-            raise RuntimeError("frozen worker failed to start: " + self.process.stderr.read())
-        self.ruleset_version = json.loads(ready).get("ruleset_version", 2)
-
-    def query(self, request):
-        self.process.stdin.write(json.dumps(request) + "\n")
-        self.process.stdin.flush()
-        line = self.process.stdout.readline()
-        if not line:
-            raise RuntimeError("frozen worker failed: " + self.process.stderr.read())
-        return json.loads(line)
-
-    def close(self):
-        self.process.stdin.close()
-        try:
-            self.process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            self.process.terminate()
-            self.process.wait(timeout=5)
-        self.process.stdout.close()
-        self.process.stderr.close()
+        self.ruleset_version = self.ready.get("ruleset_version", 2)
 
 
 class FrozenStrategy:
@@ -149,6 +123,9 @@ class MeasuredCandidate:
             "endgame_cache_hits": endgame.cache_hits if endgame else None,
             "endgame_continuation": endgame.continuation if endgame else None,
             "guard": getattr(self.strategy, "last_guard", None),
+            "partner_probabilities": getattr(result, "partner_probabilities", ()) if result else (),
+            "response_chain": getattr(result, "response_chain", None) if result else None,
+            "action_ranker": getattr(result, "action_ranker", None) if result else None,
             "endgame_elapsed_seconds": endgame.elapsed_seconds if endgame else None,
             "budget_passed": self.mode != "clock" or budget == 0 or elapsed <= budget / 1000 * 1.15 + 0.1,
         })
@@ -161,18 +138,25 @@ def candidate(tier, variant, mode, fixed_iterations=128):
     lead = variant in ("lead", "guard_lead", "combined")
     guard = variant in ("guard", "guard_lead")
     mixed = variant in ("mixed", "combined")
+    adaptation = variant in ("adaptive", "partner_combined")
+    chain = variant in ("chain", "partner_combined")
+    ranking = variant == "action_ranker"
     if tier == 2:
         return AdvancedStrategy(team_tactics=team, lead_chain=lead, partner_bomb_guard=guard)
     if tier == 3:
         return ProfessionalStrategy(
             team_tactics=team, rollout_strategy=3 if team else 1,
             lead_chain=lead, heterogeneous_rollouts=mixed, partner_bomb_guard=guard,
+            partner_adaptation=adaptation, response_chain=chain,
+            action_ranker=ranking,
             **({"time_budget_ms": 0, "iterations": fixed_iterations} if mode == "fixed" else {}),
         )
     return DaiChangshengStrategy(mcts_overrides={
         "team_tactics": int(team), "endgame_confidence": int(endgame),
         "lead_chain": int(lead), "heterogeneous_rollouts": int(mixed), "partner_bomb_guard": int(guard),
         "endgame_policy": int(variant in ("policy", "combined")),
+        "partner_adaptation": int(adaptation), "response_chain": int(chain),
+        "action_ranker": int(ranking),
         "rollout_strategy": 3 if team else 2,
         **({"time_budget_ms": 0, "iterations": fixed_iterations} if mode == "fixed" else {}),
     })
@@ -246,11 +230,17 @@ def pair(job):
                 adapters.append(adapter)
                 return adapter
 
+            seed_options = {}
+            if full and config.get("seed_schedule") == "action-ranker-v1":
+                from scripts.fit_action_ranker import derived_seed
+
+                seed_options["round_seed_factory"] = lambda master, offset: derived_seed("full-deal", master, offset)
             result = (run_full_match if full else run_match)(
                 seed, level=level, strategy_factory=factory,
                 difficulties=tuple(companion_difficulty(index) if config["suite"] == "mixed" and seat >= 2
                                    else config["difficulty"] for seat in range(4)),
                 **(match_state(index, team) if config.get("match_states") and not full else {}),
+                **seed_options,
             )
             utility = float(result.winner_team == team) if full else canonical_utility(result, team)
             if not result.finished:
@@ -281,6 +271,11 @@ def pair(job):
                 "candidate_latency": _latency_payload(timings),
                 "baseline_intrinsic_latency": _latency_payload([d for a in adapters for d in a.intrinsic_seconds]),
                 "decision_reasons": dict(Counter(row["reason"] for row in decisions)),
+                "response_chain_worlds": dict(Counter(str(row["response_chain"]["completed_worlds"]) for row in decisions if row["response_chain"])),
+                "response_chain_reasons": dict(Counter(row["response_chain"]["reason"] for row in decisions if row["response_chain"])),
+                "response_chain_replacements": sum(bool(row["response_chain"].get("candidate_replaced")) for row in decisions if row["response_chain"]),
+                "action_ranker_reasons": dict(Counter(row["action_ranker"]["reason"] for row in decisions if row["action_ranker"])),
+                "action_ranker_replacements": sum(bool(row["action_ranker"].get("candidate_replaced")) for row in decisions if row["action_ranker"]),
                 "budget_failures": [row for row in decisions if not row["budget_passed"]],
                 "clock_decisions": decisions if mode == "clock" else None,
                 "endgame_reasons": dict(Counter(row["endgame_reason"] for row in decisions if row["endgame_reason"])),
@@ -336,7 +331,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline-root", type=Path, required=True)
     parser.add_argument("--suite", choices=SUITES, default="dev")
-    parser.add_argument("--variant", choices=("corrected", "value", "team", "takeover", "lead", "endgame", "policy", "mixed", "combined", "guard", "guard_lead"), default="combined")
+    parser.add_argument("--variant", choices=("corrected", "value", "team", "takeover", "lead", "endgame", "policy", "mixed", "combined", "guard", "guard_lead", "adaptive", "chain", "partner_combined", "action_ranker"), default="combined")
     parser.add_argument("--match-states", action="store_true", help="stratify asymmetric levels and all A counters")
     parser.add_argument("--mode", choices=("fixed", "clock"), default="fixed")
     parser.add_argument("--difficulty", type=int, choices=(2, 3, 4), default=4)
@@ -373,9 +368,16 @@ def main():
               "deals": deals, "seed_start": seed_start, "source_sha256": source_fingerprint(),
               "fixed_iterations": args.fixed_iterations}
     config["match_states"] = args.match_states
-    config["objective"] = "ruleset3-match-continuation-v1"
-    config["score_interpretation"] = "empirical proxy future-match utility; not observed full-match win rate"
+    config["objective"] = "observed-full-match-outcome" if args.suite == "full" else "ruleset3-match-continuation-v1"
+    config["score_interpretation"] = ("observed complete-match win/loss" if args.suite == "full"
+                                      else "empirical proxy future-match utility; not observed full-match win rate")
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    lineage = evaluation_manifest(Path(__file__).resolve().parents[1], config)
+    manifest_path = args.out.with_suffix(".manifest.json")
+    if manifest_path.exists() and json.loads(manifest_path.read_text()) != lineage:
+        parser.error("evaluation dependencies/recipe changed; choose a new output")
+    manifest_path.write_text(json.dumps(lineage, indent=2) + "\n")
+    config["evaluation_manifest_sha256"] = manifest_fingerprint(lineage)
     print(f"trial process {os.getpid()}: {args.suite}/{args.variant}", flush=True)
     progress = args.out.with_suffix(".progress.jsonl")
     rows = []

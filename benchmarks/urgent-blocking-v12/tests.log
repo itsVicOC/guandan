@@ -1,0 +1,260 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.10.20, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/itsvic/projects/guandan
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, hypothesis-6.161.1
+collected 997 items
+
+tests/test_action_ranker.py ..................................           [  3%]
+tests/test_action_ranker_validation.py .........................         [  5%]
+tests/test_action_value_baseline.py ......                               [  6%]
+tests/test_ai.py ....................................................... [ 12%]
+.....                                                                    [ 12%]
+tests/test_ai_arena.py ...............                                   [ 14%]
+tests/test_ai_benchmark.py ...................                           [ 15%]
+tests/test_ai_diagnostics.py ...                                         [ 16%]
+tests/test_ai_head_race.py ......                                        [ 16%]
+tests/test_ai_ladder.py ......................                           [ 19%]
+tests/test_ai_partner_validation.py .............                        [ 20%]
+tests/test_ai_team_trial.py ..................                           [ 22%]
+tests/test_ai_tuning.py ....                                             [ 22%]
+tests/test_card.py ....................                                  [ 24%]
+tests/test_cli.py ..                                                     [ 24%]
+tests/test_comparator.py ...........................                     [ 27%]
+tests/test_continuation_trial.py ...                                     [ 27%]
+tests/test_dachangsheng.py ............                                  [ 28%]
+tests/test_desktop_lifecycle.py ...                                      [ 29%]
+tests/test_engine_helpers.py .........                                   [ 30%]
+tests/test_fourway_table.py .......                                      [ 30%]
+tests/test_gui_session.py ......................................         [ 34%]
+tests/test_hand_organizer.py .......................                     [ 37%]
+tests/test_hypothesis.py ..........                                      [ 38%]
+tests/test_match_optimization.py ....................................... [ 41%]
+......                                                                   [ 42%]
+tests/test_mcts.py ..................................................... [ 47%]
+                                                                         [ 47%]
+tests/test_packed_hand_plan.py ...                                       [ 48%]
+tests/test_partner_adaptation.py ....................................... [ 52%]
+......                                                                   [ 52%]
+tests/test_patterns.py ................................................. [ 57%]
+..                                                                       [ 57%]
+tests/test_reference_rollout.py ..........................               [ 60%]
+tests/test_reliability.py .................                              [ 62%]
+tests/test_replay.py ...........                                         [ 63%]
+tests/test_scoring.py ......                                             [ 63%]
+tests/test_state.py ..........................................           [ 68%]
+tests/test_storage.py .................................................. [ 73%]
+.......                                                                  [ 73%]
+tests/test_team_tactics.py ............................................. [ 78%]
+........................................................................ [ 85%]
+.....                                                                    [ 85%]
+tests/test_tributes.py .........................                         [ 88%]
+tests/test_tui.py ......................................                 [ 92%]
+tests/test_urgent_blocking.py .......................................... [ 96%]
+.........                                                                [ 97%]
+tests/test_urgent_blocking_trial.py ...........                          [ 98%]
+tests/test_visual_qa.py .                                                [ 98%]
+tests/test_wild.py ..............
+ERROR: Coverage failure: total of 54 is less than fail-under=80
+                                                                         [100%]
+
+================================ tests coverage ================================
+______________ coverage: platform darwin, python 3.10.20-final-0 _______________
+
+Name                                                                                 Stmts   Miss Branch BrPart  Cover
+----------------------------------------------------------------------------------------------------------------------
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/__init__.py                        13      8      4      0    29%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/__init__.py                      4      0      0      0   100%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/action_ranker.py               112    112     20      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/arena.py                       171    109     42      0    29%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/belief.py                       57     28     28      3    40%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/benchmark.py                   310    210     84      0    25%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/candidates.py                  133     45     60     10    60%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/context.py                     224    166    100      0    18%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/diagnostics.py                 152    120     60      0    15%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/endgame.py                      15      4      6      2    62%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/greedy.py                        7      7      0      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/hand_plan.py                    81      3     36      3    95%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/lead_chain.py                   81     81     28      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/match_value.py                  98     45     36      9    48%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/mcts/__init__.py                 9      0      0      0   100%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/mcts/determinize.py             71     13     44      7    74%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/mcts/endgame_solver.py         172    118     58      0    23%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/mcts/information_set.py        187     99     66      4    39%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/mcts/node.py                    23      5      2      0    72%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/mcts/root_search.py            257    122    100     29    50%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/mcts/search.py                 483    221    236     30    52%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/memory.py                       37      8     14      3    71%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/partner_model.py                48     39     24      0    12%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/play.py                         38     29     16      1    19%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/profiles/__init__.py            27     20     12      0    18%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/response_chain.py              105    105     54      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/rollout_reference.py            21     21      6      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/stochastic.py                   37     27     20      0    18%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/strategies/__init__.py           5      0      0      0   100%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/strategies/advanced.py          18      3      0      0    83%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/strategies/dachangsheng.py      78     58     20      0    20%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/strategies/intermediate.py      10      1      0      0    90%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/strategies/novice.py            10      1      0      0    90%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/strategies/professional.py     160     33     50     22    71%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/strategy.py                     22      9      2      0    54%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/tactics.py                     140     63     80     16    48%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/tribute.py                      48     39     24      0    12%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/tuning.py                       99     99     22      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ai/valuation.py                   154     18     72     14    85%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/cli.py                            146    146     50      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/__init__.py                  1      0      0      0   100%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/card.py                     81     17      8      1    73%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/deck.py                     26      7      6      0    78%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/events.py                   67      4      0      0    94%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/hand.py                    112     35     34      4    68%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/replay.py                   90     77     44      0    10%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/rules/__init__.py            1      0      0      0   100%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/rules/comparator.py         39     26     22      1    23%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/rules/drift.py               8      8      0      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/rules/patterns.py          284     24    166     13    90%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/rules/scoring.py            16     13      6      0    14%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/rules/tributes.py          188    148     70      0    16%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/state.py                   302    138    128     25    48%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/engine/trick.py                    54     21     36      5    51%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/gui/__init__.py                     0      0      0      0   100%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/gui/app.py                         11     11      2      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/gui/cards.py                      410    410    104      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/gui/replay.py                     188    188     20      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/gui/table.py                      314    314     50      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/gui/theme.py                       16     16      0      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/gui/widgets.py                     39     39      4      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/gui/window.py                    1160   1160    268      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/gui/workers.py                     25     25      0      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/storage/__init__.py                 8      0      0      0   100%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/storage/history.py                 83     67     20      0    16%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/storage/jsonio.py                  40     30      4      0    23%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/storage/locking.py                 37     21      4      0    39%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/storage/maintenance.py             45     45     14      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/storage/paths.py                   23     12      2      0    44%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/storage/profile.py                234    198     82      0    11%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/storage/savegame.py               285    236    116      0    12%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/storage/serialization.py           69     34     28      9    45%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/__init__.py                     1      1      0      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/app.py                         25     25      4      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/layout.py                      32     32     10      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/screens/__init__.py             1      1      0      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/screens/confirm.py             50     50      6      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/screens/difficulty.py          63     63      6      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/screens/error.py               22     22      2      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/screens/game.py               737    737    236      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/screens/history.py             85     85     16      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/screens/load_save.py          113    113     16      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/screens/main_menu.py           95     95     20      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/screens/replay.py             108    108     18      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/tui/screens/rule.py                23     23      0      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ui/__init__.py                      0      0      0      0   100%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ui/background.py                   28     28      6      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ui/content.py                       7      7      0      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ui/formatting.py                   43     43     18      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ui/hand_organizer.py              426    426    162      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ui/history.py                      31     31      6      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ui/replay.py                       58     58     28      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/ui/session.py                     562    562    194      0     0%
+/private/tmp/guandan-urgent-v12-baseline/src/guandan/utils/__init__.py                   1      1      0      0     0%
+src/guandan/__init__.py                                                                 13      0      4      0   100%
+src/guandan/ai/__init__.py                                                               4      0      0      0   100%
+src/guandan/ai/action_ranker.py                                                        112      4     20      4    94%
+src/guandan/ai/arena.py                                                                171     13     42     11    89%
+src/guandan/ai/belief.py                                                                57      0     28      0   100%
+src/guandan/ai/benchmark.py                                                            310     33     84     20    85%
+src/guandan/ai/candidates.py                                                           133      5     60      7    94%
+src/guandan/ai/context.py                                                              224      5    100      7    96%
+src/guandan/ai/diagnostics.py                                                          152    106     60      0    27%
+src/guandan/ai/endgame.py                                                               15      4      6      2    62%
+src/guandan/ai/greedy.py                                                                 7      0      0      0   100%
+src/guandan/ai/hand_plan.py                                                             81      2     36      1    97%
+src/guandan/ai/lead_chain.py                                                            81     10     28      8    83%
+src/guandan/ai/match_value.py                                                           98     30     36      5    66%
+src/guandan/ai/mcts/__init__.py                                                          9      0      0      0   100%
+src/guandan/ai/mcts/determinize.py                                                      71      2     44      5    94%
+src/guandan/ai/mcts/endgame_solver.py                                                  172      5     58      5    96%
+src/guandan/ai/mcts/information_set.py                                                 187     16     66     12    88%
+src/guandan/ai/mcts/node.py                                                             23      1      2      1    92%
+src/guandan/ai/mcts/root_search.py                                                     257     32    100     22    83%
+src/guandan/ai/mcts/search.py                                                          483     46    236     25    89%
+src/guandan/ai/memory.py                                                                37      2     14      1    94%
+src/guandan/ai/partner_model.py                                                         48      3     24      4    90%
+src/guandan/ai/play.py                                                                  38      9     16      5    70%
+src/guandan/ai/profiles/__init__.py                                                     27      3     12      4    82%
+src/guandan/ai/response_chain.py                                                       105      9     54      9    89%
+src/guandan/ai/rollout_reference.py                                                     21      1      6      1    93%
+src/guandan/ai/stochastic.py                                                            37      5     20      5    82%
+src/guandan/ai/strategies/__init__.py                                                    5      0      0      0   100%
+src/guandan/ai/strategies/advanced.py                                                   18      0      0      0   100%
+src/guandan/ai/strategies/dachangsheng.py                                               80      9     20      4    87%
+src/guandan/ai/strategies/intermediate.py                                               10      0      0      0   100%
+src/guandan/ai/strategies/novice.py                                                     10      0      0      0   100%
+src/guandan/ai/strategies/professional.py                                              200     20     68     13    87%
+src/guandan/ai/strategy.py                                                              22      1      2      0    96%
+src/guandan/ai/tactics.py                                                              145      6     82      5    95%
+src/guandan/ai/tribute.py                                                               48      1     24      3    94%
+src/guandan/ai/tuning.py                                                                99     24     22      8    72%
+src/guandan/ai/urgent_blocking.py                                                      138      6     54      9    92%
+src/guandan/ai/valuation.py                                                            154      2     72      2    98%
+src/guandan/cli.py                                                                     146     57     50     10    56%
+src/guandan/engine/__init__.py                                                           1      0      0      0   100%
+src/guandan/engine/card.py                                                              81      2      8      0    98%
+src/guandan/engine/deck.py                                                              26      0      6      0   100%
+src/guandan/engine/events.py                                                            67      0      0      0   100%
+src/guandan/engine/hand.py                                                             112     12     34      2    89%
+src/guandan/engine/replay.py                                                            90     19     44      7    76%
+src/guandan/engine/rules/__init__.py                                                     1      0      0      0   100%
+src/guandan/engine/rules/comparator.py                                                  39      6     22      6    80%
+src/guandan/engine/rules/drift.py                                                        8      8      0      0     0%
+src/guandan/engine/rules/patterns.py                                                   284      3    166      3    99%
+src/guandan/engine/rules/scoring.py                                                     16      0      6      0   100%
+src/guandan/engine/rules/tributes.py                                                   188     14     70     13    90%
+src/guandan/engine/state.py                                                            302     38    128     21    84%
+src/guandan/engine/trick.py                                                             54      3     36      4    92%
+src/guandan/gui/__init__.py                                                              0      0      0      0   100%
+src/guandan/gui/app.py                                                                  11     11      2      0     0%
+src/guandan/gui/cards.py                                                               410     54    104     21    85%
+src/guandan/gui/replay.py                                                              188     29     20      2    81%
+src/guandan/gui/table.py                                                               314      4     50      4    98%
+src/guandan/gui/theme.py                                                                16      0      0      0   100%
+src/guandan/gui/widgets.py                                                              39      0      4      0   100%
+src/guandan/gui/window.py                                                             1160    184    268     60    81%
+src/guandan/gui/workers.py                                                              25      5      0      0    80%
+src/guandan/storage/__init__.py                                                          8      0      0      0   100%
+src/guandan/storage/history.py                                                          83      6     20      4    90%
+src/guandan/storage/jsonio.py                                                           40      6      4      1    84%
+src/guandan/storage/locking.py                                                          37      1      4      1    95%
+src/guandan/storage/maintenance.py                                                      45      4     14      4    86%
+src/guandan/storage/paths.py                                                            23      0      2      0   100%
+src/guandan/storage/profile.py                                                         234     20     82     17    88%
+src/guandan/storage/savegame.py                                                        285     53    116     43    76%
+src/guandan/storage/serialization.py                                                    69      3     28      3    94%
+src/guandan/tui/__init__.py                                                              1      0      0      0   100%
+src/guandan/tui/app.py                                                                  25      4      4      1    83%
+src/guandan/tui/layout.py                                                               32      9     10      2    69%
+src/guandan/tui/screens/__init__.py                                                      1      0      0      0   100%
+src/guandan/tui/screens/confirm.py                                                      50      3      6      1    93%
+src/guandan/tui/screens/difficulty.py                                                   63     21      6      0    67%
+src/guandan/tui/screens/error.py                                                        22      1      2      1    92%
+src/guandan/tui/screens/game.py                                                        737    106    236     42    83%
+src/guandan/tui/screens/history.py                                                      85     25     16      4    69%
+src/guandan/tui/screens/load_save.py                                                   113     39     16      5    64%
+src/guandan/tui/screens/main_menu.py                                                    95     26     20      5    66%
+src/guandan/tui/screens/replay.py                                                      108     28     18      1    67%
+src/guandan/tui/screens/rule.py                                                         23     23      0      0     0%
+src/guandan/ui/__init__.py                                                               0      0      0      0   100%
+src/guandan/ui/background.py                                                            28      1      6      1    94%
+src/guandan/ui/content.py                                                                7      0      0      0   100%
+src/guandan/ui/formatting.py                                                            43      1     18      1    97%
+src/guandan/ui/hand_organizer.py                                                       426      7    162      8    97%
+src/guandan/ui/history.py                                                               31      2      6      2    89%
+src/guandan/ui/replay.py                                                                58     22     28      2    51%
+src/guandan/ui/session.py                                                              562     84    194     32    83%
+src/guandan/utils/__init__.py                                                            1      1      0      0     0%
+----------------------------------------------------------------------------------------------------------------------
+TOTAL                                                                                21445   9430   6998    753    54%
+Coverage JSON written to file benchmarks/urgent-blocking-v12/coverage.json
+FAIL Required test coverage of 80.0% not reached. Total coverage: 54.04%
+======================= 997 passed in 170.96s (0:02:50) ========================

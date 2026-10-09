@@ -1,0 +1,25 @@
+{
+  "baseline": "ai-regression-v6.json",
+  "current": "ai-regression-v7.json",
+  "check": "ai-regression-v7-check.json",
+  "decisions": 30,
+  "actions_and_reasons_unchanged": true,
+  "compatibility_before": {
+    "schema": 1,
+    "corpus": "levels-2-9-A-v1",
+    "policy": "match-team-v6",
+    "rules": 3,
+    "mode": "fixed",
+    "config_sha256": "6889dd3fc79de3f218f48dc3fbb8f92b09d5ab5505ad129941c2d0d04cea75ec"
+  },
+  "compatibility_after": {
+    "schema": 1,
+    "corpus": "levels-2-9-A-v1",
+    "policy": "match-team-v6",
+    "rules": 3,
+    "mode": "fixed",
+    "config_sha256": "37dd4e377b20db5b72b958ec21ea81a363648c2f67958162832b8214e84a3d54"
+  },
+  "review": "Only config metadata changed for two new default-false switches. No default action/reason baseline edits.",
+  "timing_interpretation": "Fixed work action regression only; concurrent development trials exclude these timings from serial production latency gates."
+}

@@ -1,0 +1,24 @@
+{
+  "baseline": "ai-regression-v7.json",
+  "current": "ai-regression-v8.json",
+  "decisions": 30,
+  "actions_and_reasons_unchanged": true,
+  "compatibility_before": {
+    "schema": 1,
+    "corpus": "levels-2-9-A-v1",
+    "policy": "match-team-v6",
+    "rules": 3,
+    "mode": "fixed",
+    "config_sha256": "37dd4e377b20db5b72b958ec21ea81a363648c2f67958162832b8214e84a3d54"
+  },
+  "compatibility_after": {
+    "schema": 1,
+    "corpus": "levels-2-9-A-v1",
+    "policy": "match-team-v6",
+    "rules": 3,
+    "mode": "fixed",
+    "config_sha256": "5eeee8303402fec67264171265aa4a0971361d7834843daeffcb47940d814ae2"
+  },
+  "review": "Added default-false action_ranker switch; default actions and decision reasons compared explicitly. Existing baseline preserved.",
+  "timing_interpretation": "Fixed work only; concurrent offline collection excludes these durations from production latency gates."
+}

@@ -8,11 +8,14 @@
 """
 from __future__ import annotations
 
+import copy
 import json
 import os
 import uuid
 from collections import Counter
+from dataclasses import replace
 from datetime import datetime
+from itertools import product
 from pathlib import Path
 from typing import Any, Optional
 
@@ -144,10 +147,22 @@ def load_game() -> Optional[dict[str, Any]]:
             if not isinstance(data, dict):
                 raise ValueError("savegame must be an object")
 
+            original = copy.deepcopy(data)
             # 反序列化事件流
             data["events"] = deserialize_events(data["events"])
             data = _migrate_savegame(data)
-            _validate_loaded_savegame(data)
+            try:
+                _validate_loaded_savegame(data)
+            except (ValueError, IllegalPlayError):
+                repaired = _recover_dropped_a_counts(data)
+                if repaired is None:
+                    raise
+                backup = path.with_name(f"{path.name}.a-counter-backup-{uuid.uuid4().hex}")
+                write_json_atomic(backup, original)
+                repaired["revision"] += 1
+                payload = {**repaired, "events": serialize_events(repaired["events"])}
+                write_json_atomic(path, payload)
+                data = repaired
 
             return data
         except FileNotFoundError:
@@ -155,6 +170,34 @@ def load_game() -> Optional[dict[str, Any]]:
         except (IndexError, KeyError, TypeError, ValueError, IllegalPlayError):
             # 文件结构损坏
             return None
+
+
+def _recover_dropped_a_counts(data: dict[str, Any]) -> dict[str, Any] | None:
+    """Repair only the v0.8.6 cross-round deal-field omission, with exact replay.
+
+    Both unfinished and finished checkpoints must uniquely match *all* snapshot
+    fields and engine events. Never accept a snapshot merely because it exists.
+    """
+    events = data.get("events", [])
+    if (data.get("version") != "4.0" or data.get("ruleset_version") != 3
+            or data.get("round_index", 0) < 2 or data.get("pending_round") is not None
+            or not events or not isinstance(events[0], ShuffleDeal)
+            or events[0].a_failure_counts != (0, 0)):
+        return None
+    shuffle = events[0]
+    levels = shuffle.team_levels or (shuffle.level, shuffle.level)
+    matches = []
+    for counts in product(*(range(3) if level == RANK_A else (0,) for level in levels)):
+        if counts == (0, 0):
+            continue
+        candidate = copy.deepcopy(data)
+        candidate["events"][0] = replace(shuffle, a_failure_counts=(counts[0], counts[1]))
+        try:
+            _validate_loaded_savegame(candidate)
+        except (ValueError, IllegalPlayError):
+            continue
+        matches.append(candidate)
+    return matches[0] if len(matches) == 1 else None
 
 
 def restore_game_state(savegame: dict[str, Any]) -> GameState:

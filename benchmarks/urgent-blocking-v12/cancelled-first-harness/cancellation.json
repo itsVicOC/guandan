@@ -1,0 +1,7 @@
+{
+  "reason": "mixed run_match result difficulties metadata did not reflect the correct lower-tier factory; corrected before any mixed or independent pair completed",
+  "completed_development_pairs": 6,
+  "independent_pairs": 0,
+  "used_for_selection": false,
+  "replacement_namespace": "urgent-blocking-v12b"
+}

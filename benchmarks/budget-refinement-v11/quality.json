@@ -1,0 +1,29 @@
+{
+  "experiment_sha256": "a25a0932358696a864539a87780e0bf0116475418cf464ed797032eebc6636a2",
+  "source_sha256": "0fc39f1dcf2ab652c4c218061760f9301b2b003b29f588c84c346b2d194aa8d0",
+  "tests": {
+    "passed": 935,
+    "seconds": 274.41,
+    "coverage_percent": 84.79988646040306
+  },
+  "ruff": "passed",
+  "mypy": {
+    "passed": true,
+    "source_files": 94
+  },
+  "coverage_floors": "passed",
+  "planner_equivalence": {
+    "source": "../fast-hand-plan-v10/equivalence.json",
+    "exact_values": 11272,
+    "planner_sha256": "65b767201b7b5c1843c50e4bc40b674a5ae9c2c43f937db2c492fa4edc88fcf3"
+  },
+  "research_defaults": {
+    "reference_refinement": false,
+    "reference_rollout_turns": 0
+  },
+  "serial_clock": {
+    "source": "clock-refined.json",
+    "decisions": 42,
+    "passed": true
+  }
+}

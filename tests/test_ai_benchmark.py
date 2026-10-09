@@ -100,6 +100,22 @@ def test_full_match_cli_reports_unfinished_limit_as_failure(
     assert payload["rounds"] == 1
 
 
+def test_full_match_uses_independent_round_seed_schedule() -> None:
+    from scripts.fit_action_ranker import derived_seed
+
+    calls = []
+
+    def schedule(master, offset):
+        calls.append((master, offset))
+        return derived_seed("test-full-deal", master, offset)
+
+    result = run_full_match(315, difficulties=0, max_rounds=3, round_seed_factory=schedule)
+    assert calls == [(315, offset) for offset in range(result.rounds)]
+    assert [row.seed for row in result.round_results] == [schedule(315, offset) for offset in range(result.rounds)]
+    legacy = run_full_match(315, difficulties=0, max_rounds=3)
+    assert [row.seed for row in legacy.round_results] == list(range(315, 315 + legacy.rounds))
+
+
 def test_benchmark_summary_to_dict_is_json_friendly() -> None:
     summary = run_benchmark(
         games=1,

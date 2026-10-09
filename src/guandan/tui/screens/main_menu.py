@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal, Vertical
-from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
 from ...storage import consume_profile_error
+from .storage_screen import StorageScreen
 
 
-class MainMenuScreen(Screen):
+class MainMenuScreen(StorageScreen):
     """主菜单。"""
 
     CSS = """
@@ -184,16 +184,22 @@ class MainMenuScreen(Screen):
             self.action_quit()
 
     def action_new_game(self) -> None:
+        self._start_storage(self._read_existing, self._existing_loaded)
+
+    @staticmethod
+    def _read_existing() -> object:
         from ...storage import has_savegame, load_game
+        has_save = has_savegame()
+        return has_save, load_game() if has_save else None
+
+    def _existing_loaded(self, payload: object) -> None:
         from .confirm import ConfirmModal
         from .error import ErrorModal
-
-        try:
-            has_save = has_savegame()
-            savegame = load_game() if has_save else None
-        except OSError as exc:
-            self.app.push_screen(ErrorModal(str(exc), title="无法检查存档"))
+        data, error = payload if isinstance(payload, tuple) else (None, ValueError("存档结果无效"))
+        if error:
+            self.app.push_screen(ErrorModal(str(error), title="无法检查存档"))
             return
+        has_save, savegame = data
         if has_save:
             # Remember which save the user is looking at: the destructive
             # branch must not remove a save another process wrote in the
@@ -222,15 +228,17 @@ class MainMenuScreen(Screen):
         if action != "overwrite":
             return
         from ...storage import delete_savegame
-        from .error import ErrorModal
+        game_id, revision = self._conflict_savegame_id, self._conflict_revision
+        self._start_storage(lambda: delete_savegame(expected_game_id=game_id,
+                                                   expected_revision=revision), self._existing_deleted)
 
-        try:
-            delete_savegame(expected_game_id=self._conflict_savegame_id,
-                            expected_revision=self._conflict_revision)
-        except OSError as exc:
-            self.app.push_screen(ErrorModal(str(exc), title="无法覆盖存档"))
-            return
-        self._open_difficulty()
+    def _existing_deleted(self, payload: object) -> None:
+        _, error = payload if isinstance(payload, tuple) else (None, ValueError("存档结果无效"))
+        if error:
+            from .error import ErrorModal
+            self.app.push_screen(ErrorModal(str(error), title="无法覆盖存档"))
+        else:
+            self._open_difficulty()
 
     def _open_difficulty(self) -> None:
         from .difficulty import DifficultySelectScreen

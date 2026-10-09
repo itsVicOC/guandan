@@ -1,0 +1,8 @@
+{
+  "status": "cancelled_before_any_complete_pair",
+  "complete_independent_pairs": 0,
+  "complete_full_pairs": 0,
+  "eligible_for_default": false,
+  "reason": "Fixed-work expert refinement permits up to 192 paired worlds, whereas serial production clocks commonly complete fewer than six. A new eight-pair cap is studied in a disjoint v11 experiment; v9 results and source remain frozen.",
+  "candidate_sha256": "3bc1c64dc69c1c69acd649477d66d833927478b8d1b5769a74879ca1e8e1bebd"
+}

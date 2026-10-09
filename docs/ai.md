@@ -36,6 +36,14 @@
 
 ## 评测与门禁
 
+职业/戴长胜另有默认关闭的 `urgent_blocking`，在原战术额度内计算对手剩余 1～3 张的完整出完组合，并区分过牌锁与压牌后的重新行动。它只调整根战术参考，保留原收益保护和候选规模；两个风险权重及生产时钟验收见[短手牌封堵优化](ai-urgent-blocking.md)。
+
+职业/戴长胜支持默认关闭的 `reference_refinement` 两阶段高手复核，以及默认 0 的 `reference_rollout_turns` 续局研究参数。复核仅重新比较轻量搜索挑战动作与战术参考，最多八对共同世界、少于六对完整世界时回退；总评估数和时钟沿用原上限。生产手牌规划已采用精确等值的整数多重集合以减少计数器开销，固定工作量核验结果不变。方法、冻结对赛及串行性能见[续局与规划研究](ai-continuation-research.md)。
+
+职业/戴长胜增加默认关闭的 `action_ranker` 研究开关，用轻量线性成对排序提名一个根动作，候选数不增加，保留战术参考、最低回应、过牌和一手出完。输入只含自身手牌与公开信息，运行时无机器学习依赖；续局、估值、收益保护及残局路径沿用现有实现。数据与独立验收流程见[动作排序研究](ai-action-ranking.md)。
+
+职业/戴长胜新增默认关闭的 `partner_adaptation`、`response_chain` 研究开关，用于近期公开行为适配与包含反压的回应链。前三档不接入。方法、预定独立种子和启用门槛见[搭档与牌权研究](ai-partner-optimization.md)。
+
 `python -m guandan.ai.arena --candidate 2 --baseline 1 --deals 20 --seed-start 21000 --json` 对同一 seed 打两局并换队。区间按完整的两局 seed 对进行 bootstrap；不足 10 对时报告 `[0, 1]`，若有未完成局则退回 Wilson 区间。生产时钟模式用于体验与延迟，`--deterministic-search` 固定 256/768 次主搜索评估用于跨机器回归（最高档另含有节点上限的残局搜索），两种胜率不可混算。
 
 整场门禁使用 `--full-match`，从 2 级连续经过升级、进贡、还贡和过 A。`scripts/action_value_baseline.py evaluate-ladder` 在 2/9/A 级、四个座位和两种来源策略收集局面，比较五档实际选牌、候选覆盖及 regret；`audit-candidates` 对照所有规则枚举动作。小样本续局标签只用于排查，不可用来宣称强度。发布前使用独立留出 seed，并事先确定样本规模或顺序检验方案；区间跨 50% 时只报告未证实，不按观察到的胜率持续扩样直到通过。新基准与未通过的实验见 [benchmarks/README.md](../benchmarks/README.md)。
@@ -44,7 +52,7 @@
 
 ```bash
 python -m guandan.ai.diagnostics --mode fixed \
-  --baseline benchmarks/ai-regression-v6.json --output fixed.json
+  --baseline benchmarks/production/ai-regression.json --output fixed.json
 python -m guandan.ai.diagnostics --mode clock --output clock.json
 python -m guandan.ai.diagnostics --mode curve --output curve.json
 python -m guandan.ai.diagnostics --mode endgame-clock --output cold-solver.json
@@ -55,6 +63,29 @@ python -m guandan.ai.diagnostics --mode endgame-clock --output cold-solver.json
 生产时钟检查单独运行职业/戴长胜共 12 次决策，逐次按对应常规/关键预算的 `1.15 × 预算 + 100ms` 检查软时限。定时配对 8 seed 对仅作完成与合法性冒烟，不再据此判定棋力，也不套用固定工作量的绝对耗时门槛。完整比赛冒烟的 p95 容差为 5.85 秒，与最高档 5 秒关键预算一致。
 
 诊断记录候选构造、隐藏世界采样、续局耗时、实际评估量、共同样本轮数、预算受限标志、选牌/回退原因及规划缓存命中、大小。阶段计时不含全部前后处理，不能简单相加作为端到端时间。报告另含代码 SHA、平台、Python、并发数和缓存条件。
+
+生产兼容性指纹只包含搜索参数和启用的研究配置；默认关闭的开关及其无效权重不改变该指纹。报告另外保留完整配置及 SHA-256。新增关闭开关不需要重建生产基线；启用开关、改变预算、规则或动作仍会触发门禁。当前基线与 v6 的 30 个动作、原因一致，见 `benchmarks/production/baseline-review.json`。
+
+`ProfessionalStrategy` 接受不可变的 `SearchConfig` 和 `ResearchConfig`，旧构造参数与可变策略属性继续兼容。每次决策用一个 `DecisionBudget` 的绝对截止时间；战术、排序、根搜索、树搜索和高手复核只能使用其剩余时间。最高档残局分配 70% 给求解器，失败后的普通搜索继续使用完整决策剩余的 30%，不重新计时。
+
+```python
+from guandan.ai.config import ResearchConfig, SearchConfig
+from guandan.ai.strategies.professional import ProfessionalStrategy
+
+policy = ProfessionalStrategy(search_config=SearchConfig(), research_config=ResearchConfig())
+```
+
+`ActorObservation` 是战术上下文、公开过牌证据、搭档风格与动作排序共用的不可变输入，包含自己的牌、各家张数与公开事件，过滤发牌种子和其他手牌。真实状态只在边界构造观察；完整暗牌世界继续在模拟器内部使用。
+
+`common_samples` 表示所有候选已完成评估的配对世界，其中续局可能按手数截断；`terminal_common_samples` 才表示所有候选均打到小局结束的世界。另记录完成/截断/因时钟丢弃的续局数。探索性诊断提供两种样本/秒、配对标准误、根动作与最终保护动作、缓存命中及可选 Python 分配峰值；`--measure-memory` 会改变耗时，不能充当生产延迟测量。
+
+```bash
+PYTHONPATH=src:. python -m scripts.ai_continuation_diagnostic \
+  --positions 16 --iterations 64 --methods baseline,horizon120 --workers 1 \
+  --seed-namespace my-single-horizon-study --out diagnostic.json
+```
+
+评测 RPC 的启动和请求都有时限，按生产预算加 IPC 容差；固定工作量请求默认上限 60 秒。超时、异常退出或协议错误会停止该评测并保存请求、stderr 尾部、阶段和校验和，位置可用 `GUANDAN_EVAL_FAILURE_DIR` 指定。故障不会补抽种子。通用对赛与 v12 入口将规则、序列化、完整策略、脚本、夹具、依赖锁与配方写入 manifest；变更后必须使用新输出目录。历史研究复现应使用原快照内的脚本，不能将新框架指纹当作旧结果的身份。
 
 预算曲线在同一进程按局面、档位、递增预算顺序运行，缓存保持热状态；动作与固定工作量参考一致的比例仅用于诊断，不能替代胜率或收益。后续实验应随机化预算顺序、增加独立重复与冷缓存对照，补充峰值内存、三家连续行动累计等待及独立配对比赛，再决定是否改默认预算。
 

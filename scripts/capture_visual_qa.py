@@ -105,7 +105,8 @@ def capture_gui(output: Path) -> list[dict]:
         # A load page renders its snapshot after background I/O completes.
         from PySide6.QtCore import QEventLoop, QTimer
         for _ in range(600):
-            if not getattr(window.stack.currentWidget(), "_loading", False):
+            page = window.stack.currentWidget()
+            if not getattr(page, "_loading", False) and not getattr(page, "_storage_busy", False):
                 break
             loop = QEventLoop()
             QTimer.singleShot(10, loop.quit)

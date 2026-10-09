@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guandan"
-version = "0.8.6b1"
+version = "0.8.7b1"
 description = "本地掼蛋游戏（桌面 GUI / 终端 TUI），含戴长胜致敬档位的 5 档 AI"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,6 +29,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+ai-training = [
+    "numpy>=1.26,<3",
+]
 gui = [
     "PySide6>=6.7,<7",
 ]

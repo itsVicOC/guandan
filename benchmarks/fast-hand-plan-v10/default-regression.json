@@ -1,0 +1,1736 @@
+{
+  "compatibility": {
+    "schema": 1,
+    "corpus": "levels-2-9-A-v1",
+    "policy": "match-team-v6",
+    "rules": 3,
+    "mode": "fixed",
+    "config_sha256": "5eeee8303402fec67264171265aa4a0971361d7834843daeffcb47940d814ae2"
+  },
+  "environment": {
+    "code_sha": "77190bf5f831f4f0c6350e39ab9cd49981f14d35",
+    "ai_source_sha256": "ac7e67fd678ff0a951be9e8a8e9d5769ebd25d49b88c8939ae10de008a05af01",
+    "python": "3.10.20",
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "workers": 1,
+    "cache": "process warm; sequential corpus order"
+  },
+  "records": [
+    {
+      "case": "level2-opening",
+      "difficulty": 0,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        2,
+        2
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        10,
+        1,
+        0,
+        null,
+        [
+          [
+            6,
+            2,
+            1
+          ],
+          [
+            6,
+            3,
+            1
+          ],
+          [
+            10,
+            3,
+            1
+          ],
+          [
+            10,
+            4,
+            2
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.004057000001921551,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 0,
+      "plan_cache_size": 0
+    },
+    {
+      "case": "level2-opening",
+      "difficulty": 1,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        2,
+        2
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "pair_sequence",
+        13,
+        3,
+        0,
+        null,
+        [
+          [
+            11,
+            3,
+            2
+          ],
+          [
+            12,
+            4,
+            2
+          ],
+          [
+            13,
+            4,
+            1
+          ],
+          [
+            13,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.00834216700241086,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 12,
+      "plan_cache_size": 12
+    },
+    {
+      "case": "level2-opening",
+      "difficulty": 2,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        2,
+        2
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        10,
+        1,
+        0,
+        null,
+        [
+          [
+            8,
+            2,
+            1
+          ],
+          [
+            8,
+            3,
+            1
+          ],
+          [
+            10,
+            3,
+            1
+          ],
+          [
+            10,
+            4,
+            2
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.035201416998461355,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 28,
+      "plan_cache_size": 40
+    },
+    {
+      "case": "level2-opening",
+      "difficulty": 3,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        2,
+        2
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        10,
+        1,
+        0,
+        null,
+        [
+          [
+            8,
+            2,
+            1
+          ],
+          [
+            8,
+            3,
+            1
+          ],
+          [
+            10,
+            3,
+            1
+          ],
+          [
+            10,
+            4,
+            2
+          ]
+        ]
+      ],
+      "elapsed_seconds": 2.5459705840003153,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 256,
+        "sampled_worlds": 32,
+        "elapsed_seconds": 2.5431830000015907,
+        "budget_limited": false,
+        "candidate_seconds": 0.02726395900026546,
+        "sampling_seconds": 0.016468956990138395,
+        "rollout_seconds": 2.4990867120541225,
+        "common_samples": 32,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 8,
+      "guard": {
+        "required_gain": 0.023515987302257173,
+        "observed_gain": 0.015525993313322162,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 32,
+        "paired_standard_error": 0.004824006285864912
+      },
+      "endgame": null,
+      "plan_cache_hits": 333,
+      "plan_cache_misses": 741,
+      "plan_cache_size": 781
+    },
+    {
+      "case": "level2-opening",
+      "difficulty": 4,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        2,
+        2
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "straight",
+        13,
+        5,
+        0,
+        null,
+        [
+          [
+            9,
+            5,
+            1
+          ],
+          [
+            10,
+            4,
+            1
+          ],
+          [
+            11,
+            3,
+            1
+          ],
+          [
+            12,
+            4,
+            1
+          ],
+          [
+            13,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 7.286818915999902,
+      "reason": "search",
+      "search": {
+        "simulations": 768,
+        "sampled_worlds": 64,
+        "elapsed_seconds": 7.28112929100098,
+        "budget_limited": false,
+        "candidate_seconds": 0.00500441599797341,
+        "sampling_seconds": 0.03222249798636767,
+        "rollout_seconds": 7.24309741893012,
+        "common_samples": 64,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 12,
+      "guard": {
+        "required_gain": 0.006872876017810018,
+        "observed_gain": 0.023255494211986028,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 64,
+        "paired_standard_error": 0.0041907780596402554
+      },
+      "endgame": null,
+      "plan_cache_hits": 1249,
+      "plan_cache_misses": 1844,
+      "plan_cache_size": 2625
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 0,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 24,
+      "team_levels": [
+        2,
+        2
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        9,
+        1,
+        0,
+        null,
+        [
+          [
+            9,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.0002976670002681203,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 0,
+      "plan_cache_size": 2625
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 1,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 24,
+      "team_levels": [
+        2,
+        2
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        9,
+        1,
+        0,
+        null,
+        [
+          [
+            9,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.0003982499983976595,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 5,
+      "plan_cache_size": 2630
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 2,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 24,
+      "team_levels": [
+        2,
+        2
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        9,
+        1,
+        0,
+        null,
+        [
+          [
+            9,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.0006369170005200431,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 5,
+      "plan_cache_size": 2635
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 3,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 24,
+      "team_levels": [
+        2,
+        2
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": true,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        9,
+        1,
+        0,
+        null,
+        [
+          [
+            9,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.8270043340016855,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 256,
+        "sampled_worlds": 52,
+        "elapsed_seconds": 0.8266992919998302,
+        "budget_limited": false,
+        "candidate_seconds": 0.0009396669993293472,
+        "sampling_seconds": 0.045967959995323326,
+        "rollout_seconds": 0.7795281349863217,
+        "common_samples": 51,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 5,
+      "guard": {
+        "required_gain": 0.023515987302257173,
+        "observed_gain": 0.006425162408272567,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 51,
+        "paired_standard_error": 0.005786084526032589
+      },
+      "endgame": null,
+      "plan_cache_hits": 289,
+      "plan_cache_misses": 71,
+      "plan_cache_size": 2706
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 4,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 24,
+      "team_levels": [
+        2,
+        2
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": true,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        9,
+        1,
+        0,
+        null,
+        [
+          [
+            9,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 2.395179541003017,
+      "reason": "agrees_with_tactical",
+      "search": {
+        "simulations": 768,
+        "sampled_worlds": 154,
+        "elapsed_seconds": 2.395019042000058,
+        "budget_limited": false,
+        "candidate_seconds": 0.00019674999930430204,
+        "sampling_seconds": 0.13874703702094848,
+        "rollout_seconds": 2.2553088379791006,
+        "common_samples": 153,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 5,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 165,
+      "plan_cache_misses": 3,
+      "plan_cache_size": 2709
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 0,
+      "player": 1,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        9,
+        9
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        4,
+        1,
+        0,
+        null,
+        [
+          [
+            4,
+            2,
+            1
+          ],
+          [
+            4,
+            4,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ],
+          [
+            8,
+            2,
+            1
+          ],
+          [
+            8,
+            3,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.0022444589994847775,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 0,
+      "plan_cache_size": 2709
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 1,
+      "player": 1,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        9,
+        9
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        4,
+        1,
+        0,
+        null,
+        [
+          [
+            4,
+            2,
+            1
+          ],
+          [
+            4,
+            4,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ],
+          [
+            5,
+            2,
+            1
+          ],
+          [
+            5,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.008190666998416418,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 12,
+      "plan_cache_size": 2721
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 2,
+      "player": 1,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        9,
+        9
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        4,
+        1,
+        0,
+        null,
+        [
+          [
+            4,
+            2,
+            1
+          ],
+          [
+            4,
+            4,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ],
+          [
+            11,
+            3,
+            1
+          ],
+          [
+            11,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.03720033399804379,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 28,
+      "plan_cache_size": 2749
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 3,
+      "player": 1,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        9,
+        9
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        4,
+        1,
+        0,
+        null,
+        [
+          [
+            4,
+            2,
+            1
+          ],
+          [
+            4,
+            4,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ],
+          [
+            11,
+            3,
+            1
+          ],
+          [
+            11,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 3.3701482500000566,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 256,
+        "sampled_worlds": 32,
+        "elapsed_seconds": 3.3659253330006322,
+        "budget_limited": false,
+        "candidate_seconds": 0.03175304199976381,
+        "sampling_seconds": 0.015578163984173443,
+        "rollout_seconds": 3.3182672929942783,
+        "common_samples": 32,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 8,
+      "guard": {
+        "required_gain": 0.03552143334060699,
+        "observed_gain": 0.02216225000183747,
+        "payoff_span": 0.2537245238614785,
+        "common_samples": 32,
+        "paired_standard_error": 0.00901490176859741
+      },
+      "endgame": null,
+      "plan_cache_hits": 184,
+      "plan_cache_misses": 888,
+      "plan_cache_size": 3637
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 4,
+      "player": 1,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        9,
+        9
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        2,
+        1,
+        0,
+        null,
+        [
+          [
+            2,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 7.343119707998994,
+      "reason": "search",
+      "search": {
+        "simulations": 768,
+        "sampled_worlds": 64,
+        "elapsed_seconds": 7.340579874999094,
+        "budget_limited": false,
+        "candidate_seconds": 0.004468332997930702,
+        "sampling_seconds": 0.03246537299492047,
+        "rollout_seconds": 7.302797545053181,
+        "common_samples": 64,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 12,
+      "guard": {
+        "required_gain": 0.012265159190663382,
+        "observed_gain": 0.026899400786586758,
+        "payoff_span": 0.2537245238614785,
+        "common_samples": 64,
+        "paired_standard_error": 0.007478755604063038
+      },
+      "endgame": null,
+      "plan_cache_hits": 1281,
+      "plan_cache_misses": 1781,
+      "plan_cache_size": 5418
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 0,
+      "player": 1,
+      "variant": "default",
+      "total_cards": 23,
+      "team_levels": [
+        9,
+        9
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        2,
+        1,
+        0,
+        null,
+        [
+          [
+            2,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.000798249999206746,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 0,
+      "plan_cache_size": 5418
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 1,
+      "player": 1,
+      "variant": "default",
+      "total_cards": 23,
+      "team_levels": [
+        9,
+        9
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            2,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ],
+          [
+            9,
+            3,
+            1
+          ],
+          [
+            9,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.0011531660020409618,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 11,
+      "plan_cache_size": 5429
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 2,
+      "player": 1,
+      "variant": "default",
+      "total_cards": 23,
+      "team_levels": [
+        9,
+        9
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            2,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ],
+          [
+            9,
+            3,
+            1
+          ],
+          [
+            9,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.001204667001729831,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 11,
+      "plan_cache_size": 5440
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 3,
+      "player": 1,
+      "variant": "default",
+      "total_cards": 23,
+      "team_levels": [
+        9,
+        9
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": true,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            2,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ],
+          [
+            9,
+            3,
+            1
+          ],
+          [
+            9,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.7473986249970039,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 256,
+        "sampled_worlds": 43,
+        "elapsed_seconds": 0.7470993749993795,
+        "budget_limited": false,
+        "candidate_seconds": 0.0024637499991513323,
+        "sampling_seconds": 0.03899570800058427,
+        "rollout_seconds": 0.7053727010134025,
+        "common_samples": 42,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 6,
+      "guard": {
+        "required_gain": 0.03552143334060699,
+        "observed_gain": 0.01508375684345692,
+        "payoff_span": 0.2537245238614785,
+        "common_samples": 42,
+        "paired_standard_error": 0.004477818126302105
+      },
+      "endgame": null,
+      "plan_cache_hits": 11,
+      "plan_cache_misses": 11,
+      "plan_cache_size": 5451
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 4,
+      "player": 1,
+      "variant": "default",
+      "total_cards": 23,
+      "team_levels": [
+        9,
+        9
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": true,
+      "budget_ms": 0,
+      "action": [
+        "triple",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            2,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 1.7077350839972496,
+      "reason": "search",
+      "search": {
+        "simulations": 768,
+        "sampled_worlds": 77,
+        "elapsed_seconds": 1.70739866599979,
+        "budget_limited": false,
+        "candidate_seconds": 0.0005164579997654073,
+        "sampling_seconds": 0.06200162499953876,
+        "rollout_seconds": 1.6442309579979337,
+        "common_samples": 76,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 10,
+      "guard": {
+        "required_gain": 0.010148980954459139,
+        "observed_gain": 0.014220245912443974,
+        "payoff_span": 0.2537245238614785,
+        "common_samples": 76,
+        "paired_standard_error": 0.0036437091783329666
+      },
+      "endgame": null,
+      "plan_cache_hits": 22,
+      "plan_cache_misses": 0,
+      "plan_cache_size": 5451
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 0,
+      "player": 2,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        14,
+        14
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        2,
+        1,
+        0,
+        null,
+        [
+          [
+            2,
+            3,
+            2
+          ],
+          [
+            2,
+            4,
+            1
+          ],
+          [
+            11,
+            2,
+            1
+          ],
+          [
+            11,
+            3,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.010273250001773704,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 0,
+      "plan_cache_size": 5451
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 1,
+      "player": 2,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        14,
+        14
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_sequence",
+        2,
+        2,
+        1,
+        null,
+        [
+          [
+            2,
+            3,
+            2
+          ],
+          [
+            2,
+            4,
+            1
+          ],
+          [
+            14,
+            2,
+            1
+          ],
+          [
+            14,
+            3,
+            1
+          ],
+          [
+            14,
+            5,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.036608458001865074,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 12,
+      "plan_cache_size": 5463
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 2,
+      "player": 2,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        14,
+        14
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        2,
+        1,
+        0,
+        null,
+        [
+          [
+            2,
+            3,
+            2
+          ],
+          [
+            2,
+            4,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.06493650000265916,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 28,
+      "plan_cache_size": 5491
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 3,
+      "player": 2,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        14,
+        14
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        2,
+        1,
+        0,
+        null,
+        [
+          [
+            2,
+            3,
+            2
+          ],
+          [
+            2,
+            4,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 2.381071375002648,
+      "reason": "agrees_with_tactical",
+      "search": {
+        "simulations": 256,
+        "sampled_worlds": 29,
+        "elapsed_seconds": 2.3703962079998746,
+        "budget_limited": false,
+        "candidate_seconds": 0.061685832999501145,
+        "sampling_seconds": 0.013802875004330417,
+        "rollout_seconds": 2.294523628992465,
+        "common_samples": 28,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 9,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 394,
+      "plan_cache_misses": 677,
+      "plan_cache_size": 6168
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 4,
+      "player": 2,
+      "variant": "default",
+      "total_cards": 108,
+      "team_levels": [
+        14,
+        14
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "triple_pair",
+        2,
+        1,
+        0,
+        null,
+        [
+          [
+            2,
+            3,
+            2
+          ],
+          [
+            2,
+            4,
+            1
+          ],
+          [
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            4,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 7.067534667003201,
+      "reason": "tactical_guard",
+      "search": {
+        "simulations": 768,
+        "sampled_worlds": 60,
+        "elapsed_seconds": 7.0592285839993565,
+        "budget_limited": false,
+        "candidate_seconds": 0.017117750001489185,
+        "sampling_seconds": 0.02795604100174387,
+        "rollout_seconds": 7.013149810005416,
+        "common_samples": 59,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 13,
+      "guard": {
+        "required_gain": 0.06332338434428132,
+        "observed_gain": 0.016928292418806667,
+        "payoff_span": 1.0,
+        "common_samples": 59,
+        "paired_standard_error": 0.038611819722122756
+      },
+      "endgame": null,
+      "plan_cache_hits": 1265,
+      "plan_cache_misses": 1804,
+      "plan_cache_size": 7972
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 0,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 23,
+      "team_levels": [
+        14,
+        14
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            3,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.0004154579983151052,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 0,
+      "plan_cache_size": 7972
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 1,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 23,
+      "team_levels": [
+        14,
+        14
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            3,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.0003862079975078814,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 3,
+      "plan_cache_size": 7975
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 2,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 23,
+      "team_levels": [
+        14,
+        14
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": false,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            3,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.0005133329977979884,
+      "reason": "heuristic",
+      "search": null,
+      "candidate_count": 0,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 0,
+      "plan_cache_misses": 3,
+      "plan_cache_size": 7978
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 3,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 23,
+      "team_levels": [
+        14,
+        14
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": true,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            3,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 0.88760133300093,
+      "reason": "agrees_with_tactical",
+      "search": {
+        "simulations": 256,
+        "sampled_worlds": 86,
+        "elapsed_seconds": 0.887464709001506,
+        "budget_limited": false,
+        "candidate_seconds": 0.0002965419989777729,
+        "sampling_seconds": 0.08092066500830697,
+        "rollout_seconds": 0.8058888349878544,
+        "common_samples": 85,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 3,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 134,
+      "plan_cache_misses": 30,
+      "plan_cache_size": 8008
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 4,
+      "player": 0,
+      "variant": "default",
+      "total_cards": 23,
+      "team_levels": [
+        14,
+        14
+      ],
+      "a_failure_counts": [
+        0,
+        0
+      ],
+      "critical": true,
+      "budget_ms": 0,
+      "action": [
+        "single",
+        3,
+        1,
+        0,
+        null,
+        [
+          [
+            3,
+            3,
+            1
+          ]
+        ]
+      ],
+      "elapsed_seconds": 2.255070999999589,
+      "reason": "agrees_with_tactical",
+      "search": {
+        "simulations": 768,
+        "sampled_worlds": 256,
+        "elapsed_seconds": 2.2548166250016948,
+        "budget_limited": false,
+        "candidate_seconds": 0.00031433299955097027,
+        "sampling_seconds": 0.2381542500006617,
+        "rollout_seconds": 2.0154856190092687,
+        "common_samples": 256,
+        "partner_probabilities": [],
+        "response_chain": null,
+        "action_ranker": null,
+        "reference_refinement": null
+      },
+      "candidate_count": 3,
+      "guard": null,
+      "endgame": null,
+      "plan_cache_hits": 75,
+      "plan_cache_misses": 3,
+      "plan_cache_size": 8011
+    }
+  ],
+  "failures": [],
+  "passed": true
+}

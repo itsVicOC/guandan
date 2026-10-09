@@ -1,0 +1,3861 @@
+{
+  "namespace": "urgent-blocking-v12",
+  "counts": {
+    "dev-team": 32,
+    "dev-mixed": 32,
+    "holdout": 240,
+    "mixed": 240,
+    "full": 48
+  },
+  "weights": [
+    6,
+    12
+  ],
+  "mode": "clock",
+  "workers": 1,
+  "baseline_root": "/private/tmp/guandan-urgent-v12-baseline",
+  "candidate_root": "/private/tmp/guandan-urgent-v12-candidate",
+  "baseline_sha256": "0fc39f1dcf2ab652c4c218061760f9301b2b003b29f588c84c346b2d194aa8d0",
+  "candidate_sha256": "c6425214bbde66c36045b485ae5a479ffd41a76dab78d46f0c1261de5569e49a",
+  "harness_sha256": "59640133ca11669475f5f7744819eb0af0b4bd8cd2e90a68550d7c380175b2e6",
+  "selection": "largest minimum positive team/mixed development gain; timing must pass",
+  "promotion": "team/mixed 95% paired lower bounds >0; all companions >=0; full lower bound >50%; replay/clock/quality pass",
+  "weight": 6,
+  "records": [
+    {
+      "tier": 3,
+      "cache": "warm",
+      "case": "level2-opening",
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 10,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 10,
+            "suit": 3
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 8,
+            "suit": 3
+          },
+          {
+            "rank": 8,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 1.0041922500022338,
+      "budget_ms": 1000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "triple_pair",
+          10,
+          1,
+          0,
+          null,
+          [
+            [
+              8,
+              2,
+              1
+            ],
+            [
+              8,
+              3,
+              1
+            ],
+            [
+              10,
+              3,
+              1
+            ],
+            [
+              10,
+              4,
+              2
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          10,
+          1,
+          0,
+          null,
+          [
+            [
+              8,
+              2,
+              1
+            ],
+            [
+              8,
+              3,
+              1
+            ],
+            [
+              10,
+              3,
+              1
+            ],
+            [
+              10,
+              4,
+              2
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 1.0458003089297563e-05,
+        "stage_elapsed_seconds": 0.03027162499347469,
+        "stage_budget_ms": 100.0
+      },
+      "guard": {
+        "required_gain": 0.023515987302257173,
+        "observed_gain": 0.021058238915960925,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 20,
+        "paired_standard_error": 0.0078022891406176595
+      },
+      "simulations": 163,
+      "common_samples": 20,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "warm",
+      "case": "level2-endgame",
+      "pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.5268025420009508,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "single",
+          9,
+          1,
+          0,
+          null,
+          [
+            [
+              9,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          9,
+          1,
+          0,
+          null,
+          [
+            [
+              9,
+              5,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 4.333000106271356e-06,
+        "stage_elapsed_seconds": 0.0005522080027731135,
+        "stage_budget_ms": 200.0
+      },
+      "guard": null,
+      "simulations": 256,
+      "common_samples": 51,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "warm",
+      "case": "level9-opening",
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 1.0024761669992586,
+      "budget_ms": 1000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "triple_pair",
+          4,
+          1,
+          0,
+          null,
+          [
+            [
+              4,
+              2,
+              1
+            ],
+            [
+              4,
+              4,
+              1
+            ],
+            [
+              4,
+              5,
+              1
+            ],
+            [
+              11,
+              3,
+              1
+            ],
+            [
+              11,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          4,
+          1,
+          0,
+          null,
+          [
+            [
+              4,
+              2,
+              1
+            ],
+            [
+              4,
+              4,
+              1
+            ],
+            [
+              4,
+              5,
+              1
+            ],
+            [
+              11,
+              3,
+              1
+            ],
+            [
+              11,
+              5,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 6.1250029830262065e-06,
+        "stage_elapsed_seconds": 0.026217874998110346,
+        "stage_budget_ms": 100.0
+      },
+      "guard": {
+        "required_gain": 0.03552143334060699,
+        "observed_gain": 0.01702898524867802,
+        "payoff_span": 0.2537245238614785,
+        "common_samples": 15,
+        "paired_standard_error": 0.007804578420237407
+      },
+      "simulations": 127,
+      "common_samples": 15,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "warm",
+      "case": "level9-endgame",
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 4
+          },
+          {
+            "rank": 9,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.43038116700336104,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "triple_pair",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              2,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ],
+            [
+              9,
+              3,
+              1
+            ],
+            [
+              9,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              2,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ],
+            [
+              9,
+              3,
+              1
+            ],
+            [
+              9,
+              4,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 5.957997927907854e-06,
+        "stage_elapsed_seconds": 0.0016236250012298115,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.03552143334060699,
+        "observed_gain": 0.014288939588057714,
+        "payoff_span": 0.2537245238614785,
+        "common_samples": 42,
+        "paired_standard_error": 0.005542444632405887
+      },
+      "simulations": 256,
+      "common_samples": 42,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "warm",
+      "case": "level14-opening",
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 1.002712250003242,
+      "budget_ms": 1000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 6.50000583846122e-06,
+        "stage_elapsed_seconds": 0.07907962500030408,
+        "stage_budget_ms": 100.0
+      },
+      "guard": {
+        "required_gain": 0.14,
+        "observed_gain": 0.01070843979997227,
+        "payoff_span": 1.0,
+        "common_samples": 18,
+        "paired_standard_error": 0.03730736772204945
+      },
+      "simulations": 164,
+      "common_samples": 18,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "warm",
+      "case": "level14-endgame",
+      "pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.5282200000001467,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "single",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              3,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              3,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 4.333000106271356e-06,
+        "stage_elapsed_seconds": 0.0004064169988851063,
+        "stage_budget_ms": 200.0
+      },
+      "guard": null,
+      "simulations": 256,
+      "common_samples": 85,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level2-seat0-solver",
+      "pattern": {
+        "type": "triple",
+        "rank": 12,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 12,
+            "suit": 4
+          },
+          {
+            "rank": 12,
+            "suit": 2
+          },
+          {
+            "rank": 12,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.06463608299964108,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "triple",
+          12,
+          1,
+          0,
+          null,
+          [
+            [
+              12,
+              2,
+              1
+            ],
+            [
+              12,
+              3,
+              1
+            ],
+            [
+              12,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple",
+          12,
+          1,
+          0,
+          null,
+          [
+            [
+              12,
+              2,
+              1
+            ],
+            [
+              12,
+              3,
+              1
+            ],
+            [
+              12,
+              4,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 4.41699376096949e-06,
+        "stage_elapsed_seconds": 0.0006822919967817143,
+        "stage_budget_ms": 200.0
+      },
+      "guard": null,
+      "simulations": 256,
+      "common_samples": 42,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level2-seat1-solver",
+      "pattern": null,
+      "elapsed_seconds": 0.08321566700033145,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "pass"
+        ],
+        "reference_key": [
+          "pass"
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 1.7080019460991025e-06,
+        "stage_elapsed_seconds": 0.00048462499398738146,
+        "stage_budget_ms": 200.0
+      },
+      "guard": null,
+      "simulations": 256,
+      "common_samples": 64,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level2-seat2-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.18382833299983758,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "search",
+      "urgent": {
+        "original_key": [
+          "single",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": true,
+        "reason": "changed",
+        "risks": [
+          {
+            "key": [
+              "single",
+              2,
+              1,
+              0,
+              null,
+              [
+                [
+                  2,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.305,
+            "score": 6.305,
+            "by_seat": {
+              "1": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              13,
+              1,
+              0,
+              null,
+              [
+                [
+                  13,
+                  4,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 7.445,
+            "score": 10.445,
+            "by_seat": {
+              "1": 0.5
+            }
+          },
+          {
+            "key": [
+              "single",
+              5,
+              1,
+              0,
+              null,
+              [
+                [
+                  5,
+                  4,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.300000000000001,
+            "score": 10.05,
+            "by_seat": {
+              "1": 0.625
+            }
+          }
+        ],
+        "candidate_replaced": false,
+        "elapsed_seconds": 0.0006658749989583157,
+        "stage_elapsed_seconds": 0.0012715419943560846,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.023515987302257173,
+        "observed_gain": 0.030161620249410714,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 85,
+        "paired_standard_error": 0.0023558227707182987
+      },
+      "simulations": 256,
+      "common_samples": 85,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level2-seat3-solver",
+      "pattern": {
+        "type": "triple",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 2
+          },
+          {
+            "rank": 5,
+            "suit": 3
+          },
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.12051741599861998,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "triple",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              2,
+              1
+            ],
+            [
+              5,
+              3,
+              1
+            ],
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              2,
+              1
+            ],
+            [
+              5,
+              3,
+              1
+            ],
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": true,
+        "reason": "unchanged",
+        "risks": [
+          {
+            "key": [
+              "single",
+              5,
+              1,
+              0,
+              null,
+              [
+                [
+                  5,
+                  2,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.41,
+            "score": 6.41,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              9,
+              1,
+              0,
+              null,
+              [
+                [
+                  9,
+                  5,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.41,
+            "score": 6.41,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              5,
+              1,
+              0,
+              null,
+              [
+                [
+                  5,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.41,
+            "score": 6.41,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              9,
+              1,
+              0,
+              null,
+              [
+                [
+                  9,
+                  2,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.41,
+            "score": 6.41,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              5,
+              1,
+              0,
+              null,
+              [
+                [
+                  5,
+                  5,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.41,
+            "score": 6.41,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              12,
+              1,
+              0,
+              null,
+              [
+                [
+                  12,
+                  2,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.0,
+            "score": 6.0,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "pair",
+              5,
+              1,
+              0,
+              null,
+              [
+                [
+                  5,
+                  2,
+                  1
+                ],
+                [
+                  5,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 10.592000000000002,
+            "score": 10.592000000000002,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "pair",
+              9,
+              1,
+              0,
+              null,
+              [
+                [
+                  9,
+                  2,
+                  1
+                ],
+                [
+                  9,
+                  5,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 10.592000000000002,
+            "score": 10.592000000000002,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "triple",
+              5,
+              1,
+              0,
+              null,
+              [
+                [
+                  5,
+                  2,
+                  1
+                ],
+                [
+                  5,
+                  3,
+                  1
+                ],
+                [
+                  5,
+                  5,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 4.732,
+            "score": 4.732,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "triple",
+              9,
+              1,
+              0,
+              null,
+              [
+                [
+                  9,
+                  2,
+                  2
+                ],
+                [
+                  9,
+                  5,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 4.732,
+            "score": 4.732,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "triple_pair",
+              5,
+              1,
+              0,
+              null,
+              [
+                [
+                  5,
+                  2,
+                  1
+                ],
+                [
+                  5,
+                  3,
+                  1
+                ],
+                [
+                  5,
+                  5,
+                  1
+                ],
+                [
+                  9,
+                  2,
+                  1
+                ],
+                [
+                  9,
+                  5,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 5.095000000000001,
+            "score": 5.095000000000001,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "triple_pair",
+              9,
+              1,
+              0,
+              null,
+              [
+                [
+                  5,
+                  2,
+                  1
+                ],
+                [
+                  5,
+                  3,
+                  1
+                ],
+                [
+                  9,
+                  2,
+                  2
+                ],
+                [
+                  9,
+                  5,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 5.095000000000001,
+            "score": 5.095000000000001,
+            "by_seat": {
+              "2": 0.0
+            }
+          }
+        ],
+        "candidate_replaced": false,
+        "elapsed_seconds": 0.001396999999997206,
+        "stage_elapsed_seconds": 0.003193667005689349,
+        "stage_budget_ms": 200.0
+      },
+      "guard": null,
+      "simulations": 256,
+      "common_samples": 36,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level9-seat0-solver",
+      "pattern": {
+        "type": "pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 5
+          },
+          {
+            "rank": 2,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.09272820800106274,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              5,
+              2
+            ]
+          ]
+        ],
+        "reference_key": [
+          "pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              5,
+              2
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 4.292000085115433e-06,
+        "stage_elapsed_seconds": 0.00023391700233332813,
+        "stage_budget_ms": 200.0
+      },
+      "guard": null,
+      "simulations": 256,
+      "common_samples": 128,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level9-seat1-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 14,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.13062491599703208,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "single",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              14,
+              3,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              14,
+              3,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": true,
+        "reason": "unchanged",
+        "risks": [
+          {
+            "key": [
+              "pass"
+            ],
+            "base_score": 17.759999999999998,
+            "score": 21.759999999999998,
+            "by_seat": {
+              "0": 0.6666666666666666
+            }
+          },
+          {
+            "key": [
+              "single",
+              9,
+              1,
+              0,
+              null,
+              [
+                [
+                  9,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.325,
+            "score": 8.325,
+            "by_seat": {
+              "0": 0.3333333333333333,
+              "2": 0.3333333333333333
+            }
+          },
+          {
+            "key": [
+              "single",
+              14,
+              1,
+              0,
+              null,
+              [
+                [
+                  14,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.195,
+            "score": 8.195,
+            "by_seat": {
+              "0": 0.3333333333333333,
+              "2": 0.3333333333333333
+            }
+          }
+        ],
+        "candidate_replaced": false,
+        "elapsed_seconds": 0.0005042920020059682,
+        "stage_elapsed_seconds": 0.0008581250003771856,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.03552143334060699,
+        "observed_gain": 0.0,
+        "payoff_span": 0.2537245238614785,
+        "common_samples": 85,
+        "paired_standard_error": 0.0
+      },
+      "simulations": 256,
+      "common_samples": 85,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level9-seat2-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 13,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 13,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.14405929100030335,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "single",
+          13,
+          1,
+          0,
+          null,
+          [
+            [
+              13,
+              3,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          13,
+          1,
+          0,
+          null,
+          [
+            [
+              13,
+              3,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": true,
+        "reason": "unchanged",
+        "risks": [
+          {
+            "key": [
+              "pass"
+            ],
+            "base_score": 11.48,
+            "score": 11.48,
+            "by_seat": {}
+          },
+          {
+            "key": [
+              "single",
+              13,
+              1,
+              0,
+              null,
+              [
+                [
+                  13,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.455,
+            "score": 6.455,
+            "by_seat": {
+              "3": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              13,
+              1,
+              0,
+              null,
+              [
+                [
+                  13,
+                  5,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.455,
+            "score": 6.455,
+            "by_seat": {
+              "3": 0.0
+            }
+          }
+        ],
+        "candidate_replaced": false,
+        "elapsed_seconds": 0.0005387080018408597,
+        "stage_elapsed_seconds": 0.0009172920035780407,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.03552143334060699,
+        "observed_gain": 0.027385233757177108,
+        "payoff_span": 0.2537245238614785,
+        "common_samples": 85,
+        "paired_standard_error": 0.004263195231884819
+      },
+      "simulations": 256,
+      "common_samples": 85,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level9-seat3-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 100,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 100,
+            "suit": 0
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.07929454099939903,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "single",
+          100,
+          1,
+          0,
+          null,
+          [
+            [
+              100,
+              0,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          100,
+          1,
+          0,
+          null,
+          [
+            [
+              100,
+              0,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": true,
+        "reason": "unchanged",
+        "risks": [
+          {
+            "key": [
+              "pass"
+            ],
+            "base_score": 11.0,
+            "score": 11.0,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              14,
+              1,
+              0,
+              null,
+              [
+                [
+                  14,
+                  2,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.105,
+            "score": 6.105,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              14,
+              1,
+              0,
+              null,
+              [
+                [
+                  14,
+                  5,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.105,
+            "score": 6.105,
+            "by_seat": {
+              "2": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              100,
+              1,
+              0,
+              null,
+              [
+                [
+                  100,
+                  0,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 2.2300000000000004,
+            "score": 2.2300000000000004,
+            "by_seat": {
+              "2": 0.0
+            }
+          }
+        ],
+        "candidate_replaced": false,
+        "elapsed_seconds": 0.0005008750013075769,
+        "stage_elapsed_seconds": 0.0009022500016726553,
+        "stage_budget_ms": 200.0
+      },
+      "guard": null,
+      "simulations": 256,
+      "common_samples": 64,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level14-seat0-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 14,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.20025537499896018,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "single",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              14,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              14,
+              4,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": true,
+        "reason": "unchanged",
+        "risks": [
+          {
+            "key": [
+              "pass"
+            ],
+            "base_score": 11.24,
+            "score": 12.440000000000001,
+            "by_seat": {
+              "3": 0.2
+            }
+          },
+          {
+            "key": [
+              "single",
+              14,
+              1,
+              0,
+              null,
+              [
+                [
+                  14,
+                  4,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 5.334999999999999,
+            "score": 5.334999999999999,
+            "by_seat": {
+              "3": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              8,
+              1,
+              0,
+              null,
+              [
+                [
+                  8,
+                  4,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 13.852000000000002,
+            "score": 13.852000000000002,
+            "by_seat": {
+              "3": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              14,
+              1,
+              0,
+              null,
+              [
+                [
+                  14,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 5.334999999999999,
+            "score": 5.334999999999999,
+            "by_seat": {
+              "3": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              9,
+              1,
+              0,
+              null,
+              [
+                [
+                  9,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 13.852000000000002,
+            "score": 13.852000000000002,
+            "by_seat": {
+              "3": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              14,
+              1,
+              1,
+              null,
+              [
+                [
+                  14,
+                  2,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 20.577,
+            "score": 20.577,
+            "by_seat": {
+              "3": 0.0
+            }
+          }
+        ],
+        "candidate_replaced": false,
+        "elapsed_seconds": 0.0008383750027860515,
+        "stage_elapsed_seconds": 0.0019825830022455193,
+        "stage_budget_ms": 200.0
+      },
+      "guard": null,
+      "simulations": 256,
+      "common_samples": 42,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level14-seat1-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.1790885000009439,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "single",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 3.958004526793957e-06,
+        "stage_elapsed_seconds": 0.00025641599495429546,
+        "stage_budget_ms": 200.0
+      },
+      "guard": null,
+      "simulations": 256,
+      "common_samples": 128,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level14-seat2-solver",
+      "pattern": {
+        "type": "pair",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 5
+          },
+          {
+            "rank": 5,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.05635579200315988,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "pair",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              3,
+              1
+            ],
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "pair",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              3,
+              1
+            ],
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": true,
+        "reason": "unchanged",
+        "risks": [
+          {
+            "key": [
+              "single",
+              4,
+              1,
+              0,
+              null,
+              [
+                [
+                  4,
+                  4,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 7.860000000000001,
+            "score": 13.860000000000001,
+            "by_seat": {
+              "1": 1.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              5,
+              1,
+              0,
+              null,
+              [
+                [
+                  5,
+                  5,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 12.69,
+            "score": 18.689999999999998,
+            "by_seat": {
+              "1": 1.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              5,
+              1,
+              0,
+              null,
+              [
+                [
+                  5,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 12.69,
+            "score": 18.689999999999998,
+            "by_seat": {
+              "1": 1.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              2,
+              1,
+              0,
+              null,
+              [
+                [
+                  2,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 7.860000000000001,
+            "score": 13.860000000000001,
+            "by_seat": {
+              "1": 1.0
+            }
+          },
+          {
+            "key": [
+              "pair",
+              5,
+              1,
+              0,
+              null,
+              [
+                [
+                  5,
+                  3,
+                  1
+                ],
+                [
+                  5,
+                  5,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 6.05,
+            "score": 6.05,
+            "by_seat": {
+              "1": 0.0
+            }
+          }
+        ],
+        "candidate_replaced": false,
+        "elapsed_seconds": 0.0006485419944510795,
+        "stage_elapsed_seconds": 0.0012658339983318,
+        "stage_budget_ms": 200.0
+      },
+      "guard": null,
+      "simulations": 256,
+      "common_samples": 51,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "cold",
+      "case": "level14-seat3-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 101,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 101,
+            "suit": 1
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.23840920800284948,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "single",
+          101,
+          1,
+          0,
+          null,
+          [
+            [
+              101,
+              1,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          101,
+          1,
+          0,
+          null,
+          [
+            [
+              101,
+              1,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": true,
+        "reason": "unchanged",
+        "risks": [
+          {
+            "key": [
+              "single",
+              12,
+              1,
+              0,
+              null,
+              [
+                [
+                  12,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 3.54,
+            "score": 4.718133333333333,
+            "by_seat": {
+              "0": 0.19635555555555553
+            }
+          },
+          {
+            "key": [
+              "single",
+              101,
+              1,
+              0,
+              null,
+              [
+                [
+                  101,
+                  1,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 2.6600000000000006,
+            "score": 2.6600000000000006,
+            "by_seat": {
+              "0": 0.0
+            }
+          }
+        ],
+        "candidate_replaced": false,
+        "elapsed_seconds": 0.0005663339979946613,
+        "stage_elapsed_seconds": 0.0008345419992110692,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.14,
+        "observed_gain": 0.09538479564048297,
+        "payoff_span": 1.0,
+        "common_samples": 128,
+        "paired_standard_error": 0.020145785589460147
+      },
+      "simulations": 256,
+      "common_samples": 128,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "consecutive",
+      "case": 0,
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 1.0023597090039402,
+      "budget_ms": 1000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 7.33299384592101e-06,
+        "stage_elapsed_seconds": 0.012293250001675915,
+        "stage_budget_ms": 100.0
+      },
+      "guard": {
+        "required_gain": 0.023515987302257173,
+        "observed_gain": 0.009088447072524652,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 25,
+        "paired_standard_error": 0.004056839922392652
+      },
+      "simulations": 200,
+      "common_samples": 25,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "consecutive",
+      "case": 1,
+      "pattern": {
+        "type": "bomb",
+        "rank": 6,
+        "length": 4,
+        "cards": [
+          {
+            "rank": 6,
+            "suit": 5
+          },
+          {
+            "rank": 6,
+            "suit": 4
+          },
+          {
+            "rank": 6,
+            "suit": 4
+          },
+          {
+            "rank": 6,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 1.0046315420040628,
+      "budget_ms": 1000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "bomb",
+          6,
+          4,
+          0,
+          null,
+          [
+            [
+              6,
+              2,
+              1
+            ],
+            [
+              6,
+              4,
+              2
+            ],
+            [
+              6,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "bomb",
+          6,
+          4,
+          0,
+          null,
+          [
+            [
+              6,
+              2,
+              1
+            ],
+            [
+              6,
+              4,
+              2
+            ],
+            [
+              6,
+              5,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 5.750000127591193e-06,
+        "stage_elapsed_seconds": 0.0018495000040275045,
+        "stage_budget_ms": 100.0
+      },
+      "guard": {
+        "required_gain": 0.023515987302257173,
+        "observed_gain": 0.010049964408996692,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 59,
+        "paired_standard_error": 0.0033011063672244725
+      },
+      "simulations": 177,
+      "common_samples": 59,
+      "endgame_reason": null
+    },
+    {
+      "tier": 3,
+      "cache": "consecutive",
+      "case": 2,
+      "pattern": null,
+      "elapsed_seconds": 1.0672502500019618,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "pass"
+        ],
+        "reference_key": [
+          "pass"
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 2.458000381011516e-06,
+        "stage_elapsed_seconds": 0.017530541997984983,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.06718853514930621,
+        "observed_gain": 0.0074363303521830515,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 36,
+        "paired_standard_error": 0.007046487530611137
+      },
+      "simulations": 256,
+      "common_samples": 36,
+      "endgame_reason": null
+    },
+    {
+      "tier": 4,
+      "cache": "warm",
+      "case": "level2-opening",
+      "pattern": {
+        "type": "straight",
+        "rank": 13,
+        "length": 5,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          },
+          {
+            "rank": 12,
+            "suit": 4
+          },
+          {
+            "rank": 13,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 2.001658209002926,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "search",
+      "urgent": {
+        "original_key": [
+          "triple_pair",
+          10,
+          1,
+          0,
+          null,
+          [
+            [
+              8,
+              2,
+              1
+            ],
+            [
+              8,
+              3,
+              1
+            ],
+            [
+              10,
+              3,
+              1
+            ],
+            [
+              10,
+              4,
+              2
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          10,
+          1,
+          0,
+          null,
+          [
+            [
+              8,
+              2,
+              1
+            ],
+            [
+              8,
+              3,
+              1
+            ],
+            [
+              10,
+              3,
+              1
+            ],
+            [
+              10,
+              4,
+              2
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 1.0042000212706625e-05,
+        "stage_elapsed_seconds": 0.030354582995641977,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.010765149249371112,
+        "observed_gain": 0.012994071143035357,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 23,
+        "paired_standard_error": 0.006564115395957996
+      },
+      "simulations": 277,
+      "common_samples": 23,
+      "endgame_reason": null
+    },
+    {
+      "tier": 4,
+      "cache": "warm",
+      "case": "level2-endgame",
+      "pattern": null,
+      "elapsed_seconds": 1.6238572919974104,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "search",
+      "urgent": {
+        "original_key": [
+          "single",
+          9,
+          1,
+          0,
+          null,
+          [
+            [
+              9,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          9,
+          1,
+          0,
+          null,
+          [
+            [
+              9,
+              5,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 3.999994078185409e-06,
+        "stage_elapsed_seconds": 0.0005570419962168671,
+        "stage_budget_ms": 500.0
+      },
+      "guard": {
+        "required_gain": 0.006718853514930621,
+        "observed_gain": 0.007108646952035835,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 153,
+        "paired_standard_error": 0.003225525341071772
+      },
+      "simulations": 768,
+      "common_samples": 153,
+      "endgame_reason": null
+    },
+    {
+      "tier": 4,
+      "cache": "warm",
+      "case": "level9-opening",
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 2.006195707996085,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "triple_pair",
+          4,
+          1,
+          0,
+          null,
+          [
+            [
+              4,
+              2,
+              1
+            ],
+            [
+              4,
+              4,
+              1
+            ],
+            [
+              4,
+              5,
+              1
+            ],
+            [
+              11,
+              3,
+              1
+            ],
+            [
+              11,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          4,
+          1,
+          0,
+          null,
+          [
+            [
+              4,
+              2,
+              1
+            ],
+            [
+              4,
+              4,
+              1
+            ],
+            [
+              4,
+              5,
+              1
+            ],
+            [
+              11,
+              3,
+              1
+            ],
+            [
+              11,
+              5,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 6.2920007621869445e-06,
+        "stage_elapsed_seconds": 0.0268326250006794,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.0203899888805547,
+        "observed_gain": 0.01293043996716714,
+        "payoff_span": 0.2537245238614785,
+        "common_samples": 22,
+        "paired_standard_error": 0.01243292004911872
+      },
+      "simulations": 265,
+      "common_samples": 22,
+      "endgame_reason": null
+    },
+    {
+      "tier": 4,
+      "cache": "warm",
+      "case": "level9-endgame",
+      "pattern": {
+        "type": "triple",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 1.1359755829980713,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "search",
+      "urgent": {
+        "original_key": [
+          "triple_pair",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              2,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ],
+            [
+              9,
+              3,
+              1
+            ],
+            [
+              9,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              2,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ],
+            [
+              9,
+              3,
+              1
+            ],
+            [
+              9,
+              4,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 6.417001713998616e-06,
+        "stage_elapsed_seconds": 0.0016506660031154752,
+        "stage_budget_ms": 500.0
+      },
+      "guard": {
+        "required_gain": 0.010148980954459139,
+        "observed_gain": 0.016056583160959426,
+        "payoff_span": 0.2537245238614785,
+        "common_samples": 76,
+        "paired_standard_error": 0.004822947767759804
+      },
+      "simulations": 768,
+      "common_samples": 76,
+      "endgame_reason": null
+    },
+    {
+      "tier": 4,
+      "cache": "warm",
+      "case": "level14-opening",
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 2.00442062500224,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 7.083006494212896e-06,
+        "stage_elapsed_seconds": 0.08444587499980116,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.08292977858079587,
+        "observed_gain": 0.05763090065370058,
+        "payoff_span": 1.0,
+        "common_samples": 22,
+        "paired_standard_error": 0.05056693815902187
+      },
+      "simulations": 297,
+      "common_samples": 22,
+      "endgame_reason": null
+    },
+    {
+      "tier": 4,
+      "cache": "warm",
+      "case": "level14-endgame",
+      "pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 1.6112032090022694,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "single",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              3,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              3,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 4.583002009894699e-06,
+        "stage_elapsed_seconds": 0.0003835419993265532,
+        "stage_budget_ms": 500.0
+      },
+      "guard": null,
+      "simulations": 768,
+      "common_samples": 256,
+      "endgame_reason": null
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level2-seat0-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 7,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 7,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.025775374997465406,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "endgame_exact",
+      "urgent": null,
+      "guard": null,
+      "simulations": 0,
+      "common_samples": 0,
+      "endgame_reason": "exact"
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level2-seat1-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.005594374997599516,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "endgame_exact",
+      "urgent": null,
+      "guard": null,
+      "simulations": 0,
+      "common_samples": 0,
+      "endgame_reason": "exact"
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level2-seat2-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.7544453750015236,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "endgame_sampled",
+      "urgent": null,
+      "guard": null,
+      "simulations": 0,
+      "common_samples": 0,
+      "endgame_reason": "sampled"
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level2-seat3-solver",
+      "pattern": {
+        "type": "triple",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.16992449999816017,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "endgame_sampled",
+      "urgent": null,
+      "guard": null,
+      "simulations": 0,
+      "common_samples": 0,
+      "endgame_reason": "sampled"
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level9-seat0-solver",
+      "pattern": {
+        "type": "pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 5
+          },
+          {
+            "rank": 2,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.013701083000341896,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "endgame_exact",
+      "urgent": null,
+      "guard": null,
+      "simulations": 0,
+      "common_samples": 0,
+      "endgame_reason": "exact"
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level9-seat1-solver",
+      "pattern": null,
+      "elapsed_seconds": 0.026171541001531295,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "endgame_sampled",
+      "urgent": null,
+      "guard": null,
+      "simulations": 0,
+      "common_samples": 0,
+      "endgame_reason": "sampled"
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level9-seat2-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 13,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 13,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.36561866699776147,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "endgame_sampled",
+      "urgent": null,
+      "guard": null,
+      "simulations": 0,
+      "common_samples": 0,
+      "endgame_reason": "sampled"
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level9-seat3-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 100,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 100,
+            "suit": 0
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.003749083000002429,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "endgame_exact",
+      "urgent": null,
+      "guard": null,
+      "simulations": 0,
+      "common_samples": 0,
+      "endgame_reason": "exact"
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level14-seat0-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 14,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 1.8660346670003491,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "agrees_with_tactical",
+      "urgent": {
+        "original_key": [
+          "single",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              14,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              14,
+              4,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": true,
+        "reason": "unchanged",
+        "risks": [
+          {
+            "key": [
+              "pass"
+            ],
+            "base_score": 11.24,
+            "score": 12.440000000000001,
+            "by_seat": {
+              "3": 0.2
+            }
+          },
+          {
+            "key": [
+              "single",
+              14,
+              1,
+              0,
+              null,
+              [
+                [
+                  14,
+                  4,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 5.334999999999999,
+            "score": 5.334999999999999,
+            "by_seat": {
+              "3": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              8,
+              1,
+              0,
+              null,
+              [
+                [
+                  8,
+                  4,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 13.852000000000002,
+            "score": 13.852000000000002,
+            "by_seat": {
+              "3": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              14,
+              1,
+              0,
+              null,
+              [
+                [
+                  14,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 5.334999999999999,
+            "score": 5.334999999999999,
+            "by_seat": {
+              "3": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              9,
+              1,
+              0,
+              null,
+              [
+                [
+                  9,
+                  3,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 13.852000000000002,
+            "score": 13.852000000000002,
+            "by_seat": {
+              "3": 0.0
+            }
+          },
+          {
+            "key": [
+              "single",
+              14,
+              1,
+              1,
+              null,
+              [
+                [
+                  14,
+                  2,
+                  1
+                ]
+              ]
+            ],
+            "base_score": 20.577,
+            "score": 20.577,
+            "by_seat": {
+              "3": 0.0
+            }
+          }
+        ],
+        "candidate_replaced": false,
+        "elapsed_seconds": 0.0008910410033422522,
+        "stage_elapsed_seconds": 0.001732083001115825,
+        "stage_budget_ms": 372.6
+      },
+      "guard": null,
+      "simulations": 768,
+      "common_samples": 128,
+      "endgame_reason": "budget_limited"
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level14-seat1-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.05601549999846611,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "endgame_exact",
+      "urgent": null,
+      "guard": null,
+      "simulations": 0,
+      "common_samples": 0,
+      "endgame_reason": "exact"
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level14-seat2-solver",
+      "pattern": {
+        "type": "pair",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 3
+          },
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.002383833001658786,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "endgame_exact",
+      "urgent": null,
+      "guard": null,
+      "simulations": 0,
+      "common_samples": 0,
+      "endgame_reason": "exact"
+    },
+    {
+      "tier": 4,
+      "cache": "cold",
+      "case": "level14-seat3-solver",
+      "pattern": {
+        "type": "single",
+        "rank": 12,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 12,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 0.31553583400091156,
+      "budget_ms": 5000,
+      "budget_passed": true,
+      "reason": "endgame_sampled",
+      "urgent": null,
+      "guard": null,
+      "simulations": 0,
+      "common_samples": 0,
+      "endgame_reason": "sampled"
+    },
+    {
+      "tier": 4,
+      "cache": "consecutive",
+      "case": 0,
+      "pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "elapsed_seconds": 2.004425582999829,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 6.16600300418213e-06,
+        "stage_elapsed_seconds": 0.011986541001533624,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.008200194912611154,
+        "observed_gain": 0.00599616814779258,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 34,
+        "paired_standard_error": 0.005000118849153143
+      },
+      "simulations": 408,
+      "common_samples": 34,
+      "endgame_reason": null
+    },
+    {
+      "tier": 4,
+      "cache": "consecutive",
+      "case": 1,
+      "pattern": null,
+      "elapsed_seconds": 2.0057009590018424,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "search",
+      "urgent": {
+        "original_key": [
+          "bomb",
+          6,
+          4,
+          0,
+          null,
+          [
+            [
+              6,
+              2,
+              1
+            ],
+            [
+              6,
+              4,
+              2
+            ],
+            [
+              6,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "bomb",
+          6,
+          4,
+          0,
+          null,
+          [
+            [
+              6,
+              2,
+              1
+            ],
+            [
+              6,
+              4,
+              2
+            ],
+            [
+              6,
+              5,
+              1
+            ]
+          ]
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 6.041002052370459e-06,
+        "stage_elapsed_seconds": 0.0019385830019018613,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.006718853514930621,
+        "observed_gain": 0.01071956292456372,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 107,
+        "paired_standard_error": 0.0029963705944622467
+      },
+      "simulations": 321,
+      "common_samples": 107,
+      "endgame_reason": null
+    },
+    {
+      "tier": 4,
+      "cache": "consecutive",
+      "case": 2,
+      "pattern": null,
+      "elapsed_seconds": 2.006915875004779,
+      "budget_ms": 2000,
+      "budget_passed": true,
+      "reason": "tactical_guard",
+      "urgent": {
+        "original_key": [
+          "pass"
+        ],
+        "reference_key": [
+          "pass"
+        ],
+        "weight": 6.0,
+        "triggered": false,
+        "reason": "no_short_opponent",
+        "risks": [],
+        "candidate_replaced": false,
+        "elapsed_seconds": 2.6659981813281775e-06,
+        "stage_elapsed_seconds": 0.023845458999858238,
+        "stage_budget_ms": 200.0
+      },
+      "guard": {
+        "required_gain": 0.06718853514930621,
+        "observed_gain": 0.011888165216363045,
+        "payoff_span": 0.1679713378732655,
+        "common_samples": 40,
+        "paired_standard_error": 0.008868386506033379
+      },
+      "simulations": 443,
+      "common_samples": 40,
+      "endgame_reason": null
+    }
+  ],
+  "passed": true
+}

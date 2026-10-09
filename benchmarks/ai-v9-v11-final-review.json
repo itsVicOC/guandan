@@ -1,0 +1,173 @@
+{
+  "source_sha256": "0fc39f1dcf2ab652c4c218061760f9301b2b003b29f588c84c346b2d194aa8d0",
+  "experiment_sha256": "a25a0932358696a864539a87780e0bf0116475418cf464ed797032eebc6636a2",
+  "default_flags": {
+    "3": {
+      "reference_refinement": false,
+      "reference_rollout_turns": 0,
+      "action_ranker": false
+    },
+    "4": {
+      "reference_refinement": false,
+      "reference_rollout_turns": 0,
+      "action_ranker": false
+    }
+  },
+  "planning_default": "exact-equivalent packed kernel enabled",
+  "strength_default": "unchanged; refinement disabled",
+  "development": {
+    "v9_pairs": 256,
+    "v11_pairs": 128,
+    "complete_games": 768,
+    "strict_replay": "all passed"
+  },
+  "v9_acceptance": "cancelled before any complete pair due fixed/clock mismatch",
+  "v11_acceptance": [
+    {
+      "tier": 3,
+      "method": "refined",
+      "selection_score": -0.014945202121,
+      "development_passed": false,
+      "eligible_for_default": false,
+      "independent_acceptance": "not_run_development_failed"
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "selection_score": -0.056151448265,
+      "development_passed": false,
+      "eligible_for_default": false,
+      "independent_acceptance": "not_run_development_failed"
+    }
+  ],
+  "independent_pairs": 0,
+  "full_match_pairs": 0,
+  "human_prefix_proxy_branches": 2304,
+  "quality": {
+    "experiment_sha256": "a25a0932358696a864539a87780e0bf0116475418cf464ed797032eebc6636a2",
+    "source_sha256": "0fc39f1dcf2ab652c4c218061760f9301b2b003b29f588c84c346b2d194aa8d0",
+    "tests": {
+      "passed": 935,
+      "seconds": 274.41,
+      "coverage_percent": 84.79988646040306
+    },
+    "ruff": "passed",
+    "mypy": {
+      "passed": true,
+      "source_files": 94
+    },
+    "coverage_floors": "passed",
+    "planner_equivalence": {
+      "source": "../fast-hand-plan-v10/equivalence.json",
+      "exact_values": 11272,
+      "planner_sha256": "65b767201b7b5c1843c50e4bc40b674a5ae9c2c43f937db2c492fa4edc88fcf3"
+    },
+    "research_defaults": {
+      "reference_refinement": false,
+      "reference_rollout_turns": 0
+    },
+    "serial_clock": {
+      "source": "clock-refined.json",
+      "decisions": 42,
+      "passed": true
+    }
+  },
+  "planning": {
+    "source_sha256": "3c7955de64192f6e8241dfde9a73740bebe58982da4bbae9931525108dde1461",
+    "functional_tests": {
+      "passed": 933,
+      "seconds": 257.11
+    },
+    "coverage_percent": 84.87084870848709,
+    "ruff": "passed",
+    "mypy": {
+      "passed": true,
+      "source_files": 94
+    },
+    "default_regression": {
+      "decisions": 30,
+      "passed": true,
+      "source": "benchmarks/fast-hand-plan-v10/workspace-regression.json"
+    },
+    "raw_label_equivalence": {
+      "deals": 576,
+      "compared_estimates": 11272,
+      "exact_values_equal": true,
+      "elapsed_seconds": 43.78774420800255,
+      "purpose": "production equivalence, not serial throughput",
+      "planner_sha256": "65b767201b7b5c1843c50e4bc40b674a5ae9c2c43f937db2c492fa4edc88fcf3",
+      "reference_sha256": "5fdfa60366e5ab0e54c8dc9b0fd4231db687c427a15e7ec4b86e15665b5783ca",
+      "cache_layers": 1
+    },
+    "off_control": {
+      "pairs": 4,
+      "games": 8,
+      "passed": true
+    },
+    "planner_sha256": "65b767201b7b5c1843c50e4bc40b674a5ae9c2c43f937db2c492fa4edc88fcf3",
+    "cache_layers": 1,
+    "cache_limit": 8192,
+    "serial_planner": {
+      "cases": 729,
+      "exact_values_equal": true,
+      "note": "cold planner caches; run serially without other workloads for timing",
+      "script_sha256": "ffeda44d554c51e1f3bbbd7d11924adbbbfddcbe27de86877c2a3408918cda08",
+      "seconds": {
+        "original": 1.2454213379969588,
+        "packed": 0.2901106589670235
+      },
+      "speedup": 4.292918234826126
+    },
+    "serial_clocks": {
+      "counter-clock.json": {
+        "source_sha256": "eb3c68302c46c2590e3ad9aca453b3ea401f6fd28117373cbd8c3cd452ec71cd",
+        "method": "baseline",
+        "workers": 1,
+        "passed": true,
+        "harness_sha256": "3c7955de64192f6e8241dfde9a73740bebe58982da4bbae9931525108dde1461",
+        "clock_script_sha256": "4c91bce198080843d32ff5b14062eb9f85a3a21a82e31c48c092de6aadeb3abf",
+        "namespace": "packed-planner-v10",
+        "runtime_root": "/private/tmp/guandan-continuation-v9-candidate",
+        "decisions": 42,
+        "evaluations": 9986,
+        "seconds": 30.615571214002557,
+        "maximum_seconds": 3.2209789580010693
+      },
+      "packed-clock.json": {
+        "source_sha256": "a573bdcfc486256afbaedbc2e3a0a4ac2deefc98efa7f575be624393971716d3",
+        "method": "baseline",
+        "workers": 1,
+        "passed": true,
+        "harness_sha256": "3c7955de64192f6e8241dfde9a73740bebe58982da4bbae9931525108dde1461",
+        "clock_script_sha256": "4c91bce198080843d32ff5b14062eb9f85a3a21a82e31c48c092de6aadeb3abf",
+        "namespace": "packed-planner-v10",
+        "runtime_root": "/Users/itsvic/projects/guandan",
+        "decisions": 42,
+        "evaluations": 10328,
+        "seconds": 30.13257070900727,
+        "maximum_seconds": 3.0308064589989954
+      },
+      "packed-refined-clock.json": {
+        "source_sha256": "a573bdcfc486256afbaedbc2e3a0a4ac2deefc98efa7f575be624393971716d3",
+        "method": "refined",
+        "workers": 1,
+        "passed": true,
+        "harness_sha256": "3c7955de64192f6e8241dfde9a73740bebe58982da4bbae9931525108dde1461",
+        "clock_script_sha256": "4c91bce198080843d32ff5b14062eb9f85a3a21a82e31c48c092de6aadeb3abf",
+        "namespace": "packed-planner-v10",
+        "runtime_root": "/Users/itsvic/projects/guandan",
+        "decisions": 42,
+        "evaluations": 6244,
+        "seconds": 26.479445248009142,
+        "maximum_seconds": 2.348430042002292
+      }
+    },
+    "clock_default_action_changes": 1,
+    "clock_note": "Serial soft-budget decisions may select differently because faster exact planning changes how many simulations complete; fixed-work equivalence is audited separately."
+  },
+  "prototype_and_production_execution_ast_equal": true,
+  "model_sha256": {
+    "action_ranker_v1.json": "f32b49470b2a969f7e33f4d8550ea36f2fda4ba5f52e895e3cfbecb3c9a14cc8",
+    "match_value.json": "d1c027cb92afd356f7c6c2d2da8b06bf5f7a3755c25e28d6c2c54512bc51461c"
+  }
+}

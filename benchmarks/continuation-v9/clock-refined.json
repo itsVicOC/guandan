@@ -1,0 +1,2634 @@
+{
+  "source_sha256": "3bc1c64dc69c1c69acd649477d66d833927478b8d1b5769a74879ca1e8e1bebd",
+  "method": "refined",
+  "workers": 1,
+  "records": [
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level2-opening",
+      "budget_ms": 1000,
+      "elapsed_seconds": 1.076528416997462,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "triple_pair",
+        "rank": 10,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 10,
+            "suit": 3
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 8,
+            "suit": 3
+          },
+          {
+            "rank": 8,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 61,
+      "refinement": {
+        "base_simulations": 60,
+        "base_common_samples": 7,
+        "base_seconds": 0.4998024999986228,
+        "challenger_key": [
+          "straight",
+          13,
+          5,
+          0,
+          null,
+          [
+            [
+              9,
+              5,
+              1
+            ],
+            [
+              10,
+              4,
+              1
+            ],
+            [
+              11,
+              3,
+              1
+            ],
+            [
+              12,
+              4,
+              1
+            ],
+            [
+              13,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          10,
+          1,
+          0,
+          null,
+          [
+            [
+              8,
+              2,
+              1
+            ],
+            [
+              8,
+              3,
+              1
+            ],
+            [
+              10,
+              3,
+              1
+            ],
+            [
+              10,
+              4,
+              2
+            ]
+          ]
+        ],
+        "refinement_simulations": 1,
+        "refinement_common_samples": 0,
+        "reason": "insufficient_pairs",
+        "refinement_seconds": 0.5646843329996045
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level2-endgame",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.2795500419997552,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 25,
+        "base_seconds": 0.27884324999831733,
+        "challenger_key": [
+          "single",
+          9,
+          1,
+          0,
+          null,
+          [
+            [
+              9,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          9,
+          1,
+          0,
+          null,
+          [
+            [
+              9,
+              5,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level9-opening",
+      "budget_ms": 1000,
+      "elapsed_seconds": 1.077883791000204,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 45,
+      "refinement": {
+        "base_simulations": 44,
+        "base_common_samples": 5,
+        "base_seconds": 0.43679691599754733,
+        "challenger_key": [
+          "single",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          4,
+          1,
+          0,
+          null,
+          [
+            [
+              4,
+              2,
+              1
+            ],
+            [
+              4,
+              4,
+              1
+            ],
+            [
+              4,
+              5,
+              1
+            ],
+            [
+              11,
+              3,
+              1
+            ],
+            [
+              11,
+              5,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 1,
+        "refinement_common_samples": 0,
+        "reason": "insufficient_pairs",
+        "refinement_seconds": 0.512981709001906
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level9-endgame",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.9483551669982262,
+      "reason": "tactical_guard",
+      "action": {
+        "type": "triple_pair",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 4
+          },
+          {
+            "rank": 9,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 256,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 21,
+        "base_seconds": 0.2349558749992866,
+        "challenger_key": [
+          "triple",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              2,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              2,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ],
+            [
+              9,
+              3,
+              1
+            ],
+            [
+              9,
+              4,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 128,
+        "refinement_common_samples": 64,
+        "reason": "completed",
+        "refinement_seconds": 0.7112200419978763
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level14-opening",
+      "budget_ms": 1000,
+      "elapsed_seconds": 1.01271083300162,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 43,
+      "refinement": {
+        "base_simulations": 43,
+        "base_common_samples": 4,
+        "base_seconds": 0.3707759589997295,
+        "challenger_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              11,
+              2,
+              1
+            ],
+            [
+              11,
+              3,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "insufficient_pairs",
+        "refinement_seconds": 0.3773757079979987
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level14-endgame",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.28141362499809475,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 42,
+        "base_seconds": 0.2809971670030791,
+        "challenger_key": [
+          "single",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              3,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              3,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level2-seat0-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.034095708000677405,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "triple",
+        "rank": 12,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 12,
+            "suit": 4
+          },
+          {
+            "rank": 12,
+            "suit": 2
+          },
+          {
+            "rank": 12,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 21,
+        "base_seconds": 0.033321874998364365,
+        "challenger_key": [
+          "triple",
+          12,
+          1,
+          0,
+          null,
+          [
+            [
+              12,
+              2,
+              1
+            ],
+            [
+              12,
+              3,
+              1
+            ],
+            [
+              12,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple",
+          12,
+          1,
+          0,
+          null,
+          [
+            [
+              12,
+              2,
+              1
+            ],
+            [
+              12,
+              3,
+              1
+            ],
+            [
+              12,
+              4,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level2-seat1-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.04219083399948431,
+      "reason": "agrees_with_tactical",
+      "action": null,
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 32,
+        "base_seconds": 0.0415978749988426,
+        "challenger_key": [
+          "pass"
+        ],
+        "reference_key": [
+          "pass"
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level2-seat2-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.09776916700138827,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "single",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 42,
+        "base_seconds": 0.09733262499867124,
+        "challenger_key": [
+          "single",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              4,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level2-seat3-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.0647625000019616,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "triple",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 2
+          },
+          {
+            "rank": 5,
+            "suit": 3
+          },
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 18,
+        "base_seconds": 0.06272016699949745,
+        "challenger_key": [
+          "triple",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              2,
+              1
+            ],
+            [
+              5,
+              3,
+              1
+            ],
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              2,
+              1
+            ],
+            [
+              5,
+              3,
+              1
+            ],
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level9-seat0-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.046814749999612104,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 5
+          },
+          {
+            "rank": 2,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 64,
+        "base_seconds": 0.046591624999564374,
+        "challenger_key": [
+          "pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              5,
+              2
+            ]
+          ]
+        ],
+        "reference_key": [
+          "pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              5,
+              2
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level9-seat1-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.15047787499861442,
+      "reason": "tactical_guard",
+      "action": {
+        "type": "single",
+        "rank": 14,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 256,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 42,
+        "base_seconds": 0.06554462499843794,
+        "challenger_key": [
+          "single",
+          9,
+          1,
+          0,
+          null,
+          [
+            [
+              9,
+              3,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              14,
+              3,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 128,
+        "refinement_common_samples": 64,
+        "reason": "completed",
+        "refinement_seconds": 0.0843617919999815
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level9-seat2-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.17488116700042156,
+      "reason": "tactical_guard",
+      "action": {
+        "type": "single",
+        "rank": 13,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 13,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 256,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 42,
+        "base_seconds": 0.07344929200189654,
+        "challenger_key": [
+          "pass"
+        ],
+        "reference_key": [
+          "single",
+          13,
+          1,
+          0,
+          null,
+          [
+            [
+              13,
+              3,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 128,
+        "refinement_common_samples": 64,
+        "reason": "completed",
+        "refinement_seconds": 0.10095750000255066
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level9-seat3-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.039718708001601044,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "single",
+        "rank": 100,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 100,
+            "suit": 0
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 32,
+        "base_seconds": 0.03926616700118757,
+        "challenger_key": [
+          "single",
+          100,
+          1,
+          0,
+          null,
+          [
+            [
+              100,
+              0,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          100,
+          1,
+          0,
+          null,
+          [
+            [
+              100,
+              0,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level14-seat0-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.10356616699937149,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "single",
+        "rank": 14,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 21,
+        "base_seconds": 0.10250608299975283,
+        "challenger_key": [
+          "single",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              14,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              14,
+              4,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level14-seat1-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.09683891700115055,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "single",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 64,
+        "base_seconds": 0.09659983299934538,
+        "challenger_key": [
+          "single",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level14-seat2-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.028674708999460563,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "pair",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 5
+          },
+          {
+            "rank": 5,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 25,
+        "base_seconds": 0.028037374999257736,
+        "challenger_key": [
+          "pair",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              3,
+              1
+            ],
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "pair",
+          5,
+          1,
+          0,
+          null,
+          [
+            [
+              5,
+              3,
+              1
+            ],
+            [
+              5,
+              5,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level14-seat3-solver",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.2883750830005738,
+      "reason": "tactical_guard",
+      "action": {
+        "type": "single",
+        "rank": 101,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 101,
+            "suit": 1
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 256,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 64,
+        "base_seconds": 0.11950891699962085,
+        "challenger_key": [
+          "single",
+          12,
+          1,
+          0,
+          null,
+          [
+            [
+              12,
+              3,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          101,
+          1,
+          0,
+          null,
+          [
+            [
+              101,
+              1,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 128,
+        "refinement_common_samples": 64,
+        "reason": "completed",
+        "refinement_seconds": 0.16839204099960625
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "consecutive",
+      "case": "step-0",
+      "budget_ms": 1000,
+      "elapsed_seconds": 1.1937192080004024,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 73,
+      "refinement": {
+        "base_simulations": 72,
+        "base_common_samples": 9,
+        "base_seconds": 0.4609928329991817,
+        "challenger_key": [
+          "triple_pair",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ],
+            [
+              14,
+              2,
+              1
+            ],
+            [
+              14,
+              3,
+              1
+            ],
+            [
+              14,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 1,
+        "refinement_common_samples": 0,
+        "reason": "insufficient_pairs",
+        "refinement_seconds": 0.6423747500011814
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "consecutive",
+      "case": "step-1",
+      "budget_ms": 1000,
+      "elapsed_seconds": 1.0998293749980803,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "bomb",
+        "rank": 6,
+        "length": 4,
+        "cards": [
+          {
+            "rank": 6,
+            "suit": 5
+          },
+          {
+            "rank": 6,
+            "suit": 4
+          },
+          {
+            "rank": 6,
+            "suit": 4
+          },
+          {
+            "rank": 6,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 78,
+      "refinement": {
+        "base_simulations": 76,
+        "base_common_samples": 25,
+        "base_seconds": 0.4949001249988214,
+        "challenger_key": [
+          "pass"
+        ],
+        "reference_key": [
+          "bomb",
+          6,
+          4,
+          0,
+          null,
+          [
+            [
+              6,
+              2,
+              1
+            ],
+            [
+              6,
+              4,
+              2
+            ],
+            [
+              6,
+              5,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 2,
+        "refinement_common_samples": 1,
+        "reason": "insufficient_pairs",
+        "refinement_seconds": 0.5906727920009871
+      },
+      "passed": true
+    },
+    {
+      "tier": 3,
+      "method": "refined",
+      "cache": "consecutive",
+      "case": "step-2",
+      "budget_ms": 2000,
+      "elapsed_seconds": 0.7452120000016293,
+      "reason": "agrees_with_tactical",
+      "action": null,
+      "simulations": 128,
+      "refinement": {
+        "base_simulations": 128,
+        "base_common_samples": 18,
+        "base_seconds": 0.6389296250017651,
+        "challenger_key": [
+          "pass"
+        ],
+        "reference_key": [
+          "pass"
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level2-opening",
+      "budget_ms": 2000,
+      "elapsed_seconds": 2.0744562079999014,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "triple_pair",
+        "rank": 10,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 10,
+            "suit": 3
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 8,
+            "suit": 3
+          },
+          {
+            "rank": 8,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 123,
+      "refinement": {
+        "base_simulations": 121,
+        "base_common_samples": 10,
+        "base_seconds": 1.0014371249999385,
+        "challenger_key": [
+          "straight",
+          13,
+          5,
+          0,
+          null,
+          [
+            [
+              9,
+              5,
+              1
+            ],
+            [
+              10,
+              4,
+              1
+            ],
+            [
+              11,
+              3,
+              1
+            ],
+            [
+              12,
+              4,
+              1
+            ],
+            [
+              13,
+              5,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          10,
+          1,
+          0,
+          null,
+          [
+            [
+              8,
+              2,
+              1
+            ],
+            [
+              8,
+              3,
+              1
+            ],
+            [
+              10,
+              3,
+              1
+            ],
+            [
+              10,
+              4,
+              2
+            ]
+          ]
+        ],
+        "refinement_simulations": 2,
+        "refinement_common_samples": 1,
+        "reason": "insufficient_pairs",
+        "refinement_seconds": 1.0607897919981042
+      },
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level2-endgame",
+      "budget_ms": 5000,
+      "elapsed_seconds": 2.3760544579999987,
+      "reason": "tactical_guard",
+      "action": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 768,
+      "refinement": {
+        "base_simulations": 384,
+        "base_common_samples": 76,
+        "base_seconds": 0.8224206670020067,
+        "challenger_key": [
+          "single",
+          7,
+          1,
+          0,
+          null,
+          [
+            [
+              7,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          9,
+          1,
+          0,
+          null,
+          [
+            [
+              9,
+              5,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 384,
+        "refinement_common_samples": 192,
+        "reason": "completed",
+        "refinement_seconds": 1.5520000840006105
+      },
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level9-opening",
+      "budget_ms": 2000,
+      "elapsed_seconds": 2.1493163330014795,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 110,
+      "refinement": {
+        "base_simulations": 108,
+        "base_common_samples": 9,
+        "base_seconds": 0.9447936670003401,
+        "challenger_key": [
+          "pair_sequence",
+          9,
+          3,
+          0,
+          null,
+          [
+            [
+              7,
+              4,
+              1
+            ],
+            [
+              7,
+              5,
+              1
+            ],
+            [
+              8,
+              2,
+              1
+            ],
+            [
+              8,
+              3,
+              1
+            ],
+            [
+              9,
+              3,
+              1
+            ],
+            [
+              9,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          4,
+          1,
+          0,
+          null,
+          [
+            [
+              4,
+              2,
+              1
+            ],
+            [
+              4,
+              4,
+              1
+            ],
+            [
+              4,
+              5,
+              1
+            ],
+            [
+              11,
+              3,
+              1
+            ],
+            [
+              11,
+              5,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 2,
+        "refinement_common_samples": 1,
+        "reason": "insufficient_pairs",
+        "refinement_seconds": 1.0767701250006212
+      },
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level9-endgame",
+      "budget_ms": 5000,
+      "elapsed_seconds": 2.6678466660014237,
+      "reason": "search",
+      "action": {
+        "type": "triple",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 768,
+      "refinement": {
+        "base_simulations": 384,
+        "base_common_samples": 38,
+        "base_seconds": 0.5862065410001378,
+        "challenger_key": [
+          "triple",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              2,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              2,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ],
+            [
+              9,
+              3,
+              1
+            ],
+            [
+              9,
+              4,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 384,
+        "refinement_common_samples": 192,
+        "reason": "completed",
+        "refinement_seconds": 2.078642915999808
+      },
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level14-opening",
+      "budget_ms": 2000,
+      "elapsed_seconds": 1.14023754200025,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 107,
+      "refinement": {
+        "base_simulations": 107,
+        "base_common_samples": 8,
+        "base_seconds": 0.8738020830023743,
+        "challenger_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "warm",
+      "case": "level14-endgame",
+      "budget_ms": 5000,
+      "elapsed_seconds": 0.8196586669982935,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 384,
+      "refinement": {
+        "base_simulations": 384,
+        "base_common_samples": 128,
+        "base_seconds": 0.8192221660028736,
+        "challenger_key": [
+          "single",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              3,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          3,
+          1,
+          0,
+          null,
+          [
+            [
+              3,
+              3,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level2-seat0-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 0.02544133400078863,
+      "reason": "endgame_exact",
+      "action": {
+        "type": "single",
+        "rank": 7,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 7,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 0,
+      "refinement": null,
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level2-seat1-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 0.005493625001690816,
+      "reason": "endgame_exact",
+      "action": {
+        "type": "single",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 0,
+      "refinement": null,
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level2-seat2-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 1.0021040409992565,
+      "reason": "endgame_sampled",
+      "action": {
+        "type": "single",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 0,
+      "refinement": null,
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level2-seat3-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 0.2592221660015639,
+      "reason": "endgame_sampled",
+      "action": {
+        "type": "triple",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 0,
+      "refinement": null,
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level9-seat0-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 0.013900916997954482,
+      "reason": "endgame_exact",
+      "action": {
+        "type": "pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 5
+          },
+          {
+            "rank": 2,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 0,
+      "refinement": null,
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level9-seat1-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 0.039991541001654696,
+      "reason": "endgame_sampled",
+      "action": {
+        "type": "single",
+        "rank": 14,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 0,
+      "refinement": null,
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level9-seat2-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 0.2630611249987851,
+      "reason": "endgame_sampled",
+      "action": {
+        "type": "single",
+        "rank": 13,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 13,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 0,
+      "refinement": null,
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level9-seat3-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 0.003863082998577738,
+      "reason": "endgame_exact",
+      "action": {
+        "type": "single",
+        "rank": 100,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 100,
+            "suit": 0
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 0,
+      "refinement": null,
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level14-seat0-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 1.7079371250001714,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "single",
+        "rank": 14,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 384,
+      "refinement": {
+        "base_simulations": 384,
+        "base_common_samples": 64,
+        "base_seconds": 0.29127887499998906,
+        "challenger_key": [
+          "single",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              14,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "single",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              14,
+              4,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level14-seat1-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 0.05648070900133462,
+      "reason": "endgame_exact",
+      "action": {
+        "type": "single",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 0,
+      "refinement": null,
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level14-seat2-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 0.002347000001464039,
+      "reason": "endgame_exact",
+      "action": {
+        "type": "pair",
+        "rank": 5,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 5,
+            "suit": 3
+          },
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 0,
+      "refinement": null,
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "cold",
+      "case": "level14-seat3-solver",
+      "budget_ms": 5000,
+      "elapsed_seconds": 0.18342837499949383,
+      "reason": "endgame_sampled",
+      "action": {
+        "type": "single",
+        "rank": 12,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 12,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 0,
+      "refinement": null,
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "consecutive",
+      "case": "step-0",
+      "budget_ms": 2000,
+      "elapsed_seconds": 2.0010658749997674,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 175,
+      "refinement": {
+        "base_simulations": 171,
+        "base_common_samples": 14,
+        "base_seconds": 0.9594961250004417,
+        "challenger_key": [
+          "triple_pair",
+          14,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              1
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              14,
+              2,
+              1
+            ],
+            [
+              14,
+              3,
+              1
+            ],
+            [
+              14,
+              4,
+              1
+            ]
+          ]
+        ],
+        "reference_key": [
+          "triple_pair",
+          2,
+          1,
+          0,
+          null,
+          [
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              4,
+              1
+            ],
+            [
+              3,
+              3,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 4,
+        "refinement_common_samples": 2,
+        "reason": "insufficient_pairs",
+        "refinement_seconds": 0.9505741249995481
+      },
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "consecutive",
+      "case": "step-1",
+      "budget_ms": 2000,
+      "elapsed_seconds": 2.116437832999509,
+      "reason": "agrees_with_tactical",
+      "action": {
+        "type": "bomb",
+        "rank": 6,
+        "length": 4,
+        "cards": [
+          {
+            "rank": 6,
+            "suit": 5
+          },
+          {
+            "rank": 6,
+            "suit": 4
+          },
+          {
+            "rank": 6,
+            "suit": 4
+          },
+          {
+            "rank": 6,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "simulations": 148,
+      "refinement": {
+        "base_simulations": 146,
+        "base_common_samples": 48,
+        "base_seconds": 1.0010212079978373,
+        "challenger_key": [
+          "pass"
+        ],
+        "reference_key": [
+          "bomb",
+          6,
+          4,
+          0,
+          null,
+          [
+            [
+              6,
+              2,
+              1
+            ],
+            [
+              6,
+              4,
+              2
+            ],
+            [
+              6,
+              5,
+              1
+            ]
+          ]
+        ],
+        "refinement_simulations": 2,
+        "refinement_common_samples": 1,
+        "reason": "insufficient_pairs",
+        "refinement_seconds": 1.1012259579983947
+      },
+      "passed": true
+    },
+    {
+      "tier": 4,
+      "method": "refined",
+      "cache": "consecutive",
+      "case": "step-2",
+      "budget_ms": 5000,
+      "elapsed_seconds": 1.7625234170009207,
+      "reason": "agrees_with_tactical",
+      "action": null,
+      "simulations": 384,
+      "refinement": {
+        "base_simulations": 384,
+        "base_common_samples": 34,
+        "base_seconds": 1.6557922499996494,
+        "challenger_key": [
+          "pass"
+        ],
+        "reference_key": [
+          "pass"
+        ],
+        "refinement_simulations": 0,
+        "refinement_common_samples": 0,
+        "reason": "agrees_with_reference"
+      },
+      "passed": true
+    }
+  ],
+  "passed": true
+}

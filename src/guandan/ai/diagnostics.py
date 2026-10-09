@@ -33,6 +33,7 @@ from .candidates import (
     enumerate_legal_patterns,
     pattern_key,
 )
+from .config import production_configuration
 from .context import _holding_chance
 from .hand_plan import _estimate
 from .mcts import MCTS_CONFIG
@@ -122,9 +123,9 @@ def environment() -> dict[str, Any]:
 def run_diagnostics(mode: str = "fixed", budgets: Sequence[int] = (250, 500, 1000, 2000, 5000)) -> dict[str, Any]:
     config = {"professional": MCTS_CONFIG, "dachangsheng": load_profile("dachangsheng")}
     compatibility = {
-        "schema": 1, "corpus": "levels-2-9-A-v1", "policy": AI_POLICY_VERSION,
+        "schema": 2, "corpus": "levels-2-9-A-v1", "policy": AI_POLICY_VERSION,
         "rules": CURRENT_RULESET_VERSION, "mode": mode,
-        "config_sha256": hashlib.sha256(json.dumps(config, sort_keys=True).encode()).hexdigest(),
+        "config_sha256": hashlib.sha256(json.dumps(production_configuration(config), sort_keys=True).encode()).hexdigest(),
     }
     records: list[dict[str, Any]] = []
     corpus = endgame_positions() if mode == "endgame-clock" else positions()
@@ -186,7 +187,9 @@ def run_diagnostics(mode: str = "fixed", budgets: Sequence[int] = (250, 500, 100
     env = environment()
     if mode == "endgame-clock":
         env["cache"] = "exact material, hand pattern, complete pattern, hand plan and holding probability caches cleared before every decision"
-    return {"compatibility": compatibility, "environment": env, "records": records}
+    return {"compatibility": compatibility, "environment": env, "records": records,
+            "configuration": {"full_sha256": hashlib.sha256(json.dumps(config, sort_keys=True).encode()).hexdigest(),
+                              "production": production_configuration(config), "full": config}}
 
 
 def regression_projection(report: dict[str, Any]) -> list[dict[str, Any]]:

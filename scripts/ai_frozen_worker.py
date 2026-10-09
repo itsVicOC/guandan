@@ -47,6 +47,7 @@ def main():
         started = time.perf_counter()
         pattern = policies[seat].select_pattern(state, seat)
         print(json.dumps({
+            "request_id": request.get("request_id"),
             "pattern": _pattern_to_dict(pattern) if pattern else None,
             "elapsed_seconds": time.perf_counter() - started,
             "reason": getattr(policies[seat], "last_decision_reason", "heuristic"),

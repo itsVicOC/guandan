@@ -66,14 +66,14 @@ class ReplayScreen(Screen):
         ("escape", "back", "返回战绩"),
     ]
 
-    def __init__(self, history: dict) -> None:
+    def __init__(self, history: dict, *, cursor: ReplayCursor | None = None) -> None:
         super().__init__()
         self._history = history
         self._events: list[Event] = list(history.get("events", []))
         if not self._events:
             raise ValueError("history has no events")
         try:
-            self._cursor = ReplayCursor(
+            self._cursor = cursor or ReplayCursor(
                 self._events, ruleset_version=history.get("ruleset_version", 1)
             )
         except (IllegalPlayError, ValueError) as exc:

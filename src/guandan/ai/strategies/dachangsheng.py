@@ -11,6 +11,7 @@ from typing import Mapping, Optional, cast
 
 from ...engine.hand import Pattern
 from ...engine.state import GameState
+from ..config import DecisionBudget, ResearchConfig, SearchConfig
 from ..match_value import round_value_span
 from ..mcts.endgame_solver import UNSOLVED, EndgameSearchResult, solve_endgame
 from ..mcts.information_set import ActionStatistics, SearchStyle
@@ -51,24 +52,9 @@ class DaiChangshengStrategy(ProfessionalStrategy):
             else mcts_config.get("critical_time_budget_ms", 5000)
         )
         super().__init__(
-            iterations=mcts_config.get("iterations", 768),
-            ucb_c=mcts_config.get("ucb_c", 1.15),
-            max_actions=mcts_config.get("top_actions", 10),
-            rollout_strategy=mcts_config.get("rollout_strategy", 1),
             rng=rng,
-            mcts_hand_threshold=mcts_config.get("hand_threshold", 27),
-            rollout_max_turns=mcts_config.get("rollout_max_turns", 48),
-            time_budget_ms=mcts_config.get("time_budget_ms", 2000),
-            critical_time_budget_ms=critical_budget,
-            max_tree_depth=mcts_config.get("max_depth", 14),
-            prior_weight=mcts_config.get("prior_weight", 0.22),
-            widening_c=mcts_config.get("widening_c", 2.0),
-            widening_alpha=mcts_config.get("widening_alpha", 0.5),
-            search_mode=str(mcts_config.get("search_mode", "root")),
-            team_tactics=bool(mcts_config.get("team_tactics", False)),
-            lead_chain=bool(mcts_config.get("lead_chain", False)),
-            partner_bomb_guard=bool(mcts_config.get("partner_bomb_guard", False)),
-            heterogeneous_rollouts=bool(mcts_config.get("heterogeneous_rollouts", False)),
+            search_config=SearchConfig.from_mapping({**mcts_config, "critical_time_budget_ms": critical_budget}),
+            research_config=ResearchConfig.from_mapping(mcts_config),
         )
         self.reference_iterations = int(mcts_config.get(
             "reference_iterations",
@@ -97,6 +83,8 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         """
         self.last_endgame = None
         self.last_guard = None
+        self.last_urgent_blocking = None
+        self._urgent_candidates = None
         if self._forced_pass(state, player):
             self.last_search = None
             self.last_decision_reason = "forced_pass"
@@ -105,10 +93,9 @@ class DaiChangshengStrategy(ProfessionalStrategy):
         if total_remaining <= 12:
             started = time.perf_counter()
             full_budget_ms = self.critical_time_budget_ms
-            deadline = (
-                started + full_budget_ms * 0.7 / 1000.0
-                if self.time_budget_ms > 0 else float("inf")
-            )
+            decision_budget = DecisionBudget.start(full_budget_ms if self.time_budget_ms > 0 else 0, started=started)
+            solver_budget = decision_budget.slice(0.7)
+            deadline = solver_budget.deadline if solver_budget.deadline is not None else float("inf")
             reports: list[EndgameSearchResult] = []
             action = solve_endgame(
                 state,
@@ -143,10 +130,12 @@ class DaiChangshengStrategy(ProfessionalStrategy):
                 return self._fast_strategy.select_pattern(state, player)
             previous = self.critical_time_budget_ms
             self.critical_time_budget_ms = remaining_ms
+            self._inherited_budget = decision_budget
             try:
                 return super().select_pattern(state, player)
             finally:
                 self.critical_time_budget_ms = previous
+                self._inherited_budget = None
         return super().select_pattern(state, player)
 
     def _reference_action(self, state: GameState, player: int) -> Optional[Pattern]:
@@ -164,6 +153,7 @@ class DaiChangshengStrategy(ProfessionalStrategy):
             time_budget_ms=reference_budget,
             critical_time_budget_ms=reference_budget,
         )
+        reference._inherited_budget = (self._decision_budget or DecisionBudget.start(budget)).slice(0.5)
         return reference.select_pattern(state, player)
 
     def _minimum_search_gain(

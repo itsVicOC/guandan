@@ -144,17 +144,10 @@ def select_heuristic_action(
     best_score, best = min(scored, key=lambda item: item[0])
     if not state.table:
         return best
-    current_plan = estimate_remaining_plays(
-        state.hands[player], state.wild_card, state.level, width=6 if tier == 1 else 24
-    )
-    pass_score = 3.0 * current_plan
+    pass_score = _pass_score(state, player, tier=tier, context=context)
     top = current_top_player(state)
     urgency = opponent_min_cards(state, player)
-    pass_urgency = context.current_opponent_min_cards if context is not None else urgency
     if top is not None and is_teammate(top, player):
-        # A long residual hand cannot close in two legal plays, and opponents
-        # with >10 cards cannot immediately exit. Preserve the partner's
-        # initiative; paired search can still justify a profitable takeover.
         if (partner_bomb_guard and tier == 2 and urgency > 10
                 and is_bomb_type(best.type)
                 and state.hand_size(player) - len(best.cards) > 10):
@@ -163,10 +156,7 @@ def select_heuristic_action(
             finish = next((p for p in candidates if len(p.cards) == state.hand_size(player)), None)
             if finish is not None:
                 return finish
-            cover = context.partner_needs_cover()
-            if cover:
-                # Prefer a real block, rather than the cheapest card that
-                # still leaves the same opponent able to exit.
+            if context.partner_needs_cover():
                 return min(candidates, key=lambda p: (
                     context.finish_risk(p),
                     _pattern_score(state, player, p, tier=tier, tracker=tracker),
@@ -177,16 +167,30 @@ def select_heuristic_action(
             return min(takeovers, key=lambda p: _pattern_score(
                 state, player, p, tier=tier, tracker=tracker, context=context,
             )) if takeovers else None
-        teammate_cards = state.hand_size(top)
         if (
-            tier == 2
-            and urgency > 3
-            and teammate_cards >= state.hand_size(player) + 5
-            and not is_bomb_type(best.type)
-            and len(best.cards) >= 4
+            tier == 2 and urgency > 3
+            and state.hand_size(top) >= state.hand_size(player) + 5
+            and not is_bomb_type(best.type) and len(best.cards) >= 4
             and len(remaining_cards(state.hands[player], best.cards)) <= 3
         ):
             return best
+    return best if best_score < pass_score else None
+
+
+def _pass_score(
+    state: GameState, player: int, *, tier: int,
+    context: PublicTacticalContext | None = None,
+) -> float:
+    """Shared original pass cost, also used by optional high-tier root tactics."""
+    current_plan = estimate_remaining_plays(
+        state.hands[player], state.wild_card, state.level, width=6 if tier == 1 else 24
+    )
+    pass_score = 3.0 * current_plan
+    top = current_top_player(state)
+    urgency = opponent_min_cards(state, player)
+    pass_urgency = context.current_opponent_min_cards if context is not None else urgency
+    if top is not None and is_teammate(top, player):
+        teammate_cards = state.hand_size(top)
         pass_score -= 5.0 if teammate_cards <= 3 and urgency > 1 else 3.3
         if urgency == 1 and state.table[-1].type == PatternType.SINGLE:
             pass_score += 6.0
@@ -196,6 +200,4 @@ def select_heuristic_action(
         pass_score += 5.0
     elif 0 < pass_urgency <= 5:
         pass_score += 2.0
-    # Passing is a legitimate alternative.  A good multi-card shed or an
-    # urgent block can outweigh it; expensive speculative bombs usually do not.
-    return best if best_score < pass_score else None
+    return pass_score

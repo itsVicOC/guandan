@@ -11,12 +11,13 @@ import math
 import random
 import time
 from collections.abc import Callable
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional, Sequence
 
-from ..engine.events import ShuffleDeal, TributeSent
+from ..engine.events import TributeSent
 from ..engine.replay import replay_events
+from ..engine.rounds import deal_next_round, set_dealt_round_starter
 from ..engine.rules.tributes import apply_tribute_flow
 from ..engine.state import GameState, make_initial_state, team_of
 from .play import play_or_pass
@@ -412,16 +413,7 @@ def _prepare_next_round(
     if previous.team_levels_final is None or len(previous.finish_order) != 3:
         raise ValueError("previous round has no valid settlement")
 
-    levels = list(previous.team_levels_final)
-    head_team = team_of(previous.finish_order[0])
-    state = make_initial_state(
-        level=levels[head_team],
-        first_player=previous.finish_order[0],
-        seed=seed,
-        team_levels=levels,
-        ruleset_version=previous.ruleset_version,
-        a_failure_counts=previous.a_failure_counts,
-    )
+    state = deal_next_round(previous, seed=seed, first_player=previous.finish_order[0])
     tribute_choices, return_choices = choose_ai_tribute_cards(
         previous.finish_order,
         state.hands,
@@ -438,12 +430,7 @@ def _prepare_next_round(
         return_choices=return_choices,
     )
     state.history.extend(tribute.events)
-    state.turn_index = tribute.first_player
-    state.leader = tribute.first_player
-    shuffle = state.history[0]
-    if not isinstance(shuffle, ShuffleDeal):
-        raise ValueError("next round event stream has no deal")
-    state.history[0] = replace(shuffle, first_player=tribute.first_player)
+    set_dealt_round_starter(state, tribute.first_player)
     return state
 
 
@@ -455,6 +442,7 @@ def run_full_match(
     max_rounds: int = 64,
     max_turns: int = 2000,
     strategy_factory: StrategyFactory | None = None,
+    round_seed_factory: Callable[[int, int], int] | None = None,
 ) -> FullMatchResult:
     """Run consecutive AI rounds, including tribute, until one team passes A."""
     if max_rounds <= 0:
@@ -471,7 +459,9 @@ def run_full_match(
     for player, strategy in enumerate(strategies):
         _seed_strategy(strategy, seed, player)
     rng = random.Random(seed)
-    state = make_initial_state(level=level, first_player=0, seed=seed)
+    deal_seed = round_seed_factory or (lambda master, offset: master + offset)
+    current_deal_seed = deal_seed(seed, 0)
+    state = make_initial_state(level=level, first_player=0, seed=current_deal_seed)
     round_results: list[MatchResult] = []
     total_turns = 0
     tribute_rounds = 0
@@ -498,7 +488,7 @@ def run_full_match(
         )
         round_results.append(
             MatchResult(
-                seed=seed + round_offset,
+                seed=current_deal_seed,
                 level=state.level,
                 difficulties=seat_difficulties,
                 turns=round_turns,
@@ -523,9 +513,10 @@ def run_full_match(
             raise RuntimeError(f"round {round_offset + 1} failed exact event replay")
         if any(isinstance(event, TributeSent) for event in state.history):
             tribute_rounds += 1
-        if state.match_finished:
+        if state.match_finished or round_offset + 1 >= max_rounds:
             break
-        state = _prepare_next_round(state, seed + round_offset + 1, seat_difficulties)
+        current_deal_seed = deal_seed(seed, round_offset + 1)
+        state = _prepare_next_round(state, current_deal_seed, seat_difficulties)
 
     levels = state.team_levels_final or state.team_levels
     return FullMatchResult(

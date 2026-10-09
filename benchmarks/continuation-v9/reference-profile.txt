@@ -1,0 +1,30 @@
+         7834995 function calls (7833260 primitive calls) in 0.745 seconds
+
+   Ordered by: cumulative time
+   List reduced from 294 to 22 due to restriction <22>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.751    0.751 /Users/itsvic/projects/guandan/src/guandan/ai/mcts/search.py:200(simulate_state)
+        8    0.000    0.000    0.733    0.092 /Users/itsvic/projects/guandan/src/guandan/ai/rollout_reference.py:29(reference_pattern)
+        8    0.000    0.000    0.733    0.092 /Users/itsvic/projects/guandan/src/guandan/ai/tactics.py:104(select_heuristic_action)
+       99    0.000    0.000    0.702    0.007 /Users/itsvic/projects/guandan/src/guandan/ai/hand_plan.py:100(estimate_remaining_plays)
+       78    0.033    0.000    0.701    0.009 /Users/itsvic/projects/guandan/src/guandan/ai/hand_plan.py:36(_estimate)
+        8    0.000    0.000    0.653    0.082 /Users/itsvic/projects/guandan/src/guandan/ai/tactics.py:135(<listcomp>)
+       92    0.000    0.000    0.653    0.007 /Users/itsvic/projects/guandan/src/guandan/ai/tactics.py:67(_pattern_score)
+    10210    0.018    0.000    0.431    0.000 /Users/itsvic/projects/guandan/src/guandan/ai/hand_plan.py:72(<listcomp>)
+    88720    0.162    0.000    0.308    0.000 /Users/itsvic/.local/share/uv/python/cpython-3.10-macos-aarch64-none/lib/python3.10/collections/__init__.py:813(__sub__)
+  2638338    0.166    0.000    0.221    0.000 <string>:2(__hash__)
+   223266    0.043    0.000    0.212    0.000 /Users/itsvic/.local/share/uv/python/cpython-3.10-macos-aarch64-none/lib/python3.10/collections/__init__.py:565(__init__)
+   223266    0.027    0.000    0.168    0.000 /Users/itsvic/.local/share/uv/python/cpython-3.10-macos-aarch64-none/lib/python3.10/collections/__init__.py:640(update)
+   134546    0.050    0.000    0.115    0.000 {built-in method _collections._count_elements}
+    18416    0.007    0.000    0.106    0.000 /Users/itsvic/projects/guandan/src/guandan/ai/hand_plan.py:18(remaining_cards)
+      184    0.006    0.000    0.069    0.000 /Users/itsvic/projects/guandan/src/guandan/engine/rules/patterns.py:607(detect_patterns)
+34790/33069    0.020    0.000    0.058    0.000 {built-in method builtins.sorted}
+  2638338    0.056    0.000    0.056    0.000 {built-in method builtins.hash}
+   112471    0.013    0.000    0.033    0.000 {method 'get' of 'dict' objects}
+   246534    0.015    0.000    0.033    0.000 {built-in method builtins.isinstance}
+        8    0.000    0.000    0.025    0.003 /Users/itsvic/projects/guandan/src/guandan/ai/tactics.py:16(_shortlist)
+    18564    0.010    0.000    0.024    0.000 /Users/itsvic/.local/share/uv/python/cpython-3.10-macos-aarch64-none/lib/python3.10/collections/__init__.py:674(subtract)
+      184    0.005    0.000    0.021    0.000 /Users/itsvic/projects/guandan/src/guandan/engine/rules/patterns.py:231(_try_triple_pair)
+
+

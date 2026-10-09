@@ -7,6 +7,7 @@ from ..engine.card import Card
 from ..engine.events import Pass, TurnPlayed
 from ..engine.hand import Pattern, PatternType, comparison_rank, effective_rank
 from ..engine.state import GameState, is_teammate
+from .observation import ActorObservation
 
 
 @dataclass(frozen=True)
@@ -18,7 +19,7 @@ class PassEvidence:
     top_remaining: int = 27
 
 
-def collect_pass_evidence(state: GameState) -> tuple[PassEvidence, ...]:
+def collect_pass_evidence(state: GameState | ActorObservation) -> tuple[PassEvidence, ...]:
     top: TurnPlayed | None = None
     passed: set[int] = set()
     finished: set[int] = set()

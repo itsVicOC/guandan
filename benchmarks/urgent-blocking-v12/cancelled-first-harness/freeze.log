@@ -1,0 +1,23 @@
+{
+  "namespace": "urgent-blocking-v12",
+  "counts": {
+    "dev-team": 32,
+    "dev-mixed": 32,
+    "holdout": 240,
+    "mixed": 240,
+    "full": 48
+  },
+  "weights": [
+    6,
+    12
+  ],
+  "mode": "clock",
+  "workers": 1,
+  "baseline_root": "/private/tmp/guandan-urgent-v12-baseline",
+  "candidate_root": "/private/tmp/guandan-urgent-v12-candidate",
+  "baseline_sha256": "0fc39f1dcf2ab652c4c218061760f9301b2b003b29f588c84c346b2d194aa8d0",
+  "candidate_sha256": "c6425214bbde66c36045b485ae5a479ffd41a76dab78d46f0c1261de5569e49a",
+  "harness_sha256": "59640133ca11669475f5f7744819eb0af0b4bd8cd2e90a68550d7c380175b2e6",
+  "selection": "largest minimum positive team/mixed development gain; timing must pass",
+  "promotion": "team/mixed 95% paired lower bounds >0; all companions >=0; full lower bound >50%; replay/clock/quality pass"
+}

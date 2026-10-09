@@ -1,0 +1,21 @@
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:377: RuntimeWarning: divide by zero encountered in matmul
+  selected = int(np.argmax(features @ weights))
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:377: RuntimeWarning: overflow encountered in matmul
+  selected = int(np.argmax(features @ weights))
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:377: RuntimeWarning: invalid value encountered in matmul
+  selected = int(np.argmax(features @ weights))
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:361: RuntimeWarning: divide by zero encountered in matmul
+  logits = np.clip(x @ weights, -30, 30)
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:361: RuntimeWarning: overflow encountered in matmul
+  logits = np.clip(x @ weights, -30, 30)
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:361: RuntimeWarning: invalid value encountered in matmul
+  logits = np.clip(x @ weights, -30, 30)
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:362: RuntimeWarning: divide by zero encountered in matmul
+  gradient = x.T @ (1 / (1 + np.exp(-logits)) - targets) / len(targets)
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:362: RuntimeWarning: overflow encountered in matmul
+  gradient = x.T @ (1 / (1 + np.exp(-logits)) - targets) / len(targets)
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:362: RuntimeWarning: invalid value encountered in matmul
+  gradient = x.T @ (1 / (1 + np.exp(-logits)) - targets) / len(targets)
+without_public_interactions: diagnostic regret 0.033778
+without_played_suit_counts: diagnostic regret 0.030285
+without_residual_structure: diagnostic regret 0.039841

@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "source_sha256": "57b73f80bec93eb6f6bf638c4a5487fc9d93125ef80b17a992d728f66f25751e",
+  "source_files": 96,
+  "baseline": "current workspace defaults; all v7/v8 research flags disabled",
+  "previous_source_sha256": "4834f59bdf4d0553131e2fbb9e26fa135ff2cff4e9b368031b308bb61b05d40a",
+  "change": "Exact-equivalent packed hand planner only; fixed-work baseline strategy unchanged."
+}

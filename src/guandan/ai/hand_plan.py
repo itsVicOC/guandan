@@ -38,8 +38,6 @@ def _estimate(cards: tuple[Card, ...], wild: Card | None, level: int, width: int
     if not cards:
         return 0.0
     patterns = detect_patterns(cards, wild)
-    # Equivalent material can have different interpretations; use the cheapest
-    # one for a future hand partition.  Keep all singles as a complete fallback.
     by_material: dict[tuple[Card, ...], Pattern] = {}
     for pattern in patterns:
         material = tuple(sorted(pattern.cards))
@@ -47,53 +45,55 @@ def _estimate(cards: tuple[Card, ...], wild: Card | None, level: int, width: int
         if previous is None or _play_cost(pattern, level) < _play_cost(previous, level):
             by_material[material] = pattern
     singles = [p for p in by_material.values() if len(p.cards) == 1]
-    grouped = sorted(
-        (p for p in by_material.values() if len(p.cards) > 1),
-        key=lambda p: (-len(p.cards), p.wild_used, _play_cost(p, level)),
-    )[:192]
-    pool = grouped + singles
-    by_card: dict[Card, list[Pattern]] = {}
-    for pattern in pool:
-        for card in set(pattern.cards):
-            by_card.setdefault(card, []).append(pattern)
-
-    beam: list[tuple[float, tuple[Card, ...]]] = [(0.0, cards)]
-    best = float(len(cards)) * 1.28
+    grouped = sorted((p for p in by_material.values() if len(p.cards) > 1),
+                     key=lambda p: (-len(p.cards), p.wild_used, _play_cost(p, level)))[:192]
+    counts = Counter(cards)
+    card_types = sorted(counts)
+    bits = max(counts.values()).bit_length()
+    stride = bits + 1
+    shifts = {card: index * stride for index, card in enumerate(card_types)}
+    guards = sum(1 << (shift + bits) for shift in shifts.values())
+    initial = sum(count * (1 << shifts[card]) for card, count in counts.items())
+    by_card: list[list[tuple[int, float, int]]] = [[] for _ in card_types]
+    sizes = {initial: len(cards)}
+    for pattern in grouped + singles:
+        used = Counter(pattern.cards)
+        packed = sum(count << shifts[card] for card, count in used.items())
+        item = (packed, _play_cost(pattern, level), len(pattern.cards))
+        for card in used:
+            by_card[shifts[card] // stride].append(item)
+    for options in by_card:
+        options.sort(key=lambda item: (item[1] / item[2], -item[2]))
+    beam: list[tuple[float, int]] = [(0.0, initial)]
+    best = len(cards) * 1.28
     expanded = 0
     node_limit = max(64, width * 12)
     while beam and expanded < node_limit:
-        next_beam: dict[tuple[Card, ...], float] = {}
+        next_beam: dict[int, float] = {}
         for spent, rest in beam:
             if not rest:
                 best = min(best, spent)
                 continue
-            pivot = rest[0]
-            have = Counter(rest)
-            options = [
-                pattern for pattern in by_card.get(pivot, ())
-                if not (Counter(pattern.cards) - have)
-            ]
-            options.sort(key=lambda p: (_play_cost(p, level) / len(p.cards), -len(p.cards)))
-            for pattern in options[:16]:
-                after = remaining_cards(rest, pattern.cards)
-                value = spent + _play_cost(pattern, level)
+            pivot = ((rest & -rest).bit_length() - 1) // stride
+            options = [item for item in by_card[pivot] if ((rest | guards) - item[0]) & guards == guards]
+            for packed, cost, size in options[:16]:
+                after = rest - packed
+                value = spent + cost
                 if not after:
                     best = min(best, value)
-                elif value + ceil(len(after) / 10) * 0.82 < best:
-                    next_beam[after] = min(value, next_beam.get(after, float("inf")))
+                else:
+                    sizes[after] = sizes[rest] - size
+                    if value + ceil(sizes[after] / 10) * 0.82 < best:
+                        next_beam[after] = min(value, next_beam.get(after, float("inf")))
                 expanded += 1
                 if expanded >= node_limit:
                     break
             if expanded >= node_limit:
                 break
-        beam = sorted(
-            ((value, rest) for rest, value in next_beam.items()),
-            key=lambda item: item[0] + ceil(len(item[1]) / 8) * 0.9,
-        )[:width]
-    # Incomplete beam states can always be finished as singles.  This upper
-    # bound prevents the node limit from making large hands look artificially good.
+        beam = sorted(((value, rest) for rest, value in next_beam.items()),
+                      key=lambda item: item[0] + ceil(sizes[item[1]] / 8) * 0.9)[:width]
     for spent, rest in beam:
-        best = min(best, spent + len(rest) * 1.28)
+        best = min(best, spent + sizes[rest] * 1.28)
     return best
 
 

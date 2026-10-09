@@ -1,0 +1,17 @@
+{
+  "python": "3.10.20",
+  "numpy": "2.2.6",
+  "blas": "Accelerate",
+  "reference_backend": "einsum without BLAS optimization",
+  "epochs": 160,
+  "regularization": 0.001,
+  "training_pairs": 21219,
+  "max_weight_difference": 5.551115123125783e-17,
+  "all_576_score_choices_match_python_runtime": true,
+  "max_score_difference": 7.771561172376096e-16,
+  "all_coefficients_finite": true,
+  "model_sha256": "f32b49470b2a969f7e33f4d8550ea36f2fda4ba5f52e895e3cfbecb3c9a14cc8",
+  "numpy_issue": "https://github.com/numpy/numpy/issues/29820",
+  "interpretation": "Accelerate matmul emitted FP warnings. The complete fitted coefficient vector was independently recomputed without BLAS, and all stored-position scores were checked against Python scalar arithmetic.",
+  "runtime_api": "score_actions(ActionObservation, deserialized labeled actions)"
+}

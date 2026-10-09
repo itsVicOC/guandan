@@ -1,0 +1,151 @@
+diagnostic: 1/32 positions
+diagnostic: 2/32 positions
+diagnostic: 3/32 positions
+diagnostic: 4/32 positions
+diagnostic: 5/32 positions
+diagnostic: 6/32 positions
+diagnostic: 7/32 positions
+diagnostic: 8/32 positions
+diagnostic: 9/32 positions
+diagnostic: 10/32 positions
+diagnostic: 11/32 positions
+diagnostic: 12/32 positions
+diagnostic: 13/32 positions
+diagnostic: 14/32 positions
+diagnostic: 15/32 positions
+diagnostic: 16/32 positions
+diagnostic: 17/32 positions
+diagnostic: 18/32 positions
+diagnostic: 19/32 positions
+diagnostic: 20/32 positions
+diagnostic: 21/32 positions
+diagnostic: 22/32 positions
+diagnostic: 23/32 positions
+diagnostic: 24/32 positions
+diagnostic: 25/32 positions
+diagnostic: 26/32 positions
+diagnostic: 27/32 positions
+diagnostic: 28/32 positions
+diagnostic: 29/32 positions
+diagnostic: 30/32 positions
+diagnostic: 31/32 positions
+diagnostic: 32/32 positions
+[
+  {
+    "tier": 3,
+    "method": "baseline",
+    "positions": 32,
+    "reasons": {
+      "agrees_with_tactical": 17,
+      "tactical_guard": 15
+    },
+    "selection_changes": 0,
+    "nominations": 0,
+    "rollouts": 4096,
+    "terminal_fraction": 0.3525390625,
+    "head_placed_fraction": 0.484619140625,
+    "regret": 0.018940326851655864,
+    "regret_count": 32,
+    "pool_regret": 0.003708400112111373,
+    "pool_regret_count": 32,
+    "search_regret": 0.013405562541032902,
+    "search_regret_count": 32,
+    "reference_regret": 0.018940326851655864,
+    "reference_regret_count": 32,
+    "elapsed_seconds": 0.7196730039376007,
+    "elapsed_seconds_count": 32,
+    "common_samples": 21.71875,
+    "common_samples_count": 32,
+    "paired_regret_improvement": 0.0,
+    "paired_regret_count": 32
+  },
+  {
+    "tier": 3,
+    "method": "refined",
+    "positions": 32,
+    "reasons": {
+      "agrees_with_tactical": 20,
+      "tactical_guard": 10,
+      "search": 2
+    },
+    "selection_changes": 2,
+    "nominations": 0,
+    "rollouts": 2336,
+    "terminal_fraction": 0.4246575342465753,
+    "head_placed_fraction": 0.5423801369863014,
+    "regret": 0.010949369155853296,
+    "regret_count": 32,
+    "pool_regret": 0.00556975608973448,
+    "pool_regret_count": 32,
+    "search_regret": 0.013919135893972787,
+    "search_regret_count": 32,
+    "reference_regret": 0.018940326851655864,
+    "reference_regret_count": 32,
+    "elapsed_seconds": 0.5883412383439008,
+    "elapsed_seconds_count": 32,
+    "common_samples": 9.5625,
+    "common_samples_count": 32,
+    "paired_regret_improvement": 0.007990957695802568,
+    "paired_regret_count": 32
+  },
+  {
+    "tier": 4,
+    "method": "baseline",
+    "positions": 32,
+    "reasons": {
+      "agrees_with_tactical": 15,
+      "tactical_guard": 14,
+      "endgame_sampled": 2,
+      "search": 1
+    },
+    "selection_changes": 0,
+    "nominations": 0,
+    "rollouts": 3840,
+    "terminal_fraction": 0.3450520833333333,
+    "head_placed_fraction": 0.5333333333333333,
+    "regret": 0.019035665666017193,
+    "regret_count": 32,
+    "pool_regret": 0.00251885823671902,
+    "pool_regret_count": 30,
+    "search_regret": 0.01790254213490609,
+    "search_regret_count": 32,
+    "reference_regret": 0.018940326851655864,
+    "reference_regret_count": 32,
+    "elapsed_seconds": 0.575205902799765,
+    "elapsed_seconds_count": 30,
+    "common_samples": 18.666666666666668,
+    "common_samples_count": 30,
+    "paired_regret_improvement": 0.0,
+    "paired_regret_count": 32
+  },
+  {
+    "tier": 4,
+    "method": "refined",
+    "positions": 32,
+    "reasons": {
+      "agrees_with_tactical": 20,
+      "tactical_guard": 9,
+      "endgame_sampled": 2,
+      "search": 1
+    },
+    "selection_changes": 2,
+    "nominations": 0,
+    "rollouts": 2160,
+    "terminal_fraction": 0.4203703703703704,
+    "head_placed_fraction": 0.5782407407407407,
+    "regret": 0.01649719033781469,
+    "regret_count": 32,
+    "pool_regret": 0.006697953283425155,
+    "pool_regret_count": 30,
+    "search_regret": 0.017386901622927442,
+    "search_regret_count": 32,
+    "reference_regret": 0.018940326851655864,
+    "reference_regret_count": 32,
+    "elapsed_seconds": 0.5120619318996129,
+    "elapsed_seconds_count": 30,
+    "common_samples": 9.4,
+    "common_samples_count": 30,
+    "paired_regret_improvement": 0.0025384753282025017,
+    "paired_regret_count": 32
+  }
+]

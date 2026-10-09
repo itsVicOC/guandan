@@ -10,20 +10,22 @@ from __future__ import annotations
 import math
 import random
 import time
-from dataclasses import dataclass, field
-from typing import Sequence
+from dataclasses import dataclass, field, replace
+from typing import Any, Sequence
 
 from ...engine.hand import Pattern
 from ...engine.state import GameState, clone_state_for_search
 from ..candidates import (
     enumerate_legal_patterns,
+    is_bomb_pattern,
     material_variants,
     pattern_key,
     smallest_legal_pattern,
 )
+from ..config import DecisionBudget
 from ..context import PublicTacticalContext
 from ..match_value import round_value_span
-from ..partner_model import sample_styles
+from ..partner_model import sample_styles, style_distribution
 from ..tactics import select_heuristic_action
 from ..valuation import enumerate_search_candidates
 from .determinize import determinize
@@ -44,6 +46,7 @@ class _RootArm:
     pattern: Pattern | None
     prior: float
     values: list[float] = field(default_factory=list)
+    terminals: list[bool] = field(default_factory=list)
 
     @property
     def visits(self) -> int:
@@ -106,6 +109,71 @@ def _arm_key(pattern: Pattern | None) -> tuple:
     return PASS_ACTION if pattern is None else pattern_key(pattern)
 
 
+def ranked_candidates(
+    state: GameState, player: int, patterns: list[Pattern | None],
+    references: Sequence[Pattern | None], *, deadline: float | None,
+) -> tuple[list[Pattern | None], dict]:
+    """Atomically nominate one learned candidate, preserving the baseline on failure."""
+    from ..action_ranker import (
+        ActionObservation,
+        RankingTimeout,
+        check_deadline,
+        load_model,
+        score_actions,
+    )
+
+    started = time.perf_counter()
+    report: dict[str, Any] = {"candidate_replaced": False, "reason": "unchanged"}
+    try:
+        check_deadline(deadline)
+        model = load_model()
+        check_deadline(deadline)
+        observation = ActionObservation.from_state(state, player)
+        legal: list[Pattern | None] = list(enumerate_legal_patterns(state, player))
+        # Preserve the existing exact-material alternatives even when the rule
+        # enumerator only represents one suit interpretation of a normal play.
+        keys = {_arm_key(p) for p in legal}
+        legal.extend(p for p in patterns if _arm_key(p) not in keys)
+        if state.table and not any(p is None for p in legal):
+            legal.append(None)
+        check_deadline(deadline)
+        scores = score_actions(observation, legal, model=model, deadline=deadline)
+        if len(scores) != len(legal) or not all(math.isfinite(score) for score in scores):
+            raise ValueError("invalid action-ranker scores")
+        preferred = max(range(len(legal)), key=lambda i: scores[i]) if legal else None
+        report.update(model_sha256=model.sha256, legal_actions=len(legal))
+        if preferred is not None:
+            action = legal[preferred]
+            report["recommended_key"] = _arm_key(action)
+            tactical = references or (select_heuristic_action(state, player, 2),)
+            protected = {_arm_key(p) for p in tactical} | {PASS_ACTION}
+            protected.add(_arm_key(smallest_legal_pattern(state, player)))
+            replace_at = next((i for i, candidate in reversed(list(enumerate(patterns)))
+                               if candidate is not None
+                               and not is_bomb_pattern(candidate)
+                               and len(candidate.cards) != state.hand_size(player)
+                               and _arm_key(candidate) not in protected), None)
+            check_deadline(deadline)
+            if any(_arm_key(p) == _arm_key(action) for p in patterns):
+                report["reason"] = "already_present"
+            elif replace_at is None:
+                report["reason"] = "protected_pool"
+            else:
+                updated = list(patterns)
+                report["replaced_key"] = _arm_key(updated[replace_at])
+                updated[replace_at] = action
+                report.update(candidate_replaced=True, reason="nominated")
+                return updated, {**report, "elapsed_seconds": time.perf_counter() - started}
+    except RankingTimeout:
+        report["reason"] = "budget_fallback"
+    except Exception as error:
+        # Optional research scoring must never discard the working baseline.
+        report["reason"] = "model_fallback"
+        report["error_type"] = type(error).__name__
+    report["elapsed_seconds"] = time.perf_counter() - started
+    return patterns, report
+
+
 def _ranking_score(
     arm: _RootArm, prior_weight: float, common_visits: int | None = None
 ) -> float:
@@ -140,6 +208,14 @@ def root_action_search(
     finalists: int = 2,
     reference_actions: Sequence[Pattern | None] = (),
     heterogeneous_rollouts: bool = False,
+    partner_adaptation: bool = False,
+    response_chain: bool = False,
+    chain_worlds: int = 4,
+    action_ranker: bool = False,
+    reference_rollout_turns: int = 0,
+    reference_refinement: bool = False,
+    _candidate_actions: Sequence[Pattern | None] | None = None,
+    decision_budget: DecisionBudget | None = None,
 ) -> SearchResult:
     """Evaluate root actions with paired worlds and optional successive halving.
 
@@ -155,18 +231,58 @@ def root_action_search(
         raise ValueError("rollout_max_turns must be positive")
     if min_samples <= 0 or finalists <= 0:
         raise ValueError("min_samples and finalists must be positive")
+    if not 0 <= reference_rollout_turns <= rollout_max_turns:
+        raise ValueError("reference rollout turns must fit the rollout horizon")
+    if reference_rollout_turns and (heterogeneous_rollouts or partner_adaptation):
+        raise ValueError("reference rollouts cannot be combined with style adaptation")
     if player != state.current_player():
         raise ValueError(
             f"player {player} is not to act (current player is {state.current_player()})"
         )
+    if reference_refinement:
+        if adaptive or rollout_strategy >= 3 or reference_rollout_turns or heterogeneous_rollouts or partner_adaptation or response_chain or action_ranker:
+            raise ValueError("reference refinement requires an unmodified uniform root search")
+        return _refined_search(
+            state, player, rng=rng, iterations=iterations, time_budget_ms=time_budget_ms,
+            max_actions=max_actions, rollout_strategy=rollout_strategy,
+            rollout_max_turns=rollout_max_turns, prior_weight=prior_weight,
+            style=style, reference_actions=reference_actions, decision_budget=decision_budget,
+        )
 
     started = time.perf_counter()
-    deadline = started + time_budget_ms / 1000.0 if time_budget_ms > 0 else None
+    clock = decision_budget or DecisionBudget.start(time_budget_ms, started=started)
+    deadline = clock.deadline
     search_style = style or SearchStyle()
     prior_weight *= round_value_span(state)
-    patterns = root_action_candidates(
+    patterns = list(_candidate_actions) if _candidate_actions is not None else root_action_candidates(
         state, player, max_actions=max_actions, reference_actions=reference_actions
     )
+    probabilities = style_distribution(state) if partner_adaptation or heterogeneous_rollouts else None
+    chain_report = None
+    if response_chain:
+        from ..response_chain import action_key, chain_candidates, evaluate_responses
+
+        chain_started = time.perf_counter()
+        chain_deadline = clock.slice(0.10).deadline
+        pool = chain_candidates(state, player, reference_actions, limit=max_actions, deadline=chain_deadline)
+        reports, chain_report = evaluate_responses(
+            state, player, pool, rng=rng, worlds=chain_worlds, deadline=chain_deadline,
+            probabilities=probabilities, partner_adaptation=partner_adaptation,
+            rollout_strategy=rollout_strategy,
+        )
+        chain_report["elapsed_seconds"] = time.perf_counter() - chain_started
+        if reports:
+            preferred = max(pool, key=lambda p: reports[action_key(p)].value)
+            protected = {_arm_key(p) for p in reference_actions}
+            protected.add(_arm_key(smallest_legal_pattern(state, player)))
+            if all(_arm_key(p) != _arm_key(preferred) for p in patterns):
+                replace_at = next((i for i, p in reversed(list(enumerate(patterns)))
+                                   if p is not None and len(p.cards) != state.hand_size(player)
+                                   and _arm_key(p) not in protected), None)
+                if replace_at is not None:
+                    patterns[replace_at] = preferred
+                    chain_report["candidate_replaced"] = True
+        chain_report.setdefault("candidate_replaced", False)
     if rollout_strategy >= 3 and not state.table:
         # Reserve a control/support lead by replacing the weakest ordinary
         # representative; required finishes and reference moves remain present.
@@ -185,6 +301,12 @@ def root_action_search(
                 ), None)
                 if replace_at is not None:
                     patterns[replace_at] = safety
+    ranker_report = None
+    if action_ranker:
+        ranker_deadline = clock.slice(0.05).deadline
+        patterns, ranker_report = ranked_candidates(
+            state, player, patterns, reference_actions, deadline=ranker_deadline,
+        )
     arms = [
         _RootArm(
             key=_arm_key(pattern),
@@ -211,6 +333,8 @@ def root_action_search(
     sampled_worlds = 0
     next_halving_at = min_samples
     stopped_by_clock = False
+    discarded_rollouts = 0
+    reference_memo: dict | None = {} if reference_rollout_turns else None
 
     while evaluations < iterations and active:
         if deadline is not None and time.perf_counter() >= deadline:
@@ -220,7 +344,7 @@ def root_action_search(
         sampled_world = determinize(state, player, rng)
         sampling_seconds += time.perf_counter() - sampling_started
         sampled_worlds += 1
-        styles = sample_styles(state, rng) if heterogeneous_rollouts else None
+        styles = sample_styles(state, rng, probabilities) if heterogeneous_rollouts or partner_adaptation else None
         completed_round = True
         # Rotate partial rounds so a clock cutoff does not always favour the
         # first candidate in the deterministic ordering.
@@ -238,6 +362,14 @@ def root_action_search(
             sampled = clone_state_for_search(sampled_world)
             if not _apply_action(sampled, player, arm.pattern):
                 continue
+            rollout_options: dict[str, Any] = {}
+            if styles is not None:
+                rollout_options["styles"] = styles
+            if partner_adaptation:
+                rollout_options["partner_adaptation"] = True
+            if reference_rollout_turns:
+                rollout_options["reference_rollout_turns"] = reference_rollout_turns
+                rollout_options["reference_memo"] = reference_memo
             value = simulate_state(
                 sampled,
                 player,
@@ -245,14 +377,16 @@ def root_action_search(
                 max_turns=rollout_max_turns,
                 copy_state=False,
                 deadline=deadline,
-                **({"styles": styles} if styles is not None else {}),
+                **rollout_options,
             )
             rollout_seconds += time.perf_counter() - rollout_started
             if deadline is not None and time.perf_counter() >= deadline:
                 stopped_by_clock = True
                 completed_round = False
+                discarded_rollouts += 1
                 break
             arm.values.append(value)
+            arm.terminals.append(sampled.finished)
             evaluations += 1
         if stopped_by_clock:
             break
@@ -329,4 +463,77 @@ def root_action_search(
         sampling_seconds=sampling_seconds,
         rollout_seconds=rollout_seconds,
         common_samples=common_visits or 0,
+        terminal_rollouts=sum(sum(arm.terminals) for arm in arms),
+        cutoff_rollouts=sum(sum(not terminal for terminal in arm.terminals) for arm in arms),
+        discarded_rollouts=discarded_rollouts,
+        terminal_common_samples=sum(all(arm.terminals[index] for arm in arms)
+                                    for index in range(common_visits or 0)),
+        partner_probabilities=probabilities or (),
+        response_chain=chain_report,
+        action_ranker=ranker_report,
+    )
+
+
+def _refined_search(
+    state: GameState, player: int, *, rng: random.Random, iterations: int,
+    time_budget_ms: int, max_actions: int, rollout_strategy: int, rollout_max_turns: int,
+    prior_weight: float, style: SearchStyle | None,
+    reference_actions: Sequence[Pattern | None],
+    decision_budget: DecisionBudget | None = None,
+) -> SearchResult:
+    """Reserve half the work/clock for an independently paired expert challenge.
+
+    Only the fast-search winner and tactical reference enter the second phase.
+    Its common completed worlds entirely replace their coarse value estimates.
+    At most eight pairs keep fixed-work evaluation near the production clock.
+    Fewer than six pairs retain the tactical action; the strategy still applies
+    its original payoff/confidence/bomb/pass guards to completed refinements.
+    """
+    started = time.perf_counter()
+    clock = decision_budget or DecisionBudget.start(time_budget_ms, started=started)
+    reference = reference_actions[0] if reference_actions else select_heuristic_action(state, player, 2)
+    base = root_action_search(
+        state, player, rng=rng, iterations=max(1, iterations // 2),
+        time_budget_ms=max(1, time_budget_ms // 2) if time_budget_ms > 0 else 0,
+        max_actions=max_actions, rollout_strategy=rollout_strategy,
+        rollout_max_turns=rollout_max_turns, prior_weight=prior_weight,
+        style=style, reference_actions=(reference,), decision_budget=clock.slice(0.5),
+    )
+    report = {"base_simulations": base.simulations, "base_common_samples": base.common_samples,
+              "base_seconds": base.elapsed_seconds, "challenger_key": _arm_key(base.pattern),
+              "reference_key": _arm_key(reference), "refinement_simulations": 0,
+              "refinement_common_samples": 0, "max_common_samples": 8,
+              "reason": "agrees_with_reference"}
+    if _arm_key(base.pattern) == _arm_key(reference):
+        return replace(base, elapsed_seconds=time.perf_counter() - started, reference_refinement=report)
+    remaining_iterations = iterations - base.simulations
+    remaining_ms = clock.remaining_ms()
+    if remaining_iterations < 12 or (time_budget_ms > 0 and remaining_ms < 100):
+        report["reason"] = "insufficient_budget"
+        return replace(base, pattern=reference, elapsed_seconds=time.perf_counter() - started,
+                       reference_refinement=report)
+    refined = root_action_search(
+        state, player, rng=rng, iterations=min(remaining_iterations, 16),
+        time_budget_ms=remaining_ms, max_actions=2,
+        rollout_strategy=rollout_strategy, rollout_max_turns=120,
+        prior_weight=prior_weight, style=style, reference_actions=(reference,),
+        reference_rollout_turns=8, _candidate_actions=(base.pattern, reference), decision_budget=clock,
+    )
+    report.update(refinement_simulations=refined.simulations,
+                  refinement_common_samples=refined.common_samples,
+                  refinement_seconds=refined.elapsed_seconds,
+                  reason="completed" if refined.common_samples >= 6 else "insufficient_pairs")
+    return replace(
+        refined, pattern=refined.pattern if refined.common_samples >= 6 else reference,
+        simulations=base.simulations + refined.simulations,
+        sampled_worlds=base.sampled_worlds + refined.sampled_worlds,
+        elapsed_seconds=time.perf_counter() - started,
+        budget_limited=base.budget_limited or refined.budget_limited,
+        candidate_seconds=base.candidate_seconds + refined.candidate_seconds,
+        sampling_seconds=base.sampling_seconds + refined.sampling_seconds,
+        rollout_seconds=base.rollout_seconds + refined.rollout_seconds,
+        terminal_rollouts=base.terminal_rollouts + refined.terminal_rollouts,
+        cutoff_rollouts=base.cutoff_rollouts + refined.cutoff_rollouts,
+        discarded_rollouts=base.discarded_rollouts + refined.discarded_rollouts,
+        reference_refinement=report,
     )

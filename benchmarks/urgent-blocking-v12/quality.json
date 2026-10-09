@@ -1,0 +1,85 @@
+{
+  "namespace": "urgent-blocking-v12b",
+  "counts": {
+    "dev-team": 32,
+    "dev-mixed": 32,
+    "holdout": 240,
+    "mixed": 240,
+    "full": 48
+  },
+  "weights": [
+    6,
+    12
+  ],
+  "mode": "clock",
+  "workers": 1,
+  "baseline_root": "/private/tmp/guandan-urgent-v12-baseline",
+  "candidate_root": "/private/tmp/guandan-urgent-v12-candidate",
+  "baseline_sha256": "0fc39f1dcf2ab652c4c218061760f9301b2b003b29f588c84c346b2d194aa8d0",
+  "candidate_sha256": "c6425214bbde66c36045b485ae5a479ffd41a76dab78d46f0c1261de5569e49a",
+  "harness_sha256": "879fb0dcf2079d8e96c7ef8961221f1438767ecb090c1988c6a0c12d3cb5dc5b",
+  "selection": "largest minimum positive team/mixed development gain; timing must pass",
+  "promotion": "team/mixed 95% paired lower bounds >0; all companions >=0; full lower bound >50%; replay/clock/quality pass",
+  "passed": true,
+  "tests": {
+    "passed": 997,
+    "seconds": 170.96,
+    "all_tests_passed": true,
+    "initial_command_exit": 1,
+    "note": "pytest tests all passed; default coverage additionally collected the frozen baseline in subprocesses. Workspace-only coverage is regenerated from the same run with include=src/guandan/*; raw duplicate-source report retained."
+  },
+  "workspace_coverage": {
+    "covered_lines": 9455,
+    "num_statements": 10815,
+    "percent_covered": 84.94878405686015,
+    "percent_covered_display": "85",
+    "missing_lines": 1360,
+    "excluded_lines": 22,
+    "percent_statements_covered": 87.42487286176606,
+    "percent_statements_covered_display": "87",
+    "num_branches": 3536,
+    "num_partial_branches": 542,
+    "covered_branches": 2736,
+    "missing_branches": 800,
+    "percent_branches_covered": 77.37556561085972,
+    "percent_branches_covered_display": "77"
+  },
+  "coverage_files": 95,
+  "checks": {
+    "ruff": true,
+    "mypy": true,
+    "source_files": 95,
+    "diff_check": true,
+    "persistence_floors": true
+  },
+  "reporting_fix": {
+    "production_source_unchanged": true,
+    "focused_harness_tests_passed": 12,
+    "ruff": true,
+    "mypy": true,
+    "diff_check": true
+  },
+  "focused_tactic_and_harness_tests_passed": 65,
+  "information_boundary_cases": 36,
+  "reporting_schema_migration": "a-metadata-migration.json",
+  "focused_tests": 69,
+  "focused_tests_passed": true,
+  "tests_passed": 1004,
+  "full_tests_passed": true,
+  "test_command": ".venv/bin/python -m pytest --cov=guandan --cov-report=term --cov-report=xml --cov-report=json",
+  "test_log": "tests-final-coverage.log",
+  "coverage_percent": 84.99756114556477,
+  "coverage_report": "coverage-final.json",
+  "coverage_boundaries": {
+    "storage": 84.64,
+    "session": 82.01,
+    "replay": 76.12
+  },
+  "coverage_gate_passed": true,
+  "ruff_passed": true,
+  "ruff_command": ".venv/bin/ruff check src tests scripts packaging",
+  "mypy_passed": true,
+  "mypy_source_files": 95,
+  "diff_check_passed": true,
+  "coverage_note": "Final full run includes the stronger must-block turn-order fixture and the shared dependency integrity test; all 95 source files are current workspace files."
+}

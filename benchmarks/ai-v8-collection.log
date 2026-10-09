@@ -1,0 +1,2880 @@
+deal 6 phase 1: 8/32 paired worlds
+deal 6 phase 1: 16/32 paired worlds
+deal 6 phase 1: 24/32 paired worlds
+deal 6 phase 1: 32/32 paired worlds
+labels 1/576; deal 6, 1 positions, 8.7s; elapsed 9s
+deal 7 phase 1: 8/32 paired worlds
+deal 7 phase 1: 16/32 paired worlds
+deal 7 phase 1: 24/32 paired worlds
+deal 8 phase 2: 8/32 paired worlds
+deal 7 phase 1: 32/32 paired worlds
+labels 2/576; deal 7, 1 positions, 29.4s; elapsed 29s
+deal 8 phase 2: 16/32 paired worlds
+deal 9 phase 1: 8/32 paired worlds
+deal 8 phase 2: 24/32 paired worlds
+deal 9 phase 1: 16/32 paired worlds
+deal 8 phase 2: 32/32 paired worlds
+labels 3/576; deal 8, 1 positions, 57.5s; elapsed 66s
+deal 9 phase 1: 24/32 paired worlds
+deal 10 phase 1: 8/32 paired worlds
+deal 9 phase 1: 32/32 paired worlds
+labels 4/576; deal 9, 1 positions, 53.9s; elapsed 83s
+deal 10 phase 1: 16/32 paired worlds
+deal 11 phase 1: 8/32 paired worlds
+deal 11 phase 1: 16/32 paired worlds
+deal 11 phase 1: 24/32 paired worlds
+deal 10 phase 1: 24/32 paired worlds
+deal 4 phase 0: 8/32 paired worlds
+deal 11 phase 1: 32/32 paired worlds
+labels 5/576; deal 11, 1 positions, 13.2s; elapsed 97s
+deal 1 phase 0: 8/32 paired worlds
+deal 12 phase 2: 8/32 paired worlds
+deal 12 phase 2: 16/32 paired worlds
+deal 12 phase 2: 24/32 paired worlds
+deal 12 phase 2: 32/32 paired worlds
+labels 6/576; deal 12, 1 positions, 2.7s; elapsed 99s
+deal 13 phase 2: 8/32 paired worlds
+deal 13 phase 2: 16/32 paired worlds
+deal 3 phase 0: 8/32 paired worlds
+deal 13 phase 2: 24/32 paired worlds
+deal 13 phase 2: 32/32 paired worlds
+labels 7/576; deal 13, 1 positions, 4.2s; elapsed 104s
+deal 0 phase 0: 8/32 paired worlds
+deal 14 phase 2: 8/32 paired worlds
+deal 14 phase 2: 16/32 paired worlds
+deal 14 phase 2: 24/32 paired worlds
+deal 14 phase 2: 32/32 paired worlds
+labels 8/576; deal 14, 1 positions, 0.3s; elapsed 104s
+deal 10 phase 1: 32/32 paired worlds
+labels 9/576; deal 10, 1 positions, 38.1s; elapsed 104s
+deal 15 phase 2: 8/32 paired worlds
+deal 16 phase 2: 8/32 paired worlds
+deal 16 phase 2: 16/32 paired worlds
+deal 16 phase 2: 24/32 paired worlds
+deal 15 phase 2: 16/32 paired worlds
+deal 16 phase 2: 32/32 paired worlds
+labels 10/576; deal 16, 1 positions, 0.8s; elapsed 105s
+deal 15 phase 2: 24/32 paired worlds
+deal 15 phase 2: 32/32 paired worlds
+labels 11/576; deal 15, 1 positions, 1.8s; elapsed 106s
+deal 17 phase 2: 8/32 paired worlds
+deal 17 phase 2: 16/32 paired worlds
+deal 17 phase 2: 24/32 paired worlds
+deal 17 phase 2: 32/32 paired worlds
+labels 12/576; deal 17, 1 positions, 1.9s; elapsed 107s
+deal 5 phase 0: 8/32 paired worlds
+deal 2 phase 0: 8/32 paired worlds
+deal 19 phase 0: 8/32 paired worlds
+deal 18 phase 0: 8/32 paired worlds
+deal 18 phase 0: 16/32 paired worlds
+deal 19 phase 0: 16/32 paired worlds
+deal 1 phase 0: 16/32 paired worlds
+deal 5 phase 0: 16/32 paired worlds
+deal 19 phase 0: 24/32 paired worlds
+deal 3 phase 0: 16/32 paired worlds
+deal 18 phase 0: 24/32 paired worlds
+deal 4 phase 0: 16/32 paired worlds
+deal 0 phase 0: 16/32 paired worlds
+deal 19 phase 0: 32/32 paired worlds
+labels 13/576; deal 19, 1 positions, 116.2s; elapsed 224s
+deal 18 phase 0: 32/32 paired worlds
+labels 14/576; deal 18, 1 positions, 121.9s; elapsed 228s
+deal 2 phase 0: 16/32 paired worlds
+deal 20 phase 0: 8/32 paired worlds
+deal 1 phase 0: 24/32 paired worlds
+deal 5 phase 0: 24/32 paired worlds
+deal 20 phase 0: 16/32 paired worlds
+deal 3 phase 0: 24/32 paired worlds
+deal 0 phase 0: 24/32 paired worlds
+deal 4 phase 0: 24/32 paired worlds
+deal 21 phase 0: 8/32 paired worlds
+deal 20 phase 0: 24/32 paired worlds
+deal 2 phase 0: 24/32 paired worlds
+deal 20 phase 0: 32/32 paired worlds
+labels 15/576; deal 20, 1 positions, 136.1s; elapsed 360s
+deal 1 phase 0: 32/32 paired worlds
+labels 16/576; deal 1, 1 positions, 367.0s; elapsed 367s
+deal 5 phase 0: 32/32 paired worlds
+labels 17/576; deal 5, 1 positions, 381.3s; elapsed 381s
+deal 24 phase 1: 8/32 paired worlds
+deal 24 phase 1: 16/32 paired worlds
+deal 0 phase 0: 32/32 paired worlds
+labels 18/576; deal 0, 1 positions, 394.1s; elapsed 394s
+deal 25 phase 2: 8/32 paired worlds
+deal 24 phase 1: 24/32 paired worlds
+deal 25 phase 2: 16/32 paired worlds
+deal 25 phase 2: 24/32 paired worlds
+deal 25 phase 2: 32/32 paired worlds
+labels 19/576; deal 25, 1 positions, 2.0s; elapsed 396s
+deal 26 phase 1: 8/32 paired worlds
+deal 24 phase 1: 32/32 paired worlds
+labels 20/576; deal 24, 1 positions, 18.3s; elapsed 400s
+deal 26 phase 1: 16/32 paired worlds
+deal 27 phase 1: 8/32 paired worlds
+deal 26 phase 1: 24/32 paired worlds
+deal 26 phase 1: 32/32 paired worlds
+labels 21/576; deal 26, 1 positions, 10.0s; elapsed 406s
+deal 3 phase 0: 32/32 paired worlds
+labels 22/576; deal 3, 1 positions, 406.4s; elapsed 406s
+deal 27 phase 1: 16/32 paired worlds
+deal 4 phase 0: 32/32 paired worlds
+labels 23/576; deal 4, 1 positions, 412.7s; elapsed 413s
+deal 27 phase 1: 24/32 paired worlds
+deal 28 phase 1: 8/32 paired worlds
+deal 30 phase 2: 8/32 paired worlds
+deal 30 phase 2: 16/32 paired worlds
+deal 30 phase 2: 24/32 paired worlds
+deal 30 phase 2: 32/32 paired worlds
+labels 24/576; deal 30, 1 positions, 1.8s; elapsed 415s
+deal 29 phase 1: 8/32 paired worlds
+deal 27 phase 1: 32/32 paired worlds
+labels 25/576; deal 27, 1 positions, 18.1s; elapsed 418s
+deal 32 phase 2: 8/32 paired worlds
+deal 32 phase 2: 16/32 paired worlds
+deal 31 phase 1: 8/32 paired worlds
+deal 32 phase 2: 24/32 paired worlds
+deal 32 phase 2: 32/32 paired worlds
+labels 26/576; deal 32, 1 positions, 3.9s; elapsed 422s
+deal 22 phase 0: 8/32 paired worlds
+deal 28 phase 1: 16/32 paired worlds
+deal 33 phase 2: 8/32 paired worlds
+deal 33 phase 2: 16/32 paired worlds
+deal 33 phase 2: 24/32 paired worlds
+deal 33 phase 2: 32/32 paired worlds
+labels 27/576; deal 33, 1 positions, 2.1s; elapsed 424s
+deal 29 phase 1: 16/32 paired worlds
+deal 34 phase 2: 8/32 paired worlds
+deal 31 phase 1: 16/32 paired worlds
+deal 34 phase 2: 16/32 paired worlds
+deal 34 phase 2: 24/32 paired worlds
+deal 34 phase 2: 32/32 paired worlds
+labels 28/576; deal 34, 1 positions, 2.3s; elapsed 426s
+deal 28 phase 1: 24/32 paired worlds
+deal 35 phase 2: 8/32 paired worlds
+deal 31 phase 1: 24/32 paired worlds
+deal 35 phase 2: 16/32 paired worlds
+deal 29 phase 1: 24/32 paired worlds
+deal 31 phase 1: 32/32 paired worlds
+labels 29/576; deal 31, 1 positions, 21.0s; elapsed 436s
+deal 35 phase 2: 24/32 paired worlds
+deal 28 phase 1: 32/32 paired worlds
+labels 30/576; deal 28, 1 positions, 30.9s; elapsed 437s
+deal 35 phase 2: 32/32 paired worlds
+labels 31/576; deal 35, 1 positions, 11.2s; elapsed 438s
+deal 29 phase 1: 32/32 paired worlds
+labels 32/576; deal 29, 1 positions, 37.1s; elapsed 444s
+deal 21 phase 0: 16/32 paired worlds
+deal 23 phase 0: 8/32 paired worlds
+deal 38 phase 0: 8/32 paired worlds
+deal 37 phase 0: 8/32 paired worlds
+deal 2 phase 0: 32/32 paired worlds
+labels 33/576; deal 2, 1 positions, 464.8s; elapsed 465s
+deal 36 phase 0: 8/32 paired worlds
+deal 39 phase 0: 8/32 paired worlds
+deal 38 phase 0: 16/32 paired worlds
+deal 22 phase 0: 16/32 paired worlds
+deal 37 phase 0: 16/32 paired worlds
+deal 38 phase 0: 24/32 paired worlds
+deal 37 phase 0: 24/32 paired worlds
+deal 40 phase 0: 8/32 paired worlds
+deal 36 phase 0: 16/32 paired worlds
+deal 39 phase 0: 16/32 paired worlds
+deal 38 phase 0: 32/32 paired worlds
+labels 34/576; deal 38, 1 positions, 100.7s; elapsed 538s
+deal 41 phase 2: 8/32 paired worlds
+deal 41 phase 2: 16/32 paired worlds
+deal 41 phase 2: 24/32 paired worlds
+deal 41 phase 2: 32/32 paired worlds
+labels 35/576; deal 41, 1 positions, 0.2s; elapsed 539s
+deal 37 phase 0: 32/32 paired worlds
+labels 36/576; deal 37, 1 positions, 104.8s; elapsed 542s
+deal 43 phase 1: 8/32 paired worlds
+deal 42 phase 1: 8/32 paired worlds
+deal 22 phase 0: 24/32 paired worlds
+deal 43 phase 1: 16/32 paired worlds
+deal 42 phase 1: 16/32 paired worlds
+deal 43 phase 1: 24/32 paired worlds
+deal 39 phase 0: 24/32 paired worlds
+deal 42 phase 1: 24/32 paired worlds
+deal 43 phase 1: 32/32 paired worlds
+labels 37/576; deal 43, 1 positions, 18.8s; elapsed 561s
+deal 36 phase 0: 24/32 paired worlds
+deal 21 phase 0: 24/32 paired worlds
+deal 42 phase 1: 32/32 paired worlds
+labels 38/576; deal 42, 1 positions, 26.8s; elapsed 566s
+deal 23 phase 0: 16/32 paired worlds
+deal 40 phase 0: 16/32 paired worlds
+deal 44 phase 1: 8/32 paired worlds
+deal 44 phase 1: 16/32 paired worlds
+deal 39 phase 0: 32/32 paired worlds
+labels 39/576; deal 39, 1 positions, 157.2s; elapsed 601s
+deal 36 phase 0: 32/32 paired worlds
+labels 40/576; deal 36, 1 positions, 168.8s; elapsed 604s
+deal 45 phase 1: 8/32 paired worlds
+deal 44 phase 1: 24/32 paired worlds
+deal 46 phase 1: 8/32 paired worlds
+deal 47 phase 1: 8/32 paired worlds
+deal 22 phase 0: 32/32 paired worlds
+labels 41/576; deal 22, 1 positions, 258.4s; elapsed 618s
+deal 46 phase 1: 16/32 paired worlds
+deal 48 phase 2: 8/32 paired worlds
+deal 48 phase 2: 16/32 paired worlds
+deal 48 phase 2: 24/32 paired worlds
+deal 48 phase 2: 32/32 paired worlds
+labels 42/576; deal 48, 1 positions, 0.8s; elapsed 619s
+deal 49 phase 2: 8/32 paired worlds
+deal 49 phase 2: 16/32 paired worlds
+deal 49 phase 2: 24/32 paired worlds
+deal 49 phase 2: 32/32 paired worlds
+labels 43/576; deal 49, 1 positions, 1.6s; elapsed 621s
+deal 50 phase 2: 8/32 paired worlds
+deal 50 phase 2: 16/32 paired worlds
+deal 50 phase 2: 24/32 paired worlds
+deal 50 phase 2: 32/32 paired worlds
+labels 44/576; deal 50, 1 positions, 1.2s; elapsed 622s
+deal 51 phase 2: 8/32 paired worlds
+deal 51 phase 2: 16/32 paired worlds
+deal 51 phase 2: 24/32 paired worlds
+deal 51 phase 2: 32/32 paired worlds
+labels 45/576; deal 51, 1 positions, 2.1s; elapsed 624s
+deal 47 phase 1: 16/32 paired worlds
+deal 40 phase 0: 24/32 paired worlds
+deal 52 phase 1: 8/32 paired worlds
+deal 46 phase 1: 24/32 paired worlds
+deal 52 phase 1: 16/32 paired worlds
+deal 52 phase 1: 24/32 paired worlds
+deal 52 phase 1: 32/32 paired worlds
+labels 46/576; deal 52, 1 positions, 3.7s; elapsed 628s
+deal 53 phase 2: 8/32 paired worlds
+deal 53 phase 2: 16/32 paired worlds
+deal 53 phase 2: 24/32 paired worlds
+deal 53 phase 2: 32/32 paired worlds
+labels 47/576; deal 53, 1 positions, 0.8s; elapsed 629s
+deal 44 phase 1: 32/32 paired worlds
+labels 48/576; deal 44, 1 positions, 69.0s; elapsed 630s
+deal 46 phase 1: 32/32 paired worlds
+labels 49/576; deal 46, 1 positions, 34.0s; elapsed 635s
+deal 47 phase 1: 24/32 paired worlds
+deal 47 phase 1: 32/32 paired worlds
+labels 50/576; deal 47, 1 positions, 38.4s; elapsed 643s
+deal 45 phase 1: 16/32 paired worlds
+deal 57 phase 0: 8/32 paired worlds
+deal 56 phase 0: 8/32 paired worlds
+deal 40 phase 0: 32/32 paired worlds
+labels 51/576; deal 40, 1 positions, 210.3s; elapsed 675s
+deal 57 phase 0: 16/32 paired worlds
+deal 55 phase 0: 8/32 paired worlds
+deal 23 phase 0: 24/32 paired worlds
+deal 54 phase 0: 8/32 paired worlds
+deal 56 phase 0: 16/32 paired worlds
+deal 57 phase 0: 24/32 paired worlds
+deal 21 phase 0: 32/32 paired worlds
+labels 52/576; deal 21, 1 positions, 469.2s; elapsed 697s
+deal 58 phase 0: 8/32 paired worlds
+deal 56 phase 0: 24/32 paired worlds
+deal 57 phase 0: 32/32 paired worlds
+labels 53/576; deal 57, 1 positions, 70.5s; elapsed 714s
+deal 45 phase 1: 24/32 paired worlds
+deal 55 phase 0: 16/32 paired worlds
+deal 60 phase 1: 8/32 paired worlds
+deal 54 phase 0: 16/32 paired worlds
+deal 59 phase 0: 8/32 paired worlds
+deal 56 phase 0: 32/32 paired worlds
+labels 54/576; deal 56, 1 positions, 101.9s; elapsed 737s
+deal 60 phase 1: 16/32 paired worlds
+deal 61 phase 1: 8/32 paired worlds
+deal 58 phase 0: 16/32 paired worlds
+deal 61 phase 1: 16/32 paired worlds
+deal 61 phase 1: 24/32 paired worlds
+deal 60 phase 1: 24/32 paired worlds
+deal 61 phase 1: 32/32 paired worlds
+labels 55/576; deal 61, 1 positions, 20.3s; elapsed 758s
+deal 59 phase 0: 16/32 paired worlds
+deal 45 phase 1: 32/32 paired worlds
+labels 56/576; deal 45, 1 positions, 202.1s; elapsed 768s
+deal 62 phase 1: 8/32 paired worlds
+deal 60 phase 1: 32/32 paired worlds
+labels 57/576; deal 60, 1 positions, 54.7s; elapsed 769s
+deal 54 phase 0: 24/32 paired worlds
+deal 63 phase 1: 8/32 paired worlds
+deal 62 phase 1: 16/32 paired worlds
+deal 58 phase 0: 24/32 paired worlds
+deal 55 phase 0: 24/32 paired worlds
+deal 64 phase 1: 8/32 paired worlds
+deal 63 phase 1: 16/32 paired worlds
+deal 23 phase 0: 32/32 paired worlds
+labels 58/576; deal 23, 1 positions, 420.2s; elapsed 787s
+deal 63 phase 1: 24/32 paired worlds
+deal 62 phase 1: 24/32 paired worlds
+deal 65 phase 1: 8/32 paired worlds
+deal 64 phase 1: 16/32 paired worlds
+deal 65 phase 1: 16/32 paired worlds
+deal 63 phase 1: 32/32 paired worlds
+labels 59/576; deal 63, 1 positions, 29.0s; elapsed 797s
+deal 66 phase 2: 8/32 paired worlds
+deal 66 phase 2: 16/32 paired worlds
+deal 66 phase 2: 24/32 paired worlds
+deal 66 phase 2: 32/32 paired worlds
+labels 60/576; deal 66, 1 positions, 1.3s; elapsed 799s
+deal 65 phase 1: 24/32 paired worlds
+deal 59 phase 0: 24/32 paired worlds
+deal 62 phase 1: 32/32 paired worlds
+labels 61/576; deal 62, 1 positions, 44.4s; elapsed 802s
+deal 67 phase 2: 8/32 paired worlds
+deal 68 phase 2: 8/32 paired worlds
+deal 68 phase 2: 16/32 paired worlds
+deal 65 phase 1: 32/32 paired worlds
+labels 62/576; deal 65, 1 positions, 17.6s; elapsed 805s
+deal 68 phase 2: 24/32 paired worlds
+deal 68 phase 2: 32/32 paired worlds
+labels 63/576; deal 68, 1 positions, 4.2s; elapsed 806s
+deal 67 phase 2: 16/32 paired worlds
+deal 64 phase 1: 24/32 paired worlds
+deal 70 phase 2: 8/32 paired worlds
+deal 70 phase 2: 16/32 paired worlds
+deal 70 phase 2: 24/32 paired worlds
+deal 70 phase 2: 32/32 paired worlds
+labels 64/576; deal 70, 1 positions, 2.0s; elapsed 808s
+deal 58 phase 0: 32/32 paired worlds
+labels 65/576; deal 58, 1 positions, 134.6s; elapsed 810s
+deal 69 phase 2: 8/32 paired worlds
+deal 71 phase 2: 8/32 paired worlds
+deal 71 phase 2: 16/32 paired worlds
+deal 71 phase 2: 24/32 paired worlds
+deal 71 phase 2: 32/32 paired worlds
+labels 66/576; deal 71, 1 positions, 2.4s; elapsed 811s
+deal 67 phase 2: 24/32 paired worlds
+deal 69 phase 2: 16/32 paired worlds
+deal 69 phase 2: 24/32 paired worlds
+deal 69 phase 2: 32/32 paired worlds
+labels 67/576; deal 69, 1 positions, 9.7s; elapsed 815s
+deal 67 phase 2: 32/32 paired worlds
+labels 68/576; deal 67, 1 positions, 17.0s; elapsed 816s
+deal 54 phase 0: 32/32 paired worlds
+labels 69/576; deal 54, 1 positions, 186.7s; elapsed 816s
+deal 64 phase 1: 32/32 paired worlds
+labels 70/576; deal 64, 1 positions, 49.0s; elapsed 818s
+deal 55 phase 0: 32/32 paired worlds
+labels 71/576; deal 55, 1 positions, 200.4s; elapsed 831s
+deal 78 phase 1: 8/32 paired worlds
+deal 78 phase 1: 16/32 paired worlds
+deal 78 phase 1: 24/32 paired worlds
+deal 59 phase 0: 32/32 paired worlds
+labels 72/576; deal 59, 1 positions, 146.2s; elapsed 843s
+deal 78 phase 1: 32/32 paired worlds
+labels 73/576; deal 78, 1 positions, 15.3s; elapsed 846s
+deal 80 phase 2: 8/32 paired worlds
+deal 80 phase 2: 16/32 paired worlds
+deal 80 phase 2: 24/32 paired worlds
+deal 80 phase 2: 32/32 paired worlds
+labels 74/576; deal 80, 1 positions, 1.7s; elapsed 848s
+deal 79 phase 1: 8/32 paired worlds
+deal 81 phase 1: 8/32 paired worlds
+deal 81 phase 1: 16/32 paired worlds
+deal 81 phase 1: 24/32 paired worlds
+deal 81 phase 1: 32/32 paired worlds
+labels 75/576; deal 81, 1 positions, 4.0s; elapsed 852s
+deal 79 phase 1: 16/32 paired worlds
+deal 82 phase 2: 8/32 paired worlds
+deal 82 phase 2: 16/32 paired worlds
+deal 82 phase 2: 24/32 paired worlds
+deal 82 phase 2: 32/32 paired worlds
+labels 76/576; deal 82, 1 positions, 3.4s; elapsed 855s
+deal 79 phase 1: 24/32 paired worlds
+deal 79 phase 1: 32/32 paired worlds
+labels 77/576; deal 79, 1 positions, 16.7s; elapsed 860s
+deal 84 phase 2: 8/32 paired worlds
+deal 83 phase 1: 8/32 paired worlds
+deal 84 phase 2: 16/32 paired worlds
+deal 84 phase 2: 24/32 paired worlds
+deal 84 phase 2: 32/32 paired worlds
+labels 78/576; deal 84, 1 positions, 2.3s; elapsed 863s
+deal 85 phase 2: 8/32 paired worlds
+deal 85 phase 2: 16/32 paired worlds
+deal 85 phase 2: 24/32 paired worlds
+deal 85 phase 2: 32/32 paired worlds
+labels 79/576; deal 85, 1 positions, 1.9s; elapsed 865s
+deal 86 phase 2: 8/32 paired worlds
+deal 86 phase 2: 16/32 paired worlds
+deal 83 phase 1: 16/32 paired worlds
+deal 86 phase 2: 24/32 paired worlds
+deal 86 phase 2: 32/32 paired worlds
+labels 80/576; deal 86, 1 positions, 1.1s; elapsed 866s
+deal 87 phase 2: 8/32 paired worlds
+deal 87 phase 2: 16/32 paired worlds
+deal 87 phase 2: 24/32 paired worlds
+deal 87 phase 2: 32/32 paired worlds
+labels 81/576; deal 87, 1 positions, 1.0s; elapsed 867s
+deal 88 phase 2: 8/32 paired worlds
+deal 88 phase 2: 16/32 paired worlds
+deal 88 phase 2: 24/32 paired worlds
+deal 88 phase 2: 32/32 paired worlds
+labels 82/576; deal 88, 1 positions, 2.2s; elapsed 869s
+deal 83 phase 1: 24/32 paired worlds
+deal 89 phase 2: 8/32 paired worlds
+deal 89 phase 2: 16/32 paired worlds
+deal 89 phase 2: 24/32 paired worlds
+deal 89 phase 2: 32/32 paired worlds
+labels 83/576; deal 89, 1 positions, 1.3s; elapsed 870s
+deal 83 phase 1: 32/32 paired worlds
+labels 84/576; deal 83, 1 positions, 18.1s; elapsed 874s
+deal 74 phase 0: 8/32 paired worlds
+deal 77 phase 0: 8/32 paired worlds
+deal 73 phase 0: 8/32 paired worlds
+deal 75 phase 0: 8/32 paired worlds
+deal 90 phase 0: 8/32 paired worlds
+deal 72 phase 0: 8/32 paired worlds
+deal 76 phase 0: 8/32 paired worlds
+deal 91 phase 0: 8/32 paired worlds
+deal 90 phase 0: 16/32 paired worlds
+deal 74 phase 0: 16/32 paired worlds
+deal 77 phase 0: 16/32 paired worlds
+deal 90 phase 0: 24/32 paired worlds
+deal 91 phase 0: 16/32 paired worlds
+deal 73 phase 0: 16/32 paired worlds
+deal 76 phase 0: 16/32 paired worlds
+deal 72 phase 0: 16/32 paired worlds
+deal 75 phase 0: 16/32 paired worlds
+deal 90 phase 0: 32/32 paired worlds
+labels 85/576; deal 90, 1 positions, 168.1s; elapsed 1039s
+deal 92 phase 0: 8/32 paired worlds
+deal 91 phase 0: 24/32 paired worlds
+deal 74 phase 0: 24/32 paired worlds
+deal 77 phase 0: 24/32 paired worlds
+deal 92 phase 0: 16/32 paired worlds
+deal 75 phase 0: 24/32 paired worlds
+deal 73 phase 0: 24/32 paired worlds
+deal 92 phase 0: 24/32 paired worlds
+deal 76 phase 0: 24/32 paired worlds
+deal 72 phase 0: 24/32 paired worlds
+deal 92 phase 0: 32/32 paired worlds
+labels 86/576; deal 92, 1 positions, 109.5s; elapsed 1148s
+deal 91 phase 0: 32/32 paired worlds
+labels 87/576; deal 91, 1 positions, 281.7s; elapsed 1155s
+deal 74 phase 0: 32/32 paired worlds
+labels 88/576; deal 74, 1 positions, 348.8s; elapsed 1164s
+deal 95 phase 0: 8/32 paired worlds
+deal 93 phase 0: 8/32 paired worlds
+deal 77 phase 0: 32/32 paired worlds
+labels 89/576; deal 77, 1 positions, 384.1s; elapsed 1202s
+deal 96 phase 1: 8/32 paired worlds
+deal 96 phase 1: 16/32 paired worlds
+deal 96 phase 1: 24/32 paired worlds
+deal 96 phase 1: 32/32 paired worlds
+labels 90/576; deal 96, 1 positions, 9.4s; elapsed 1211s
+deal 97 phase 1: 8/32 paired worlds
+deal 97 phase 1: 16/32 paired worlds
+deal 95 phase 0: 16/32 paired worlds
+deal 97 phase 1: 24/32 paired worlds
+deal 97 phase 1: 32/32 paired worlds
+labels 91/576; deal 97, 1 positions, 4.0s; elapsed 1215s
+deal 94 phase 0: 8/32 paired worlds
+deal 98 phase 1: 8/32 paired worlds
+deal 73 phase 0: 32/32 paired worlds
+labels 92/576; deal 73, 1 positions, 411.4s; elapsed 1222s
+deal 98 phase 1: 16/32 paired worlds
+deal 99 phase 1: 8/32 paired worlds
+deal 98 phase 1: 24/32 paired worlds
+deal 99 phase 1: 16/32 paired worlds
+deal 98 phase 1: 32/32 paired worlds
+labels 93/576; deal 98, 1 positions, 14.6s; elapsed 1230s
+deal 99 phase 1: 24/32 paired worlds
+deal 72 phase 0: 32/32 paired worlds
+labels 94/576; deal 72, 1 positions, 422.0s; elapsed 1232s
+deal 99 phase 1: 32/32 paired worlds
+labels 95/576; deal 99, 1 positions, 10.9s; elapsed 1233s
+deal 100 phase 1: 8/32 paired worlds
+deal 95 phase 0: 24/32 paired worlds
+deal 101 phase 1: 8/32 paired worlds
+deal 75 phase 0: 32/32 paired worlds
+labels 96/576; deal 75, 1 positions, 420.5s; elapsed 1236s
+deal 100 phase 1: 16/32 paired worlds
+deal 76 phase 0: 32/32 paired worlds
+labels 97/576; deal 76, 1 positions, 421.4s; elapsed 1237s
+deal 103 phase 2: 8/32 paired worlds
+deal 103 phase 2: 16/32 paired worlds
+deal 101 phase 1: 16/32 paired worlds
+deal 103 phase 2: 24/32 paired worlds
+deal 103 phase 2: 32/32 paired worlds
+labels 98/576; deal 103, 1 positions, 2.1s; elapsed 1238s
+deal 102 phase 1: 8/32 paired worlds
+deal 100 phase 1: 24/32 paired worlds
+deal 104 phase 2: 8/32 paired worlds
+deal 101 phase 1: 24/32 paired worlds
+deal 102 phase 1: 16/32 paired worlds
+deal 105 phase 2: 8/32 paired worlds
+deal 104 phase 2: 16/32 paired worlds
+deal 100 phase 1: 32/32 paired worlds
+labels 99/576; deal 100, 1 positions, 11.7s; elapsed 1242s
+deal 105 phase 2: 16/32 paired worlds
+deal 105 phase 2: 24/32 paired worlds
+deal 104 phase 2: 24/32 paired worlds
+deal 105 phase 2: 32/32 paired worlds
+labels 100/576; deal 105, 1 positions, 4.9s; elapsed 1244s
+deal 101 phase 1: 32/32 paired worlds
+labels 101/576; deal 101, 1 positions, 11.5s; elapsed 1244s
+deal 104 phase 2: 32/32 paired worlds
+labels 102/576; deal 104, 1 positions, 6.8s; elapsed 1244s
+deal 102 phase 1: 24/32 paired worlds
+deal 107 phase 2: 8/32 paired worlds
+deal 102 phase 1: 32/32 paired worlds
+labels 103/576; deal 102, 1 positions, 13.8s; elapsed 1247s
+deal 107 phase 2: 16/32 paired worlds
+deal 93 phase 0: 16/32 paired worlds
+deal 107 phase 2: 24/32 paired worlds
+deal 107 phase 2: 32/32 paired worlds
+labels 104/576; deal 107, 1 positions, 6.7s; elapsed 1250s
+deal 106 phase 1: 8/32 paired worlds
+deal 95 phase 0: 32/32 paired worlds
+labels 105/576; deal 95, 1 positions, 94.8s; elapsed 1259s
+deal 106 phase 1: 16/32 paired worlds
+deal 106 phase 1: 24/32 paired worlds
+deal 109 phase 0: 8/32 paired worlds
+deal 94 phase 0: 16/32 paired worlds
+deal 106 phase 1: 32/32 paired worlds
+labels 106/576; deal 106, 1 positions, 36.2s; elapsed 1278s
+deal 110 phase 0: 8/32 paired worlds
+deal 108 phase 0: 8/32 paired worlds
+deal 111 phase 0: 8/32 paired worlds
+deal 109 phase 0: 16/32 paired worlds
+deal 93 phase 0: 24/32 paired worlds
+deal 109 phase 0: 24/32 paired worlds
+deal 110 phase 0: 16/32 paired worlds
+deal 108 phase 0: 16/32 paired worlds
+deal 109 phase 0: 32/32 paired worlds
+labels 107/576; deal 109, 1 positions, 80.8s; elapsed 1325s
+deal 114 phase 2: 8/32 paired worlds
+deal 111 phase 0: 16/32 paired worlds
+deal 114 phase 2: 16/32 paired worlds
+deal 112 phase 0: 8/32 paired worlds
+deal 114 phase 2: 24/32 paired worlds
+deal 114 phase 2: 32/32 paired worlds
+labels 108/576; deal 114, 1 positions, 3.8s; elapsed 1329s
+deal 113 phase 0: 8/32 paired worlds
+deal 93 phase 0: 32/32 paired worlds
+labels 109/576; deal 93, 1 positions, 188.0s; elapsed 1336s
+deal 115 phase 1: 8/32 paired worlds
+deal 115 phase 1: 16/32 paired worlds
+deal 94 phase 0: 24/32 paired worlds
+deal 115 phase 1: 24/32 paired worlds
+deal 116 phase 1: 8/32 paired worlds
+deal 115 phase 1: 32/32 paired worlds
+labels 110/576; deal 115, 1 positions, 20.8s; elapsed 1350s
+deal 110 phase 0: 24/32 paired worlds
+deal 116 phase 1: 16/32 paired worlds
+deal 117 phase 1: 8/32 paired worlds
+deal 111 phase 0: 24/32 paired worlds
+deal 108 phase 0: 24/32 paired worlds
+deal 117 phase 1: 16/32 paired worlds
+deal 116 phase 1: 24/32 paired worlds
+deal 117 phase 1: 24/32 paired worlds
+deal 116 phase 1: 32/32 paired worlds
+labels 111/576; deal 116, 1 positions, 35.4s; elapsed 1372s
+deal 117 phase 1: 32/32 paired worlds
+labels 112/576; deal 117, 1 positions, 22.4s; elapsed 1373s
+deal 113 phase 0: 16/32 paired worlds
+deal 111 phase 0: 32/32 paired worlds
+labels 113/576; deal 111, 1 positions, 139.4s; elapsed 1390s
+deal 120 phase 2: 8/32 paired worlds
+deal 120 phase 2: 16/32 paired worlds
+deal 120 phase 2: 24/32 paired worlds
+deal 120 phase 2: 32/32 paired worlds
+labels 114/576; deal 120, 1 positions, 1.7s; elapsed 1391s
+deal 121 phase 2: 8/32 paired worlds
+deal 121 phase 2: 16/32 paired worlds
+deal 121 phase 2: 24/32 paired worlds
+deal 121 phase 2: 32/32 paired worlds
+labels 115/576; deal 121, 1 positions, 0.2s; elapsed 1392s
+deal 122 phase 2: 8/32 paired worlds
+deal 110 phase 0: 32/32 paired worlds
+labels 116/576; deal 110, 1 positions, 145.3s; elapsed 1393s
+deal 112 phase 0: 16/32 paired worlds
+deal 122 phase 2: 16/32 paired worlds
+deal 118 phase 1: 8/32 paired worlds
+deal 123 phase 2: 8/32 paired worlds
+deal 122 phase 2: 24/32 paired worlds
+deal 122 phase 2: 32/32 paired worlds
+labels 117/576; deal 122, 1 positions, 2.3s; elapsed 1394s
+deal 123 phase 2: 16/32 paired worlds
+deal 124 phase 2: 8/32 paired worlds
+deal 123 phase 2: 24/32 paired worlds
+deal 124 phase 2: 16/32 paired worlds
+deal 124 phase 2: 24/32 paired worlds
+deal 119 phase 1: 8/32 paired worlds
+deal 123 phase 2: 32/32 paired worlds
+labels 118/576; deal 123, 1 positions, 3.2s; elapsed 1396s
+deal 124 phase 2: 32/32 paired worlds
+labels 119/576; deal 124, 1 positions, 1.9s; elapsed 1396s
+deal 125 phase 2: 8/32 paired worlds
+deal 125 phase 2: 16/32 paired worlds
+deal 125 phase 2: 24/32 paired worlds
+deal 125 phase 2: 32/32 paired worlds
+labels 120/576; deal 125, 1 positions, 0.7s; elapsed 1397s
+deal 94 phase 0: 32/32 paired worlds
+labels 121/576; deal 94, 1 positions, 249.6s; elapsed 1405s
+deal 108 phase 0: 32/32 paired worlds
+labels 122/576; deal 108, 1 positions, 163.1s; elapsed 1407s
+deal 128 phase 0: 8/32 paired worlds
+deal 118 phase 1: 16/32 paired worlds
+deal 113 phase 0: 24/32 paired worlds
+deal 119 phase 1: 16/32 paired worlds
+deal 128 phase 0: 16/32 paired worlds
+deal 129 phase 0: 8/32 paired worlds
+deal 128 phase 0: 24/32 paired worlds
+deal 119 phase 1: 24/32 paired worlds
+deal 118 phase 1: 24/32 paired worlds
+deal 126 phase 0: 8/32 paired worlds
+deal 128 phase 0: 32/32 paired worlds
+labels 123/576; deal 128, 1 positions, 32.6s; elapsed 1437s
+deal 112 phase 0: 24/32 paired worlds
+deal 129 phase 0: 16/32 paired worlds
+deal 113 phase 0: 32/32 paired worlds
+labels 124/576; deal 113, 1 positions, 174.8s; elapsed 1453s
+deal 127 phase 0: 8/32 paired worlds
+deal 131 phase 2: 8/32 paired worlds
+deal 131 phase 2: 16/32 paired worlds
+deal 119 phase 1: 32/32 paired worlds
+labels 125/576; deal 119, 1 positions, 82.5s; elapsed 1455s
+deal 131 phase 2: 24/32 paired worlds
+deal 131 phase 2: 32/32 paired worlds
+labels 126/576; deal 131, 1 positions, 2.3s; elapsed 1455s
+deal 133 phase 1: 8/32 paired worlds
+deal 118 phase 1: 32/32 paired worlds
+labels 127/576; deal 118, 1 positions, 85.2s; elapsed 1457s
+deal 133 phase 1: 16/32 paired worlds
+deal 133 phase 1: 24/32 paired worlds
+deal 133 phase 1: 32/32 paired worlds
+labels 128/576; deal 133, 1 positions, 3.4s; elapsed 1459s
+deal 129 phase 0: 24/32 paired worlds
+deal 132 phase 1: 8/32 paired worlds
+deal 134 phase 1: 8/32 paired worlds
+deal 135 phase 1: 8/32 paired worlds
+deal 135 phase 1: 16/32 paired worlds
+deal 134 phase 1: 16/32 paired worlds
+deal 135 phase 1: 24/32 paired worlds
+deal 132 phase 1: 16/32 paired worlds
+deal 135 phase 1: 32/32 paired worlds
+labels 129/576; deal 135, 1 positions, 5.4s; elapsed 1464s
+deal 134 phase 1: 24/32 paired worlds
+deal 132 phase 1: 24/32 paired worlds
+deal 136 phase 1: 8/32 paired worlds
+deal 134 phase 1: 32/32 paired worlds
+labels 130/576; deal 134, 1 positions, 10.5s; elapsed 1468s
+deal 136 phase 1: 16/32 paired worlds
+deal 132 phase 1: 32/32 paired worlds
+labels 131/576; deal 132, 1 positions, 16.4s; elapsed 1471s
+deal 126 phase 0: 16/32 paired worlds
+deal 136 phase 1: 24/32 paired worlds
+deal 138 phase 2: 8/32 paired worlds
+deal 138 phase 2: 16/32 paired worlds
+deal 138 phase 2: 24/32 paired worlds
+deal 138 phase 2: 32/32 paired worlds
+labels 132/576; deal 138, 1 positions, 2.6s; elapsed 1474s
+deal 129 phase 0: 32/32 paired worlds
+labels 133/576; deal 129, 1 positions, 68.1s; elapsed 1475s
+deal 136 phase 1: 32/32 paired worlds
+labels 134/576; deal 136, 1 positions, 11.0s; elapsed 1475s
+deal 137 phase 1: 8/32 paired worlds
+deal 140 phase 2: 8/32 paired worlds
+deal 140 phase 2: 16/32 paired worlds
+deal 140 phase 2: 24/32 paired worlds
+deal 140 phase 2: 32/32 paired worlds
+labels 135/576; deal 140, 1 positions, 1.9s; elapsed 1477s
+deal 141 phase 2: 8/32 paired worlds
+deal 141 phase 2: 16/32 paired worlds
+deal 142 phase 2: 8/32 paired worlds
+deal 142 phase 2: 16/32 paired worlds
+deal 142 phase 2: 24/32 paired worlds
+deal 142 phase 2: 32/32 paired worlds
+labels 136/576; deal 142, 1 positions, 2.1s; elapsed 1480s
+deal 141 phase 2: 24/32 paired worlds
+deal 141 phase 2: 32/32 paired worlds
+labels 137/576; deal 141, 1 positions, 5.0s; elapsed 1480s
+deal 137 phase 1: 16/32 paired worlds
+deal 139 phase 1: 8/32 paired worlds
+deal 143 phase 2: 8/32 paired worlds
+deal 137 phase 1: 24/32 paired worlds
+deal 143 phase 2: 16/32 paired worlds
+deal 139 phase 1: 16/32 paired worlds
+deal 112 phase 0: 32/32 paired worlds
+labels 138/576; deal 112, 1 positions, 235.2s; elapsed 1494s
+deal 143 phase 2: 24/32 paired worlds
+deal 139 phase 1: 24/32 paired worlds
+deal 143 phase 2: 32/32 paired worlds
+labels 139/576; deal 143, 1 positions, 20.3s; elapsed 1500s
+deal 127 phase 0: 16/32 paired worlds
+deal 137 phase 1: 32/32 paired worlds
+labels 140/576; deal 137, 1 positions, 33.7s; elapsed 1501s
+deal 139 phase 1: 32/32 paired worlds
+labels 141/576; deal 139, 1 positions, 32.3s; elapsed 1507s
+deal 126 phase 0: 24/32 paired worlds
+deal 130 phase 0: 8/32 paired worlds
+deal 127 phase 0: 24/32 paired worlds
+deal 126 phase 0: 32/32 paired worlds
+labels 142/576; deal 126, 1 positions, 163.3s; elapsed 1559s
+deal 144 phase 0: 8/32 paired worlds
+deal 130 phase 0: 16/32 paired worlds
+deal 148 phase 0: 8/32 paired worlds
+deal 127 phase 0: 32/32 paired worlds
+labels 143/576; deal 127, 1 positions, 202.2s; elapsed 1599s
+deal 150 phase 1: 8/32 paired worlds
+deal 150 phase 1: 16/32 paired worlds
+deal 150 phase 1: 24/32 paired worlds
+deal 150 phase 1: 32/32 paired worlds
+labels 144/576; deal 150, 1 positions, 7.1s; elapsed 1606s
+deal 145 phase 0: 8/32 paired worlds
+deal 146 phase 0: 8/32 paired worlds
+deal 151 phase 1: 8/32 paired worlds
+deal 147 phase 0: 8/32 paired worlds
+deal 151 phase 1: 16/32 paired worlds
+deal 151 phase 1: 24/32 paired worlds
+deal 151 phase 1: 32/32 paired worlds
+labels 145/576; deal 151, 1 positions, 15.5s; elapsed 1622s
+deal 152 phase 1: 8/32 paired worlds
+deal 130 phase 0: 24/32 paired worlds
+deal 152 phase 1: 16/32 paired worlds
+deal 149 phase 0: 8/32 paired worlds
+deal 152 phase 1: 24/32 paired worlds
+deal 144 phase 0: 16/32 paired worlds
+deal 148 phase 0: 16/32 paired worlds
+deal 152 phase 1: 32/32 paired worlds
+labels 146/576; deal 152, 1 positions, 84.7s; elapsed 1706s
+deal 153 phase 1: 8/32 paired worlds
+deal 145 phase 0: 16/32 paired worlds
+deal 153 phase 1: 16/32 paired worlds
+deal 153 phase 1: 24/32 paired worlds
+deal 153 phase 1: 32/32 paired worlds
+labels 147/576; deal 153, 1 positions, 9.9s; elapsed 1717s
+deal 130 phase 0: 32/32 paired worlds
+labels 148/576; deal 130, 1 positions, 280.1s; elapsed 1718s
+deal 147 phase 0: 16/32 paired worlds
+deal 155 phase 1: 8/32 paired worlds
+deal 155 phase 1: 16/32 paired worlds
+deal 154 phase 1: 8/32 paired worlds
+deal 146 phase 0: 16/32 paired worlds
+deal 155 phase 1: 24/32 paired worlds
+deal 155 phase 1: 32/32 paired worlds
+labels 149/576; deal 155, 1 positions, 13.3s; elapsed 1731s
+deal 154 phase 1: 16/32 paired worlds
+deal 156 phase 2: 8/32 paired worlds
+deal 156 phase 2: 16/32 paired worlds
+deal 156 phase 2: 24/32 paired worlds
+deal 156 phase 2: 32/32 paired worlds
+labels 150/576; deal 156, 1 positions, 5.4s; elapsed 1737s
+deal 157 phase 2: 8/32 paired worlds
+deal 157 phase 2: 16/32 paired worlds
+deal 157 phase 2: 24/32 paired worlds
+deal 157 phase 2: 32/32 paired worlds
+labels 151/576; deal 157, 1 positions, 0.4s; elapsed 1737s
+deal 158 phase 2: 8/32 paired worlds
+deal 158 phase 2: 16/32 paired worlds
+deal 158 phase 2: 24/32 paired worlds
+deal 158 phase 2: 32/32 paired worlds
+labels 152/576; deal 158, 1 positions, 1.6s; elapsed 1739s
+deal 154 phase 1: 24/32 paired worlds
+deal 159 phase 2: 8/32 paired worlds
+deal 159 phase 2: 16/32 paired worlds
+deal 159 phase 2: 24/32 paired worlds
+deal 159 phase 2: 32/32 paired worlds
+labels 153/576; deal 159, 1 positions, 0.5s; elapsed 1740s
+deal 160 phase 2: 8/32 paired worlds
+deal 160 phase 2: 16/32 paired worlds
+deal 160 phase 2: 24/32 paired worlds
+deal 160 phase 2: 32/32 paired worlds
+labels 154/576; deal 160, 1 positions, 1.4s; elapsed 1741s
+deal 161 phase 2: 8/32 paired worlds
+deal 161 phase 2: 16/32 paired worlds
+deal 161 phase 2: 24/32 paired worlds
+deal 161 phase 2: 32/32 paired worlds
+labels 155/576; deal 161, 1 positions, 4.3s; elapsed 1745s
+deal 154 phase 1: 32/32 paired worlds
+labels 156/576; deal 154, 1 positions, 29.9s; elapsed 1747s
+deal 149 phase 0: 16/32 paired worlds
+deal 144 phase 0: 24/32 paired worlds
+deal 145 phase 0: 24/32 paired worlds
+deal 162 phase 0: 8/32 paired worlds
+deal 148 phase 0: 24/32 paired worlds
+deal 163 phase 0: 8/32 paired worlds
+deal 147 phase 0: 24/32 paired worlds
+deal 146 phase 0: 24/32 paired worlds
+deal 163 phase 0: 16/32 paired worlds
+deal 162 phase 0: 16/32 paired worlds
+deal 144 phase 0: 32/32 paired worlds
+labels 157/576; deal 144, 1 positions, 395.0s; elapsed 1876s
+deal 149 phase 0: 24/32 paired worlds
+deal 145 phase 0: 32/32 paired worlds
+labels 158/576; deal 145, 1 positions, 406.4s; elapsed 1900s
+deal 148 phase 0: 32/32 paired worlds
+labels 159/576; deal 148, 1 positions, 397.7s; elapsed 1904s
+deal 163 phase 0: 24/32 paired worlds
+deal 165 phase 0: 8/32 paired worlds
+deal 164 phase 0: 8/32 paired worlds
+deal 162 phase 0: 24/32 paired worlds
+deal 147 phase 0: 32/32 paired worlds
+labels 160/576; deal 147, 1 positions, 437.8s; elapsed 1940s
+deal 165 phase 0: 16/32 paired worlds
+deal 146 phase 0: 32/32 paired worlds
+labels 161/576; deal 146, 1 positions, 471.2s; elapsed 1971s
+deal 163 phase 0: 32/32 paired worlds
+labels 162/576; deal 163, 1 positions, 226.3s; elapsed 1973s
+deal 168 phase 1: 8/32 paired worlds
+deal 168 phase 1: 16/32 paired worlds
+deal 168 phase 1: 24/32 paired worlds
+deal 168 phase 1: 32/32 paired worlds
+labels 163/576; deal 168, 1 positions, 7.4s; elapsed 1978s
+deal 169 phase 1: 8/32 paired worlds
+deal 170 phase 1: 8/32 paired worlds
+deal 149 phase 0: 32/32 paired worlds
+labels 164/576; deal 149, 1 positions, 429.0s; elapsed 1989s
+deal 164 phase 0: 16/32 paired worlds
+deal 170 phase 1: 16/32 paired worlds
+deal 171 phase 1: 8/32 paired worlds
+deal 169 phase 1: 16/32 paired worlds
+deal 171 phase 1: 16/32 paired worlds
+deal 171 phase 1: 24/32 paired worlds
+deal 170 phase 1: 24/32 paired worlds
+deal 165 phase 0: 24/32 paired worlds
+deal 171 phase 1: 32/32 paired worlds
+labels 165/576; deal 171, 1 positions, 12.3s; elapsed 2001s
+deal 170 phase 1: 32/32 paired worlds
+labels 166/576; deal 170, 1 positions, 25.7s; elapsed 2005s
+deal 172 phase 1: 8/32 paired worlds
+deal 173 phase 2: 8/32 paired worlds
+deal 169 phase 1: 24/32 paired worlds
+deal 173 phase 2: 16/32 paired worlds
+deal 173 phase 2: 24/32 paired worlds
+deal 173 phase 2: 32/32 paired worlds
+labels 167/576; deal 173, 1 positions, 1.0s; elapsed 2006s
+deal 174 phase 2: 8/32 paired worlds
+deal 174 phase 2: 16/32 paired worlds
+deal 174 phase 2: 24/32 paired worlds
+deal 174 phase 2: 32/32 paired worlds
+labels 168/576; deal 174, 1 positions, 1.5s; elapsed 2007s
+deal 172 phase 1: 16/32 paired worlds
+deal 172 phase 1: 24/32 paired worlds
+deal 162 phase 0: 32/32 paired worlds
+labels 169/576; deal 162, 1 positions, 266.7s; elapsed 2012s
+deal 172 phase 1: 32/32 paired worlds
+labels 170/576; deal 172, 1 positions, 13.8s; elapsed 2015s
+deal 176 phase 2: 8/32 paired worlds
+deal 176 phase 2: 16/32 paired worlds
+deal 169 phase 1: 32/32 paired worlds
+labels 171/576; deal 169, 1 positions, 44.1s; elapsed 2017s
+deal 176 phase 2: 24/32 paired worlds
+deal 178 phase 2: 8/32 paired worlds
+deal 178 phase 2: 16/32 paired worlds
+deal 178 phase 2: 24/32 paired worlds
+deal 176 phase 2: 32/32 paired worlds
+labels 172/576; deal 176, 1 positions, 7.8s; elapsed 2020s
+deal 178 phase 2: 32/32 paired worlds
+labels 173/576; deal 178, 1 positions, 2.8s; elapsed 2020s
+deal 177 phase 2: 8/32 paired worlds
+deal 177 phase 2: 16/32 paired worlds
+deal 179 phase 1: 8/32 paired worlds
+deal 177 phase 2: 24/32 paired worlds
+deal 179 phase 1: 16/32 paired worlds
+deal 177 phase 2: 32/32 paired worlds
+labels 174/576; deal 177, 1 positions, 12.3s; elapsed 2027s
+deal 179 phase 1: 24/32 paired worlds
+deal 179 phase 1: 32/32 paired worlds
+labels 175/576; deal 179, 1 positions, 10.6s; elapsed 2031s
+deal 165 phase 0: 32/32 paired worlds
+labels 176/576; deal 165, 1 positions, 134.9s; elapsed 2036s
+deal 166 phase 0: 8/32 paired worlds
+deal 181 phase 0: 8/32 paired worlds
+deal 164 phase 0: 24/32 paired worlds
+deal 167 phase 0: 8/32 paired worlds
+deal 181 phase 0: 16/32 paired worlds
+deal 182 phase 0: 8/32 paired worlds
+deal 181 phase 0: 24/32 paired worlds
+deal 183 phase 0: 8/32 paired worlds
+deal 180 phase 0: 8/32 paired worlds
+deal 181 phase 0: 32/32 paired worlds
+labels 177/576; deal 181, 1 positions, 56.8s; elapsed 2084s
+deal 182 phase 0: 16/32 paired worlds
+deal 164 phase 0: 32/32 paired worlds
+labels 178/576; deal 164, 1 positions, 226.0s; elapsed 2102s
+deal 183 phase 0: 16/32 paired worlds
+deal 180 phase 0: 16/32 paired worlds
+deal 175 phase 0: 8/32 paired worlds
+deal 184 phase 0: 8/32 paired worlds
+deal 182 phase 0: 24/32 paired worlds
+deal 185 phase 0: 8/32 paired worlds
+deal 166 phase 0: 16/32 paired worlds
+deal 167 phase 0: 16/32 paired worlds
+deal 183 phase 0: 24/32 paired worlds
+deal 185 phase 0: 16/32 paired worlds
+deal 182 phase 0: 32/32 paired worlds
+labels 179/576; deal 182, 1 positions, 146.4s; elapsed 2177s
+deal 180 phase 0: 24/32 paired worlds
+deal 184 phase 0: 16/32 paired worlds
+deal 186 phase 1: 8/32 paired worlds
+deal 186 phase 1: 16/32 paired worlds
+deal 186 phase 1: 24/32 paired worlds
+deal 183 phase 0: 32/32 paired worlds
+labels 180/576; deal 183, 1 positions, 157.5s; elapsed 2193s
+deal 186 phase 1: 32/32 paired worlds
+labels 181/576; deal 186, 1 positions, 18.5s; elapsed 2196s
+deal 185 phase 0: 24/32 paired worlds
+deal 188 phase 1: 8/32 paired worlds
+deal 187 phase 1: 8/32 paired worlds
+deal 188 phase 1: 16/32 paired worlds
+deal 187 phase 1: 16/32 paired worlds
+deal 188 phase 1: 24/32 paired worlds
+deal 188 phase 1: 32/32 paired worlds
+labels 182/576; deal 188, 1 positions, 25.0s; elapsed 2221s
+deal 187 phase 1: 24/32 paired worlds
+deal 189 phase 1: 8/32 paired worlds
+deal 184 phase 0: 24/32 paired worlds
+deal 189 phase 1: 16/32 paired worlds
+deal 180 phase 0: 32/32 paired worlds
+labels 183/576; deal 180, 1 positions, 207.6s; elapsed 2228s
+deal 189 phase 1: 24/32 paired worlds
+deal 189 phase 1: 32/32 paired worlds
+labels 184/576; deal 189, 1 positions, 11.0s; elapsed 2232s
+deal 187 phase 1: 32/32 paired worlds
+labels 185/576; deal 187, 1 positions, 39.0s; elapsed 2232s
+deal 175 phase 0: 16/32 paired worlds
+deal 185 phase 0: 32/32 paired worlds
+labels 186/576; deal 185, 1 positions, 132.1s; elapsed 2234s
+deal 193 phase 2: 8/32 paired worlds
+deal 193 phase 2: 16/32 paired worlds
+deal 193 phase 2: 24/32 paired worlds
+deal 193 phase 2: 32/32 paired worlds
+labels 187/576; deal 193, 1 positions, 1.3s; elapsed 2235s
+deal 194 phase 2: 8/32 paired worlds
+deal 194 phase 2: 16/32 paired worlds
+deal 194 phase 2: 24/32 paired worlds
+deal 194 phase 2: 32/32 paired worlds
+labels 188/576; deal 194, 1 positions, 1.1s; elapsed 2237s
+deal 195 phase 2: 8/32 paired worlds
+deal 195 phase 2: 16/32 paired worlds
+deal 191 phase 1: 8/32 paired worlds
+deal 195 phase 2: 24/32 paired worlds
+deal 195 phase 2: 32/32 paired worlds
+labels 189/576; deal 195, 1 positions, 1.2s; elapsed 2238s
+deal 196 phase 2: 8/32 paired worlds
+deal 190 phase 1: 8/32 paired worlds
+deal 196 phase 2: 16/32 paired worlds
+deal 196 phase 2: 24/32 paired worlds
+deal 196 phase 2: 32/32 paired worlds
+labels 190/576; deal 196, 1 positions, 1.1s; elapsed 2239s
+deal 197 phase 2: 8/32 paired worlds
+deal 197 phase 2: 16/32 paired worlds
+deal 191 phase 1: 16/32 paired worlds
+deal 197 phase 2: 24/32 paired worlds
+deal 197 phase 2: 32/32 paired worlds
+labels 191/576; deal 197, 1 positions, 4.4s; elapsed 2243s
+deal 191 phase 1: 24/32 paired worlds
+deal 190 phase 1: 16/32 paired worlds
+deal 191 phase 1: 32/32 paired worlds
+labels 192/576; deal 191, 1 positions, 17.5s; elapsed 2249s
+deal 167 phase 0: 24/32 paired worlds
+deal 166 phase 0: 24/32 paired worlds
+deal 190 phase 1: 24/32 paired worlds
+deal 190 phase 1: 32/32 paired worlds
+labels 193/576; deal 190, 1 positions, 39.5s; elapsed 2267s
+deal 198 phase 0: 8/32 paired worlds
+deal 184 phase 0: 32/32 paired worlds
+labels 194/576; deal 184, 1 positions, 188.0s; elapsed 2272s
+deal 201 phase 0: 8/32 paired worlds
+deal 200 phase 0: 8/32 paired worlds
+deal 198 phase 0: 16/32 paired worlds
+deal 201 phase 0: 16/32 paired worlds
+deal 199 phase 0: 8/32 paired worlds
+deal 200 phase 0: 16/32 paired worlds
+deal 201 phase 0: 24/32 paired worlds
+deal 192 phase 0: 8/32 paired worlds
+deal 198 phase 0: 24/32 paired worlds
+deal 201 phase 0: 32/32 paired worlds
+labels 195/576; deal 201, 1 positions, 58.4s; elapsed 2331s
+deal 200 phase 0: 24/32 paired worlds
+deal 175 phase 0: 24/32 paired worlds
+deal 166 phase 0: 32/32 paired worlds
+labels 196/576; deal 166, 1 positions, 440.3s; elapsed 2345s
+deal 198 phase 0: 32/32 paired worlds
+labels 197/576; deal 198, 1 positions, 101.8s; elapsed 2345s
+deal 167 phase 0: 32/32 paired worlds
+labels 198/576; deal 167, 1 positions, 408.0s; elapsed 2348s
+deal 204 phase 1: 8/32 paired worlds
+deal 200 phase 0: 32/32 paired worlds
+labels 199/576; deal 200, 1 positions, 81.9s; elapsed 2349s
+deal 204 phase 1: 16/32 paired worlds
+deal 205 phase 1: 8/32 paired worlds
+deal 204 phase 1: 24/32 paired worlds
+deal 206 phase 1: 8/32 paired worlds
+deal 199 phase 0: 16/32 paired worlds
+deal 205 phase 1: 16/32 paired worlds
+deal 204 phase 1: 32/32 paired worlds
+labels 200/576; deal 204, 1 positions, 11.5s; elapsed 2357s
+deal 206 phase 1: 16/32 paired worlds
+deal 207 phase 2: 8/32 paired worlds
+deal 207 phase 2: 16/32 paired worlds
+deal 207 phase 2: 24/32 paired worlds
+deal 207 phase 2: 32/32 paired worlds
+labels 201/576; deal 207, 1 positions, 0.9s; elapsed 2358s
+deal 205 phase 1: 24/32 paired worlds
+deal 202 phase 0: 8/32 paired worlds
+deal 206 phase 1: 24/32 paired worlds
+deal 205 phase 1: 32/32 paired worlds
+labels 202/576; deal 205, 1 positions, 14.8s; elapsed 2362s
+deal 206 phase 1: 32/32 paired worlds
+labels 203/576; deal 206, 1 positions, 13.1s; elapsed 2363s
+deal 208 phase 1: 8/32 paired worlds
+deal 209 phase 1: 8/32 paired worlds
+deal 210 phase 2: 8/32 paired worlds
+deal 210 phase 2: 16/32 paired worlds
+deal 210 phase 2: 24/32 paired worlds
+deal 210 phase 2: 32/32 paired worlds
+labels 204/576; deal 210, 1 positions, 2.2s; elapsed 2365s
+deal 209 phase 1: 16/32 paired worlds
+deal 209 phase 1: 24/32 paired worlds
+deal 211 phase 2: 8/32 paired worlds
+deal 211 phase 2: 16/32 paired worlds
+deal 211 phase 2: 24/32 paired worlds
+deal 211 phase 2: 32/32 paired worlds
+labels 205/576; deal 211, 1 positions, 2.4s; elapsed 2367s
+deal 209 phase 1: 32/32 paired worlds
+labels 206/576; deal 209, 1 positions, 5.7s; elapsed 2368s
+deal 208 phase 1: 16/32 paired worlds
+deal 212 phase 2: 8/32 paired worlds
+deal 212 phase 2: 16/32 paired worlds
+deal 212 phase 2: 24/32 paired worlds
+deal 212 phase 2: 32/32 paired worlds
+labels 207/576; deal 212, 1 positions, 2.6s; elapsed 2370s
+deal 213 phase 2: 8/32 paired worlds
+deal 214 phase 2: 8/32 paired worlds
+deal 213 phase 2: 16/32 paired worlds
+deal 208 phase 1: 24/32 paired worlds
+deal 214 phase 2: 16/32 paired worlds
+deal 213 phase 2: 24/32 paired worlds
+deal 214 phase 2: 24/32 paired worlds
+deal 214 phase 2: 32/32 paired worlds
+labels 208/576; deal 214, 1 positions, 5.0s; elapsed 2375s
+deal 213 phase 2: 32/32 paired worlds
+labels 209/576; deal 213, 1 positions, 7.0s; elapsed 2375s
+deal 208 phase 1: 32/32 paired worlds
+labels 210/576; deal 208, 1 positions, 21.0s; elapsed 2379s
+deal 215 phase 2: 8/32 paired worlds
+deal 202 phase 0: 16/32 paired worlds
+deal 215 phase 2: 16/32 paired worlds
+deal 215 phase 2: 24/32 paired worlds
+deal 215 phase 2: 32/32 paired worlds
+labels 211/576; deal 215, 1 positions, 22.6s; elapsed 2398s
+deal 199 phase 0: 24/32 paired worlds
+deal 192 phase 0: 16/32 paired worlds
+deal 203 phase 0: 8/32 paired worlds
+deal 202 phase 0: 24/32 paired worlds
+deal 202 phase 0: 32/32 paired worlds
+labels 212/576; deal 202, 1 positions, 110.8s; elapsed 2441s
+deal 216 phase 0: 8/32 paired worlds
+deal 175 phase 0: 32/32 paired worlds
+labels 213/576; deal 175, 1 positions, 437.9s; elapsed 2445s
+deal 199 phase 0: 32/32 paired worlds
+labels 214/576; deal 199, 1 positions, 198.1s; elapsed 2448s
+deal 203 phase 0: 16/32 paired worlds
+deal 217 phase 0: 8/32 paired worlds
+deal 192 phase 0: 24/32 paired worlds
+deal 216 phase 0: 16/32 paired worlds
+deal 218 phase 0: 8/32 paired worlds
+deal 219 phase 0: 8/32 paired worlds
+deal 203 phase 0: 24/32 paired worlds
+deal 220 phase 0: 8/32 paired worlds
+deal 221 phase 0: 8/32 paired worlds
+deal 216 phase 0: 24/32 paired worlds
+deal 192 phase 0: 32/32 paired worlds
+labels 215/576; deal 192, 1 positions, 345.9s; elapsed 2578s
+deal 222 phase 1: 8/32 paired worlds
+deal 217 phase 0: 16/32 paired worlds
+deal 222 phase 1: 16/32 paired worlds
+deal 219 phase 0: 16/32 paired worlds
+deal 203 phase 0: 32/32 paired worlds
+labels 216/576; deal 203, 1 positions, 253.5s; elapsed 2598s
+deal 222 phase 1: 24/32 paired worlds
+deal 223 phase 1: 8/32 paired worlds
+deal 222 phase 1: 32/32 paired worlds
+labels 217/576; deal 222, 1 positions, 29.8s; elapsed 2608s
+deal 223 phase 1: 16/32 paired worlds
+deal 223 phase 1: 24/32 paired worlds
+deal 218 phase 0: 16/32 paired worlds
+deal 224 phase 1: 8/32 paired worlds
+deal 223 phase 1: 32/32 paired worlds
+labels 218/576; deal 223, 1 positions, 22.2s; elapsed 2621s
+deal 225 phase 1: 8/32 paired worlds
+deal 225 phase 1: 16/32 paired worlds
+deal 225 phase 1: 24/32 paired worlds
+deal 225 phase 1: 32/32 paired worlds
+labels 219/576; deal 225, 1 positions, 8.6s; elapsed 2630s
+deal 224 phase 1: 16/32 paired worlds
+deal 226 phase 1: 8/32 paired worlds
+deal 216 phase 0: 32/32 paired worlds
+labels 220/576; deal 216, 1 positions, 259.8s; elapsed 2635s
+deal 226 phase 1: 16/32 paired worlds
+deal 227 phase 1: 8/32 paired worlds
+deal 227 phase 1: 16/32 paired worlds
+deal 226 phase 1: 24/32 paired worlds
+deal 227 phase 1: 24/32 paired worlds
+deal 227 phase 1: 32/32 paired worlds
+labels 221/576; deal 227, 1 positions, 6.3s; elapsed 2641s
+deal 224 phase 1: 24/32 paired worlds
+deal 226 phase 1: 32/32 paired worlds
+labels 222/576; deal 226, 1 positions, 13.5s; elapsed 2643s
+deal 220 phase 0: 16/32 paired worlds
+deal 229 phase 2: 8/32 paired worlds
+deal 229 phase 2: 16/32 paired worlds
+deal 229 phase 2: 24/32 paired worlds
+deal 228 phase 1: 8/32 paired worlds
+deal 229 phase 2: 32/32 paired worlds
+labels 223/576; deal 229, 1 positions, 2.8s; elapsed 2646s
+deal 230 phase 2: 8/32 paired worlds
+deal 230 phase 2: 16/32 paired worlds
+deal 230 phase 2: 24/32 paired worlds
+deal 230 phase 2: 32/32 paired worlds
+labels 224/576; deal 230, 1 positions, 2.8s; elapsed 2649s
+deal 221 phase 0: 16/32 paired worlds
+deal 231 phase 1: 8/32 paired worlds
+deal 228 phase 1: 16/32 paired worlds
+deal 231 phase 1: 16/32 paired worlds
+deal 231 phase 1: 24/32 paired worlds
+deal 231 phase 1: 32/32 paired worlds
+labels 225/576; deal 231, 1 positions, 4.6s; elapsed 2653s
+deal 232 phase 2: 8/32 paired worlds
+deal 232 phase 2: 16/32 paired worlds
+deal 232 phase 2: 24/32 paired worlds
+deal 232 phase 2: 32/32 paired worlds
+labels 226/576; deal 232, 1 positions, 1.0s; elapsed 2654s
+deal 228 phase 1: 24/32 paired worlds
+deal 233 phase 2: 8/32 paired worlds
+deal 224 phase 1: 32/32 paired worlds
+labels 227/576; deal 224, 1 positions, 46.7s; elapsed 2655s
+deal 233 phase 2: 16/32 paired worlds
+deal 233 phase 2: 24/32 paired worlds
+deal 233 phase 2: 32/32 paired worlds
+labels 228/576; deal 233, 1 positions, 2.1s; elapsed 2656s
+deal 228 phase 1: 32/32 paired worlds
+labels 229/576; deal 228, 1 positions, 17.9s; elapsed 2659s
+deal 219 phase 0: 24/32 paired worlds
+deal 217 phase 0: 24/32 paired worlds
+deal 236 phase 0: 8/32 paired worlds
+deal 234 phase 0: 8/32 paired worlds
+deal 218 phase 0: 24/32 paired worlds
+deal 236 phase 0: 16/32 paired worlds
+deal 235 phase 0: 8/32 paired worlds
+deal 220 phase 0: 24/32 paired worlds
+deal 219 phase 0: 32/32 paired worlds
+labels 230/576; deal 219, 1 positions, 317.1s; elapsed 2759s
+deal 221 phase 0: 24/32 paired worlds
+deal 236 phase 0: 24/32 paired worlds
+deal 234 phase 0: 16/32 paired worlds
+deal 217 phase 0: 32/32 paired worlds
+labels 231/576; deal 217, 1 positions, 425.4s; elapsed 2804s
+deal 236 phase 0: 32/32 paired worlds
+labels 232/576; deal 236, 1 positions, 162.6s; elapsed 2822s
+deal 218 phase 0: 32/32 paired worlds
+labels 233/576; deal 218, 1 positions, 427.1s; elapsed 2825s
+deal 234 phase 0: 24/32 paired worlds
+deal 240 phase 1: 8/32 paired worlds
+deal 240 phase 1: 16/32 paired worlds
+deal 235 phase 0: 16/32 paired worlds
+deal 221 phase 0: 32/32 paired worlds
+labels 234/576; deal 221, 1 positions, 401.2s; elapsed 2849s
+deal 239 phase 0: 8/32 paired worlds
+deal 240 phase 1: 24/32 paired worlds
+deal 241 phase 1: 8/32 paired worlds
+deal 241 phase 1: 16/32 paired worlds
+deal 237 phase 0: 8/32 paired worlds
+deal 241 phase 1: 24/32 paired worlds
+deal 240 phase 1: 32/32 paired worlds
+labels 235/576; deal 240, 1 positions, 35.5s; elapsed 2860s
+deal 220 phase 0: 32/32 paired worlds
+labels 236/576; deal 220, 1 positions, 414.7s; elapsed 2860s
+deal 242 phase 1: 8/32 paired worlds
+deal 241 phase 1: 32/32 paired worlds
+labels 237/576; deal 241, 1 positions, 14.1s; elapsed 2863s
+deal 242 phase 1: 16/32 paired worlds
+deal 243 phase 1: 8/32 paired worlds
+deal 242 phase 1: 24/32 paired worlds
+deal 242 phase 1: 32/32 paired worlds
+labels 238/576; deal 242, 1 positions, 5.6s; elapsed 2866s
+deal 243 phase 1: 16/32 paired worlds
+deal 244 phase 1: 8/32 paired worlds
+deal 243 phase 1: 24/32 paired worlds
+deal 244 phase 1: 16/32 paired worlds
+deal 243 phase 1: 32/32 paired worlds
+labels 239/576; deal 243, 1 positions, 11.9s; elapsed 2872s
+deal 245 phase 1: 8/32 paired worlds
+deal 239 phase 0: 16/32 paired worlds
+deal 244 phase 1: 24/32 paired worlds
+deal 246 phase 1: 8/32 paired worlds
+deal 244 phase 1: 32/32 paired worlds
+labels 240/576; deal 244, 1 positions, 19.2s; elapsed 2882s
+deal 247 phase 2: 8/32 paired worlds
+deal 245 phase 1: 16/32 paired worlds
+deal 247 phase 2: 16/32 paired worlds
+deal 247 phase 2: 24/32 paired worlds
+deal 247 phase 2: 32/32 paired worlds
+labels 241/576; deal 247, 1 positions, 8.0s; elapsed 2890s
+deal 246 phase 1: 16/32 paired worlds
+deal 248 phase 2: 8/32 paired worlds
+deal 248 phase 2: 16/32 paired worlds
+deal 248 phase 2: 24/32 paired worlds
+deal 248 phase 2: 32/32 paired worlds
+labels 242/576; deal 248, 1 positions, 2.1s; elapsed 2893s
+deal 239 phase 0: 24/32 paired worlds
+deal 249 phase 2: 8/32 paired worlds
+deal 249 phase 2: 16/32 paired worlds
+deal 249 phase 2: 24/32 paired worlds
+deal 234 phase 0: 32/32 paired worlds
+labels 243/576; deal 234, 1 positions, 240.8s; elapsed 2896s
+deal 245 phase 1: 24/32 paired worlds
+deal 249 phase 2: 32/32 paired worlds
+labels 244/576; deal 249, 1 positions, 3.5s; elapsed 2896s
+deal 250 phase 2: 8/32 paired worlds
+deal 250 phase 2: 16/32 paired worlds
+deal 250 phase 2: 24/32 paired worlds
+deal 250 phase 2: 32/32 paired worlds
+labels 245/576; deal 250, 1 positions, 1.4s; elapsed 2897s
+deal 251 phase 2: 8/32 paired worlds
+deal 251 phase 2: 16/32 paired worlds
+deal 251 phase 2: 24/32 paired worlds
+deal 251 phase 2: 32/32 paired worlds
+labels 246/576; deal 251, 1 positions, 2.7s; elapsed 2899s
+deal 246 phase 1: 24/32 paired worlds
+deal 245 phase 1: 32/32 paired worlds
+labels 247/576; deal 245, 1 positions, 39.0s; elapsed 2905s
+deal 246 phase 1: 32/32 paired worlds
+labels 248/576; deal 246, 1 positions, 37.9s; elapsed 2910s
+deal 239 phase 0: 32/32 paired worlds
+labels 249/576; deal 239, 1 positions, 93.6s; elapsed 2916s
+deal 238 phase 0: 8/32 paired worlds
+deal 252 phase 0: 8/32 paired worlds
+deal 253 phase 0: 8/32 paired worlds
+deal 254 phase 0: 8/32 paired worlds
+deal 256 phase 0: 8/32 paired worlds
+deal 235 phase 0: 24/32 paired worlds
+deal 237 phase 0: 16/32 paired worlds
+deal 252 phase 0: 16/32 paired worlds
+deal 256 phase 0: 16/32 paired worlds
+deal 254 phase 0: 16/32 paired worlds
+deal 252 phase 0: 24/32 paired worlds
+deal 253 phase 0: 16/32 paired worlds
+deal 256 phase 0: 24/32 paired worlds
+deal 255 phase 0: 8/32 paired worlds
+deal 252 phase 0: 32/32 paired worlds
+labels 250/576; deal 252, 1 positions, 98.9s; elapsed 2997s
+deal 254 phase 0: 24/32 paired worlds
+deal 257 phase 0: 8/32 paired worlds
+deal 256 phase 0: 32/32 paired worlds
+labels 251/576; deal 256, 1 positions, 94.5s; elapsed 3010s
+deal 253 phase 0: 24/32 paired worlds
+deal 238 phase 0: 16/32 paired worlds
+deal 257 phase 0: 16/32 paired worlds
+deal 237 phase 0: 24/32 paired worlds
+deal 258 phase 1: 8/32 paired worlds
+deal 257 phase 0: 24/32 paired worlds
+deal 254 phase 0: 32/32 paired worlds
+labels 252/576; deal 254, 1 positions, 123.8s; elapsed 3029s
+deal 258 phase 1: 16/32 paired worlds
+deal 257 phase 0: 32/32 paired worlds
+labels 253/576; deal 257, 1 positions, 41.3s; elapsed 3038s
+deal 235 phase 0: 32/32 paired worlds
+labels 254/576; deal 235, 1 positions, 385.3s; elapsed 3042s
+deal 258 phase 1: 24/32 paired worlds
+deal 259 phase 1: 8/32 paired worlds
+deal 260 phase 1: 8/32 paired worlds
+deal 261 phase 1: 8/32 paired worlds
+deal 261 phase 1: 16/32 paired worlds
+deal 260 phase 1: 16/32 paired worlds
+deal 261 phase 1: 24/32 paired worlds
+deal 253 phase 0: 32/32 paired worlds
+labels 255/576; deal 253, 1 positions, 158.5s; elapsed 3057s
+deal 258 phase 1: 32/32 paired worlds
+labels 256/576; deal 258, 1 positions, 47.1s; elapsed 3057s
+deal 261 phase 1: 32/32 paired worlds
+labels 257/576; deal 261, 1 positions, 15.8s; elapsed 3058s
+deal 264 phase 2: 8/32 paired worlds
+deal 264 phase 2: 16/32 paired worlds
+deal 264 phase 2: 24/32 paired worlds
+deal 264 phase 2: 32/32 paired worlds
+labels 258/576; deal 264, 1 positions, 1.3s; elapsed 3059s
+deal 260 phase 1: 24/32 paired worlds
+deal 265 phase 2: 8/32 paired worlds
+deal 265 phase 2: 16/32 paired worlds
+deal 265 phase 2: 24/32 paired worlds
+deal 265 phase 2: 32/32 paired worlds
+labels 259/576; deal 265, 1 positions, 1.8s; elapsed 3061s
+deal 266 phase 2: 8/32 paired worlds
+deal 259 phase 1: 16/32 paired worlds
+deal 266 phase 2: 16/32 paired worlds
+deal 266 phase 2: 24/32 paired worlds
+deal 263 phase 1: 8/32 paired worlds
+deal 266 phase 2: 32/32 paired worlds
+labels 260/576; deal 266, 1 positions, 1.3s; elapsed 3062s
+deal 267 phase 1: 8/32 paired worlds
+deal 262 phase 1: 8/32 paired worlds
+deal 263 phase 1: 16/32 paired worlds
+deal 260 phase 1: 32/32 paired worlds
+labels 261/576; deal 260, 1 positions, 27.8s; elapsed 3066s
+deal 267 phase 1: 16/32 paired worlds
+deal 268 phase 2: 8/32 paired worlds
+deal 268 phase 2: 16/32 paired worlds
+deal 267 phase 1: 24/32 paired worlds
+deal 268 phase 2: 24/32 paired worlds
+deal 263 phase 1: 24/32 paired worlds
+deal 268 phase 2: 32/32 paired worlds
+labels 262/576; deal 268, 1 positions, 4.4s; elapsed 3070s
+deal 267 phase 1: 32/32 paired worlds
+labels 263/576; deal 267, 1 positions, 8.3s; elapsed 3071s
+deal 269 phase 2: 8/32 paired worlds
+deal 255 phase 0: 16/32 paired worlds
+deal 269 phase 2: 16/32 paired worlds
+deal 269 phase 2: 24/32 paired worlds
+deal 269 phase 2: 32/32 paired worlds
+labels 264/576; deal 269, 1 positions, 0.6s; elapsed 3071s
+deal 262 phase 1: 16/32 paired worlds
+deal 263 phase 1: 32/32 paired worlds
+labels 265/576; deal 263, 1 positions, 14.3s; elapsed 3072s
+deal 262 phase 1: 24/32 paired worlds
+deal 259 phase 1: 24/32 paired worlds
+deal 262 phase 1: 32/32 paired worlds
+labels 266/576; deal 262, 1 positions, 24.1s; elapsed 3082s
+deal 259 phase 1: 32/32 paired worlds
+labels 267/576; deal 259, 1 positions, 65.0s; elapsed 3094s
+deal 237 phase 0: 32/32 paired worlds
+labels 268/576; deal 237, 1 positions, 338.5s; elapsed 3098s
+deal 272 phase 0: 8/32 paired worlds
+deal 273 phase 0: 8/32 paired worlds
+deal 238 phase 0: 24/32 paired worlds
+deal 273 phase 0: 16/32 paired worlds
+deal 270 phase 0: 8/32 paired worlds
+deal 272 phase 0: 16/32 paired worlds
+deal 255 phase 0: 24/32 paired worlds
+deal 273 phase 0: 24/32 paired worlds
+deal 271 phase 0: 8/32 paired worlds
+deal 274 phase 0: 8/32 paired worlds
+deal 273 phase 0: 32/32 paired worlds
+labels 269/576; deal 273, 1 positions, 69.5s; elapsed 3151s
+deal 275 phase 0: 8/32 paired worlds
+deal 276 phase 1: 8/32 paired worlds
+deal 272 phase 0: 24/32 paired worlds
+deal 276 phase 1: 16/32 paired worlds
+deal 276 phase 1: 24/32 paired worlds
+deal 276 phase 1: 32/32 paired worlds
+labels 270/576; deal 276, 1 positions, 15.0s; elapsed 3166s
+deal 277 phase 1: 8/32 paired worlds
+deal 277 phase 1: 16/32 paired worlds
+deal 270 phase 0: 16/32 paired worlds
+deal 277 phase 1: 24/32 paired worlds
+deal 277 phase 1: 32/32 paired worlds
+labels 271/576; deal 277, 1 positions, 20.2s; elapsed 3186s
+deal 274 phase 0: 16/32 paired worlds
+deal 278 phase 1: 8/32 paired worlds
+deal 272 phase 0: 32/32 paired worlds
+labels 272/576; deal 272, 1 positions, 117.7s; elapsed 3190s
+deal 278 phase 1: 16/32 paired worlds
+deal 278 phase 1: 24/32 paired worlds
+deal 278 phase 1: 32/32 paired worlds
+labels 273/576; deal 278, 1 positions, 8.1s; elapsed 3195s
+deal 271 phase 0: 16/32 paired worlds
+deal 280 phase 1: 8/32 paired worlds
+deal 280 phase 1: 16/32 paired worlds
+deal 280 phase 1: 24/32 paired worlds
+deal 275 phase 0: 16/32 paired worlds
+deal 255 phase 0: 32/32 paired worlds
+labels 274/576; deal 255, 1 positions, 290.9s; elapsed 3201s
+deal 280 phase 1: 32/32 paired worlds
+labels 275/576; deal 280, 1 positions, 7.6s; elapsed 3202s
+deal 282 phase 2: 8/32 paired worlds
+deal 279 phase 1: 8/32 paired worlds
+deal 282 phase 2: 16/32 paired worlds
+deal 281 phase 1: 8/32 paired worlds
+deal 282 phase 2: 24/32 paired worlds
+deal 282 phase 2: 32/32 paired worlds
+labels 276/576; deal 282, 1 positions, 3.3s; elapsed 3205s
+deal 238 phase 0: 32/32 paired worlds
+labels 277/576; deal 238, 1 positions, 401.7s; elapsed 3206s
+deal 283 phase 2: 8/32 paired worlds
+deal 283 phase 2: 16/32 paired worlds
+deal 283 phase 2: 24/32 paired worlds
+deal 283 phase 2: 32/32 paired worlds
+labels 278/576; deal 283, 1 positions, 2.8s; elapsed 3209s
+deal 281 phase 1: 16/32 paired worlds
+deal 284 phase 1: 8/32 paired worlds
+deal 285 phase 2: 8/32 paired worlds
+deal 285 phase 2: 16/32 paired worlds
+deal 281 phase 1: 24/32 paired worlds
+deal 285 phase 2: 24/32 paired worlds
+deal 284 phase 1: 16/32 paired worlds
+deal 285 phase 2: 32/32 paired worlds
+labels 279/576; deal 285, 1 positions, 4.2s; elapsed 3213s
+deal 284 phase 1: 24/32 paired worlds
+deal 281 phase 1: 32/32 paired worlds
+labels 280/576; deal 281, 1 positions, 13.5s; elapsed 3215s
+deal 279 phase 1: 16/32 paired worlds
+deal 287 phase 2: 8/32 paired worlds
+deal 284 phase 1: 32/32 paired worlds
+labels 281/576; deal 284, 1 positions, 11.1s; elapsed 3217s
+deal 287 phase 2: 16/32 paired worlds
+deal 287 phase 2: 24/32 paired worlds
+deal 286 phase 1: 8/32 paired worlds
+deal 287 phase 2: 32/32 paired worlds
+labels 282/576; deal 287, 1 positions, 2.6s; elapsed 3218s
+deal 286 phase 1: 16/32 paired worlds
+deal 286 phase 1: 24/32 paired worlds
+deal 274 phase 0: 24/32 paired worlds
+deal 279 phase 1: 24/32 paired worlds
+deal 286 phase 1: 32/32 paired worlds
+labels 283/576; deal 286, 1 positions, 20.7s; elapsed 3233s
+deal 270 phase 0: 24/32 paired worlds
+deal 279 phase 1: 32/32 paired worlds
+labels 284/576; deal 279, 1 positions, 52.1s; elapsed 3242s
+deal 271 phase 0: 24/32 paired worlds
+deal 275 phase 0: 24/32 paired worlds
+deal 274 phase 0: 32/32 paired worlds
+labels 285/576; deal 274, 1 positions, 187.1s; elapsed 3281s
+deal 275 phase 0: 32/32 paired worlds
+labels 286/576; deal 275, 1 positions, 197.9s; elapsed 3296s
+deal 270 phase 0: 32/32 paired worlds
+labels 287/576; deal 270, 1 positions, 227.4s; elapsed 3298s
+deal 289 phase 0: 8/32 paired worlds
+deal 294 phase 1: 8/32 paired worlds
+deal 271 phase 0: 32/32 paired worlds
+labels 288/576; deal 271, 1 positions, 236.2s; elapsed 3307s
+deal 295 phase 1: 8/32 paired worlds
+deal 295 phase 1: 16/32 paired worlds
+deal 294 phase 1: 16/32 paired worlds
+deal 295 phase 1: 24/32 paired worlds
+deal 295 phase 1: 32/32 paired worlds
+labels 289/576; deal 295, 1 positions, 8.6s; elapsed 3316s
+deal 288 phase 0: 8/32 paired worlds
+deal 294 phase 1: 24/32 paired worlds
+deal 294 phase 1: 32/32 paired worlds
+labels 290/576; deal 294, 1 positions, 30.5s; elapsed 3329s
+deal 297 phase 1: 8/32 paired worlds
+deal 296 phase 1: 8/32 paired worlds
+deal 297 phase 1: 16/32 paired worlds
+deal 297 phase 1: 24/32 paired worlds
+deal 290 phase 0: 8/32 paired worlds
+deal 297 phase 1: 32/32 paired worlds
+labels 291/576; deal 297, 1 positions, 15.3s; elapsed 3344s
+deal 296 phase 1: 16/32 paired worlds
+deal 291 phase 0: 8/32 paired worlds
+deal 298 phase 1: 8/32 paired worlds
+deal 298 phase 1: 16/32 paired worlds
+deal 298 phase 1: 24/32 paired worlds
+deal 296 phase 1: 24/32 paired worlds
+deal 298 phase 1: 32/32 paired worlds
+labels 292/576; deal 298, 1 positions, 21.8s; elapsed 3366s
+deal 299 phase 1: 8/32 paired worlds
+deal 299 phase 1: 16/32 paired worlds
+deal 296 phase 1: 32/32 paired worlds
+labels 293/576; deal 296, 1 positions, 62.8s; elapsed 3379s
+deal 300 phase 2: 8/32 paired worlds
+deal 300 phase 2: 16/32 paired worlds
+deal 300 phase 2: 24/32 paired worlds
+deal 300 phase 2: 32/32 paired worlds
+labels 294/576; deal 300, 1 positions, 1.8s; elapsed 3381s
+deal 301 phase 2: 8/32 paired worlds
+deal 301 phase 2: 16/32 paired worlds
+deal 301 phase 2: 24/32 paired worlds
+deal 301 phase 2: 32/32 paired worlds
+labels 295/576; deal 301, 1 positions, 0.9s; elapsed 3382s
+deal 302 phase 2: 8/32 paired worlds
+deal 302 phase 2: 16/32 paired worlds
+deal 302 phase 2: 24/32 paired worlds
+deal 299 phase 1: 24/32 paired worlds
+deal 302 phase 2: 32/32 paired worlds
+labels 296/576; deal 302, 1 positions, 1.5s; elapsed 3383s
+deal 303 phase 2: 8/32 paired worlds
+deal 303 phase 2: 16/32 paired worlds
+deal 293 phase 0: 8/32 paired worlds
+deal 303 phase 2: 24/32 paired worlds
+deal 292 phase 0: 8/32 paired worlds
+deal 303 phase 2: 32/32 paired worlds
+labels 297/576; deal 303, 1 positions, 2.6s; elapsed 3386s
+deal 304 phase 2: 8/32 paired worlds
+deal 304 phase 2: 16/32 paired worlds
+deal 299 phase 1: 32/32 paired worlds
+labels 298/576; deal 299, 1 positions, 20.3s; elapsed 3386s
+deal 304 phase 2: 24/32 paired worlds
+deal 304 phase 2: 32/32 paired worlds
+labels 299/576; deal 304, 1 positions, 0.8s; elapsed 3386s
+deal 305 phase 2: 8/32 paired worlds
+deal 305 phase 2: 16/32 paired worlds
+deal 306 phase 2: 8/32 paired worlds
+deal 306 phase 2: 16/32 paired worlds
+deal 306 phase 2: 24/32 paired worlds
+deal 306 phase 2: 32/32 paired worlds
+labels 300/576; deal 306, 1 positions, 1.8s; elapsed 3388s
+deal 305 phase 2: 24/32 paired worlds
+deal 305 phase 2: 32/32 paired worlds
+labels 301/576; deal 305, 1 positions, 3.3s; elapsed 3390s
+deal 289 phase 0: 16/32 paired worlds
+deal 307 phase 0: 8/32 paired worlds
+deal 288 phase 0: 16/32 paired worlds
+deal 307 phase 0: 16/32 paired worlds
+deal 290 phase 0: 16/32 paired worlds
+deal 291 phase 0: 16/32 paired worlds
+deal 307 phase 0: 24/32 paired worlds
+deal 293 phase 0: 16/32 paired worlds
+deal 289 phase 0: 24/32 paired worlds
+deal 308 phase 0: 8/32 paired worlds
+deal 307 phase 0: 32/32 paired worlds
+labels 302/576; deal 307, 1 positions, 99.7s; elapsed 3488s
+deal 292 phase 0: 16/32 paired worlds
+deal 288 phase 0: 24/32 paired worlds
+deal 290 phase 0: 24/32 paired worlds
+deal 291 phase 0: 24/32 paired worlds
+deal 293 phase 0: 24/32 paired worlds
+deal 289 phase 0: 32/32 paired worlds
+labels 303/576; deal 289, 1 positions, 346.5s; elapsed 3564s
+deal 308 phase 0: 16/32 paired worlds
+deal 309 phase 0: 8/32 paired worlds
+deal 292 phase 0: 24/32 paired worlds
+deal 310 phase 0: 8/32 paired worlds
+deal 288 phase 0: 32/32 paired worlds
+labels 304/576; deal 288, 1 positions, 416.2s; elapsed 3633s
+deal 293 phase 0: 32/32 paired worlds
+labels 305/576; deal 293, 1 positions, 344.9s; elapsed 3640s
+deal 312 phase 1: 8/32 paired worlds
+deal 290 phase 0: 32/32 paired worlds
+labels 306/576; deal 290, 1 positions, 415.7s; elapsed 3649s
+deal 313 phase 1: 8/32 paired worlds
+deal 313 phase 1: 16/32 paired worlds
+deal 313 phase 1: 24/32 paired worlds
+deal 313 phase 1: 32/32 paired worlds
+labels 307/576; deal 313, 1 positions, 3.1s; elapsed 3653s
+deal 314 phase 2: 8/32 paired worlds
+deal 314 phase 2: 16/32 paired worlds
+deal 314 phase 2: 24/32 paired worlds
+deal 314 phase 2: 32/32 paired worlds
+labels 308/576; deal 314, 1 positions, 1.7s; elapsed 3654s
+deal 312 phase 1: 16/32 paired worlds
+deal 315 phase 1: 8/32 paired worlds
+deal 312 phase 1: 24/32 paired worlds
+deal 291 phase 0: 32/32 paired worlds
+labels 309/576; deal 291, 1 positions, 425.7s; elapsed 3667s
+deal 312 phase 1: 32/32 paired worlds
+labels 310/576; deal 312, 1 positions, 29.4s; elapsed 3670s
+deal 316 phase 1: 8/32 paired worlds
+deal 317 phase 1: 8/32 paired worlds
+deal 311 phase 0: 8/32 paired worlds
+deal 317 phase 1: 16/32 paired worlds
+deal 316 phase 1: 16/32 paired worlds
+deal 315 phase 1: 16/32 paired worlds
+deal 317 phase 1: 24/32 paired worlds
+deal 317 phase 1: 32/32 paired worlds
+labels 311/576; deal 317, 1 positions, 5.2s; elapsed 3676s
+deal 308 phase 0: 24/32 paired worlds
+deal 316 phase 1: 24/32 paired worlds
+deal 316 phase 1: 32/32 paired worlds
+labels 312/576; deal 316, 1 positions, 12.1s; elapsed 3680s
+deal 310 phase 0: 16/32 paired worlds
+deal 315 phase 1: 24/32 paired worlds
+deal 315 phase 1: 32/32 paired worlds
+labels 313/576; deal 315, 1 positions, 38.0s; elapsed 3692s
+deal 319 phase 1: 8/32 paired worlds
+deal 292 phase 0: 32/32 paired worlds
+labels 314/576; deal 292, 1 positions, 418.1s; elapsed 3699s
+deal 309 phase 0: 16/32 paired worlds
+deal 321 phase 2: 8/32 paired worlds
+deal 320 phase 1: 8/32 paired worlds
+deal 321 phase 2: 16/32 paired worlds
+deal 311 phase 0: 16/32 paired worlds
+deal 321 phase 2: 24/32 paired worlds
+deal 318 phase 0: 8/32 paired worlds
+deal 321 phase 2: 32/32 paired worlds
+labels 315/576; deal 321, 1 positions, 10.3s; elapsed 3710s
+deal 319 phase 1: 16/32 paired worlds
+deal 322 phase 2: 8/32 paired worlds
+deal 322 phase 2: 16/32 paired worlds
+deal 322 phase 2: 24/32 paired worlds
+deal 322 phase 2: 32/32 paired worlds
+labels 316/576; deal 322, 1 positions, 2.6s; elapsed 3713s
+deal 323 phase 2: 8/32 paired worlds
+deal 323 phase 2: 16/32 paired worlds
+deal 323 phase 2: 24/32 paired worlds
+deal 323 phase 2: 32/32 paired worlds
+labels 317/576; deal 323, 1 positions, 2.7s; elapsed 3715s
+deal 320 phase 1: 16/32 paired worlds
+deal 319 phase 1: 24/32 paired worlds
+deal 320 phase 1: 24/32 paired worlds
+deal 310 phase 0: 24/32 paired worlds
+deal 311 phase 0: 24/32 paired worlds
+deal 319 phase 1: 32/32 paired worlds
+labels 318/576; deal 319, 1 positions, 60.8s; elapsed 3741s
+deal 318 phase 0: 16/32 paired worlds
+deal 320 phase 1: 32/32 paired worlds
+labels 319/576; deal 320, 1 positions, 49.8s; elapsed 3742s
+deal 324 phase 0: 8/32 paired worlds
+deal 311 phase 0: 32/32 paired worlds
+labels 320/576; deal 311, 1 positions, 142.1s; elapsed 3776s
+deal 318 phase 0: 24/32 paired worlds
+deal 326 phase 0: 8/32 paired worlds
+deal 310 phase 0: 32/32 paired worlds
+labels 321/576; deal 310, 1 positions, 222.0s; elapsed 3786s
+deal 325 phase 0: 8/32 paired worlds
+deal 308 phase 0: 32/32 paired worlds
+labels 322/576; deal 308, 1 positions, 399.7s; elapsed 3790s
+deal 318 phase 0: 32/32 paired worlds
+labels 323/576; deal 318, 1 positions, 127.6s; elapsed 3803s
+deal 309 phase 0: 24/32 paired worlds
+deal 324 phase 0: 16/32 paired worlds
+deal 330 phase 1: 8/32 paired worlds
+deal 330 phase 1: 16/32 paired worlds
+deal 330 phase 1: 24/32 paired worlds
+deal 329 phase 0: 8/32 paired worlds
+deal 330 phase 1: 32/32 paired worlds
+labels 324/576; deal 330, 1 positions, 9.3s; elapsed 3812s
+deal 325 phase 0: 16/32 paired worlds
+deal 331 phase 1: 8/32 paired worlds
+deal 326 phase 0: 16/32 paired worlds
+deal 331 phase 1: 16/32 paired worlds
+deal 331 phase 1: 24/32 paired worlds
+deal 327 phase 0: 8/32 paired worlds
+deal 329 phase 0: 16/32 paired worlds
+deal 331 phase 1: 32/32 paired worlds
+labels 325/576; deal 331, 1 positions, 22.4s; elapsed 3835s
+deal 328 phase 0: 8/32 paired worlds
+deal 325 phase 0: 24/32 paired worlds
+deal 324 phase 0: 24/32 paired worlds
+deal 332 phase 0: 8/32 paired worlds
+deal 329 phase 0: 24/32 paired worlds
+deal 326 phase 0: 24/32 paired worlds
+deal 332 phase 0: 16/32 paired worlds
+deal 325 phase 0: 32/32 paired worlds
+labels 326/576; deal 325, 1 positions, 132.2s; elapsed 3873s
+deal 329 phase 0: 32/32 paired worlds
+labels 327/576; deal 329, 1 positions, 85.9s; elapsed 3875s
+deal 332 phase 0: 24/32 paired worlds
+deal 328 phase 0: 16/32 paired worlds
+deal 332 phase 0: 32/32 paired worlds
+labels 328/576; deal 332, 1 positions, 55.8s; elapsed 3891s
+deal 334 phase 1: 8/32 paired worlds
+deal 326 phase 0: 32/32 paired worlds
+labels 329/576; deal 326, 1 positions, 150.2s; elapsed 3893s
+deal 327 phase 0: 16/32 paired worlds
+deal 335 phase 2: 8/32 paired worlds
+deal 335 phase 2: 16/32 paired worlds
+deal 333 phase 1: 8/32 paired worlds
+deal 335 phase 2: 24/32 paired worlds
+deal 335 phase 2: 32/32 paired worlds
+labels 330/576; deal 335, 1 positions, 4.4s; elapsed 3895s
+deal 324 phase 0: 32/32 paired worlds
+labels 331/576; deal 324, 1 positions, 180.0s; elapsed 3895s
+deal 338 phase 2: 8/32 paired worlds
+deal 337 phase 2: 8/32 paired worlds
+deal 338 phase 2: 16/32 paired worlds
+deal 338 phase 2: 24/32 paired worlds
+deal 336 phase 1: 8/32 paired worlds
+deal 337 phase 2: 16/32 paired worlds
+deal 338 phase 2: 32/32 paired worlds
+labels 332/576; deal 338, 1 positions, 2.0s; elapsed 3897s
+deal 339 phase 2: 8/32 paired worlds
+deal 337 phase 2: 24/32 paired worlds
+deal 339 phase 2: 16/32 paired worlds
+deal 339 phase 2: 24/32 paired worlds
+deal 339 phase 2: 32/32 paired worlds
+labels 333/576; deal 339, 1 positions, 0.8s; elapsed 3899s
+deal 337 phase 2: 32/32 paired worlds
+labels 334/576; deal 337, 1 positions, 3.8s; elapsed 3899s
+deal 340 phase 2: 8/32 paired worlds
+deal 340 phase 2: 16/32 paired worlds
+deal 341 phase 2: 8/32 paired worlds
+deal 340 phase 2: 24/32 paired worlds
+deal 341 phase 2: 16/32 paired worlds
+deal 341 phase 2: 24/32 paired worlds
+deal 340 phase 2: 32/32 paired worlds
+labels 335/576; deal 340, 1 positions, 2.1s; elapsed 3901s
+deal 341 phase 2: 32/32 paired worlds
+labels 336/576; deal 341, 1 positions, 1.8s; elapsed 3901s
+deal 336 phase 1: 16/32 paired worlds
+deal 334 phase 1: 16/32 paired worlds
+deal 336 phase 1: 24/32 paired worlds
+deal 336 phase 1: 32/32 paired worlds
+labels 337/576; deal 336, 1 positions, 18.1s; elapsed 3911s
+deal 333 phase 1: 16/32 paired worlds
+deal 334 phase 1: 24/32 paired worlds
+deal 309 phase 0: 32/32 paired worlds
+labels 338/576; deal 309, 1 positions, 427.6s; elapsed 3916s
+deal 344 phase 0: 8/32 paired worlds
+deal 328 phase 0: 24/32 paired worlds
+deal 334 phase 1: 32/32 paired worlds
+labels 339/576; deal 334, 1 positions, 54.3s; elapsed 3930s
+deal 333 phase 1: 24/32 paired worlds
+deal 344 phase 0: 16/32 paired worlds
+deal 343 phase 0: 8/32 paired worlds
+deal 344 phase 0: 24/32 paired worlds
+deal 345 phase 0: 8/32 paired worlds
+deal 327 phase 0: 24/32 paired worlds
+deal 344 phase 0: 32/32 paired worlds
+labels 340/576; deal 344, 1 positions, 43.0s; elapsed 3954s
+deal 333 phase 1: 32/32 paired worlds
+labels 341/576; deal 333, 1 positions, 82.2s; elapsed 3955s
+deal 346 phase 0: 8/32 paired worlds
+deal 348 phase 1: 8/32 paired worlds
+deal 348 phase 1: 16/32 paired worlds
+deal 348 phase 1: 24/32 paired worlds
+deal 342 phase 0: 8/32 paired worlds
+deal 348 phase 1: 32/32 paired worlds
+labels 342/576; deal 348, 1 positions, 12.3s; elapsed 3968s
+deal 349 phase 1: 8/32 paired worlds
+deal 328 phase 0: 32/32 paired worlds
+labels 343/576; deal 328, 1 positions, 192.0s; elapsed 3978s
+deal 346 phase 0: 16/32 paired worlds
+deal 349 phase 1: 16/32 paired worlds
+deal 343 phase 0: 16/32 paired worlds
+deal 350 phase 1: 8/32 paired worlds
+deal 350 phase 1: 16/32 paired worlds
+deal 350 phase 1: 24/32 paired worlds
+deal 345 phase 0: 16/32 paired worlds
+deal 350 phase 1: 32/32 paired worlds
+labels 344/576; deal 350, 1 positions, 3.7s; elapsed 3982s
+deal 349 phase 1: 24/32 paired worlds
+deal 349 phase 1: 32/32 paired worlds
+labels 345/576; deal 349, 1 positions, 21.2s; elapsed 3989s
+deal 351 phase 1: 8/32 paired worlds
+deal 352 phase 1: 8/32 paired worlds
+deal 352 phase 1: 16/32 paired worlds
+deal 352 phase 1: 24/32 paired worlds
+deal 351 phase 1: 16/32 paired worlds
+deal 352 phase 1: 32/32 paired worlds
+labels 346/576; deal 352, 1 positions, 11.1s; elapsed 4000s
+deal 351 phase 1: 24/32 paired worlds
+deal 327 phase 0: 32/32 paired worlds
+labels 347/576; deal 327, 1 positions, 230.8s; elapsed 4007s
+deal 353 phase 1: 8/32 paired worlds
+deal 354 phase 2: 8/32 paired worlds
+deal 354 phase 2: 16/32 paired worlds
+deal 354 phase 2: 24/32 paired worlds
+deal 354 phase 2: 32/32 paired worlds
+labels 348/576; deal 354, 1 positions, 2.2s; elapsed 4009s
+deal 346 phase 0: 24/32 paired worlds
+deal 353 phase 1: 16/32 paired worlds
+deal 351 phase 1: 32/32 paired worlds
+labels 349/576; deal 351, 1 positions, 31.9s; elapsed 4014s
+deal 347 phase 0: 8/32 paired worlds
+deal 355 phase 1: 8/32 paired worlds
+deal 343 phase 0: 24/32 paired worlds
+deal 345 phase 0: 24/32 paired worlds
+deal 356 phase 2: 8/32 paired worlds
+deal 356 phase 2: 16/32 paired worlds
+deal 356 phase 2: 24/32 paired worlds
+deal 356 phase 2: 32/32 paired worlds
+labels 350/576; deal 356, 1 positions, 4.5s; elapsed 4019s
+deal 353 phase 1: 24/32 paired worlds
+deal 357 phase 2: 8/32 paired worlds
+deal 357 phase 2: 16/32 paired worlds
+deal 357 phase 2: 24/32 paired worlds
+deal 357 phase 2: 32/32 paired worlds
+labels 351/576; deal 357, 1 positions, 2.3s; elapsed 4021s
+deal 355 phase 1: 16/32 paired worlds
+deal 342 phase 0: 16/32 paired worlds
+deal 358 phase 1: 8/32 paired worlds
+deal 358 phase 1: 16/32 paired worlds
+deal 358 phase 1: 24/32 paired worlds
+deal 358 phase 1: 32/32 paired worlds
+labels 352/576; deal 358, 1 positions, 3.5s; elapsed 4025s
+deal 355 phase 1: 24/32 paired worlds
+deal 359 phase 2: 8/32 paired worlds
+deal 359 phase 2: 16/32 paired worlds
+deal 353 phase 1: 32/32 paired worlds
+labels 353/576; deal 353, 1 positions, 28.1s; elapsed 4028s
+deal 359 phase 2: 24/32 paired worlds
+deal 359 phase 2: 32/32 paired worlds
+labels 354/576; deal 359, 1 positions, 3.8s; elapsed 4029s
+deal 355 phase 1: 32/32 paired worlds
+labels 355/576; deal 355, 1 positions, 23.9s; elapsed 4033s
+deal 346 phase 0: 32/32 paired worlds
+labels 356/576; deal 346, 1 positions, 108.4s; elapsed 4038s
+deal 345 phase 0: 32/32 paired worlds
+labels 357/576; deal 345, 1 positions, 133.5s; elapsed 4050s
+deal 343 phase 0: 32/32 paired worlds
+labels 358/576; deal 343, 1 positions, 159.7s; elapsed 4061s
+deal 347 phase 0: 16/32 paired worlds
+deal 342 phase 0: 24/32 paired worlds
+deal 360 phase 0: 8/32 paired worlds
+deal 347 phase 0: 24/32 paired worlds
+deal 361 phase 0: 8/32 paired worlds
+deal 363 phase 0: 8/32 paired worlds
+deal 364 phase 0: 8/32 paired worlds
+deal 342 phase 0: 32/32 paired worlds
+labels 359/576; deal 342, 1 positions, 242.3s; elapsed 4143s
+deal 362 phase 0: 8/32 paired worlds
+deal 366 phase 1: 8/32 paired worlds
+deal 366 phase 1: 16/32 paired worlds
+deal 366 phase 1: 24/32 paired worlds
+deal 365 phase 0: 8/32 paired worlds
+deal 366 phase 1: 32/32 paired worlds
+labels 360/576; deal 366, 1 positions, 14.2s; elapsed 4157s
+deal 347 phase 0: 32/32 paired worlds
+labels 361/576; deal 347, 1 positions, 213.5s; elapsed 4167s
+deal 367 phase 1: 8/32 paired worlds
+deal 368 phase 1: 8/32 paired worlds
+deal 368 phase 1: 16/32 paired worlds
+deal 367 phase 1: 16/32 paired worlds
+deal 368 phase 1: 24/32 paired worlds
+deal 368 phase 1: 32/32 paired worlds
+labels 362/576; deal 368, 1 positions, 12.7s; elapsed 4181s
+deal 367 phase 1: 24/32 paired worlds
+deal 369 phase 1: 8/32 paired worlds
+deal 369 phase 1: 16/32 paired worlds
+deal 367 phase 1: 32/32 paired worlds
+labels 363/576; deal 367, 1 positions, 35.4s; elapsed 4193s
+deal 369 phase 1: 24/32 paired worlds
+deal 370 phase 1: 8/32 paired worlds
+deal 369 phase 1: 32/32 paired worlds
+labels 364/576; deal 369, 1 positions, 19.2s; elapsed 4200s
+deal 370 phase 1: 16/32 paired worlds
+deal 371 phase 1: 8/32 paired worlds
+deal 370 phase 1: 24/32 paired worlds
+deal 371 phase 1: 16/32 paired worlds
+deal 370 phase 1: 32/32 paired worlds
+labels 365/576; deal 370, 1 positions, 19.4s; elapsed 4212s
+deal 372 phase 2: 8/32 paired worlds
+deal 372 phase 2: 16/32 paired worlds
+deal 372 phase 2: 24/32 paired worlds
+deal 372 phase 2: 32/32 paired worlds
+labels 366/576; deal 372, 1 positions, 1.6s; elapsed 4214s
+deal 371 phase 1: 24/32 paired worlds
+deal 373 phase 2: 8/32 paired worlds
+deal 373 phase 2: 16/32 paired worlds
+deal 373 phase 2: 24/32 paired worlds
+deal 373 phase 2: 32/32 paired worlds
+labels 367/576; deal 373, 1 positions, 1.8s; elapsed 4216s
+deal 374 phase 2: 8/32 paired worlds
+deal 374 phase 2: 16/32 paired worlds
+deal 374 phase 2: 24/32 paired worlds
+deal 374 phase 2: 32/32 paired worlds
+labels 368/576; deal 374, 1 positions, 1.2s; elapsed 4217s
+deal 375 phase 2: 8/32 paired worlds
+deal 375 phase 2: 16/32 paired worlds
+deal 371 phase 1: 32/32 paired worlds
+labels 369/576; deal 371, 1 positions, 18.6s; elapsed 4218s
+deal 375 phase 2: 24/32 paired worlds
+deal 376 phase 2: 8/32 paired worlds
+deal 375 phase 2: 32/32 paired worlds
+labels 370/576; deal 375, 1 positions, 2.2s; elapsed 4219s
+deal 376 phase 2: 16/32 paired worlds
+deal 376 phase 2: 24/32 paired worlds
+deal 377 phase 2: 8/32 paired worlds
+deal 361 phase 0: 16/32 paired worlds
+deal 377 phase 2: 16/32 paired worlds
+deal 376 phase 2: 32/32 paired worlds
+labels 371/576; deal 376, 1 positions, 2.0s; elapsed 4221s
+deal 377 phase 2: 24/32 paired worlds
+deal 377 phase 2: 32/32 paired worlds
+labels 372/576; deal 377, 1 positions, 1.5s; elapsed 4221s
+deal 363 phase 0: 16/32 paired worlds
+deal 360 phase 0: 16/32 paired worlds
+deal 364 phase 0: 16/32 paired worlds
+deal 362 phase 0: 16/32 paired worlds
+deal 365 phase 0: 16/32 paired worlds
+deal 379 phase 0: 8/32 paired worlds
+deal 363 phase 0: 24/32 paired worlds
+deal 361 phase 0: 24/32 paired worlds
+deal 378 phase 0: 8/32 paired worlds
+deal 360 phase 0: 24/32 paired worlds
+deal 364 phase 0: 24/32 paired worlds
+deal 379 phase 0: 16/32 paired worlds
+deal 362 phase 0: 24/32 paired worlds
+deal 365 phase 0: 24/32 paired worlds
+deal 361 phase 0: 32/32 paired worlds
+labels 373/576; deal 361, 1 positions, 388.1s; elapsed 4417s
+deal 379 phase 0: 24/32 paired worlds
+deal 363 phase 0: 32/32 paired worlds
+labels 374/576; deal 363, 1 positions, 390.8s; elapsed 4429s
+deal 378 phase 0: 16/32 paired worlds
+deal 381 phase 0: 8/32 paired worlds
+deal 364 phase 0: 32/32 paired worlds
+labels 375/576; deal 364, 1 positions, 400.2s; elapsed 4450s
+deal 365 phase 0: 32/32 paired worlds
+labels 376/576; deal 365, 1 positions, 390.1s; elapsed 4451s
+deal 360 phase 0: 32/32 paired worlds
+labels 377/576; deal 360, 1 positions, 432.2s; elapsed 4461s
+deal 381 phase 0: 16/32 paired worlds
+deal 380 phase 0: 8/32 paired worlds
+deal 384 phase 1: 8/32 paired worlds
+deal 384 phase 1: 16/32 paired worlds
+deal 384 phase 1: 24/32 paired worlds
+deal 362 phase 0: 32/32 paired worlds
+labels 378/576; deal 362, 1 positions, 440.6s; elapsed 4474s
+deal 381 phase 0: 24/32 paired worlds
+deal 384 phase 1: 32/32 paired worlds
+labels 379/576; deal 384, 1 positions, 16.2s; elapsed 4477s
+deal 385 phase 1: 8/32 paired worlds
+deal 385 phase 1: 16/32 paired worlds
+deal 386 phase 1: 8/32 paired worlds
+deal 385 phase 1: 24/32 paired worlds
+deal 385 phase 1: 32/32 paired worlds
+labels 380/576; deal 385, 1 positions, 13.8s; elapsed 4488s
+deal 386 phase 1: 16/32 paired worlds
+deal 382 phase 0: 8/32 paired worlds
+deal 387 phase 1: 8/32 paired worlds
+deal 381 phase 0: 32/32 paired worlds
+labels 381/576; deal 381, 1 positions, 63.6s; elapsed 4493s
+deal 386 phase 1: 24/32 paired worlds
+deal 388 phase 1: 8/32 paired worlds
+deal 387 phase 1: 16/32 paired worlds
+deal 388 phase 1: 16/32 paired worlds
+deal 388 phase 1: 24/32 paired worlds
+deal 387 phase 1: 24/32 paired worlds
+deal 386 phase 1: 32/32 paired worlds
+labels 382/576; deal 386, 1 positions, 21.7s; elapsed 4499s
+deal 379 phase 0: 32/32 paired worlds
+labels 383/576; deal 379, 1 positions, 277.7s; elapsed 4499s
+deal 388 phase 1: 32/32 paired worlds
+labels 384/576; deal 388, 1 positions, 6.5s; elapsed 4499s
+deal 390 phase 2: 8/32 paired worlds
+deal 391 phase 2: 8/32 paired worlds
+deal 390 phase 2: 16/32 paired worlds
+deal 389 phase 1: 8/32 paired worlds
+deal 391 phase 2: 16/32 paired worlds
+deal 390 phase 2: 24/32 paired worlds
+deal 391 phase 2: 24/32 paired worlds
+deal 390 phase 2: 32/32 paired worlds
+labels 385/576; deal 390, 1 positions, 3.0s; elapsed 4502s
+deal 387 phase 1: 32/32 paired worlds
+labels 386/576; deal 387, 1 positions, 14.7s; elapsed 4502s
+deal 391 phase 2: 32/32 paired worlds
+labels 387/576; deal 391, 1 positions, 2.9s; elapsed 4502s
+deal 389 phase 1: 16/32 paired worlds
+deal 393 phase 2: 8/32 paired worlds
+deal 393 phase 2: 16/32 paired worlds
+deal 393 phase 2: 24/32 paired worlds
+deal 392 phase 2: 8/32 paired worlds
+deal 392 phase 2: 16/32 paired worlds
+deal 393 phase 2: 32/32 paired worlds
+labels 388/576; deal 393, 1 positions, 2.9s; elapsed 4505s
+deal 392 phase 2: 24/32 paired worlds
+deal 392 phase 2: 32/32 paired worlds
+labels 389/576; deal 392, 1 positions, 3.6s; elapsed 4506s
+deal 389 phase 1: 24/32 paired worlds
+deal 394 phase 2: 8/32 paired worlds
+deal 395 phase 2: 8/32 paired worlds
+deal 395 phase 2: 16/32 paired worlds
+deal 395 phase 2: 24/32 paired worlds
+deal 380 phase 0: 16/32 paired worlds
+deal 389 phase 1: 32/32 paired worlds
+labels 390/576; deal 389, 1 positions, 9.8s; elapsed 4508s
+deal 395 phase 2: 32/32 paired worlds
+labels 391/576; deal 395, 1 positions, 3.1s; elapsed 4508s
+deal 394 phase 2: 16/32 paired worlds
+deal 394 phase 2: 24/32 paired worlds
+deal 394 phase 2: 32/32 paired worlds
+labels 392/576; deal 394, 1 positions, 14.6s; elapsed 4517s
+deal 398 phase 0: 8/32 paired worlds
+deal 397 phase 0: 8/32 paired worlds
+deal 382 phase 0: 16/32 paired worlds
+deal 398 phase 0: 16/32 paired worlds
+deal 397 phase 0: 16/32 paired worlds
+deal 378 phase 0: 24/32 paired worlds
+deal 397 phase 0: 24/32 paired worlds
+deal 398 phase 0: 24/32 paired worlds
+deal 396 phase 0: 8/32 paired worlds
+deal 380 phase 0: 24/32 paired worlds
+deal 397 phase 0: 32/32 paired worlds
+labels 393/576; deal 397, 1 positions, 45.4s; elapsed 4554s
+deal 383 phase 0: 8/32 paired worlds
+deal 398 phase 0: 32/32 paired worlds
+labels 394/576; deal 398, 1 positions, 46.3s; elapsed 4555s
+deal 382 phase 0: 24/32 paired worlds
+deal 399 phase 0: 8/32 paired worlds
+deal 380 phase 0: 32/32 paired worlds
+labels 395/576; deal 380, 1 positions, 175.6s; elapsed 4592s
+deal 382 phase 0: 32/32 paired worlds
+labels 396/576; deal 382, 1 positions, 143.2s; elapsed 4593s
+deal 396 phase 0: 16/32 paired worlds
+deal 401 phase 0: 8/32 paired worlds
+deal 403 phase 1: 8/32 paired worlds
+deal 402 phase 1: 8/32 paired worlds
+deal 403 phase 1: 16/32 paired worlds
+deal 402 phase 1: 16/32 paired worlds
+deal 403 phase 1: 24/32 paired worlds
+deal 399 phase 0: 16/32 paired worlds
+deal 403 phase 1: 32/32 paired worlds
+labels 397/576; deal 403, 1 positions, 17.2s; elapsed 4610s
+deal 402 phase 1: 24/32 paired worlds
+deal 400 phase 0: 8/32 paired worlds
+deal 402 phase 1: 32/32 paired worlds
+labels 398/576; deal 402, 1 positions, 24.4s; elapsed 4617s
+deal 404 phase 1: 8/32 paired worlds
+deal 404 phase 1: 16/32 paired worlds
+deal 405 phase 1: 8/32 paired worlds
+deal 404 phase 1: 24/32 paired worlds
+deal 404 phase 1: 32/32 paired worlds
+labels 399/576; deal 404, 1 positions, 21.6s; elapsed 4632s
+deal 405 phase 1: 16/32 paired worlds
+deal 396 phase 0: 24/32 paired worlds
+deal 401 phase 0: 16/32 paired worlds
+deal 405 phase 1: 24/32 paired worlds
+deal 405 phase 1: 32/32 paired worlds
+labels 400/576; deal 405, 1 positions, 28.9s; elapsed 4646s
+deal 378 phase 0: 32/32 paired worlds
+labels 401/576; deal 378, 1 positions, 428.2s; elapsed 4649s
+deal 399 phase 0: 24/32 paired worlds
+deal 408 phase 1: 8/32 paired worlds
+deal 408 phase 1: 16/32 paired worlds
+deal 383 phase 0: 16/32 paired worlds
+deal 407 phase 1: 8/32 paired worlds
+deal 408 phase 1: 24/32 paired worlds
+deal 408 phase 1: 32/32 paired worlds
+labels 402/576; deal 408, 1 positions, 10.8s; elapsed 4660s
+deal 409 phase 2: 8/32 paired worlds
+deal 409 phase 2: 16/32 paired worlds
+deal 409 phase 2: 24/32 paired worlds
+deal 409 phase 2: 32/32 paired worlds
+labels 403/576; deal 409, 1 positions, 2.3s; elapsed 4662s
+deal 410 phase 2: 8/32 paired worlds
+deal 410 phase 2: 16/32 paired worlds
+deal 410 phase 2: 24/32 paired worlds
+deal 410 phase 2: 32/32 paired worlds
+labels 404/576; deal 410, 1 positions, 0.2s; elapsed 4662s
+deal 411 phase 2: 8/32 paired worlds
+deal 411 phase 2: 16/32 paired worlds
+deal 411 phase 2: 24/32 paired worlds
+deal 411 phase 2: 32/32 paired worlds
+labels 405/576; deal 411, 1 positions, 1.6s; elapsed 4664s
+deal 412 phase 2: 8/32 paired worlds
+deal 412 phase 2: 16/32 paired worlds
+deal 412 phase 2: 24/32 paired worlds
+deal 412 phase 2: 32/32 paired worlds
+labels 406/576; deal 412, 1 positions, 1.6s; elapsed 4666s
+deal 407 phase 1: 16/32 paired worlds
+deal 413 phase 2: 8/32 paired worlds
+deal 413 phase 2: 16/32 paired worlds
+deal 413 phase 2: 24/32 paired worlds
+deal 413 phase 2: 32/32 paired worlds
+labels 407/576; deal 413, 1 positions, 1.3s; elapsed 4667s
+deal 407 phase 1: 24/32 paired worlds
+deal 400 phase 0: 16/32 paired worlds
+deal 401 phase 0: 24/32 paired worlds
+deal 407 phase 1: 32/32 paired worlds
+labels 408/576; deal 407, 1 positions, 38.5s; elapsed 4685s
+deal 399 phase 0: 32/32 paired worlds
+labels 409/576; deal 399, 1 positions, 175.2s; elapsed 4692s
+deal 396 phase 0: 32/32 paired worlds
+labels 410/576; deal 396, 1 positions, 189.4s; elapsed 4695s
+deal 415 phase 0: 8/32 paired worlds
+deal 414 phase 0: 8/32 paired worlds
+deal 417 phase 0: 8/32 paired worlds
+deal 401 phase 0: 32/32 paired worlds
+labels 411/576; deal 401, 1 positions, 161.3s; elapsed 4716s
+deal 416 phase 0: 8/32 paired worlds
+deal 406 phase 0: 8/32 paired worlds
+deal 415 phase 0: 16/32 paired worlds
+deal 400 phase 0: 24/32 paired worlds
+deal 417 phase 0: 16/32 paired worlds
+deal 416 phase 0: 16/32 paired worlds
+deal 414 phase 0: 16/32 paired worlds
+deal 383 phase 0: 24/32 paired worlds
+deal 415 phase 0: 24/32 paired worlds
+deal 417 phase 0: 24/32 paired worlds
+deal 418 phase 0: 8/32 paired worlds
+deal 416 phase 0: 24/32 paired worlds
+deal 417 phase 0: 32/32 paired worlds
+labels 412/576; deal 417, 1 positions, 82.3s; elapsed 4777s
+deal 415 phase 0: 32/32 paired worlds
+labels 413/576; deal 415, 1 positions, 95.0s; elapsed 4780s
+deal 420 phase 1: 8/32 paired worlds
+deal 400 phase 0: 32/32 paired worlds
+labels 414/576; deal 400, 1 positions, 234.6s; elapsed 4788s
+deal 420 phase 1: 16/32 paired worlds
+deal 421 phase 1: 8/32 paired worlds
+deal 416 phase 0: 32/32 paired worlds
+labels 415/576; deal 416, 1 positions, 102.8s; elapsed 4795s
+deal 420 phase 1: 24/32 paired worlds
+deal 422 phase 1: 8/32 paired worlds
+deal 421 phase 1: 16/32 paired worlds
+deal 422 phase 1: 16/32 paired worlds
+deal 414 phase 0: 24/32 paired worlds
+deal 420 phase 1: 32/32 paired worlds
+labels 416/576; deal 420, 1 positions, 21.3s; elapsed 4801s
+deal 422 phase 1: 24/32 paired worlds
+deal 422 phase 1: 32/32 paired worlds
+labels 417/576; deal 422, 1 positions, 8.9s; elapsed 4804s
+deal 421 phase 1: 24/32 paired worlds
+deal 423 phase 1: 8/32 paired worlds
+deal 424 phase 1: 8/32 paired worlds
+deal 421 phase 1: 32/32 paired worlds
+labels 418/576; deal 421, 1 positions, 21.2s; elapsed 4810s
+deal 423 phase 1: 16/32 paired worlds
+deal 418 phase 0: 16/32 paired worlds
+deal 424 phase 1: 16/32 paired worlds
+deal 425 phase 1: 8/32 paired worlds
+deal 423 phase 1: 24/32 paired worlds
+deal 425 phase 1: 16/32 paired worlds
+deal 424 phase 1: 24/32 paired worlds
+deal 425 phase 1: 24/32 paired worlds
+deal 424 phase 1: 32/32 paired worlds
+deal 423 phase 1: 32/32 paired worlds
+labels 419/576; deal 423, 1 positions, 17.7s; elapsed 4819s
+labels 420/576; deal 424, 1 positions, 14.5s; elapsed 4819s
+deal 425 phase 1: 32/32 paired worlds
+labels 421/576; deal 425, 1 positions, 9.8s; elapsed 4820s
+deal 426 phase 2: 8/32 paired worlds
+deal 426 phase 2: 16/32 paired worlds
+deal 426 phase 2: 24/32 paired worlds
+deal 426 phase 2: 32/32 paired worlds
+labels 422/576; deal 426, 1 positions, 2.6s; elapsed 4822s
+deal 427 phase 2: 8/32 paired worlds
+deal 429 phase 2: 8/32 paired worlds
+deal 427 phase 2: 16/32 paired worlds
+deal 429 phase 2: 16/32 paired worlds
+deal 429 phase 2: 24/32 paired worlds
+deal 427 phase 2: 24/32 paired worlds
+deal 429 phase 2: 32/32 paired worlds
+labels 423/576; deal 429, 1 positions, 4.1s; elapsed 4826s
+deal 406 phase 0: 16/32 paired worlds
+deal 427 phase 2: 32/32 paired worlds
+labels 424/576; deal 427, 1 positions, 8.2s; elapsed 4827s
+deal 431 phase 2: 8/32 paired worlds
+deal 431 phase 2: 16/32 paired worlds
+deal 431 phase 2: 24/32 paired worlds
+deal 431 phase 2: 32/32 paired worlds
+labels 425/576; deal 431, 1 positions, 3.0s; elapsed 4830s
+deal 419 phase 0: 8/32 paired worlds
+deal 430 phase 1: 8/32 paired worlds
+deal 430 phase 1: 16/32 paired worlds
+deal 414 phase 0: 32/32 paired worlds
+labels 426/576; deal 414, 1 positions, 176.2s; elapsed 4843s
+deal 430 phase 1: 24/32 paired worlds
+deal 430 phase 1: 32/32 paired worlds
+labels 427/576; deal 430, 1 positions, 24.8s; elapsed 4851s
+deal 418 phase 0: 24/32 paired worlds
+deal 383 phase 0: 32/32 paired worlds
+labels 428/576; deal 383, 1 positions, 424.3s; elapsed 4875s
+deal 428 phase 0: 8/32 paired worlds
+deal 419 phase 0: 16/32 paired worlds
+deal 418 phase 0: 32/32 paired worlds
+labels 429/576; deal 418, 1 positions, 180.0s; elapsed 4896s
+deal 419 phase 0: 24/32 paired worlds
+deal 406 phase 0: 24/32 paired worlds
+deal 428 phase 0: 16/32 paired worlds
+deal 432 phase 0: 8/32 paired worlds
+deal 434 phase 0: 8/32 paired worlds
+deal 419 phase 0: 32/32 paired worlds
+labels 430/576; deal 419, 1 positions, 182.1s; elapsed 4960s
+deal 433 phase 0: 8/32 paired worlds
+deal 428 phase 0: 24/32 paired worlds
+deal 435 phase 0: 8/32 paired worlds
+deal 436 phase 0: 8/32 paired worlds
+deal 406 phase 0: 32/32 paired worlds
+labels 431/576; deal 406, 1 positions, 378.7s; elapsed 5011s
+deal 428 phase 0: 32/32 paired worlds
+labels 432/576; deal 428, 1 positions, 205.2s; elapsed 5025s
+deal 438 phase 1: 8/32 paired worlds
+deal 439 phase 1: 8/32 paired worlds
+deal 432 phase 0: 16/32 paired worlds
+deal 439 phase 1: 16/32 paired worlds
+deal 439 phase 1: 24/32 paired worlds
+deal 439 phase 1: 32/32 paired worlds
+labels 433/576; deal 439, 1 positions, 13.0s; elapsed 5038s
+deal 434 phase 0: 16/32 paired worlds
+deal 440 phase 1: 8/32 paired worlds
+deal 438 phase 1: 16/32 paired worlds
+deal 440 phase 1: 16/32 paired worlds
+deal 440 phase 1: 24/32 paired worlds
+deal 440 phase 1: 32/32 paired worlds
+labels 434/576; deal 440, 1 positions, 11.7s; elapsed 5050s
+deal 441 phase 1: 8/32 paired worlds
+deal 438 phase 1: 24/32 paired worlds
+deal 441 phase 1: 16/32 paired worlds
+deal 433 phase 0: 16/32 paired worlds
+deal 441 phase 1: 24/32 paired worlds
+deal 441 phase 1: 32/32 paired worlds
+labels 435/576; deal 441, 1 positions, 15.2s; elapsed 5065s
+deal 438 phase 1: 32/32 paired worlds
+labels 436/576; deal 438, 1 positions, 58.2s; elapsed 5069s
+deal 443 phase 1: 8/32 paired worlds
+deal 443 phase 1: 16/32 paired worlds
+deal 443 phase 1: 24/32 paired worlds
+deal 443 phase 1: 32/32 paired worlds
+labels 437/576; deal 443, 1 positions, 4.9s; elapsed 5074s
+deal 442 phase 1: 8/32 paired worlds
+deal 444 phase 2: 8/32 paired worlds
+deal 444 phase 2: 16/32 paired worlds
+deal 444 phase 2: 24/32 paired worlds
+deal 444 phase 2: 32/32 paired worlds
+labels 438/576; deal 444, 1 positions, 1.5s; elapsed 5076s
+deal 437 phase 0: 8/32 paired worlds
+deal 436 phase 0: 16/32 paired worlds
+deal 442 phase 1: 16/32 paired worlds
+deal 445 phase 1: 8/32 paired worlds
+deal 445 phase 1: 16/32 paired worlds
+deal 442 phase 1: 24/32 paired worlds
+deal 445 phase 1: 24/32 paired worlds
+deal 435 phase 0: 16/32 paired worlds
+deal 442 phase 1: 32/32 paired worlds
+labels 439/576; deal 442, 1 positions, 35.6s; elapsed 5101s
+deal 446 phase 2: 8/32 paired worlds
+deal 446 phase 2: 16/32 paired worlds
+deal 446 phase 2: 24/32 paired worlds
+deal 446 phase 2: 32/32 paired worlds
+labels 440/576; deal 446, 1 positions, 0.4s; elapsed 5101s
+deal 447 phase 2: 8/32 paired worlds
+deal 447 phase 2: 16/32 paired worlds
+deal 447 phase 2: 24/32 paired worlds
+deal 447 phase 2: 32/32 paired worlds
+labels 441/576; deal 447, 1 positions, 1.1s; elapsed 5102s
+deal 448 phase 2: 8/32 paired worlds
+deal 448 phase 2: 16/32 paired worlds
+deal 448 phase 2: 24/32 paired worlds
+deal 448 phase 2: 32/32 paired worlds
+labels 442/576; deal 448, 1 positions, 0.6s; elapsed 5103s
+deal 445 phase 1: 32/32 paired worlds
+labels 443/576; deal 445, 1 positions, 27.7s; elapsed 5104s
+deal 449 phase 2: 8/32 paired worlds
+deal 449 phase 2: 16/32 paired worlds
+deal 449 phase 2: 24/32 paired worlds
+deal 449 phase 2: 32/32 paired worlds
+labels 444/576; deal 449, 1 positions, 1.9s; elapsed 5105s
+deal 451 phase 0: 8/32 paired worlds
+deal 432 phase 0: 24/32 paired worlds
+deal 434 phase 0: 24/32 paired worlds
+deal 451 phase 0: 16/32 paired worlds
+deal 436 phase 0: 24/32 paired worlds
+deal 433 phase 0: 24/32 paired worlds
+deal 435 phase 0: 24/32 paired worlds
+deal 437 phase 0: 16/32 paired worlds
+deal 451 phase 0: 24/32 paired worlds
+deal 450 phase 0: 8/32 paired worlds
+deal 451 phase 0: 32/32 paired worlds
+labels 445/576; deal 451, 1 positions, 118.1s; elapsed 5223s
+deal 434 phase 0: 32/32 paired worlds
+labels 446/576; deal 434, 1 positions, 381.6s; elapsed 5233s
+deal 432 phase 0: 32/32 paired worlds
+labels 447/576; deal 432, 1 positions, 408.1s; elapsed 5238s
+deal 436 phase 0: 32/32 paired worlds
+labels 448/576; deal 436, 1 positions, 379.8s; elapsed 5276s
+deal 433 phase 0: 32/32 paired worlds
+labels 449/576; deal 433, 1 positions, 436.6s; elapsed 5280s
+deal 456 phase 1: 8/32 paired worlds
+deal 456 phase 1: 16/32 paired worlds
+deal 454 phase 0: 8/32 paired worlds
+deal 456 phase 1: 24/32 paired worlds
+deal 456 phase 1: 32/32 paired worlds
+labels 450/576; deal 456, 1 positions, 17.9s; elapsed 5298s
+deal 457 phase 1: 8/32 paired worlds
+deal 435 phase 0: 32/32 paired worlds
+labels 451/576; deal 435, 1 positions, 432.3s; elapsed 5308s
+deal 457 phase 1: 16/32 paired worlds
+deal 458 phase 1: 8/32 paired worlds
+deal 437 phase 0: 24/32 paired worlds
+deal 458 phase 1: 16/32 paired worlds
+deal 457 phase 1: 24/32 paired worlds
+deal 458 phase 1: 24/32 paired worlds
+deal 458 phase 1: 32/32 paired worlds
+labels 452/576; deal 458, 1 positions, 10.8s; elapsed 5319s
+deal 457 phase 1: 32/32 paired worlds
+labels 453/576; deal 457, 1 positions, 21.3s; elapsed 5320s
+deal 459 phase 1: 8/32 paired worlds
+deal 459 phase 1: 16/32 paired worlds
+deal 459 phase 1: 24/32 paired worlds
+deal 459 phase 1: 32/32 paired worlds
+labels 454/576; deal 459, 1 positions, 4.5s; elapsed 5323s
+deal 452 phase 0: 8/32 paired worlds
+deal 461 phase 2: 8/32 paired worlds
+deal 460 phase 1: 8/32 paired worlds
+deal 461 phase 2: 16/32 paired worlds
+deal 461 phase 2: 24/32 paired worlds
+deal 461 phase 2: 32/32 paired worlds
+labels 455/576; deal 461, 1 positions, 2.3s; elapsed 5326s
+deal 450 phase 0: 16/32 paired worlds
+deal 460 phase 1: 16/32 paired worlds
+deal 462 phase 2: 8/32 paired worlds
+deal 462 phase 2: 16/32 paired worlds
+deal 462 phase 2: 24/32 paired worlds
+deal 454 phase 0: 16/32 paired worlds
+deal 462 phase 2: 32/32 paired worlds
+labels 456/576; deal 462, 1 positions, 4.9s; elapsed 5331s
+deal 463 phase 2: 8/32 paired worlds
+deal 463 phase 2: 16/32 paired worlds
+deal 463 phase 2: 24/32 paired worlds
+deal 463 phase 2: 32/32 paired worlds
+labels 457/576; deal 463, 1 positions, 1.5s; elapsed 5332s
+deal 460 phase 1: 24/32 paired worlds
+deal 464 phase 2: 8/32 paired worlds
+deal 464 phase 2: 16/32 paired worlds
+deal 464 phase 2: 24/32 paired worlds
+deal 464 phase 2: 32/32 paired worlds
+labels 458/576; deal 464, 1 positions, 2.4s; elapsed 5335s
+deal 460 phase 1: 32/32 paired worlds
+labels 459/576; deal 460, 1 positions, 16.4s; elapsed 5336s
+deal 466 phase 2: 8/32 paired worlds
+deal 466 phase 2: 16/32 paired worlds
+deal 465 phase 1: 8/32 paired worlds
+deal 466 phase 2: 24/32 paired worlds
+deal 466 phase 2: 32/32 paired worlds
+labels 460/576; deal 466, 1 positions, 3.7s; elapsed 5340s
+deal 467 phase 2: 8/32 paired worlds
+deal 465 phase 1: 16/32 paired worlds
+deal 467 phase 2: 16/32 paired worlds
+deal 467 phase 2: 24/32 paired worlds
+deal 467 phase 2: 32/32 paired worlds
+labels 461/576; deal 467, 1 positions, 2.3s; elapsed 5342s
+deal 465 phase 1: 24/32 paired worlds
+deal 465 phase 1: 32/32 paired worlds
+labels 462/576; deal 465, 1 positions, 11.7s; elapsed 5346s
+deal 453 phase 0: 8/32 paired worlds
+deal 469 phase 0: 8/32 paired worlds
+deal 455 phase 0: 8/32 paired worlds
+deal 454 phase 0: 24/32 paired worlds
+deal 469 phase 0: 16/32 paired worlds
+deal 468 phase 0: 8/32 paired worlds
+deal 469 phase 0: 24/32 paired worlds
+deal 469 phase 0: 32/32 paired worlds
+labels 463/576; deal 469, 1 positions, 54.3s; elapsed 5401s
+deal 468 phase 0: 16/32 paired worlds
+deal 437 phase 0: 32/32 paired worlds
+labels 464/576; deal 437, 1 positions, 455.0s; elapsed 5415s
+deal 452 phase 0: 16/32 paired worlds
+deal 454 phase 0: 32/32 paired worlds
+labels 465/576; deal 454, 1 positions, 187.4s; elapsed 5426s
+deal 470 phase 0: 8/32 paired worlds
+deal 471 phase 0: 8/32 paired worlds
+deal 450 phase 0: 24/32 paired worlds
+deal 468 phase 0: 24/32 paired worlds
+deal 470 phase 0: 16/32 paired worlds
+deal 471 phase 0: 16/32 paired worlds
+deal 472 phase 0: 8/32 paired worlds
+deal 453 phase 0: 16/32 paired worlds
+deal 471 phase 0: 24/32 paired worlds
+deal 455 phase 0: 16/32 paired worlds
+deal 470 phase 0: 24/32 paired worlds
+deal 468 phase 0: 32/32 paired worlds
+labels 466/576; deal 468, 1 positions, 148.5s; elapsed 5491s
+deal 471 phase 0: 32/32 paired worlds
+labels 467/576; deal 471, 1 positions, 90.0s; elapsed 5505s
+deal 472 phase 0: 16/32 paired worlds
+deal 474 phase 1: 8/32 paired worlds
+deal 470 phase 0: 32/32 paired worlds
+labels 468/576; deal 470, 1 positions, 119.8s; elapsed 5521s
+deal 474 phase 1: 16/32 paired worlds
+deal 475 phase 2: 8/32 paired worlds
+deal 475 phase 2: 16/32 paired worlds
+deal 475 phase 2: 24/32 paired worlds
+deal 475 phase 2: 32/32 paired worlds
+labels 469/576; deal 475, 1 positions, 2.7s; elapsed 5523s
+deal 474 phase 1: 24/32 paired worlds
+deal 452 phase 0: 24/32 paired worlds
+deal 476 phase 1: 8/32 paired worlds
+deal 473 phase 0: 8/32 paired worlds
+deal 474 phase 1: 32/32 paired worlds
+labels 470/576; deal 474, 1 positions, 29.8s; elapsed 5535s
+deal 476 phase 1: 16/32 paired worlds
+deal 476 phase 1: 24/32 paired worlds
+deal 477 phase 1: 8/32 paired worlds
+deal 472 phase 0: 24/32 paired worlds
+deal 476 phase 1: 32/32 paired worlds
+labels 471/576; deal 476, 1 positions, 29.5s; elapsed 5553s
+deal 477 phase 1: 16/32 paired worlds
+deal 450 phase 0: 32/32 paired worlds
+labels 472/576; deal 450, 1 positions, 451.2s; elapsed 5555s
+deal 478 phase 1: 8/32 paired worlds
+deal 477 phase 1: 24/32 paired worlds
+deal 479 phase 1: 8/32 paired worlds
+deal 478 phase 1: 16/32 paired worlds
+deal 479 phase 1: 16/32 paired worlds
+deal 477 phase 1: 32/32 paired worlds
+labels 473/576; deal 477, 1 positions, 33.8s; elapsed 5569s
+deal 480 phase 2: 8/32 paired worlds
+deal 479 phase 1: 24/32 paired worlds
+deal 480 phase 2: 16/32 paired worlds
+deal 478 phase 1: 24/32 paired worlds
+deal 473 phase 0: 16/32 paired worlds
+deal 480 phase 2: 24/32 paired worlds
+deal 480 phase 2: 32/32 paired worlds
+labels 474/576; deal 480, 1 positions, 2.7s; elapsed 5571s
+deal 481 phase 2: 8/32 paired worlds
+deal 481 phase 2: 16/32 paired worlds
+deal 481 phase 2: 24/32 paired worlds
+deal 481 phase 2: 32/32 paired worlds
+labels 475/576; deal 481, 1 positions, 0.4s; elapsed 5572s
+deal 479 phase 1: 32/32 paired worlds
+labels 476/576; deal 479, 1 positions, 19.0s; elapsed 5574s
+deal 455 phase 0: 24/32 paired worlds
+deal 483 phase 2: 8/32 paired worlds
+deal 483 phase 2: 16/32 paired worlds
+deal 483 phase 2: 24/32 paired worlds
+deal 483 phase 2: 32/32 paired worlds
+labels 477/576; deal 483, 1 positions, 0.3s; elapsed 5575s
+deal 484 phase 2: 8/32 paired worlds
+deal 484 phase 2: 16/32 paired worlds
+deal 482 phase 1: 8/32 paired worlds
+deal 484 phase 2: 24/32 paired worlds
+deal 484 phase 2: 32/32 paired worlds
+labels 478/576; deal 484, 1 positions, 0.7s; elapsed 5575s
+deal 478 phase 1: 32/32 paired worlds
+labels 479/576; deal 478, 1 positions, 22.8s; elapsed 5576s
+deal 453 phase 0: 24/32 paired worlds
+deal 482 phase 1: 16/32 paired worlds
+deal 485 phase 1: 8/32 paired worlds
+deal 482 phase 1: 24/32 paired worlds
+deal 482 phase 1: 32/32 paired worlds
+labels 480/576; deal 482, 1 positions, 12.4s; elapsed 5584s
+deal 485 phase 1: 16/32 paired worlds
+deal 485 phase 1: 24/32 paired worlds
+deal 485 phase 1: 32/32 paired worlds
+labels 481/576; deal 485, 1 positions, 19.9s; elapsed 5595s
+deal 472 phase 0: 32/32 paired worlds
+labels 482/576; deal 472, 1 positions, 172.5s; elapsed 5599s
+deal 473 phase 0: 24/32 paired worlds
+deal 489 phase 0: 8/32 paired worlds
+deal 489 phase 0: 16/32 paired worlds
+deal 486 phase 0: 8/32 paired worlds
+deal 487 phase 0: 8/32 paired worlds
+deal 489 phase 0: 24/32 paired worlds
+deal 452 phase 0: 32/32 paired worlds
+labels 483/576; deal 452, 1 positions, 423.9s; elapsed 5647s
+deal 473 phase 0: 32/32 paired worlds
+labels 484/576; deal 473, 1 positions, 158.8s; elapsed 5650s
+deal 489 phase 0: 32/32 paired worlds
+labels 485/576; deal 489, 1 positions, 51.6s; elapsed 5651s
+deal 492 phase 1: 8/32 paired worlds
+deal 488 phase 0: 8/32 paired worlds
+deal 492 phase 1: 16/32 paired worlds
+deal 492 phase 1: 24/32 paired worlds
+deal 492 phase 1: 32/32 paired worlds
+labels 486/576; deal 492, 1 positions, 16.6s; elapsed 5667s
+deal 493 phase 1: 8/32 paired worlds
+deal 455 phase 0: 32/32 paired worlds
+labels 487/576; deal 455, 1 positions, 399.5s; elapsed 5676s
+deal 493 phase 1: 16/32 paired worlds
+deal 494 phase 1: 8/32 paired worlds
+deal 494 phase 1: 16/32 paired worlds
+deal 493 phase 1: 24/32 paired worlds
+deal 494 phase 1: 24/32 paired worlds
+deal 494 phase 1: 32/32 paired worlds
+labels 488/576; deal 494, 1 positions, 7.6s; elapsed 5684s
+deal 487 phase 0: 16/32 paired worlds
+deal 490 phase 0: 8/32 paired worlds
+deal 495 phase 1: 8/32 paired worlds
+deal 493 phase 1: 32/32 paired worlds
+labels 489/576; deal 493, 1 positions, 19.0s; elapsed 5686s
+deal 486 phase 0: 16/32 paired worlds
+deal 495 phase 1: 16/32 paired worlds
+deal 496 phase 1: 8/32 paired worlds
+deal 495 phase 1: 24/32 paired worlds
+deal 453 phase 0: 32/32 paired worlds
+labels 490/576; deal 453, 1 positions, 456.2s; elapsed 5689s
+deal 495 phase 1: 32/32 paired worlds
+labels 491/576; deal 495, 1 positions, 6.1s; elapsed 5690s
+deal 496 phase 1: 16/32 paired worlds
+deal 498 phase 1: 8/32 paired worlds
+deal 496 phase 1: 24/32 paired worlds
+deal 498 phase 1: 16/32 paired worlds
+deal 498 phase 1: 24/32 paired worlds
+deal 498 phase 1: 32/32 paired worlds
+labels 492/576; deal 498, 1 positions, 4.1s; elapsed 5694s
+deal 496 phase 1: 32/32 paired worlds
+labels 493/576; deal 496, 1 positions, 7.6s; elapsed 5694s
+deal 499 phase 2: 8/32 paired worlds
+deal 499 phase 2: 16/32 paired worlds
+deal 499 phase 2: 24/32 paired worlds
+deal 500 phase 2: 8/32 paired worlds
+deal 500 phase 2: 16/32 paired worlds
+deal 500 phase 2: 24/32 paired worlds
+deal 500 phase 2: 32/32 paired worlds
+labels 494/576; deal 500, 1 positions, 2.4s; elapsed 5697s
+deal 499 phase 2: 32/32 paired worlds
+labels 495/576; deal 499, 1 positions, 3.0s; elapsed 5697s
+deal 502 phase 2: 8/32 paired worlds
+deal 502 phase 2: 16/32 paired worlds
+deal 502 phase 2: 24/32 paired worlds
+deal 502 phase 2: 32/32 paired worlds
+labels 496/576; deal 502, 1 positions, 1.4s; elapsed 5698s
+deal 497 phase 1: 8/32 paired worlds
+deal 503 phase 2: 8/32 paired worlds
+deal 503 phase 2: 16/32 paired worlds
+deal 503 phase 2: 24/32 paired worlds
+deal 503 phase 2: 32/32 paired worlds
+labels 497/576; deal 503, 1 positions, 1.7s; elapsed 5700s
+deal 501 phase 1: 8/32 paired worlds
+deal 491 phase 0: 8/32 paired worlds
+deal 501 phase 1: 16/32 paired worlds
+deal 501 phase 1: 24/32 paired worlds
+deal 501 phase 1: 32/32 paired worlds
+labels 498/576; deal 501, 1 positions, 11.3s; elapsed 5708s
+deal 497 phase 1: 16/32 paired worlds
+deal 488 phase 0: 16/32 paired worlds
+deal 490 phase 0: 16/32 paired worlds
+deal 497 phase 1: 24/32 paired worlds
+deal 497 phase 1: 32/32 paired worlds
+labels 499/576; deal 497, 1 positions, 41.8s; elapsed 5731s
+deal 487 phase 0: 24/32 paired worlds
+deal 486 phase 0: 24/32 paired worlds
+deal 491 phase 0: 16/32 paired worlds
+deal 490 phase 0: 24/32 paired worlds
+deal 488 phase 0: 24/32 paired worlds
+deal 487 phase 0: 32/32 paired worlds
+labels 500/576; deal 487, 1 positions, 196.8s; elapsed 5781s
+deal 490 phase 0: 32/32 paired worlds
+labels 501/576; deal 490, 1 positions, 136.0s; elapsed 5784s
+deal 486 phase 0: 32/32 paired worlds
+labels 502/576; deal 486, 1 positions, 210.8s; elapsed 5787s
+deal 488 phase 0: 32/32 paired worlds
+labels 503/576; deal 488, 1 positions, 212.9s; elapsed 5808s
+deal 504 phase 0: 8/32 paired worlds
+deal 491 phase 0: 24/32 paired worlds
+deal 510 phase 1: 8/32 paired worlds
+deal 510 phase 1: 16/32 paired worlds
+deal 510 phase 1: 24/32 paired worlds
+deal 505 phase 0: 8/32 paired worlds
+deal 510 phase 1: 32/32 paired worlds
+labels 504/576; deal 510, 1 positions, 18.4s; elapsed 5827s
+deal 511 phase 1: 8/32 paired worlds
+deal 511 phase 1: 16/32 paired worlds
+deal 511 phase 1: 24/32 paired worlds
+deal 511 phase 1: 32/32 paired worlds
+labels 505/576; deal 511, 1 positions, 14.5s; elapsed 5841s
+deal 506 phase 0: 8/32 paired worlds
+deal 512 phase 1: 8/32 paired worlds
+deal 512 phase 1: 16/32 paired worlds
+deal 512 phase 1: 24/32 paired worlds
+deal 509 phase 0: 8/32 paired worlds
+deal 491 phase 0: 32/32 paired worlds
+labels 506/576; deal 491, 1 positions, 214.9s; elapsed 5865s
+deal 512 phase 1: 32/32 paired worlds
+labels 507/576; deal 512, 1 positions, 24.7s; elapsed 5866s
+deal 514 phase 1: 8/32 paired worlds
+deal 513 phase 1: 8/32 paired worlds
+deal 507 phase 0: 8/32 paired worlds
+deal 514 phase 1: 16/32 paired worlds
+deal 513 phase 1: 16/32 paired worlds
+deal 508 phase 0: 8/32 paired worlds
+deal 514 phase 1: 24/32 paired worlds
+deal 513 phase 1: 24/32 paired worlds
+deal 514 phase 1: 32/32 paired worlds
+labels 508/576; deal 514, 1 positions, 15.2s; elapsed 5881s
+deal 513 phase 1: 32/32 paired worlds
+labels 509/576; deal 513, 1 positions, 18.0s; elapsed 5883s
+deal 516 phase 2: 8/32 paired worlds
+deal 516 phase 2: 16/32 paired worlds
+deal 516 phase 2: 24/32 paired worlds
+deal 516 phase 2: 32/32 paired worlds
+labels 510/576; deal 516, 1 positions, 2.2s; elapsed 5885s
+deal 515 phase 1: 8/32 paired worlds
+deal 515 phase 1: 16/32 paired worlds
+deal 517 phase 1: 8/32 paired worlds
+deal 517 phase 1: 16/32 paired worlds
+deal 515 phase 1: 24/32 paired worlds
+deal 517 phase 1: 24/32 paired worlds
+deal 515 phase 1: 32/32 paired worlds
+labels 511/576; deal 515, 1 positions, 18.1s; elapsed 5900s
+deal 518 phase 2: 8/32 paired worlds
+deal 518 phase 2: 16/32 paired worlds
+deal 518 phase 2: 24/32 paired worlds
+deal 518 phase 2: 32/32 paired worlds
+labels 512/576; deal 518, 1 positions, 1.7s; elapsed 5901s
+deal 519 phase 2: 8/32 paired worlds
+deal 519 phase 2: 16/32 paired worlds
+deal 519 phase 2: 24/32 paired worlds
+deal 519 phase 2: 32/32 paired worlds
+labels 513/576; deal 519, 1 positions, 0.2s; elapsed 5902s
+deal 517 phase 1: 32/32 paired worlds
+labels 514/576; deal 517, 1 positions, 16.6s; elapsed 5902s
+deal 520 phase 2: 8/32 paired worlds
+deal 520 phase 2: 16/32 paired worlds
+deal 520 phase 2: 24/32 paired worlds
+deal 521 phase 2: 8/32 paired worlds
+deal 520 phase 2: 32/32 paired worlds
+labels 515/576; deal 520, 1 positions, 1.2s; elapsed 5903s
+deal 521 phase 2: 16/32 paired worlds
+deal 521 phase 2: 24/32 paired worlds
+deal 521 phase 2: 32/32 paired worlds
+labels 516/576; deal 521, 1 positions, 1.6s; elapsed 5904s
+deal 505 phase 0: 16/32 paired worlds
+deal 504 phase 0: 16/32 paired worlds
+deal 523 phase 0: 8/32 paired worlds
+deal 509 phase 0: 16/32 paired worlds
+deal 523 phase 0: 16/32 paired worlds
+deal 506 phase 0: 16/32 paired worlds
+deal 508 phase 0: 16/32 paired worlds
+deal 507 phase 0: 16/32 paired worlds
+deal 523 phase 0: 24/32 paired worlds
+deal 522 phase 0: 8/32 paired worlds
+deal 509 phase 0: 24/32 paired worlds
+deal 523 phase 0: 32/32 paired worlds
+labels 517/576; deal 523, 1 positions, 128.5s; elapsed 6032s
+deal 504 phase 0: 24/32 paired worlds
+deal 505 phase 0: 24/32 paired worlds
+deal 508 phase 0: 24/32 paired worlds
+deal 524 phase 0: 8/32 paired worlds
+deal 507 phase 0: 24/32 paired worlds
+deal 506 phase 0: 24/32 paired worlds
+deal 524 phase 0: 16/32 paired worlds
+deal 522 phase 0: 16/32 paired worlds
+deal 509 phase 0: 32/32 paired worlds
+labels 518/576; deal 509, 1 positions, 309.0s; elapsed 6096s
+deal 524 phase 0: 24/32 paired worlds
+deal 504 phase 0: 32/32 paired worlds
+labels 519/576; deal 504, 1 positions, 442.0s; elapsed 6142s
+deal 524 phase 0: 32/32 paired worlds
+labels 520/576; deal 524, 1 positions, 113.4s; elapsed 6145s
+deal 508 phase 0: 32/32 paired worlds
+labels 521/576; deal 508, 1 positions, 367.4s; elapsed 6151s
+deal 505 phase 0: 32/32 paired worlds
+labels 522/576; deal 505, 1 positions, 444.2s; elapsed 6152s
+deal 528 phase 1: 8/32 paired worlds
+deal 528 phase 1: 16/32 paired worlds
+deal 529 phase 1: 8/32 paired worlds
+deal 528 phase 1: 24/32 paired worlds
+deal 528 phase 1: 32/32 paired worlds
+labels 523/576; deal 528, 1 positions, 12.5s; elapsed 6164s
+deal 527 phase 0: 8/32 paired worlds
+deal 529 phase 1: 16/32 paired worlds
+deal 507 phase 0: 32/32 paired worlds
+labels 524/576; deal 507, 1 positions, 389.9s; elapsed 6171s
+deal 530 phase 1: 8/32 paired worlds
+deal 529 phase 1: 24/32 paired worlds
+deal 531 phase 1: 8/32 paired worlds
+deal 527 phase 0: 16/32 paired worlds
+deal 522 phase 0: 24/32 paired worlds
+deal 531 phase 1: 16/32 paired worlds
+deal 530 phase 1: 16/32 paired worlds
+deal 529 phase 1: 32/32 paired worlds
+labels 525/576; deal 529, 1 positions, 33.3s; elapsed 6185s
+deal 532 phase 1: 8/32 paired worlds
+deal 531 phase 1: 24/32 paired worlds
+deal 506 phase 0: 32/32 paired worlds
+labels 526/576; deal 506, 1 positions, 460.6s; elapsed 6192s
+deal 532 phase 1: 16/32 paired worlds
+deal 533 phase 1: 8/32 paired worlds
+deal 533 phase 1: 16/32 paired worlds
+deal 532 phase 1: 24/32 paired worlds
+deal 527 phase 0: 24/32 paired worlds
+deal 530 phase 1: 24/32 paired worlds
+deal 533 phase 1: 24/32 paired worlds
+deal 531 phase 1: 32/32 paired worlds
+labels 527/576; deal 531, 1 positions, 25.9s; elapsed 6197s
+deal 533 phase 1: 32/32 paired worlds
+labels 528/576; deal 533, 1 positions, 6.0s; elapsed 6198s
+deal 532 phase 1: 32/32 paired worlds
+labels 529/576; deal 532, 1 positions, 11.8s; elapsed 6198s
+deal 535 phase 2: 8/32 paired worlds
+deal 536 phase 2: 8/32 paired worlds
+deal 536 phase 2: 16/32 paired worlds
+deal 536 phase 2: 24/32 paired worlds
+deal 535 phase 2: 16/32 paired worlds
+deal 536 phase 2: 32/32 paired worlds
+labels 530/576; deal 536, 1 positions, 2.2s; elapsed 6200s
+deal 535 phase 2: 24/32 paired worlds
+deal 535 phase 2: 32/32 paired worlds
+labels 531/576; deal 535, 1 positions, 3.3s; elapsed 6201s
+deal 538 phase 2: 8/32 paired worlds
+deal 538 phase 2: 16/32 paired worlds
+deal 537 phase 2: 8/32 paired worlds
+deal 538 phase 2: 24/32 paired worlds
+deal 538 phase 2: 32/32 paired worlds
+labels 532/576; deal 538, 1 positions, 1.7s; elapsed 6203s
+deal 537 phase 2: 16/32 paired worlds
+deal 537 phase 2: 24/32 paired worlds
+deal 534 phase 1: 8/32 paired worlds
+deal 537 phase 2: 32/32 paired worlds
+labels 533/576; deal 537, 1 positions, 4.2s; elapsed 6204s
+deal 530 phase 1: 32/32 paired worlds
+labels 534/576; deal 530, 1 positions, 42.4s; elapsed 6206s
+deal 539 phase 1: 8/32 paired worlds
+deal 534 phase 1: 16/32 paired worlds
+deal 539 phase 1: 16/32 paired worlds
+deal 527 phase 0: 32/32 paired worlds
+labels 535/576; deal 527, 1 positions, 66.4s; elapsed 6212s
+deal 539 phase 1: 24/32 paired worlds
+deal 534 phase 1: 24/32 paired worlds
+deal 525 phase 0: 8/32 paired worlds
+deal 539 phase 1: 32/32 paired worlds
+labels 536/576; deal 539, 1 positions, 13.2s; elapsed 6216s
+deal 534 phase 1: 32/32 paired worlds
+labels 537/576; deal 534, 1 positions, 20.9s; elapsed 6218s
+deal 541 phase 0: 8/32 paired worlds
+deal 526 phase 0: 8/32 paired worlds
+deal 542 phase 0: 8/32 paired worlds
+deal 541 phase 0: 16/32 paired worlds
+deal 544 phase 0: 8/32 paired worlds
+deal 540 phase 0: 8/32 paired worlds
+deal 541 phase 0: 24/32 paired worlds
+deal 542 phase 0: 16/32 paired worlds
+deal 543 phase 0: 8/32 paired worlds
+deal 544 phase 0: 16/32 paired worlds
+deal 541 phase 0: 32/32 paired worlds
+labels 538/576; deal 541, 1 positions, 78.0s; elapsed 6284s
+deal 522 phase 0: 32/32 paired worlds
+labels 539/576; deal 522, 1 positions, 382.9s; elapsed 6286s
+deal 546 phase 1: 8/32 paired worlds
+deal 546 phase 1: 16/32 paired worlds
+deal 540 phase 0: 16/32 paired worlds
+deal 546 phase 1: 24/32 paired worlds
+deal 542 phase 0: 24/32 paired worlds
+deal 546 phase 1: 32/32 paired worlds
+labels 540/576; deal 546, 1 positions, 18.0s; elapsed 6304s
+deal 545 phase 0: 8/32 paired worlds
+deal 544 phase 0: 24/32 paired worlds
+deal 547 phase 1: 8/32 paired worlds
+deal 547 phase 1: 16/32 paired worlds
+deal 525 phase 0: 16/32 paired worlds
+deal 547 phase 1: 24/32 paired worlds
+deal 543 phase 0: 16/32 paired worlds
+deal 547 phase 1: 32/32 paired worlds
+labels 541/576; deal 547, 1 positions, 26.5s; elapsed 6330s
+deal 545 phase 0: 16/32 paired worlds
+deal 548 phase 1: 8/32 paired worlds
+deal 548 phase 1: 16/32 paired worlds
+deal 548 phase 1: 24/32 paired worlds
+deal 548 phase 1: 32/32 paired worlds
+labels 542/576; deal 548, 1 positions, 3.3s; elapsed 6334s
+deal 542 phase 0: 32/32 paired worlds
+labels 543/576; deal 542, 1 positions, 121.4s; elapsed 6334s
+deal 549 phase 1: 8/32 paired worlds
+deal 549 phase 1: 16/32 paired worlds
+deal 550 phase 1: 8/32 paired worlds
+deal 549 phase 1: 24/32 paired worlds
+deal 549 phase 1: 32/32 paired worlds
+labels 544/576; deal 549, 1 positions, 7.2s; elapsed 6341s
+deal 544 phase 0: 32/32 paired worlds
+labels 545/576; deal 544, 1 positions, 124.1s; elapsed 6342s
+deal 552 phase 2: 8/32 paired worlds
+deal 552 phase 2: 16/32 paired worlds
+deal 552 phase 2: 24/32 paired worlds
+deal 552 phase 2: 32/32 paired worlds
+deal 550 phase 1: 16/32 paired worlds
+labels 546/576; deal 552, 1 positions, 0.5s; elapsed 6343s
+deal 553 phase 2: 8/32 paired worlds
+deal 553 phase 2: 16/32 paired worlds
+deal 551 phase 1: 8/32 paired worlds
+deal 553 phase 2: 24/32 paired worlds
+deal 553 phase 2: 32/32 paired worlds
+labels 547/576; deal 553, 1 positions, 2.3s; elapsed 6345s
+deal 554 phase 2: 8/32 paired worlds
+deal 554 phase 2: 16/32 paired worlds
+deal 554 phase 2: 24/32 paired worlds
+deal 550 phase 1: 24/32 paired worlds
+deal 551 phase 1: 16/32 paired worlds
+deal 554 phase 2: 32/32 paired worlds
+labels 548/576; deal 554, 1 positions, 1.8s; elapsed 6347s
+deal 526 phase 0: 16/32 paired worlds
+deal 551 phase 1: 24/32 paired worlds
+deal 550 phase 1: 32/32 paired worlds
+labels 549/576; deal 550, 1 positions, 16.4s; elapsed 6350s
+deal 556 phase 2: 8/32 paired worlds
+deal 556 phase 2: 16/32 paired worlds
+deal 551 phase 1: 32/32 paired worlds
+labels 550/576; deal 551, 1 positions, 10.0s; elapsed 6351s
+deal 555 phase 1: 8/32 paired worlds
+deal 556 phase 2: 24/32 paired worlds
+deal 556 phase 2: 32/32 paired worlds
+labels 551/576; deal 556, 1 positions, 1.2s; elapsed 6351s
+deal 545 phase 0: 24/32 paired worlds
+deal 555 phase 1: 16/32 paired worlds
+deal 540 phase 0: 24/32 paired worlds
+deal 555 phase 1: 24/32 paired worlds
+deal 557 phase 1: 8/32 paired worlds
+deal 555 phase 1: 32/32 paired worlds
+labels 552/576; deal 555, 1 positions, 13.7s; elapsed 6361s
+deal 557 phase 1: 16/32 paired worlds
+deal 559 phase 2: 8/32 paired worlds
+deal 559 phase 2: 16/32 paired worlds
+deal 559 phase 2: 24/32 paired worlds
+deal 557 phase 1: 24/32 paired worlds
+deal 559 phase 2: 32/32 paired worlds
+labels 553/576; deal 559, 1 positions, 14.8s; elapsed 6376s
+deal 557 phase 1: 32/32 paired worlds
+labels 554/576; deal 557, 1 positions, 33.1s; elapsed 6384s
+deal 545 phase 0: 32/32 paired worlds
+labels 555/576; deal 545, 1 positions, 100.5s; elapsed 6385s
+deal 543 phase 0: 24/32 paired worlds
+deal 540 phase 0: 32/32 paired worlds
+labels 556/576; deal 540, 1 positions, 197.0s; elapsed 6401s
+deal 560 phase 0: 8/32 paired worlds
+deal 558 phase 0: 8/32 paired worlds
+deal 561 phase 0: 8/32 paired worlds
+deal 563 phase 0: 8/32 paired worlds
+deal 560 phase 0: 16/32 paired worlds
+deal 563 phase 0: 16/32 paired worlds
+deal 525 phase 0: 24/32 paired worlds
+deal 562 phase 0: 8/32 paired worlds
+deal 558 phase 0: 16/32 paired worlds
+deal 543 phase 0: 32/32 paired worlds
+labels 557/576; deal 543, 1 positions, 226.5s; elapsed 6443s
+deal 564 phase 2: 8/32 paired worlds
+deal 564 phase 2: 16/32 paired worlds
+deal 564 phase 2: 24/32 paired worlds
+deal 564 phase 2: 32/32 paired worlds
+labels 558/576; deal 564, 1 positions, 1.2s; elapsed 6444s
+deal 561 phase 0: 16/32 paired worlds
+deal 563 phase 0: 24/32 paired worlds
+deal 560 phase 0: 24/32 paired worlds
+deal 565 phase 1: 8/32 paired worlds
+deal 565 phase 1: 16/32 paired worlds
+deal 563 phase 0: 32/32 paired worlds
+labels 559/576; deal 563, 1 positions, 62.2s; elapsed 6464s
+deal 566 phase 1: 8/32 paired worlds
+deal 566 phase 1: 16/32 paired worlds
+deal 565 phase 1: 24/32 paired worlds
+deal 560 phase 0: 32/32 paired worlds
+labels 560/576; deal 560, 1 positions, 96.8s; elapsed 6473s
+deal 566 phase 1: 24/32 paired worlds
+deal 526 phase 0: 24/32 paired worlds
+deal 566 phase 1: 32/32 paired worlds
+labels 561/576; deal 566, 1 positions, 13.8s; elapsed 6477s
+deal 561 phase 0: 24/32 paired worlds
+deal 567 phase 1: 8/32 paired worlds
+deal 565 phase 1: 32/32 paired worlds
+labels 562/576; deal 565, 1 positions, 35.0s; elapsed 6479s
+deal 569 phase 1: 8/32 paired worlds
+deal 569 phase 1: 16/32 paired worlds
+deal 567 phase 1: 16/32 paired worlds
+deal 568 phase 1: 8/32 paired worlds
+deal 569 phase 1: 24/32 paired worlds
+deal 569 phase 1: 32/32 paired worlds
+labels 563/576; deal 569, 1 positions, 8.3s; elapsed 6488s
+deal 562 phase 0: 16/32 paired worlds
+deal 558 phase 0: 24/32 paired worlds
+deal 567 phase 1: 24/32 paired worlds
+deal 568 phase 1: 16/32 paired worlds
+deal 570 phase 1: 8/32 paired worlds
+deal 567 phase 1: 32/32 paired worlds
+labels 564/576; deal 567, 1 positions, 24.3s; elapsed 6497s
+deal 568 phase 1: 24/32 paired worlds
+deal 571 phase 2: 8/32 paired worlds
+deal 571 phase 2: 16/32 paired worlds
+deal 571 phase 2: 24/32 paired worlds
+deal 571 phase 2: 32/32 paired worlds
+labels 565/576; deal 571, 1 positions, 2.7s; elapsed 6500s
+deal 570 phase 1: 16/32 paired worlds
+deal 572 phase 2: 8/32 paired worlds
+deal 572 phase 2: 16/32 paired worlds
+deal 572 phase 2: 24/32 paired worlds
+deal 572 phase 2: 32/32 paired worlds
+labels 566/576; deal 572, 1 positions, 2.7s; elapsed 6503s
+deal 568 phase 1: 32/32 paired worlds
+labels 567/576; deal 568, 1 positions, 27.8s; elapsed 6505s
+deal 573 phase 2: 8/32 paired worlds
+deal 561 phase 0: 32/32 paired worlds
+labels 568/576; deal 561, 1 positions, 121.6s; elapsed 6506s
+deal 570 phase 1: 24/32 paired worlds
+deal 573 phase 2: 16/32 paired worlds
+deal 574 phase 2: 8/32 paired worlds
+deal 574 phase 2: 16/32 paired worlds
+deal 574 phase 2: 24/32 paired worlds
+deal 575 phase 2: 8/32 paired worlds
+deal 575 phase 2: 16/32 paired worlds
+deal 575 phase 2: 24/32 paired worlds
+deal 574 phase 2: 32/32 paired worlds
+labels 569/576; deal 574, 1 positions, 2.6s; elapsed 6508s
+deal 575 phase 2: 32/32 paired worlds
+labels 570/576; deal 575, 1 positions, 1.8s; elapsed 6508s
+deal 573 phase 2: 24/32 paired worlds
+deal 573 phase 2: 32/32 paired worlds
+labels 571/576; deal 573, 1 positions, 6.6s; elapsed 6509s
+deal 570 phase 1: 32/32 paired worlds
+labels 572/576; deal 570, 1 positions, 23.5s; elapsed 6511s
+deal 558 phase 0: 32/32 paired worlds
+labels 573/576; deal 558, 1 positions, 172.1s; elapsed 6524s
+deal 562 phase 0: 24/32 paired worlds
+deal 525 phase 0: 32/32 paired worlds
+labels 574/576; deal 525, 1 positions, 440.8s; elapsed 6536s
+deal 526 phase 0: 32/32 paired worlds
+labels 575/576; deal 526, 1 positions, 399.4s; elapsed 6542s
+deal 562 phase 0: 32/32 paired worlds
+labels 576/576; deal 562, 1 positions, 172.1s; elapsed 6557s

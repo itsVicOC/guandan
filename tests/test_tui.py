@@ -1258,7 +1258,7 @@ def test_next_round_applies_tribute_card_swaps_and_records_events() -> None:
                         team_levels=list(kwargs["team_levels"]),
                     )
 
-                with patch("guandan.ui.session.make_initial_state", fake_initial_state):
+                with patch("guandan.engine.rounds.make_initial_state", fake_initial_state):
                     screen.action_next_game()
                     await pilot.pause()
                     assert screen.state is state

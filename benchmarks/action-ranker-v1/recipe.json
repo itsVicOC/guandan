@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "name": "action-ranker-v1",
+  "deals": 576,
+  "splits": {
+    "train": 384,
+    "tune": 96,
+    "diagnostic": 96
+  },
+  "positions_per_deal": 3,
+  "actions_per_position": 16,
+  "sampled_positions_per_deal": 1,
+  "phase_sampling": "balanced-one-prefix-per-deal",
+  "worlds": 32,
+  "companions": [
+    0,
+    1,
+    2
+  ],
+  "other_policy": 2,
+  "regularization": [
+    0.001,
+    0.01,
+    0.1
+  ],
+  "epochs": 160,
+  "objective": "full-round-ranks-frozen-match-continuation",
+  "seed_schedule": "sha256-action-ranker-v1-stage-index-round",
+  "baseline_sha256": "d2082d68aef3264d88d16d64e0cbcd233eb8ce349e2d1ae99afd87b4373802de",
+  "value_model_sha256": "d1c027cb92afd356f7c6c2d2da8b06bf5f7a3755c25e28d6c2c54512bc51461c",
+  "collector_sha256": "cef7637b94a0e969bc6e83660035cb0f27f16365d84b1f9038ebaf628a8d3a5f"
+}

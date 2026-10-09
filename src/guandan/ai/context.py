@@ -20,8 +20,8 @@ from ..engine.state import (
     is_teammate,
     partner_of,
 )
-from ..engine.trick import current_top_player
 from .belief import PassEvidence, collect_pass_evidence, response_evidence_multiplier
+from .observation import ActorObservation
 
 _FULL_DECK = tuple(make_deck())
 
@@ -108,8 +108,13 @@ class PublicTacticalContext:
 
     @classmethod
     def from_state(cls, state: GameState, player: int) -> PublicTacticalContext:
+        return cls.from_observation(ActorObservation.from_state(state, player))
+
+    @classmethod
+    def from_observation(cls, state: ActorObservation) -> PublicTacticalContext:
+        player = state.player
         unseen = Counter(_FULL_DECK)
-        unseen.subtract(state.hands[player])
+        unseen.subtract(state.hand)
         known: list[list[Card]] = [[], [], [], []]
         leads: list[tuple[int, Pattern]] = []
         passes: list[tuple[int, int, Pattern]] = []
@@ -144,7 +149,7 @@ class PublicTacticalContext:
                 if event.card in known[event.from_player]:
                     known[event.from_player].remove(event.card)
                 known[event.to_player].append(event.card)
-        sizes = tuple(state.hand_size(seat) for seat in range(4))
+        sizes = state.sizes
         known[player] = []  # Already removed from the unseen pool with our hand.
         known = [cards[:sizes[seat]] for seat, cards in enumerate(known)]
         order = tuple(
@@ -154,10 +159,10 @@ class PublicTacticalContext:
         )
         return cls(
             player, partner_of(player), state.level, sizes, order,
-            current_top_player(state), state.table[-1] if state.table else None,
+            state.top_player, state.table[-1] if state.table else None,
             tuple(sorted(unseen.elements())), tuple(tuple(cards) for cards in known),
             tuple(leads[-8:]), tuple(passes[-12:]), state.wild_card, state.ruleset_version,
-            tuple(state.hands[player]), collect_pass_evidence(state),
+            state.hand, collect_pass_evidence(state),
         )
 
     @property

@@ -1,0 +1,749 @@
+{
+  "recipe": {
+    "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+    "baseline_root": "/private/tmp/guandan-v7-v6",
+    "baseline": {
+      "version": "0.8.6b1",
+      "commit": "77190bf",
+      "ruleset_version": 3,
+      "source_sha256": "6c581e13437627856830ba78118d5d8f73d51c4af03cd6ae743b28056ce4bde6"
+    },
+    "selected": {
+      "3": "chain",
+      "4": "adaptive"
+    },
+    "screens": {
+      "3": {
+        "adaptive": {
+          "team": -0.008293112225,
+          "mixed": -0.054984625603,
+          "selection_score": -0.054984625603
+        },
+        "chain": {
+          "team": -0.038179867215,
+          "mixed": -0.037019019226,
+          "selection_score": -0.038179867215
+        },
+        "partner_combined": {
+          "team": -0.008281012054,
+          "mixed": -0.078159081173,
+          "selection_score": -0.078159081173
+        }
+      },
+      "4": {
+        "adaptive": {
+          "team": -0.047738020575,
+          "mixed": -0.007592206803,
+          "selection_score": -0.047738020575
+        },
+        "chain": {
+          "team": -0.057236818222,
+          "mixed": -0.078700453486,
+          "selection_score": -0.078700453486
+        },
+        "partner_combined": {
+          "team": -0.060040387138,
+          "mixed": -0.016003867853,
+          "selection_score": -0.060040387138
+        }
+      }
+    },
+    "development_pairs_per_suite": 32,
+    "holdout": {
+      "3": {
+        "team_start": 202000,
+        "mixed_start": 203000,
+        "pairs_each": 240,
+        "iterations": 256
+      },
+      "4": {
+        "team_start": 202240,
+        "mixed_start": 203240,
+        "pairs_each": 240,
+        "iterations": 768
+      }
+    },
+    "full": {
+      "3": {
+        "seed_start": 204000,
+        "pairs": 24
+      },
+      "4": {
+        "seed_start": 204024,
+        "pairs": 24
+      }
+    },
+    "promotion": "both independent paired 95% lower bounds > 0 and each mixed companion mean >= 0; serial clock and complete-match legality gates",
+    "sampling": "fixed once; no appended holdout seeds"
+  },
+  "results": {
+    "3": {
+      "selected": "chain",
+      "clock_passed": true,
+      "team": {
+        "config": {
+          "baseline_root": "/private/tmp/guandan-v7-v6",
+          "baseline_sha": "6c581e13437627856830ba78118d5d8f73d51c4af03cd6ae743b28056ce4bde6",
+          "suite": "dev",
+          "variant": "chain",
+          "mode": "fixed",
+          "difficulty": 3,
+          "deals": 240,
+          "seed_start": 202000,
+          "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+          "fixed_iterations": 256,
+          "match_states": true,
+          "objective": "ruleset3-match-continuation-v1",
+          "score_interpretation": "empirical proxy future-match utility; not observed full-match win rate"
+        },
+        "workers": 8,
+        "python": "3.10.20",
+        "platform": "macOS-27.0-arm64-arm-64bit",
+        "elapsed_seconds": 3842.8211497908924,
+        "pairs": 240,
+        "games": 480,
+        "mean_paired_gain": -0.006293560077,
+        "gain_confidence_95": [
+          -0.031254945395,
+          0.018926917535
+        ],
+        "strength_gate_passed": false,
+        "head_win_rate": 0.4979166666666667,
+        "budget_gate_passed": true,
+        "by_level": {
+          "2": {
+            "games": 160,
+            "mean_gain": 0.00143380849,
+            "head_win_rate": 0.5125,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "9": {
+            "games": 160,
+            "mean_gain": 0.000278357263,
+            "head_win_rate": 0.50625,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "14": {
+            "games": 160,
+            "mean_gain": -0.020592845985,
+            "head_win_rate": 0.475,
+            "a_attempts": 120,
+            "a_successes": 37,
+            "a_success_rate": 0.30833333333333335,
+            "opponent_a_failures": 80,
+            "a_utility_win_rate": 0.23125
+          }
+        },
+        "by_companion": {}
+      },
+      "mixed": {
+        "config": {
+          "baseline_root": "/private/tmp/guandan-v7-v6",
+          "baseline_sha": "6c581e13437627856830ba78118d5d8f73d51c4af03cd6ae743b28056ce4bde6",
+          "suite": "mixed",
+          "variant": "chain",
+          "mode": "fixed",
+          "difficulty": 3,
+          "deals": 240,
+          "seed_start": 203000,
+          "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+          "fixed_iterations": 256,
+          "match_states": true,
+          "objective": "ruleset3-match-continuation-v1",
+          "score_interpretation": "empirical proxy future-match utility; not observed full-match win rate"
+        },
+        "workers": 8,
+        "python": "3.10.20",
+        "platform": "macOS-27.0-arm64-arm-64bit",
+        "elapsed_seconds": 2001.2762736252043,
+        "pairs": 240,
+        "games": 480,
+        "mean_paired_gain": 0.011835806566,
+        "gain_confidence_95": [
+          -0.007038195351,
+          0.031279365002
+        ],
+        "strength_gate_passed": false,
+        "head_win_rate": 0.5208333333333334,
+        "budget_gate_passed": true,
+        "by_level": {
+          "2": {
+            "games": 160,
+            "mean_gain": -0.00101515111,
+            "head_win_rate": 0.49375,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "9": {
+            "games": 160,
+            "mean_gain": 0.006146653202,
+            "head_win_rate": 0.53125,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "14": {
+            "games": 160,
+            "mean_gain": 0.030375917606,
+            "head_win_rate": 0.5375,
+            "a_attempts": 120,
+            "a_successes": 35,
+            "a_success_rate": 0.2916666666666667,
+            "opponent_a_failures": 90,
+            "a_utility_win_rate": 0.21875
+          }
+        },
+        "by_companion": {
+          "0": {
+            "pairs": 80,
+            "games": 160,
+            "mean_paired_gain": 0.017779762989,
+            "gain_confidence_95": [
+              -0.001933834689,
+              0.042335043343
+            ],
+            "strength_gate_passed": false,
+            "head_win_rate": 0.51875,
+            "budget_gate_passed": true,
+            "by_level": {
+              "2": {
+                "games": 54,
+                "mean_gain": -0.002418725531,
+                "head_win_rate": 0.48148148148148145,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "9": {
+                "games": 52,
+                "mean_gain": 0.004496155992,
+                "head_win_rate": 0.5192307692307693,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "14": {
+                "games": 54,
+                "mean_gain": 0.05076987306,
+                "head_win_rate": 0.5555555555555556,
+                "a_attempts": 40,
+                "a_successes": 11,
+                "a_success_rate": 0.275,
+                "opponent_a_failures": 32,
+                "a_utility_win_rate": 0.2037037037037037
+              }
+            },
+            "by_companion": {}
+          },
+          "1": {
+            "pairs": 80,
+            "games": 160,
+            "mean_paired_gain": 0.02090842731,
+            "gain_confidence_95": [
+              -0.012541103759,
+              0.056692579033
+            ],
+            "strength_gate_passed": false,
+            "head_win_rate": 0.5375,
+            "budget_gate_passed": true,
+            "by_level": {
+              "2": {
+                "games": 54,
+                "mean_gain": 0.006149539017,
+                "head_win_rate": 0.5370370370370371,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "9": {
+                "games": 54,
+                "mean_gain": 0.003527516207,
+                "head_win_rate": 0.5185185185185185,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "14": {
+                "games": 52,
+                "mean_gain": 0.054284372836,
+                "head_win_rate": 0.5576923076923077,
+                "a_attempts": 39,
+                "a_successes": 9,
+                "a_success_rate": 0.23076923076923078,
+                "opponent_a_failures": 32,
+                "a_utility_win_rate": 0.17307692307692307
+              }
+            },
+            "by_companion": {}
+          },
+          "2": {
+            "pairs": 80,
+            "games": 160,
+            "mean_paired_gain": -0.003180770601,
+            "gain_confidence_95": [
+              -0.042000156531,
+              0.036079908614
+            ],
+            "strength_gate_passed": false,
+            "head_win_rate": 0.50625,
+            "budget_gate_passed": true,
+            "by_level": {
+              "2": {
+                "games": 52,
+                "mean_gain": -0.00699784819,
+                "head_win_rate": 0.46153846153846156,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "9": {
+                "games": 54,
+                "mean_gain": 0.01035515788,
+                "head_win_rate": 0.5555555555555556,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "14": {
+                "games": 54,
+                "mean_gain": -0.013040994737,
+                "head_win_rate": 0.5,
+                "a_attempts": 41,
+                "a_successes": 15,
+                "a_success_rate": 0.36585365853658536,
+                "opponent_a_failures": 26,
+                "a_utility_win_rate": 0.2777777777777778
+              }
+            },
+            "by_companion": {}
+          }
+        }
+      },
+      "full": {
+        "config": {
+          "baseline_root": "/private/tmp/guandan-v7-v6",
+          "baseline_sha": "6c581e13437627856830ba78118d5d8f73d51c4af03cd6ae743b28056ce4bde6",
+          "suite": "full",
+          "variant": "chain",
+          "mode": "fixed",
+          "difficulty": 3,
+          "deals": 24,
+          "seed_start": 204000,
+          "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+          "fixed_iterations": 256,
+          "match_states": true,
+          "objective": "observed-full-match-outcome",
+          "score_interpretation": "observed complete-match win/loss"
+        },
+        "workers": 8,
+        "python": "3.10.20",
+        "platform": "macOS-27.0-arm64-arm-64bit",
+        "elapsed_seconds": 5210.573924124939,
+        "pairs": 24,
+        "games": 48,
+        "mean_paired_gain": 0.166666666667,
+        "gain_confidence_95": [
+          -0.125,
+          0.416666666667
+        ],
+        "strength_gate_passed": false,
+        "head_win_rate": 0.5208333333333334,
+        "budget_gate_passed": true,
+        "by_level": {
+          "2": {
+            "games": 48,
+            "mean_gain": 0.166666666667,
+            "head_win_rate": 0.5208333333333334,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "9": {
+            "games": 0,
+            "mean_gain": null,
+            "head_win_rate": null,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "14": {
+            "games": 0,
+            "mean_gain": null,
+            "head_win_rate": null,
+            "a_attempts": 0,
+            "a_successes": 0,
+            "a_success_rate": null,
+            "opponent_a_failures": 0,
+            "a_utility_win_rate": null
+          }
+        },
+        "by_companion": {}
+      },
+      "eligible_for_default": false
+    },
+    "4": {
+      "selected": "adaptive",
+      "clock_passed": true,
+      "team": {
+        "config": {
+          "baseline_root": "/private/tmp/guandan-v7-v6",
+          "baseline_sha": "6c581e13437627856830ba78118d5d8f73d51c4af03cd6ae743b28056ce4bde6",
+          "suite": "dev",
+          "variant": "adaptive",
+          "mode": "fixed",
+          "difficulty": 4,
+          "deals": 240,
+          "seed_start": 202240,
+          "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+          "fixed_iterations": 768,
+          "match_states": true,
+          "objective": "ruleset3-match-continuation-v1",
+          "score_interpretation": "empirical proxy future-match utility; not observed full-match win rate"
+        },
+        "workers": 8,
+        "python": "3.10.20",
+        "platform": "macOS-27.0-arm64-arm-64bit",
+        "elapsed_seconds": 11107.508130584145,
+        "pairs": 240,
+        "games": 480,
+        "mean_paired_gain": -0.148053566215,
+        "gain_confidence_95": [
+          -0.184207032408,
+          -0.115186642413
+        ],
+        "strength_gate_passed": false,
+        "head_win_rate": 0.35,
+        "budget_gate_passed": true,
+        "by_level": {
+          "2": {
+            "games": 160,
+            "mean_gain": -0.054401040831,
+            "head_win_rate": 0.35625,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "9": {
+            "games": 160,
+            "mean_gain": -0.053442288689,
+            "head_win_rate": 0.4,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "14": {
+            "games": 160,
+            "mean_gain": -0.336317369125,
+            "head_win_rate": 0.29375,
+            "a_attempts": 120,
+            "a_successes": 13,
+            "a_success_rate": 0.10833333333333334,
+            "opponent_a_failures": 56,
+            "a_utility_win_rate": 0.08125
+          }
+        },
+        "by_companion": {}
+      },
+      "mixed": {
+        "config": {
+          "baseline_root": "/private/tmp/guandan-v7-v6",
+          "baseline_sha": "6c581e13437627856830ba78118d5d8f73d51c4af03cd6ae743b28056ce4bde6",
+          "suite": "mixed",
+          "variant": "adaptive",
+          "mode": "fixed",
+          "difficulty": 4,
+          "deals": 240,
+          "seed_start": 203240,
+          "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+          "fixed_iterations": 768,
+          "match_states": true,
+          "objective": "ruleset3-match-continuation-v1",
+          "score_interpretation": "empirical proxy future-match utility; not observed full-match win rate"
+        },
+        "workers": 8,
+        "python": "3.10.20",
+        "platform": "macOS-27.0-arm64-arm-64bit",
+        "elapsed_seconds": 5110.817233292153,
+        "pairs": 240,
+        "games": 480,
+        "mean_paired_gain": -0.058842797681,
+        "gain_confidence_95": [
+          -0.087117642424,
+          -0.030229810082
+        ],
+        "strength_gate_passed": false,
+        "head_win_rate": 0.44375,
+        "budget_gate_passed": true,
+        "by_level": {
+          "2": {
+            "games": 160,
+            "mean_gain": -0.026394697995,
+            "head_win_rate": 0.43125,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "9": {
+            "games": 160,
+            "mean_gain": -0.028514412257,
+            "head_win_rate": 0.425,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "14": {
+            "games": 160,
+            "mean_gain": -0.121619282789,
+            "head_win_rate": 0.475,
+            "a_attempts": 120,
+            "a_successes": 26,
+            "a_success_rate": 0.21666666666666667,
+            "opponent_a_failures": 76,
+            "a_utility_win_rate": 0.1625
+          }
+        },
+        "by_companion": {
+          "0": {
+            "pairs": 80,
+            "games": 160,
+            "mean_paired_gain": -0.078775124116,
+            "gain_confidence_95": [
+              -0.138922647514,
+              -0.021530565265
+            ],
+            "strength_gate_passed": false,
+            "head_win_rate": 0.40625,
+            "budget_gate_passed": true,
+            "by_level": {
+              "2": {
+                "games": 54,
+                "mean_gain": -0.042432072504,
+                "head_win_rate": 0.35185185185185186,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "9": {
+                "games": 52,
+                "mean_gain": -0.025176071958,
+                "head_win_rate": 0.4230769230769231,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "14": {
+                "games": 54,
+                "mean_gain": -0.166732077807,
+                "head_win_rate": 0.4444444444444444,
+                "a_attempts": 40,
+                "a_successes": 4,
+                "a_success_rate": 0.1,
+                "opponent_a_failures": 27,
+                "a_utility_win_rate": 0.07407407407407407
+              }
+            },
+            "by_companion": {}
+          },
+          "1": {
+            "pairs": 80,
+            "games": 160,
+            "mean_paired_gain": -0.072749839335,
+            "gain_confidence_95": [
+              -0.123489474539,
+              -0.029366964085
+            ],
+            "strength_gate_passed": false,
+            "head_win_rate": 0.44375,
+            "budget_gate_passed": true,
+            "by_level": {
+              "2": {
+                "games": 54,
+                "mean_gain": -0.018289217309,
+                "head_win_rate": 0.5,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "9": {
+                "games": 54,
+                "mean_gain": -0.041393391223,
+                "head_win_rate": 0.4074074074074074,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "14": {
+                "games": 52,
+                "mean_gain": -0.161867566015,
+                "head_win_rate": 0.4230769230769231,
+                "a_attempts": 39,
+                "a_successes": 11,
+                "a_success_rate": 0.28205128205128205,
+                "opponent_a_failures": 22,
+                "a_utility_win_rate": 0.21153846153846154
+              }
+            },
+            "by_companion": {}
+          },
+          "2": {
+            "pairs": 80,
+            "games": 160,
+            "mean_paired_gain": -0.025003429591,
+            "gain_confidence_95": [
+              -0.064052298126,
+              0.013637314506
+            ],
+            "strength_gate_passed": false,
+            "head_win_rate": 0.48125,
+            "budget_gate_passed": true,
+            "by_level": {
+              "2": {
+                "games": 52,
+                "mean_gain": -0.018157731334,
+                "head_win_rate": 0.4423076923076923,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "9": {
+                "games": 54,
+                "mean_gain": -0.018850131357,
+                "head_win_rate": 0.4444444444444444,
+                "a_attempts": null,
+                "a_successes": null,
+                "a_success_rate": null,
+                "opponent_a_failures": null,
+                "a_utility_win_rate": null
+              },
+              "14": {
+                "games": 54,
+                "mean_gain": -0.037748881702,
+                "head_win_rate": 0.5555555555555556,
+                "a_attempts": 41,
+                "a_successes": 11,
+                "a_success_rate": 0.2682926829268293,
+                "opponent_a_failures": 27,
+                "a_utility_win_rate": 0.2037037037037037
+              }
+            },
+            "by_companion": {}
+          }
+        }
+      },
+      "full": {
+        "config": {
+          "baseline_root": "/private/tmp/guandan-v7-v6",
+          "baseline_sha": "6c581e13437627856830ba78118d5d8f73d51c4af03cd6ae743b28056ce4bde6",
+          "suite": "full",
+          "variant": "adaptive",
+          "mode": "fixed",
+          "difficulty": 4,
+          "deals": 24,
+          "seed_start": 204024,
+          "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+          "fixed_iterations": 768,
+          "match_states": true,
+          "objective": "observed-full-match-outcome",
+          "score_interpretation": "observed complete-match win/loss"
+        },
+        "workers": 8,
+        "python": "3.10.20",
+        "platform": "macOS-27.0-arm64-arm-64bit",
+        "elapsed_seconds": 12708.739652125165,
+        "pairs": 24,
+        "games": 48,
+        "mean_paired_gain": -0.958333333333,
+        "gain_confidence_95": [
+          -1.0,
+          -0.875
+        ],
+        "strength_gate_passed": false,
+        "head_win_rate": 0.2916666666666667,
+        "budget_gate_passed": true,
+        "by_level": {
+          "2": {
+            "games": 48,
+            "mean_gain": -0.958333333333,
+            "head_win_rate": 0.2916666666666667,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "9": {
+            "games": 0,
+            "mean_gain": null,
+            "head_win_rate": null,
+            "a_attempts": null,
+            "a_successes": null,
+            "a_success_rate": null,
+            "opponent_a_failures": null,
+            "a_utility_win_rate": null
+          },
+          "14": {
+            "games": 0,
+            "mean_gain": null,
+            "head_win_rate": null,
+            "a_attempts": 0,
+            "a_successes": 0,
+            "a_success_rate": null,
+            "opponent_a_failures": 0,
+            "a_utility_win_rate": null
+          }
+        },
+        "by_companion": {}
+      },
+      "eligible_for_default": false
+    }
+  },
+  "clock_passed": true,
+  "interpretation": "single-round continuation utility and observed full-match results are distinct; mixed agents are human execution proxies"
+}

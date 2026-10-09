@@ -3,15 +3,16 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.containers import Center, Vertical, VerticalScroll
-from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Static
 
 from ...storage import load_history_detail, load_history_list
 from ...ui.history import HISTORY_COLUMNS, history_entry_cells
+from ...ui.replay import prepare_replay
 from .error import ErrorModal
+from .storage_screen import StorageScreen
 
 
-class HistoryScreen(Screen):
+class HistoryScreen(StorageScreen):
     """历史战绩屏（显示最近对局记录）。"""
 
     CSS = """
@@ -54,17 +55,17 @@ class HistoryScreen(Screen):
         super().__init__()
         self._history: list[dict] = []
         self._history_error = ""
+        self._loaded = False
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
 
-        try:
-            self._history = load_history_list(limit=20)
-        except OSError as exc:
-            self._history_error = str(exc)
-            self._history = []
-
-        if self._history_error:
+        if not self._loaded:
+            with Center(), Vertical(id="hist-box"):
+                yield Static("📊 历史战绩", id="hist-title")
+                yield Static("读取历史记录中…", id="hist-hint")
+                yield Button("← 返回", id="btn-back")
+        elif self._history_error:
             with Center(), Vertical(id="hist-box"):
                 yield Static("📊 历史战绩", id="hist-title")
                 yield Static("无法读取历史记录", id="hist-empty")
@@ -100,12 +101,26 @@ class HistoryScreen(Screen):
     def on_mount(self) -> None:
         self.query_one("#hist-title", Static).styles.text_style = "bold"
         self.query_one("#hist-title", Static).styles.color = "yellow"
+        self._start_storage(lambda: load_history_list(limit=20), self._history_loaded)
+
+    def _history_loaded(self, payload: object) -> None:
+        data, error = payload if isinstance(payload, tuple) else (None, ValueError("历史结果无效"))
+        self._loaded = True
+        self._history_error = str(error) if error else ""
+        self._history = data if data is not None else []
+        self.refresh(recompose=True)
+
+    def _populate_table(self) -> None:
         tables = list(self.query(DataTable))
         if tables:
             table = tables[0]
             table.add_columns(*HISTORY_COLUMNS)
             for entry in self._history:
                 table.add_row(*self._entry_cells(entry))
+
+    async def recompose(self) -> None:
+        await super().recompose()
+        self._populate_table()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-replay":
@@ -118,6 +133,8 @@ class HistoryScreen(Screen):
         self.action_replay()
 
     def action_replay(self) -> None:
+        if self._storage_busy:
+            return
         if not self._history:
             self.app.push_screen(ErrorModal("暂无可查看的历史战绩。"))
             return
@@ -126,10 +143,13 @@ class HistoryScreen(Screen):
         if not 0 <= row < len(self._history):
             self.app.push_screen(ErrorModal("请先选择一局历史战绩。"))
             return
-        try:
-            detail = load_history_detail(self._history[row]["game_id"])
-        except OSError as exc:
-            self.app.push_screen(ErrorModal(str(exc), title="无法读取回放"))
+        game_id = self._history[row]["game_id"]
+        self._start_storage(lambda: prepare_replay(load_history_detail(game_id)), self._replay_loaded)
+
+    def _replay_loaded(self, payload: object) -> None:
+        detail, error = payload if isinstance(payload, tuple) else (None, ValueError("回放结果无效"))
+        if error is not None:
+            self.app.push_screen(ErrorModal(str(error), title="无法读取回放"))
             return
         if detail is None:
             self.app.push_screen(ErrorModal("这局历史记录无法读取。", title="无法读取回放"))
@@ -137,7 +157,8 @@ class HistoryScreen(Screen):
         from .replay import ReplayScreen
 
         try:
-            self.app.push_screen(ReplayScreen(detail))
+            history, cursor = detail
+            self.app.push_screen(ReplayScreen(history, cursor=cursor))
         except ValueError as exc:
             self.app.push_screen(ErrorModal(str(exc), title="回放数据无效"))
         except Exception as exc:  # pragma: no cover - defensive: never kill the app

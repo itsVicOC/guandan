@@ -56,3 +56,5 @@ build/
 # 临时调试文件
 scratch/
 *.log
+# Versioned research exports are attachments; keep their index in the repository.
+benchmarks/archives/

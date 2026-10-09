@@ -12,7 +12,7 @@ import copy
 import math
 import time
 from collections import Counter
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
 from ...engine.card import RANK_A, Card
 from ...engine.hand import Pattern, PatternType, comparison_rank
@@ -206,6 +206,9 @@ def simulate_state(
     copy_state: bool = True,
     deadline: float | None = None,
     styles: Sequence[str] | None = None,
+    partner_adaptation: bool = False,
+    reference_rollout_turns: int = 0,
+    reference_memo: dict | None = None,
 ) -> float:
     """Roll out a state and return its value from ``root_player``'s team view."""
     sim_state = copy.deepcopy(state) if copy_state else state
@@ -217,12 +220,22 @@ def simulate_state(
         if deadline is not None and time.perf_counter() >= deadline:
             break
         player = sim_state.current_player()
-        pattern = _rollout_select_pattern(
-            sim_state,
-            player,
-            rollout_strategy_level=rollout_strategy_level,
-            **({"style": styles[player]} if styles is not None else {}),
-        )
+        policy_options: dict[str, Any] = {}
+        if styles is not None:
+            policy_options["style"] = styles[player]
+        if partner_adaptation:
+            policy_options["partner_adaptation"] = True
+        if turn_count < reference_rollout_turns:
+            from ..rollout_reference import reference_pattern
+
+            pattern = reference_pattern(sim_state, player, reference_memo)
+        else:
+            pattern = _rollout_select_pattern(
+                sim_state,
+                player,
+                rollout_strategy_level=rollout_strategy_level,
+                **policy_options,
+            )
 
         try:
             if pattern is None:
@@ -253,6 +266,7 @@ def _rollout_select_pattern(
     *,
     rollout_strategy_level: int,
     style: str = "balanced",
+    partner_adaptation: bool = False,
 ) -> Optional[Pattern]:
     """MCTS rollout 的轻量出牌策略。
 
@@ -262,6 +276,9 @@ def _rollout_select_pattern(
     finish = _legal_finish_pattern(state, player, max_cards=10)
     if finish is not None:
         return finish
+
+    if partner_adaptation:
+        return _adaptive_rollout_pattern(state, player, style=style)
 
     context = PublicTacticalContext.from_state(state, player) if rollout_strategy_level >= 3 else None
     if (
@@ -315,6 +332,57 @@ def _rollout_select_pattern(
             return None
         return basic
     return _smallest_rollout_pattern(state, player)
+
+
+def _adaptive_rollout_pattern(state: GameState, player: int, *, style: str) -> Optional[Pattern]:
+    """Actor-local execution preferences, including ordinary responses and pass.
+
+    No nested search or recursive hand planner is used in a continuation.
+    Finishing and urgent blocks take precedence over style preferences.
+    """
+    urgency = opponent_min_cards(state, player)
+    top = current_top_player(state)
+    partner_top = top is not None and is_teammate(top, player)
+    table = state.table[-1] if state.table else None
+    structured = not state.table or state.hand_size(player) <= 10 or (table is not None and table.type not in (PatternType.SINGLE, PatternType.PAIR, PatternType.TRIPLE))
+    candidates = enumerate_legal_patterns(state, player) if structured else [p for p in _basic_patterns(state.hands[player], state.wild_card) + _fast_bomb_patterns(state.hands[player], state.wild_card) if table is not None and p.can_be_played_on(table, level=state.level)]
+    if not candidates:
+        return None
+    context = PublicTacticalContext.from_state(state, player) if (not state.table or partner_top or 0 < urgency <= 3) else None
+    counts = Counter(card.rank for card in state.hands[player])
+
+    def cost(pattern: Pattern) -> float:
+        value = _rollout_material_cost(pattern, counts, state.level, urgency)
+        if urgency > 3:
+            if style == "conservative" and is_bomb_pattern(pattern):
+                value += 4.0
+            elif style == "shedding":
+                value -= 0.25 * len(pattern.cards)
+        if context is not None:
+            value += context.lead_adjustment(pattern) if not state.table else 12.0 * context.finish_risk(pattern)
+        return value
+
+    if partner_top and context is not None and not context.partner_needs_cover():
+        # A shedding player may make a controlled two-play exit; conservative
+        # partners retain initiative. Neither assumes another hand is visible.
+        takeovers = [p for p in candidates if context.can_takeover_in_two(p, remaining_cards(state.hands[player], p.cards))]
+        if style != "shedding" or not takeovers:
+            return None
+        return min(takeovers, key=cost)
+    if state.table and urgency > 5:
+        non_bombs = [p for p in candidates if not is_bomb_pattern(p)]
+        if not non_bombs:
+            # Preserve a sole bomb in ordinary long-hand play for all styles;
+            # a shedding actor can spend it to leave one legal final group.
+            if style != "shedding":
+                return None
+            closers = [p for p in candidates if (rest := remaining_cards(state.hands[player], p.cards)) and len(rest) <= 10 and find_complete_pattern(list(rest), state.wild_card) is not None]
+            return min(closers, key=cost) if closers else None
+        candidates = non_bombs
+    best = min(candidates, key=cost)
+    if state.table and urgency > 5 and style == "conservative" and cost(best) > 1.2:
+        return None
+    return best
 
 
 def _structured_rollout_pattern(

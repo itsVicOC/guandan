@@ -1,0 +1,41 @@
+{
+  "namespace": "urgent-blocking-v12b",
+  "counts": {
+    "dev-team": 32,
+    "dev-mixed": 32,
+    "holdout": 240,
+    "mixed": 240,
+    "full": 48
+  },
+  "weights": [
+    6,
+    12
+  ],
+  "mode": "clock",
+  "workers": 1,
+  "baseline_root": "/private/tmp/guandan-urgent-v12-baseline",
+  "candidate_root": "/private/tmp/guandan-urgent-v12-candidate",
+  "baseline_sha256": "0fc39f1dcf2ab652c4c218061760f9301b2b003b29f588c84c346b2d194aa8d0",
+  "candidate_sha256": "c6425214bbde66c36045b485ae5a479ffd41a76dab78d46f0c1261de5569e49a",
+  "harness_sha256": "879fb0dcf2079d8e96c7ef8961221f1438767ecb090c1988c6a0c12d3cb5dc5b",
+  "selection": "largest minimum positive team/mixed development gain; timing must pass",
+  "promotion": "team/mixed 95% paired lower bounds >0; all companions >=0; full lower bound >50%; replay/clock/quality pass",
+  "tiers": [
+    {
+      "tier": 3,
+      "weight": 12,
+      "development_passed": false,
+      "score": -0.004194896325,
+      "eligible_for_default": false,
+      "independent_acceptance": "not_run_development_failed"
+    },
+    {
+      "tier": 4,
+      "weight": 12,
+      "development_passed": false,
+      "score": -0.013998679422,
+      "eligible_for_default": false,
+      "independent_acceptance": "not_run_development_failed"
+    }
+  ]
+}

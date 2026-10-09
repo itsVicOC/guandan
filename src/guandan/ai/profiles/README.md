@@ -1,5 +1,13 @@
 # AI Profiles
 
+职业和戴长胜支持默认关闭的 `urgent_blocking` 和默认 12 的 `urgent_blocking_weight`。只在对手报单、报双、报三时调整根战术参考，使用公共多重集合概率和引擎行动顺序；超时、信息不足和没有可替换候选时回退。新战术不改变续局及收益保护。独立生产时钟验收见 `docs/ai-urgent-blocking.md`。
+
+职业和戴长胜支持默认关闭的 `reference_refinement`、默认 0 的 `reference_rollout_turns`。前者保留半数预算，对轻量搜索挑战动作与战术参考做最多八对共同世界高手复核；不足六对完整样本时回退。后者为全池续局研究接口，不与风格适配组合。生产手牌规划的整数多重集合实现保持原估值及单层缓存；冻结对赛与串行性能记录见 `docs/ai-continuation-research.md`。
+
+职业和戴长胜另有默认关闭的 `action_ranker`。它加载 `action_ranker_v1.json` 中的线性权重，仅按自身手牌和公开信息提名一个根候选，最终仍经过共同世界搜索和收益保护。模型须匹配第 3 版规则、特征顺序和现有整场估值指纹；缺失、异常或超时均保留原候选。训练与验收流程见 `docs/ai-action-ranking.md`。
+
+职业和戴长胜支持 `partner_adaptation`、`response_chain`，初始默认关闭。前者为共同世界选定公开历史适配的执行风格；后者在原预算内检查实际回应和反压，只影响候选保留。独立验收与研究记录见 `docs/ai-partner-optimization.md`。
+
 职业档使用 `guandan.ai.mcts.MCTS_CONFIG`；戴长胜档加载 `dachangsheng.json`。难度编号、`select_pattern` 接口及存档格式不变。
 
 两档均全局面采用配对根动作评估。职业主搜索最多 256 次动作评估，常规/关键时钟预算为 1000/2000ms，最多 6 个主要候选；戴长胜为 768 次、2000/5000ms 和 10 个主要候选，另在全场最多 12 张时尝试限时团队残局搜索。实体牌型变体、过牌及快速战术参考动作可扩充根候选。戴长胜采用牌组规划的截断估值，整段预算用于一次根动作比较。`reference_iterations` 默认为 0，保留正值作为旧的嵌套职业搜索实验开关。搜索会在时钟或迭代上限处结束，以实际 `SearchResult.simulations` 为准。

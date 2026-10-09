@@ -1,0 +1,1871 @@
+{
+  "purpose": "default policy parity, fixed work; no strength claim",
+  "baseline_fixture_sha256": "ae96af77690c34c67c0d05895f5a73d682d20ed918364451cb6a277a50907c54",
+  "evaluation_manifest": {
+    "schema": 1,
+    "recipe": {},
+    "files": {
+      "pyproject.toml": "078310ba799515a0fbb9076d9a66e163c9c2dac52c46e489500d08247fe328ca",
+      "scripts/ablate_action_ranker.py": "b11d5e44367241ad6757065e3eb69f5931b98c460879b3dca350e183ad52de59",
+      "scripts/action_value_baseline.py": "2ff1a5fe7790dedcacf9c10c6bfb402a06c0270bf78d0be9a1b99933b2534d79",
+      "scripts/ai_action_ranker_validation.py": "383a3b274fe14e85eca327a71863bbea940830dd52619ad67e1123c5ace66451",
+      "scripts/ai_budget_refinement_trial.py": "209ad9786e2c1b5c1298354850103af70e57dcff278d023cc789e395981a331c",
+      "scripts/ai_comprehensive_validation.py": "293356580595c0a17dccc5a4e612dd199703f135630dfe559a603fada3b328cc",
+      "scripts/ai_confidence_trial.py": "853ee1ef502c03e148225ba902f3cf0e7bea48b0340e12704db70eef33a2738b",
+      "scripts/ai_continuation_diagnostic.py": "2e3249226002eaac873cc4e5462d318aa0695471cb132c07d9d587e8154f2bcb",
+      "scripts/ai_continuation_trial.py": "fa88a928bc86ab98fa29e8c6e28781170a07fda97c6879069d5c3eecde9003be",
+      "scripts/ai_frozen_worker.py": "87915c703f69bca84419a92f7c8deab8e0fd3a41fb9b489395f56210cf881c4d",
+      "scripts/ai_hand_plan_bitmask.py": "ffeda44d554c51e1f3bbbd7d11924adbbbfddcbe27de86877c2a3408918cda08",
+      "scripts/ai_head_race.py": "ac977ae7f7afdb66cd37b3822f09a6a513898be1b528b01d1e9a93032bc08d9d",
+      "scripts/ai_manifest.py": "db283d13b266ab8d9a305f3915d29c84342bf2b2fa4dbf4ac9271b1729874778",
+      "scripts/ai_packed_clock.py": "4c91bce198080843d32ff5b14062eb9f85a3a21a82e31c48c092de6aadeb3abf",
+      "scripts/ai_partner_validation.py": "8bccb128bb796114be8dc6622f940a683d6187347f7918522d899fab247216b3",
+      "scripts/ai_placed_value_audit.py": "505e02e9706b41565e29e31573d49d89efc456599b965a090ce4e74efba0c60c",
+      "scripts/ai_replay_trial.py": "9e8289a429c9c17e5d56a89773cbc60d1fcfe01f616af915c270c5f2297f5860",
+      "scripts/ai_research_archive.py": "fe1f38dcba259b57e3cce0601c4db345164eed1ca7c5997f789995c0b48b3ea9",
+      "scripts/ai_rpc.py": "20d5ae866a9d5bf457b4d0da58ce07c9206c13abc098c9446e6901c180066306",
+      "scripts/ai_team_trial.py": "80ef9758f2346d2ce9a378d077c39f79c0051a76d611c7af1d5b115894101344",
+      "scripts/ai_urgent_blocking_trial.py": "df944cb35e9f7cce48c62287b8d3724b78c12481a19d6b18f602fc725edecb26",
+      "scripts/ai_urgent_worker.py": "5d3d8cf50f2584069ea55d1bbc20100652e3fa19488d0b378805eb48d2dbf311",
+      "scripts/ai_v6_clock.py": "34463b8e5d5df7584020917e19f6cfe76a1d93f532e126d70bcae4537c2d6832",
+      "scripts/ai_v6_report.py": "623c4ee58aac0f20da6421965f3e3ce1657edac05f9e5857ddd4346b7249bb30",
+      "scripts/capture_readme_screenshots.py": "7968e212228c66fb9f2c6a49091dcd3998443308eaf5c3483e2d3ba4a5319e27",
+      "scripts/capture_visual_qa.py": "700dfa611e8e10b2cba2af73a4c13e5a00ed4055a3b1cf291d216ff4ab90e4a9",
+      "scripts/check_coverage.py": "f463d65cc847a53c48244b4149a9388fa526b224dd5dd8d63eec06f7bf346c5f",
+      "scripts/fit_action_ranker.py": "cef7637b94a0e969bc6e83660035cb0f27f16365d84b1f9038ebaf628a8d3a5f",
+      "scripts/fit_ai_value.py": "83e57caff2bfbf4f1f0e68020cfe7a661dca93d24613ec0265af4e8cd61dc3d6",
+      "scripts/fit_match_value.py": "a94c28684f086bcbcc29def0b8da4f01e71782766a00a2bbdbe4a762d52fcbbb",
+      "src/guandan/__init__.py": "f23cd4b985cd5cd71d42277aba9626265698729d113a31dd928cf7990ea8db79",
+      "src/guandan/ai/__init__.py": "fd801757d56fa8fccccd4f871a9b60264f60b47c9e178a78e60263436f7e15b8",
+      "src/guandan/ai/action_ranker.py": "6691292e3520c8eb1f7a316c8f25b11f0e1340b76292632c69342b8a5ed56edc",
+      "src/guandan/ai/arena.py": "9ce775779203cb03bae04ea4f4235e1d1e09ce49696316f07ce7ff38a86b8c55",
+      "src/guandan/ai/belief.py": "a1c9756b9006d1b48f3ed64c866495b7d9397824889439afd9f65c7b2fbc5313",
+      "src/guandan/ai/benchmark.py": "bb8466cf9a75fda09cc92cf0d1418ba67ea8ba3788fdb073cef990946bd6be68",
+      "src/guandan/ai/candidates.py": "31000bdf6eb194a452d7a6c30e34d9d49c90d808b89c0da8cd05f4e2d68403a9",
+      "src/guandan/ai/config.py": "0b7c719fad5f0dcfeabab2d9dcda02841f3861c5794d3daff6c4ad50137ecfb1",
+      "src/guandan/ai/context.py": "27ce470837033aef4b091cb42f6f963283c2286404a6c5f8498e4a0d195e7250",
+      "src/guandan/ai/diagnostics.py": "3a1b52ca20d14adbef7b3533ca0a1416538a50eafc1ae22a54a6fa17ae7cdd85",
+      "src/guandan/ai/endgame.py": "f5cd477f73de9d06e680ab1315212bcde0ec0cb90af6a964f5a54ec8dd7352b3",
+      "src/guandan/ai/greedy.py": "eb591a494af74749a846df9ebfe67c411ca2e177273bc6422001ccd351ea1511",
+      "src/guandan/ai/hand_plan.py": "65b767201b7b5c1843c50e4bc40b674a5ae9c2c43f937db2c492fa4edc88fcf3",
+      "src/guandan/ai/lead_chain.py": "ce564835703f932ca36ab18541594bf169c702dac19a9efbf5d79bb149f9692f",
+      "src/guandan/ai/match_value.py": "48db525d3635403edaefda8bf40a5f466e9879b8be0acfabc6fa4abb777dfd38",
+      "src/guandan/ai/mcts/__init__.py": "15b0349ec9267c3f910d2ee8f9d1a566da5970f32be0cf705b9e19111a4c9e70",
+      "src/guandan/ai/mcts/determinize.py": "20b0453d5b021de307efdcc384f4bc3c33c1723841b7f5e3f90aaf01279f7f16",
+      "src/guandan/ai/mcts/endgame_solver.py": "fb8ab581ecd7b53f43aa2793eac7aee975e32892bea9176b174652e58053d8a1",
+      "src/guandan/ai/mcts/information_set.py": "930162a9a6d7258ff4cf8ab1af4463b108a243d5cecc24d60ff123f4ba3a3a3a",
+      "src/guandan/ai/mcts/node.py": "c1f15844bcfe924d7ad3702a11069f078d5fdbcbdb4e6af21fef6887a8b98a08",
+      "src/guandan/ai/mcts/root_search.py": "9e3183507c7302ea9d380b90069e4f0980096acc21ad7a27368f67488a3b1cff",
+      "src/guandan/ai/mcts/search.py": "590fbb1fb1bb033d55a61d371e19e290e71d4d3c6b223575e33a6ddcc62fc424",
+      "src/guandan/ai/memory.py": "06c439c80d189243a6fc77fb8b60ee7de62968c12102c5481767fd7aa0d6dbe9",
+      "src/guandan/ai/observation.py": "58ff9c7146eee1a73240130f44e19ea3401dbd9058648d3215f65746e10155ad",
+      "src/guandan/ai/partner_model.py": "e9ad5c6114d779f3414478a3f272509a6de95278b3d156bfa0700a3c76965a15",
+      "src/guandan/ai/play.py": "3ca3cf185056d27427249383ddcd766d5b66a4ee575bc9cd8dad69ba9ea86f0b",
+      "src/guandan/ai/profiles/__init__.py": "ad92c33a37aeeac3aee5d089961f3a0b48868c8ccb935f9ba084f2c1bce3fe78",
+      "src/guandan/ai/profiles/action_ranker_v1.json": "f32b49470b2a969f7e33f4d8550ea36f2fda4ba5f52e895e3cfbecb3c9a14cc8",
+      "src/guandan/ai/profiles/dachangsheng.json": "f81f064c8ed1bdce96951779eedd0776103a1bd11115ee11a5540c634bc304c6",
+      "src/guandan/ai/profiles/match_value.json": "d1c027cb92afd356f7c6c2d2da8b06bf5f7a3755c25e28d6c2c54512bc51461c",
+      "src/guandan/ai/response_chain.py": "5d737df5c1cfca6d702f8539c34d3ba695c734313037ed5fd915fb3bea0a1599",
+      "src/guandan/ai/rollout_reference.py": "04a6695c8e72e72e1fb205819bd9b0a897c946bb94a7ef1745a92d3947a8de57",
+      "src/guandan/ai/stochastic.py": "5f18fedad2ab285e5845bfc3fc985be2eb93b9efbe5d25a08c03cbafe8f1d522",
+      "src/guandan/ai/strategies/__init__.py": "85ef86fd1a37284fbdaa6490e9d9ea0a84d73caa42ebd137968832130a2d7aea",
+      "src/guandan/ai/strategies/advanced.py": "0954a36d4e06d0b95c6afb8224870340cb37d196b71a00aca4d6096e6149bc0e",
+      "src/guandan/ai/strategies/dachangsheng.py": "4738664112fd416583d33dc5580b991c0a5125a6de087f6ea800ac9b617c2675",
+      "src/guandan/ai/strategies/intermediate.py": "3096dc6c995b0d4385654006784ac1175128399a93af088953f56aeae922aa1c",
+      "src/guandan/ai/strategies/novice.py": "996ce3ff30fa5e474543d8b56a3e5a21c99afcdc3a2cbd01269dfe33707b225e",
+      "src/guandan/ai/strategies/professional.py": "1764b067a246350b568d31959c1113c0508b2e8f823e66729b68b8e696f58289",
+      "src/guandan/ai/strategy.py": "9c4cc8596f0eb9255a27ac770b0c34ed61429ff6d3380a23079acbc69b1033dd",
+      "src/guandan/ai/tactics.py": "d8a1aee2122f474c3e74a3a48c59f46af1dd32785fac49bca57ff1b4e1d9230f",
+      "src/guandan/ai/tribute.py": "0587b47ccf018ebad9972a33e3acaabea6d3c1c48f2dff235119b9dc3d3e43c9",
+      "src/guandan/ai/tuning.py": "2ad44f44a5e683f0d243da4c49b2287067d259a22783908e4546babf57524b88",
+      "src/guandan/ai/urgent_blocking.py": "9970c21bc8123109d4b65c4f5dbdaae8b41a7a4ff57798972ff5c14e0e69ec83",
+      "src/guandan/ai/valuation.py": "7c9e8015ddbd81e9cbb2c2bb51e18a348a0dd03c4ce706512ca58629238e1295",
+      "src/guandan/cli.py": "24133742c90f5fd80e4858462b7cdb353f904f293773f441fcc43664c8d681fa",
+      "src/guandan/engine/__init__.py": "b0bf500ed54b9f2381e3a02b047d48df003c4d75b8f90eaf9887d29c0552ec78",
+      "src/guandan/engine/card.py": "ee95bc491fc1b2a42105d6a55b64988e5b5bfb3835fd9bf332d5484b211f19f8",
+      "src/guandan/engine/deck.py": "e5bae037c03f2d49e05d9c00f60b25b5d33b710e60a27e90674ff3593f7d50f3",
+      "src/guandan/engine/events.py": "14b2a61eecf637631c4b339d0a7e2f90b73540c1d4c1f5eca10f44a4a7ddff37",
+      "src/guandan/engine/hand.py": "b9036b07607159ed9b639c093c3194b9b43cfd52627de6c8823ce89c0d99c6bf",
+      "src/guandan/engine/replay.py": "c3665981dfbd5f03e7dfe442132a02073a78f2e1e876e1ca73e7649cacc931ef",
+      "src/guandan/engine/rounds.py": "65622b74b983ade09ff10bb86bb76c8fafe7c80e9cdf452582960a53b97a0703",
+      "src/guandan/engine/rules/__init__.py": "e87e8ac3add9d1966c38924306f2497256167ec988f78851f465ec13394d51e7",
+      "src/guandan/engine/rules/comparator.py": "8f97dd2655a9b8b972af250d1f68ed65a1f4ab64963498b153346abc180c6238",
+      "src/guandan/engine/rules/drift.py": "ed1beebe8cb616cfa2498aad59b408ebb84cffbe841279941bf61b9bd53faab2",
+      "src/guandan/engine/rules/patterns.py": "0e88ef93209915f638474496a641cf836e0d0af147085622e3d844b655fa32ed",
+      "src/guandan/engine/rules/scoring.py": "8f6281b7cbe105546ed4d26ade20281f4b7405a789f42ac4f1bf2471bce04913",
+      "src/guandan/engine/rules/tributes.py": "54552b1c383814ff82d8e7c4994a580f3a2895490c8d98409b7bcf0c6c2aa4a9",
+      "src/guandan/engine/state.py": "71016ce2dd460bc16d2dff87a6d348432169ef01a72f919fe29c4a14e5831a58",
+      "src/guandan/engine/trick.py": "3f36e4d0add152aa0e076446549ab9bfbba1be2e6ccdaa535fae2b2f330049df",
+      "src/guandan/gui/__init__.py": "b84673ad948b91b653218bb029f7beafaaffea1fb7c7c38753974d75f6481c94",
+      "src/guandan/gui/app.py": "22beb32c3806b9ba518f2ceb48dfa47a5deadf3f742541700d4213b02a070a94",
+      "src/guandan/gui/cards.py": "57a4b2f28c00286a29a2c02d8dc88aa91459a874295d17fb69e16fbfe0b81373",
+      "src/guandan/gui/replay.py": "c5fa5ff417e350950a52d3879d3b47f6c8dc8c7506f2eb84e0ceca5ddd2a15ba",
+      "src/guandan/gui/storage_page.py": "c81ec2dc58e38baedcd5caba781446b70c8716b1169779f979654f585d453025",
+      "src/guandan/gui/table.py": "8a4407ff958cfaec9252ca8986bcfd1991d4cb7b1c8594f615a1531ec6406944",
+      "src/guandan/gui/theme.py": "e8ebd159283ce6b56032b1ac8e160f38b7dea9d3d3604112d4d9fc0e76a7c555",
+      "src/guandan/gui/widgets.py": "a1d3a2f294d91c9e65ead13498ac8063343ec2268e153d8978501ffb58e42c61",
+      "src/guandan/gui/window.py": "aa2873ff86e5982ce2c307f00a319ffd45bac0277173af64408ce82548ea0214",
+      "src/guandan/gui/workers.py": "ab2f28d55eb5ee2b32e8ed2e3c29ff333b52531c421a6e943a1a024cf9c96645",
+      "src/guandan/storage/__init__.py": "795a99a13f4c0e5d9d53bf1fe9083c1d14bddaa28c220b54e1a376d1e43a243c",
+      "src/guandan/storage/history.py": "c4c134433a8ee1a77e697d8d2379b5f3044233d69e7a5fe7406b6b08a40344f4",
+      "src/guandan/storage/jsonio.py": "547b9049240386747b86100391785b36b3f68b3f9767c6fecc010d58f13ec73e",
+      "src/guandan/storage/locking.py": "d2173428209c1f0a67b03a0873474da82b34dbaa5ae3194305bb4295b546b03a",
+      "src/guandan/storage/maintenance.py": "237f0c6fb2ea25c9dc06207fe94d3af0881581d05323e66aa0c9b2dc17c8396a",
+      "src/guandan/storage/paths.py": "9ffb65a326c95b82b218defcccef08e49dbe6e99f20f392e47b25e5ee9de6bee",
+      "src/guandan/storage/profile.py": "f1f96738681dff48c99149ad51ded372777cf8b82cbb55504b48d5989f315c1a",
+      "src/guandan/storage/savegame.py": "c3f68e8ff74ebce501470f0059e24fb855b7443df8d956313da387dcee8c5eab",
+      "src/guandan/storage/serialization.py": "88234eba32fb1c761bf7cc833c6319fb3ff31093cf25ef6514b8ced394543222",
+      "src/guandan/tui/__init__.py": "82d94fe03602edc3f9cc64b0aa3e53479595073f68d6e53fdf65fc5e293f4dcc",
+      "src/guandan/tui/app.py": "30fd48b39269281c2ed7e2597d4ca9baf9e718d3cad67013fb732f3e392674a4",
+      "src/guandan/tui/layout.py": "0dfd7b1f324a57ae99f2b397c90ae4464db3c591fb758d5559ba7a6c6a64a373",
+      "src/guandan/tui/screens/__init__.py": "13b716e0d987c6e018ee4a00decdee8f9484b5dfbe8d2dd4f95b41882a2ac17e",
+      "src/guandan/tui/screens/confirm.py": "51add4baa91bf3a789681ff18e29dcb1d9b3877b2f94b1ded33123c49a15784d",
+      "src/guandan/tui/screens/difficulty.py": "0439ed768dc163b4889ce1a20cecdb9f0ea0396a50f75fcb632f0ee1d12aa6bf",
+      "src/guandan/tui/screens/error.py": "308c2f4050246a7a39501816e84ff997d8fdf55201d38d0afc7445231b760c8a",
+      "src/guandan/tui/screens/game.py": "142f8fb5163a10aa4894ce7632af1f8d3b20ed4fccc4f0d0825de3419def86cf",
+      "src/guandan/tui/screens/history.py": "686eb460c094be9fc3be99cc93f8d08c6b2b75d45203e4e1aeca425ed3130472",
+      "src/guandan/tui/screens/load_save.py": "0c6b648d378fb8f45bfc6787295f23f426fdc69450b60bab0b69c38ee043cc9c",
+      "src/guandan/tui/screens/main_menu.py": "16ee38c4dd03936d611b8781fc4925b7c1f4b8fe9e231fa133c8946e3d595051",
+      "src/guandan/tui/screens/replay.py": "bb34ee91d220deb9ce47eead8a68d6ac7b640eaba4cc56c206c2a036e23f3fee",
+      "src/guandan/tui/screens/rule.py": "8970430b0d848a9cc467a2fe768082fd0e5d618ffd721109184cbffea70bbd9e",
+      "src/guandan/tui/screens/storage_screen.py": "36b79044218f98f378ecdeea062fb31f3119ae14bcc919b43a5b33370e82aa8e",
+      "src/guandan/ui/__init__.py": "3b04997ac27924134fa4233d4a589ff9eec35c22296f0d67c0961a85b5ada6a5",
+      "src/guandan/ui/background.py": "5a92e2bd1cc35905ba8ea2785db49689c4ed28664fca8b14b412244eb61fe963",
+      "src/guandan/ui/content.py": "b3214fc159109acc28593ef0eb65125078f150c851125faa2f06da0c04e0c67a",
+      "src/guandan/ui/formatting.py": "5edb4d6d183d79f03c2542bdaa89e3fb2f7a079b58d35e7beb18ac819f02986e",
+      "src/guandan/ui/hand_organizer.py": "c49c21762cf2ec2439a12081f49cf277b031d06ea6e8b91bd8664f3112010218",
+      "src/guandan/ui/history.py": "e081656d8381ea6b885d1938413912330bba3ad2a39e8ea12ce5b89f1a95d6ed",
+      "src/guandan/ui/replay.py": "ac05c22685477ce0e4689306364feb5443d5a7e2e4f6f6e8d4f66da4a1c8de8c",
+      "src/guandan/ui/session.py": "4685960bfee18fd29f3551e26ecd2dfd618cc4871e62d9dc0a345a70edfee541",
+      "src/guandan/utils/__init__.py": "efeff7e696eea1408774a7e2075c681591f8c25fbf12bb6a5d70451ff1d96a89",
+      "tests/fixtures/ai-human-partner-replay.json": "a0af4526094e07e3886c2f28ab7ef71269660d2c1d2f0848422e77cfca401ffd",
+      "tests/fixtures/frozen-v11.zip": "ae96af77690c34c67c0d05895f5a73d682d20ed918364451cb6a277a50907c54",
+      "uv.lock": "bd7f2290c513027c23239fa77b428e2e9aab2d55c731868e976fe1e0e74ed64f"
+    }
+  },
+  "passed": true,
+  "decisions": 30,
+  "records": [
+    {
+      "case": "level2-opening",
+      "difficulty": 0,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 10,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 10,
+            "suit": 3
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 6,
+            "suit": 2
+          },
+          {
+            "rank": 6,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 10,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 10,
+            "suit": 3
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 6,
+            "suit": 2
+          },
+          {
+            "rank": 6,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level2-opening",
+      "difficulty": 1,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "pair_sequence",
+        "rank": 13,
+        "length": 3,
+        "cards": [
+          {
+            "rank": 11,
+            "suit": 3
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          },
+          {
+            "rank": 12,
+            "suit": 4
+          },
+          {
+            "rank": 12,
+            "suit": 4
+          },
+          {
+            "rank": 13,
+            "suit": 5
+          },
+          {
+            "rank": 13,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "pair_sequence",
+        "rank": 13,
+        "length": 3,
+        "cards": [
+          {
+            "rank": 11,
+            "suit": 3
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          },
+          {
+            "rank": 12,
+            "suit": 4
+          },
+          {
+            "rank": 12,
+            "suit": 4
+          },
+          {
+            "rank": 13,
+            "suit": 5
+          },
+          {
+            "rank": 13,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level2-opening",
+      "difficulty": 2,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 10,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 10,
+            "suit": 3
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 8,
+            "suit": 3
+          },
+          {
+            "rank": 8,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 10,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 10,
+            "suit": 3
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 8,
+            "suit": 3
+          },
+          {
+            "rank": 8,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level2-opening",
+      "difficulty": 3,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "tactical_guard",
+      "new_reason": "tactical_guard",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 10,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 10,
+            "suit": 3
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 8,
+            "suit": 3
+          },
+          {
+            "rank": 8,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 10,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 10,
+            "suit": 3
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 8,
+            "suit": 3
+          },
+          {
+            "rank": 8,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level2-opening",
+      "difficulty": 4,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "search",
+      "new_reason": "search",
+      "old_pattern": {
+        "type": "straight",
+        "rank": 13,
+        "length": 5,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          },
+          {
+            "rank": 12,
+            "suit": 4
+          },
+          {
+            "rank": 13,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "straight",
+        "rank": 13,
+        "length": 5,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          },
+          {
+            "rank": 10,
+            "suit": 4
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          },
+          {
+            "rank": 12,
+            "suit": 4
+          },
+          {
+            "rank": 13,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 0,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 1,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 2,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 3,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "tactical_guard",
+      "new_reason": "tactical_guard",
+      "old_pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level2-endgame",
+      "difficulty": 4,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "agrees_with_tactical",
+      "new_reason": "agrees_with_tactical",
+      "old_pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 9,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 9,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 0,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 8,
+            "suit": 2
+          },
+          {
+            "rank": 8,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 8,
+            "suit": 2
+          },
+          {
+            "rank": 8,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 1,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 5,
+            "suit": 2
+          },
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 5,
+            "suit": 2
+          },
+          {
+            "rank": 5,
+            "suit": 5
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 2,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 3,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "tactical_guard",
+      "new_reason": "tactical_guard",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 4,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 4,
+            "suit": 2
+          },
+          {
+            "rank": 4,
+            "suit": 4
+          },
+          {
+            "rank": 4,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 5
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level9-opening",
+      "difficulty": 4,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "search",
+      "new_reason": "search",
+      "old_pattern": {
+        "type": "single",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 0,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "single",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 1,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 4
+          },
+          {
+            "rank": 9,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 4
+          },
+          {
+            "rank": 9,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 2,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 4
+          },
+          {
+            "rank": 9,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 4
+          },
+          {
+            "rank": 9,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 3,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "tactical_guard",
+      "new_reason": "tactical_guard",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 4
+          },
+          {
+            "rank": 9,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          },
+          {
+            "rank": 9,
+            "suit": 4
+          },
+          {
+            "rank": 9,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level9-endgame",
+      "difficulty": 4,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "search",
+      "new_reason": "search",
+      "old_pattern": {
+        "type": "triple",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 0,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          },
+          {
+            "rank": 11,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 11,
+            "suit": 3
+          },
+          {
+            "rank": 11,
+            "suit": 2
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 1,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "triple_sequence",
+        "rank": 2,
+        "length": 2,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 3
+          },
+          {
+            "rank": 14,
+            "suit": 5
+          },
+          {
+            "rank": 14,
+            "suit": 2
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          }
+        ],
+        "wild_used": 1,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_sequence",
+        "rank": 2,
+        "length": 2,
+        "cards": [
+          {
+            "rank": 14,
+            "suit": 3
+          },
+          {
+            "rank": 14,
+            "suit": 5
+          },
+          {
+            "rank": 14,
+            "suit": 2
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          }
+        ],
+        "wild_used": 1,
+        "suit": null
+      }
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 2,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 3,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "agrees_with_tactical",
+      "new_reason": "agrees_with_tactical",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level14-opening",
+      "difficulty": 4,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "tactical_guard",
+      "new_reason": "tactical_guard",
+      "old_pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "triple_pair",
+        "rank": 2,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "rank": 2,
+            "suit": 4
+          },
+          {
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "rank": 3,
+            "suit": 4
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 0,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 1,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 2,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "heuristic",
+      "new_reason": "heuristic",
+      "old_pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 3,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "agrees_with_tactical",
+      "new_reason": "agrees_with_tactical",
+      "old_pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    },
+    {
+      "case": "level14-endgame",
+      "difficulty": 4,
+      "passed": true,
+      "fields": {
+        "pattern": true,
+        "reason": true,
+        "rng_state": true
+      },
+      "old_reason": "agrees_with_tactical",
+      "new_reason": "agrees_with_tactical",
+      "old_pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      },
+      "new_pattern": {
+        "type": "single",
+        "rank": 3,
+        "length": 1,
+        "cards": [
+          {
+            "rank": 3,
+            "suit": 3
+          }
+        ],
+        "wild_used": 0,
+        "suit": null
+      }
+    }
+  ],
+  "validation_harness": {
+    "path": "benchmarks/production/validation-harnesses.json",
+    "name": "default_policy_parity",
+    "source_sha256": "692d778c2802def83037f7f0b0d12ae79488f19118b4986ec77ca5b48c079891"
+  }
+}

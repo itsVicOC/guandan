@@ -1,0 +1,1148 @@
+{
+  "baseline_sha": "d2082d68aef3264d88d16d64e0cbcd233eb8ce349e2d1ae99afd87b4373802de",
+  "source_sha256": "17bac68f7bbf499cf0bc62d6b2f2a7a79b925530e03535a85454b49e21f592e7",
+  "replay_script_sha256": "9e8289a429c9c17e5d56a89773cbc60d1fcfe01f616af915c270c5f2297f5860",
+  "difficulty": 3,
+  "fixed_iterations": 256,
+  "variant": "action_ranker",
+  "worlds": 32,
+  "ruleset_override": 3,
+  "fixture_ruleset": 2,
+  "continuation": "legal independent style proxies, not recorded human suffixes",
+  "positions": [
+    {
+      "event_prefix": 10,
+      "player": 1,
+      "old_action": [
+        "bomb",
+        4,
+        4,
+        0,
+        null,
+        [
+          [
+            4,
+            2,
+            2
+          ],
+          [
+            4,
+            3,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ]
+        ]
+      ],
+      "new_action": [
+        "bomb",
+        4,
+        4,
+        0,
+        null,
+        [
+          [
+            4,
+            2,
+            2
+          ],
+          [
+            4,
+            3,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ]
+        ]
+      ],
+      "new_reason": "tactical_guard",
+      "partner_probabilities": [],
+      "response_chain": null,
+      "action_ranker": {
+        "candidate_replaced": false,
+        "reason": "already_present",
+        "model_sha256": "f32b49470b2a969f7e33f4d8550ea36f2fda4ba5f52e895e3cfbecb3c9a14cc8",
+        "legal_actions": 18,
+        "recommended_key": [
+          "pass"
+        ],
+        "elapsed_seconds": 0.002587791001133155
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5251909345629867,
+          "new_mean_utility": 0.5251909345629867,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5309975477426815,
+          "new_mean_utility": 0.5309975477426815,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.524965098572599,
+          "new_mean_utility": 0.524965098572599,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "event_prefix": 21,
+      "player": 2,
+      "old_action": [
+        "triple_pair",
+        4,
+        1,
+        0,
+        null,
+        [
+          [
+            4,
+            3,
+            1
+          ],
+          [
+            4,
+            4,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ],
+          [
+            5,
+            2,
+            1
+          ],
+          [
+            5,
+            4,
+            1
+          ]
+        ]
+      ],
+      "new_action": [
+        "triple_pair",
+        4,
+        1,
+        0,
+        null,
+        [
+          [
+            4,
+            3,
+            1
+          ],
+          [
+            4,
+            4,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ],
+          [
+            5,
+            2,
+            1
+          ],
+          [
+            5,
+            4,
+            1
+          ]
+        ]
+      ],
+      "new_reason": "agrees_with_tactical",
+      "partner_probabilities": [],
+      "response_chain": null,
+      "action_ranker": {
+        "candidate_replaced": false,
+        "reason": "already_present",
+        "model_sha256": "f32b49470b2a969f7e33f4d8550ea36f2fda4ba5f52e895e3cfbecb3c9a14cc8",
+        "legal_actions": 31,
+        "recommended_key": [
+          "triple",
+          4,
+          1,
+          0,
+          null,
+          [
+            [
+              4,
+              3,
+              1
+            ],
+            [
+              4,
+              4,
+              1
+            ],
+            [
+              4,
+              5,
+              1
+            ]
+          ]
+        ],
+        "elapsed_seconds": 0.0028721250000671716
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5247542872170301,
+          "new_mean_utility": 0.5247542872170301,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5340849908592045,
+          "new_mean_utility": 0.5340849908592045,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5298300427677762,
+          "new_mean_utility": 0.5298300427677762,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "event_prefix": 58,
+      "player": 2,
+      "old_action": [
+        "triple_pair",
+        8,
+        1,
+        0,
+        null,
+        [
+          [
+            8,
+            2,
+            1
+          ],
+          [
+            8,
+            5,
+            2
+          ],
+          [
+            13,
+            2,
+            1
+          ],
+          [
+            13,
+            4,
+            1
+          ]
+        ]
+      ],
+      "new_action": [
+        "triple_pair",
+        8,
+        1,
+        0,
+        null,
+        [
+          [
+            8,
+            2,
+            1
+          ],
+          [
+            8,
+            5,
+            2
+          ],
+          [
+            13,
+            2,
+            1
+          ],
+          [
+            13,
+            4,
+            1
+          ]
+        ]
+      ],
+      "new_reason": "tactical_guard",
+      "partner_probabilities": [],
+      "response_chain": null,
+      "action_ranker": {
+        "candidate_replaced": false,
+        "reason": "already_present",
+        "model_sha256": "f32b49470b2a969f7e33f4d8550ea36f2fda4ba5f52e895e3cfbecb3c9a14cc8",
+        "legal_actions": 15,
+        "recommended_key": [
+          "triple",
+          8,
+          1,
+          0,
+          null,
+          [
+            [
+              8,
+              2,
+              1
+            ],
+            [
+              8,
+              5,
+              2
+            ]
+          ]
+        ],
+        "elapsed_seconds": 0.0011727090004569618
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5459535722767516,
+          "new_mean_utility": 0.5459535722767516,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5459535722767516,
+          "new_mean_utility": 0.5459535722767516,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5454564941681957,
+          "new_mean_utility": 0.5454564941681957,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "event_prefix": 65,
+      "player": 1,
+      "old_action": [
+        "single",
+        10,
+        1,
+        0,
+        null,
+        [
+          [
+            10,
+            2,
+            1
+          ]
+        ]
+      ],
+      "new_action": [
+        "single",
+        10,
+        1,
+        0,
+        null,
+        [
+          [
+            10,
+            2,
+            1
+          ]
+        ]
+      ],
+      "new_reason": "tactical_guard",
+      "partner_probabilities": [],
+      "response_chain": null,
+      "action_ranker": {
+        "candidate_replaced": false,
+        "reason": "already_present",
+        "model_sha256": "f32b49470b2a969f7e33f4d8550ea36f2fda4ba5f52e895e3cfbecb3c9a14cc8",
+        "legal_actions": 15,
+        "recommended_key": [
+          "triple",
+          10,
+          1,
+          0,
+          null,
+          [
+            [
+              10,
+              2,
+              1
+            ],
+            [
+              10,
+              3,
+              2
+            ]
+          ]
+        ],
+        "elapsed_seconds": 0.0009687919991847593
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5666787473927419,
+          "new_mean_utility": 0.5666787473927419,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5638546028643817,
+          "new_mean_utility": 0.5638546028643817,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5632446067606323,
+          "new_mean_utility": 0.5632446067606323,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "event_prefix": 72,
+      "player": 1,
+      "old_action": [
+        "pass"
+      ],
+      "new_action": [
+        "pass"
+      ],
+      "new_reason": "tactical_guard",
+      "partner_probabilities": [],
+      "response_chain": null,
+      "action_ranker": {
+        "candidate_replaced": false,
+        "reason": "already_present",
+        "model_sha256": "f32b49470b2a969f7e33f4d8550ea36f2fda4ba5f52e895e3cfbecb3c9a14cc8",
+        "legal_actions": 2,
+        "recommended_key": [
+          "pass"
+        ],
+        "elapsed_seconds": 0.0003099999994446989
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5704445609056196,
+          "new_mean_utility": 0.5704445609056196,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5704445609056196,
+          "new_mean_utility": 0.5704445609056196,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5703316429104257,
+          "new_mean_utility": 0.5703316429104257,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "event_prefix": 87,
+      "player": 2,
+      "old_action": [
+        "single",
+        7,
+        1,
+        0,
+        null,
+        [
+          [
+            7,
+            5,
+            1
+          ]
+        ]
+      ],
+      "new_action": [
+        "single",
+        7,
+        1,
+        0,
+        null,
+        [
+          [
+            7,
+            5,
+            1
+          ]
+        ]
+      ],
+      "new_reason": "agrees_with_tactical",
+      "partner_probabilities": [],
+      "response_chain": null,
+      "action_ranker": {
+        "candidate_replaced": false,
+        "reason": "already_present",
+        "model_sha256": "f32b49470b2a969f7e33f4d8550ea36f2fda4ba5f52e895e3cfbecb3c9a14cc8",
+        "legal_actions": 3,
+        "recommended_key": [
+          "single",
+          101,
+          1,
+          0,
+          null,
+          [
+            [
+              101,
+              1,
+              1
+            ]
+          ]
+        ],
+        "elapsed_seconds": 0.0003521250000630971
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5765294973082962,
+          "new_mean_utility": 0.5765294973082962,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5765294973082962,
+          "new_mean_utility": 0.5765294973082962,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5765294973082962,
+          "new_mean_utility": 0.5765294973082962,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1258 @@
+{
+  "baseline_sha": "6c581e13437627856830ba78118d5d8f73d51c4af03cd6ae743b28056ce4bde6",
+  "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+  "replay_script_sha256": "a96cfb32b96c9ee40b82aab67d4f0d05ada9b972ce4a57e210ddc2e18695b743",
+  "difficulty": 3,
+  "fixed_iterations": 256,
+  "variant": "chain",
+  "worlds": 32,
+  "ruleset_override": 3,
+  "fixture_ruleset": 2,
+  "continuation": "legal independent style proxies, not recorded human suffixes",
+  "positions": [
+    {
+      "event_prefix": 10,
+      "player": 1,
+      "old_action": [
+        "bomb",
+        4,
+        4,
+        0,
+        null,
+        [
+          [
+            4,
+            2,
+            2
+          ],
+          [
+            4,
+            3,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ]
+        ]
+      ],
+      "new_action": [
+        "bomb",
+        4,
+        4,
+        0,
+        null,
+        [
+          [
+            4,
+            2,
+            2
+          ],
+          [
+            4,
+            3,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ]
+        ]
+      ],
+      "new_reason": "tactical_guard",
+      "partner_probabilities": [],
+      "response_chain": {
+        "completed_worlds": 4,
+        "requested_worlds": 4,
+        "used": true,
+        "reason": "complete",
+        "horizon": 8,
+        "ownership": {
+          "(<PatternType.BOMB: 'bomb'>, 4, 4, 0, None, ((4, 2, 2), (4, 3, 1), (4, 5, 1)))": {
+            "own": 1.0,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          },
+          "('pass',)": {
+            "own": 0.0,
+            "partner": 1.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          },
+          "(<PatternType.BOMB: 'bomb'>, 10, 4, 0, None, ((10, 2, 1), (10, 3, 2), (10, 5, 1)))": {
+            "own": 1.0,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          },
+          "(<PatternType.BOMB: 'bomb'>, 9, 4, 1, None, ((2, 2, 1), (9, 2, 1), (9, 3, 1), (9, 5, 1)))": {
+            "own": 1.0,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          },
+          "(<PatternType.BOMB: 'bomb'>, 4, 5, 1, None, ((2, 2, 1), (4, 2, 2), (4, 3, 1), (4, 5, 1)))": {
+            "own": 1.0,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          },
+          "(<PatternType.BOMB: 'bomb'>, 12, 4, 1, None, ((2, 2, 1), (12, 2, 1), (12, 5, 2)))": {
+            "own": 1.0,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          }
+        },
+        "elapsed_seconds": 0.04606958292424679,
+        "candidate_replaced": false
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5287229685554715,
+          "new_mean_utility": 0.5287229685554715,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5199418302544473,
+          "new_mean_utility": 0.5199418302544473,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5023270664198047,
+          "new_mean_utility": 0.5023270664198047,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "event_prefix": 21,
+      "player": 2,
+      "old_action": [
+        "triple_pair",
+        4,
+        1,
+        0,
+        null,
+        [
+          [
+            4,
+            3,
+            1
+          ],
+          [
+            4,
+            4,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ],
+          [
+            5,
+            2,
+            1
+          ],
+          [
+            5,
+            4,
+            1
+          ]
+        ]
+      ],
+      "new_action": [
+        "triple_pair",
+        4,
+        1,
+        0,
+        null,
+        [
+          [
+            4,
+            3,
+            1
+          ],
+          [
+            4,
+            4,
+            1
+          ],
+          [
+            4,
+            5,
+            1
+          ],
+          [
+            5,
+            2,
+            1
+          ],
+          [
+            5,
+            4,
+            1
+          ]
+        ]
+      ],
+      "new_reason": "tactical_guard",
+      "partner_probabilities": [],
+      "response_chain": {
+        "completed_worlds": 4,
+        "requested_worlds": 4,
+        "used": true,
+        "reason": "complete",
+        "horizon": 8,
+        "ownership": {
+          "(<PatternType.TRIPLE_PAIR: 'triple_pair'>, 4, 1, 0, None, ((4, 3, 1), (4, 4, 1), (4, 5, 1), (5, 2, 1), (5, 4, 1)))": {
+            "own": 0.0,
+            "partner": 0.5,
+            "opponent": 0.0,
+            "unresolved": 0.5
+          },
+          "(<PatternType.SINGLE: 'single'>, 7, 1, 0, None, ((7, 5, 1),))": {
+            "own": 0.0,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 1.0
+          },
+          "(<PatternType.SINGLE: 'single'>, 12, 1, 0, None, ((12, 2, 1),))": {
+            "own": 0.0,
+            "partner": 0.25,
+            "opponent": 0.5,
+            "unresolved": 0.25
+          },
+          "(<PatternType.SINGLE: 'single'>, 9, 1, 0, None, ((9, 2, 1),))": {
+            "own": 0.0,
+            "partner": 0.0,
+            "opponent": 0.25,
+            "unresolved": 0.75
+          },
+          "(<PatternType.PAIR: 'pair'>, 5, 1, 0, None, ((5, 2, 1), (5, 4, 1)))": {
+            "own": 0.5,
+            "partner": 0.25,
+            "opponent": 0.25,
+            "unresolved": 0.0
+          },
+          "(<PatternType.PAIR: 'pair'>, 13, 1, 0, None, ((13, 2, 1), (13, 4, 1)))": {
+            "own": 0.0,
+            "partner": 0.5,
+            "opponent": 0.5,
+            "unresolved": 0.0
+          }
+        },
+        "elapsed_seconds": 0.12547654192894697,
+        "candidate_replaced": false
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5393340951677439,
+          "new_mean_utility": 0.5393340951677439,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5121023609379399,
+          "new_mean_utility": 0.5121023609379399,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5153186091096676,
+          "new_mean_utility": 0.5153186091096676,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "event_prefix": 58,
+      "player": 2,
+      "old_action": [
+        "triple_pair",
+        8,
+        1,
+        0,
+        null,
+        [
+          [
+            8,
+            2,
+            1
+          ],
+          [
+            8,
+            5,
+            2
+          ],
+          [
+            13,
+            2,
+            1
+          ],
+          [
+            13,
+            4,
+            1
+          ]
+        ]
+      ],
+      "new_action": [
+        "triple_pair",
+        8,
+        1,
+        0,
+        null,
+        [
+          [
+            8,
+            2,
+            1
+          ],
+          [
+            8,
+            5,
+            2
+          ],
+          [
+            13,
+            2,
+            1
+          ],
+          [
+            13,
+            4,
+            1
+          ]
+        ]
+      ],
+      "new_reason": "agrees_with_tactical",
+      "partner_probabilities": [],
+      "response_chain": {
+        "completed_worlds": 4,
+        "requested_worlds": 4,
+        "used": true,
+        "reason": "complete",
+        "horizon": 8,
+        "ownership": {
+          "(<PatternType.TRIPLE_PAIR: 'triple_pair'>, 8, 1, 0, None, ((8, 2, 1), (8, 5, 2), (13, 2, 1), (13, 4, 1)))": {
+            "own": 0.0,
+            "partner": 0.0,
+            "opponent": 1.0,
+            "unresolved": 0.0
+          },
+          "(<PatternType.SINGLE: 'single'>, 7, 1, 0, None, ((7, 5, 1),))": {
+            "own": 0.5,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.5
+          },
+          "(<PatternType.SINGLE: 'single'>, 9, 1, 0, None, ((9, 2, 1),))": {
+            "own": 0.5,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.5
+          },
+          "(<PatternType.PAIR: 'pair'>, 13, 1, 0, None, ((13, 2, 1), (13, 4, 1)))": {
+            "own": 0.0,
+            "partner": 0.25,
+            "opponent": 0.75,
+            "unresolved": 0.0
+          },
+          "(<PatternType.SINGLE: 'single'>, 13, 1, 0, None, ((13, 4, 1),))": {
+            "own": 0.75,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.25
+          },
+          "(<PatternType.SINGLE: 'single'>, 13, 1, 0, None, ((13, 2, 1),))": {
+            "own": 0.75,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.25
+          }
+        },
+        "elapsed_seconds": 0.03928020899184048,
+        "candidate_replaced": false
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5409382474886051,
+          "new_mean_utility": 0.5409382474886051,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5377903736094823,
+          "new_mean_utility": 0.5377903736094823,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5476181553602123,
+          "new_mean_utility": 0.5476181553602123,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "event_prefix": 65,
+      "player": 1,
+      "old_action": [
+        "single",
+        10,
+        1,
+        0,
+        null,
+        [
+          [
+            10,
+            2,
+            1
+          ]
+        ]
+      ],
+      "new_action": [
+        "single",
+        10,
+        1,
+        0,
+        null,
+        [
+          [
+            10,
+            2,
+            1
+          ]
+        ]
+      ],
+      "new_reason": "agrees_with_tactical",
+      "partner_probabilities": [],
+      "response_chain": {
+        "completed_worlds": 4,
+        "requested_worlds": 4,
+        "used": true,
+        "reason": "complete",
+        "horizon": 8,
+        "ownership": {
+          "(<PatternType.SINGLE: 'single'>, 10, 1, 0, None, ((10, 2, 1),))": {
+            "own": 0.5,
+            "partner": 0.25,
+            "opponent": 0.0,
+            "unresolved": 0.25
+          },
+          "(<PatternType.SINGLE: 'single'>, 10, 1, 0, None, ((10, 3, 1),))": {
+            "own": 0.5,
+            "partner": 0.25,
+            "opponent": 0.0,
+            "unresolved": 0.25
+          },
+          "(<PatternType.SINGLE: 'single'>, 10, 1, 0, None, ((10, 5, 1),))": {
+            "own": 0.5,
+            "partner": 0.25,
+            "opponent": 0.0,
+            "unresolved": 0.25
+          },
+          "(<PatternType.SINGLE: 'single'>, 2, 1, 0, None, ((2, 5, 1),))": {
+            "own": 0.0,
+            "partner": 1.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          },
+          "(<PatternType.PAIR: 'pair'>, 10, 1, 0, None, ((10, 2, 1), (10, 3, 1)))": {
+            "own": 0.5,
+            "partner": 0.0,
+            "opponent": 0.5,
+            "unresolved": 0.0
+          },
+          "(<PatternType.TRIPLE_PAIR: 'triple_pair'>, 10, 1, 1, None, ((2, 2, 1), (2, 5, 1), (10, 2, 1), (10, 3, 2)))": {
+            "own": 0.75,
+            "partner": 0.0,
+            "opponent": 0.25,
+            "unresolved": 0.0
+          }
+        },
+        "elapsed_seconds": 0.021556334104388952,
+        "candidate_replaced": false
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.558432149798049,
+          "new_mean_utility": 0.558432149798049,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5622504505435207,
+          "new_mean_utility": 0.5622504505435207,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5628604466472704,
+          "new_mean_utility": 0.5628604466472704,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "event_prefix": 72,
+      "player": 1,
+      "old_action": [
+        "pass"
+      ],
+      "new_action": [
+        "pass"
+      ],
+      "new_reason": "tactical_guard",
+      "partner_probabilities": [],
+      "response_chain": {
+        "completed_worlds": 4,
+        "requested_worlds": 4,
+        "used": true,
+        "reason": "complete",
+        "horizon": 8,
+        "ownership": {
+          "('pass',)": {
+            "own": 0.0,
+            "partner": 1.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          },
+          "(<PatternType.BOMB: 'bomb'>, 10, 4, 1, None, ((2, 2, 1), (10, 3, 2), (10, 5, 1)))": {
+            "own": 1.0,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          }
+        },
+        "elapsed_seconds": 0.007176666986197233,
+        "candidate_replaced": false
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5410591090138046,
+          "new_mean_utility": 0.5410591090138046,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5693374866933143,
+          "new_mean_utility": 0.5693374866933143,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5687274905895647,
+          "new_mean_utility": 0.5687274905895647,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "event_prefix": 87,
+      "player": 2,
+      "old_action": [
+        "single",
+        7,
+        1,
+        0,
+        null,
+        [
+          [
+            7,
+            5,
+            1
+          ]
+        ]
+      ],
+      "new_action": [
+        "single",
+        7,
+        1,
+        0,
+        null,
+        [
+          [
+            7,
+            5,
+            1
+          ]
+        ]
+      ],
+      "new_reason": "agrees_with_tactical",
+      "partner_probabilities": [],
+      "response_chain": {
+        "completed_worlds": 4,
+        "requested_worlds": 4,
+        "used": true,
+        "reason": "complete",
+        "horizon": 8,
+        "ownership": {
+          "(<PatternType.SINGLE: 'single'>, 7, 1, 0, None, ((7, 5, 1),))": {
+            "own": 1.0,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          },
+          "(<PatternType.SINGLE: 'single'>, 101, 1, 0, None, ((101, 1, 1),))": {
+            "own": 1.0,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          },
+          "(<PatternType.SINGLE: 'single'>, 9, 1, 0, None, ((9, 2, 1),))": {
+            "own": 1.0,
+            "partner": 0.0,
+            "opponent": 0.0,
+            "unresolved": 0.0
+          }
+        },
+        "elapsed_seconds": 0.005705957999452949,
+        "candidate_replaced": false
+      },
+      "styles": [
+        {
+          "style": 0,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5765294973082962,
+          "new_mean_utility": 0.5765294973082962,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 1,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5765294973082962,
+          "new_mean_utility": 0.5765294973082962,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "style": 2,
+          "common_worlds": 32,
+          "old_mean_utility": 0.5765294973082962,
+          "new_mean_utility": 0.5765294973082962,
+          "paired_differences": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    }
+  ]
+}

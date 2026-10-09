@@ -1,0 +1,77 @@
+{
+  "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+  "baseline_root": "/private/tmp/guandan-v7-v6",
+  "baseline": {
+    "version": "0.8.6b1",
+    "commit": "77190bf",
+    "ruleset_version": 3,
+    "source_sha256": "6c581e13437627856830ba78118d5d8f73d51c4af03cd6ae743b28056ce4bde6"
+  },
+  "selected": {
+    "3": "chain",
+    "4": "adaptive"
+  },
+  "screens": {
+    "3": {
+      "adaptive": {
+        "team": -0.008293112225,
+        "mixed": -0.054984625603,
+        "selection_score": -0.054984625603
+      },
+      "chain": {
+        "team": -0.038179867215,
+        "mixed": -0.037019019226,
+        "selection_score": -0.038179867215
+      },
+      "partner_combined": {
+        "team": -0.008281012054,
+        "mixed": -0.078159081173,
+        "selection_score": -0.078159081173
+      }
+    },
+    "4": {
+      "adaptive": {
+        "team": -0.047738020575,
+        "mixed": -0.007592206803,
+        "selection_score": -0.047738020575
+      },
+      "chain": {
+        "team": -0.057236818222,
+        "mixed": -0.078700453486,
+        "selection_score": -0.078700453486
+      },
+      "partner_combined": {
+        "team": -0.060040387138,
+        "mixed": -0.016003867853,
+        "selection_score": -0.060040387138
+      }
+    }
+  },
+  "development_pairs_per_suite": 32,
+  "holdout": {
+    "3": {
+      "team_start": 202000,
+      "mixed_start": 203000,
+      "pairs_each": 240,
+      "iterations": 256
+    },
+    "4": {
+      "team_start": 202240,
+      "mixed_start": 203240,
+      "pairs_each": 240,
+      "iterations": 768
+    }
+  },
+  "full": {
+    "3": {
+      "seed_start": 204000,
+      "pairs": 24
+    },
+    "4": {
+      "seed_start": 204024,
+      "pairs": 24
+    }
+  },
+  "promotion": "both independent paired 95% lower bounds > 0 and each mixed companion mean >= 0; serial clock and complete-match legality gates",
+  "sampling": "fixed once; no appended holdout seeds"
+}

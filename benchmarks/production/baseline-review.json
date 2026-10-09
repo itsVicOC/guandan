@@ -1,0 +1,23 @@
+{
+  "from": "ai-regression-v6.json",
+  "to": "production/ai-regression.json",
+  "decisions": 30,
+  "actions_and_reasons_unchanged": true,
+  "previous_compatibility": {
+    "schema": 1,
+    "corpus": "levels-2-9-A-v1",
+    "policy": "match-team-v6",
+    "rules": 3,
+    "mode": "fixed",
+    "config_sha256": "6889dd3fc79de3f218f48dc3fbb8f92b09d5ab5505ad129941c2d0d04cea75ec"
+  },
+  "current_compatibility": {
+    "schema": 2,
+    "corpus": "levels-2-9-A-v1",
+    "policy": "match-team-v6",
+    "rules": 3,
+    "mode": "fixed",
+    "config_sha256": "0b478fe9029d0f27cab59ab07702fbbc710090c096154da7d7fbdfcccbacbe03"
+  },
+  "changes": []
+}

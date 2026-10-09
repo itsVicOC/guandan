@@ -1,0 +1,141 @@
+{
+  "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+  "production_policy_version": "match-team-v6",
+  "independent_pairs": 960,
+  "independent_rounds": 1920,
+  "development_pairs": 384,
+  "full_pairs": 48,
+  "full_matches": 96,
+  "full_rounds": 1077,
+  "clock_decisions": 42,
+  "proxy_replay_branches": 2304,
+  "tiers": {
+    "3": {
+      "selected_variant": "chain",
+      "eligible_for_default": false,
+      "production_flags": {
+        "partner_adaptation": false,
+        "response_chain": false
+      },
+      "full_matches": {
+        "pairs": 24,
+        "games": 48,
+        "candidate_wins": 28,
+        "candidate_losses": 20,
+        "observed_win_rate": 0.5833333333333334,
+        "rounds": 581,
+        "actions": 43071,
+        "tribute_rounds": 453,
+        "all_finished": true,
+        "strict_replay": "enforced by trial after every round",
+        "interpretation": "descriptive flow check; downstream deal sequences overlap, not an independent strength interval"
+      },
+      "clock": {
+        "decisions": 21,
+        "passed": true,
+        "max_seconds": 1.020002624951303,
+        "single_position_chain_worlds": {
+          "0": 3,
+          "4": 15
+        }
+      },
+      "replay": {
+        "prefixes": 6,
+        "common_worlds_per_prefix_and_companion": 32,
+        "branches": 1152,
+        "changed_prefixes": [],
+        "interpretation": "recorded public human prefixes; legal proxy continuations, not human suffixes or human win rate"
+      }
+    },
+    "4": {
+      "selected_variant": "adaptive",
+      "eligible_for_default": false,
+      "production_flags": {
+        "partner_adaptation": false,
+        "response_chain": false
+      },
+      "full_matches": {
+        "pairs": 24,
+        "games": 48,
+        "candidate_wins": 1,
+        "candidate_losses": 47,
+        "observed_win_rate": 0.020833333333333332,
+        "rounds": 496,
+        "actions": 40215,
+        "tribute_rounds": 390,
+        "all_finished": true,
+        "strict_replay": "enforced by trial after every round",
+        "interpretation": "descriptive flow check; downstream deal sequences overlap, not an independent strength interval"
+      },
+      "clock": {
+        "decisions": 21,
+        "passed": true,
+        "max_seconds": 2.00927283288911,
+        "single_position_chain_worlds": {}
+      },
+      "replay": {
+        "prefixes": 6,
+        "common_worlds_per_prefix_and_companion": 32,
+        "branches": 1152,
+        "changed_prefixes": [
+          10,
+          58
+        ],
+        "interpretation": "recorded public human prefixes; legal proxy continuations, not human suffixes or human win rate"
+      }
+    }
+  },
+  "quality": {
+    "source_sha256": "7903b5b5f70badc1e6d9579fd1cada24fc57343d34964b7eacffbbd030068b43",
+    "full_suite": {
+      "passed": 843,
+      "coverage_percent": 84.77503628447025,
+      "seconds": 324.22
+    },
+    "ruff": "src tests scripts packaging: passed",
+    "mypy": {
+      "source_files": 92,
+      "passed": true
+    },
+    "fixed_regression": {
+      "decisions": 30,
+      "actions_and_reasons_match_v6": true,
+      "baseline_self_check_passed": true,
+      "review": "ai-v7-regression-review.json"
+    },
+    "coverage_module_gates": "storage>=80%, ui/session>=78%, replay>=72% passed",
+    "note": "Revised source after deadline early exit and per-tier promotion gates. No default action or reason changed; timing-only branch fixes are disabled in fixed default regression."
+  },
+  "artifacts_sha256": {
+    "ai-regression-v7-check.json": "590ced1d3e1fd24086dc2475d5fd4d24cd7dbe20d7270716383c9dceeaecf407",
+    "ai-regression-v7.json": "18292baa9d9f59609c1ff2e9edfcb83f7bdfbf9bed4c5bd87451bbf043ad81f6",
+    "ai-v6-ruleset3-snapshot.zip": "14a9d9fd68badbc04ddd5aeebafcc71f26b637c20276bad90acc040877113ca5",
+    "ai-v7-clock.json": "bc5848d62923fa437d9bdacdc1e3450367ecd75b9e8fdcf98284206a47ed5603",
+    "ai-v7-dev-mixed-3-adaptive.json": "db7271b12730eb041bd43ca456d06918abd006b470971de4802896a48332fdee",
+    "ai-v7-dev-mixed-3-chain.json": "bbebcc3bf67f4d8b6fa166a12f8e5779c69441ed31f61ec26e80b3d143aead6a",
+    "ai-v7-dev-mixed-3-partner_combined.json": "1e5faa33c51e5df5cc685d176d6c03925968aad4740376ac686afd95f8098fd3",
+    "ai-v7-dev-mixed-4-adaptive.json": "0ea6dd2451800c690845c86a68bad6c3a89748b181417f8812ceae4229bea670",
+    "ai-v7-dev-mixed-4-chain.json": "d35e88ae8273db0156cb0e6f13ce2112a29ec507ecd633afcc9fe761424463da",
+    "ai-v7-dev-mixed-4-partner_combined.json": "fcfb6ad12b02b02935a96806e96fe2366b723a7775c2a098346196340fb91b48",
+    "ai-v7-dev-team-3-adaptive.json": "9aff55491d543581914cb0190b68f57277636c7a6a5013ac941317e3d3f02732",
+    "ai-v7-dev-team-3-chain.json": "4f9a54411582fc14231b89e145cce9a3ad4a3cae7449ff0dec3bf28bb8b12280",
+    "ai-v7-dev-team-3-partner_combined.json": "ec9f8a5e001256248e2be6ea82a9c885c7f80d7a2674712becdc4a63d55cf873",
+    "ai-v7-dev-team-4-adaptive.json": "1eb72d101eb7e5480666fdb8d2504f99ec7cd4a155e8316b72ce415c84750fc4",
+    "ai-v7-dev-team-4-chain.json": "01a1dfb0cc9dab872505f358dbe9a6df6dd570926b0a67bd538d16c0c4015cf7",
+    "ai-v7-dev-team-4-partner_combined.json": "d17b90040e7b1facb8833a3ecf5205d738b7861a2ec65af765342443bd3db450",
+    "ai-v7-experimental-snapshot.zip": "bcde0a672b14efa8cd0aa4c76a3e37f691326ad00ef20b287500f1bbdb1b2926",
+    "ai-v7-full-3-chain.json": "b06a63b25c7c48cd8834969529cfafb8e55a46ee649fa13b8472cb6c23ac166e",
+    "ai-v7-full-4-adaptive.json": "ee46775603c60b89881c6de5e5a6b3d02b1eab6289a34a128527221ddea3dd5f",
+    "ai-v7-holdout-3-chain.json": "01e23280f45c66f832ccb125975990a676fc85feb0834df9b617b41359a6bea3",
+    "ai-v7-holdout-4-adaptive.json": "753b4c20f91c9aa734f39416d298fcf9bc72ee93e91f4d508cef0c03dae002d0",
+    "ai-v7-mixed-3-chain.json": "1246c7ca9057cff5af12bd3b3b5f50d86d29063fb10370e0976e881471b58f39",
+    "ai-v7-mixed-4-adaptive.json": "16899c58b57ad4bf92937b2de3a11c3e4445a7c86a80a1371c159777ab898de5",
+    "ai-v7-quality.json": "0458d032c86e8de0550436fcd0c143b5811750a2aa7b0940467402b7acd77ab0",
+    "ai-v7-regression-review.json": "6055e57bc9ffd08816ff843c9475f5d5790d42d8c44119fc8de2742a7fd92bf2",
+    "ai-v7-replay-3.json": "856d4fae4ed3ef9d58cc71c3b28e98f0653a998c77501a65c0a18e68cca4176d",
+    "ai-v7-replay-4.json": "91926cd4816f6d470a5f35b0dfc56fb908aed9e0c790935e8c86f18f8bb1b891",
+    "ai-v7-validation-lock.json": "824dd940f3b930dae6faabeb9c84625c909d76a8e72236216dfd62800cb11833",
+    "ai-v7-validation.json": "188da1a2e66398e9e077bccd8a7976781bc92945c3ae9cf94f363d1aecfa4556"
+  },
+  "excluded_development": "ai-v7-development-before-clock-fix/ contains superseded pre-lock screens, never acceptance data"
+}

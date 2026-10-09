@@ -13,6 +13,16 @@ class WorkerSignals(QObject):
     completed = Signal(object)
 
 
+def _emit_completed(signals: WorkerSignals, payload: object) -> None:
+    try:
+        signals.completed.emit(payload)
+    except RuntimeError as exc:
+        # Application shutdown can destroy the Qt signal source after the disk
+        # operation finishes. Its owner can no longer receive a completion.
+        if "deleted" not in str(exc):
+            raise
+
+
 class AIWorker(QRunnable):
     def __init__(self, session: GameSession, *, save_only: bool = False) -> None:
         super().__init__()
@@ -21,7 +31,7 @@ class AIWorker(QRunnable):
         self.signals = WorkerSignals()
 
     def run(self) -> None:
-        self.signals.completed.emit(run_turn(self.session, save_only=self.save_only))
+        _emit_completed(self.signals, run_turn(self.session, save_only=self.save_only))
 
 
 class StorageWorker(QRunnable):
@@ -31,7 +41,9 @@ class StorageWorker(QRunnable):
         self.signals = WorkerSignals()
 
     def run(self) -> None:
+        payload: tuple[object, Exception | None]
         try:
-            self.signals.completed.emit((self.operation(), None))
+            payload = self.operation(), None
         except Exception as exc:
-            self.signals.completed.emit((None, exc))
+            payload = None, exc
+        _emit_completed(self.signals, payload)

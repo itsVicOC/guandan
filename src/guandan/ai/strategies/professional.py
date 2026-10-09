@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import random
 import time
-from typing import Optional
+from typing import Any, Optional
 
 from ...engine.hand import Pattern
 from ...engine.rules.comparator import is_bomb_type
 from ...engine.state import GameState
 from ..candidates import enumerate_legal_patterns, pattern_key
+from ..config import DecisionBudget, ResearchConfig, SearchConfig, config_field
 from ..context import opponent_min_cards
 from ..endgame import legal_finish_pattern
 from ..match_value import round_value_span
@@ -20,7 +21,7 @@ from ..mcts.information_set import (
     SearchStyle,
 )
 from ..mcts.information_set import information_set_search as mcts_search
-from ..mcts.root_search import root_action_search
+from ..mcts.root_search import root_action_candidates, root_action_search
 from ..tactics import select_heuristic_action
 from .advanced import AdvancedStrategy
 
@@ -37,6 +38,11 @@ DEFAULT_WIDENING_C = float(MCTS_CONFIG["widening_c"])
 DEFAULT_WIDENING_ALPHA = float(MCTS_CONFIG["widening_alpha"])
 DEFAULT_SEARCH_MODE = str(MCTS_CONFIG["search_mode"])
 DEFAULT_CRITICAL_TIME_BUDGET_MS = 2000
+DEFAULT_PARTNER_ADAPTATION = bool(MCTS_CONFIG.get("partner_adaptation", False))
+DEFAULT_RESPONSE_CHAIN = bool(MCTS_CONFIG.get("response_chain", False))
+DEFAULT_ACTION_RANKER = bool(MCTS_CONFIG.get("action_ranker", False))
+DEFAULT_URGENT_BLOCKING = bool(MCTS_CONFIG.get("urgent_blocking", False))
+DEFAULT_URGENT_BLOCKING_WEIGHT = float(MCTS_CONFIG.get("urgent_blocking_weight", 12.0))
 
 
 class ProfessionalStrategy:
@@ -45,6 +51,31 @@ class ProfessionalStrategy:
     name = "职业"
     difficulty = 3
     uses_stochastic_pass = False
+
+    iterations = config_field("search_config", "iterations")
+    ucb_c = config_field("search_config", "ucb_c")
+    max_actions = config_field("search_config", "max_actions")
+    rollout_strategy = config_field("search_config", "rollout_strategy")
+    mcts_hand_threshold = config_field("search_config", "mcts_hand_threshold")
+    rollout_max_turns = config_field("search_config", "rollout_max_turns")
+    time_budget_ms = config_field("search_config", "time_budget_ms")
+    critical_time_budget_ms = config_field("search_config", "critical_time_budget_ms")
+    max_tree_depth = config_field("search_config", "max_tree_depth")
+    prior_weight = config_field("search_config", "prior_weight")
+    widening_c = config_field("search_config", "widening_c")
+    widening_alpha = config_field("search_config", "widening_alpha")
+    search_mode = config_field("search_config", "search_mode")
+    team_tactics = config_field("research_config", "team_tactics")
+    lead_chain = config_field("research_config", "lead_chain")
+    heterogeneous_rollouts = config_field("research_config", "heterogeneous_rollouts")
+    partner_bomb_guard = config_field("research_config", "partner_bomb_guard")
+    partner_adaptation = config_field("research_config", "partner_adaptation")
+    response_chain = config_field("research_config", "response_chain")
+    action_ranker = config_field("research_config", "action_ranker")
+    reference_rollout_turns = config_field("research_config", "reference_rollout_turns")
+    reference_refinement = config_field("research_config", "reference_refinement")
+    urgent_blocking = config_field("research_config", "urgent_blocking")
+    urgent_blocking_weight = config_field("research_config", "urgent_blocking_weight")
 
     def __init__(
         self,
@@ -66,6 +97,16 @@ class ProfessionalStrategy:
         lead_chain: bool = False,
         heterogeneous_rollouts: bool = False,
         partner_bomb_guard: bool = False,
+        partner_adaptation: bool = DEFAULT_PARTNER_ADAPTATION,
+        response_chain: bool = DEFAULT_RESPONSE_CHAIN,
+        action_ranker: bool = DEFAULT_ACTION_RANKER,
+        reference_rollout_turns: int = 0,
+        reference_refinement: bool = False,
+        urgent_blocking: bool = DEFAULT_URGENT_BLOCKING,
+        urgent_blocking_weight: float = DEFAULT_URGENT_BLOCKING_WEIGHT,
+        *,
+        search_config: SearchConfig | None = None,
+        research_config: ResearchConfig | None = None,
     ):
         """初始化职业策略。
 
@@ -84,35 +125,35 @@ class ProfessionalStrategy:
             widening_alpha: 渐进扩展的访问次数指数
             search_mode: ``root`` 使用配对根动作评估；``tree`` 使用旧 SO-ISMCTS
         """
-        self.iterations = iterations
-        self.ucb_c = ucb_c
-        self.max_actions = max_actions
-        self.rollout_strategy = max(3, rollout_strategy) if team_tactics else rollout_strategy
-        self.rng = rng if rng is not None else random.Random()
-        self.mcts_hand_threshold = mcts_hand_threshold
-        self.rollout_max_turns = rollout_max_turns
-        self.time_budget_ms = time_budget_ms
-        self.critical_time_budget_ms = (
-            DEFAULT_CRITICAL_TIME_BUDGET_MS
-            if critical_time_budget_ms is None and time_budget_ms > 0
-            else time_budget_ms if critical_time_budget_ms is None else critical_time_budget_ms
+        self.search_config = search_config or SearchConfig(
+            iterations=iterations, ucb_c=ucb_c, max_actions=max_actions,
+            rollout_strategy=rollout_strategy, mcts_hand_threshold=mcts_hand_threshold,
+            rollout_max_turns=rollout_max_turns, time_budget_ms=time_budget_ms,
+            critical_time_budget_ms=(critical_time_budget_ms if critical_time_budget_ms is not None
+                                     else 0 if time_budget_ms == 0 else DEFAULT_CRITICAL_TIME_BUDGET_MS),
+            max_tree_depth=max_tree_depth, prior_weight=prior_weight, widening_c=widening_c,
+            widening_alpha=widening_alpha, search_mode=search_mode,
         )
-        self.max_tree_depth = max_tree_depth
-        self.prior_weight = prior_weight
-        self.widening_c = widening_c
-        self.widening_alpha = widening_alpha
-        if search_mode not in {"root", "tree"}:
-            raise ValueError("search_mode must be 'root' or 'tree'")
-        self.search_mode = search_mode
+        self.research_config = research_config or ResearchConfig(
+            team_tactics=team_tactics, lead_chain=lead_chain, heterogeneous_rollouts=heterogeneous_rollouts,
+            partner_bomb_guard=partner_bomb_guard, partner_adaptation=partner_adaptation,
+            response_chain=response_chain, action_ranker=action_ranker,
+            reference_rollout_turns=reference_rollout_turns, reference_refinement=reference_refinement,
+            urgent_blocking=urgent_blocking, urgent_blocking_weight=urgent_blocking_weight,
+        )
+        self.research_config.validate(self.search_config)
+        if self.team_tactics:
+            self.rollout_strategy = max(3, self.rollout_strategy)
+        self.rng = rng if rng is not None else random.Random()
         self.last_search: SearchResult | None = None
         self.last_decision_reason = "not_started"
-        self.team_tactics = team_tactics
-        self.lead_chain = lead_chain
-        self.partner_bomb_guard = partner_bomb_guard
-        self.heterogeneous_rollouts = heterogeneous_rollouts
+        self.last_urgent_blocking: dict | None = None
+        self._urgent_candidates: list[Pattern | None] | None = None
         self.last_guard: dict | None = None
         self._tactical_deadline: float | None = None
-        self._fast_strategy = AdvancedStrategy(team_tactics=team_tactics, lead_chain=lead_chain, partner_bomb_guard=partner_bomb_guard)
+        self._inherited_budget: DecisionBudget | None = None
+        self._decision_budget: DecisionBudget | None = None
+        self._fast_strategy = AdvancedStrategy(team_tactics=self.team_tactics, lead_chain=self.lead_chain, partner_bomb_guard=self.partner_bomb_guard)
 
     def select_pattern(
         self, state: GameState, player: int
@@ -133,6 +174,8 @@ class ProfessionalStrategy:
         """
         self.last_search = None
         self.last_guard = None
+        self.last_urgent_blocking = None
+        self._urgent_candidates = None
         self.last_decision_reason = "search"
         if self._forced_pass(state, player):
             self.last_decision_reason = "forced_pass"
@@ -146,22 +189,35 @@ class ProfessionalStrategy:
             self.critical_time_budget_ms
             if self._critical_decision(state, player) else self.time_budget_ms
         )
-        self._tactical_deadline = decision_started + budget * 0.10 / 1000.0 if budget > 0 else None
+        decision_budget = self._inherited_budget or DecisionBudget.start(budget, started=decision_started)
+        self._decision_budget = decision_budget
+        self._tactical_deadline = decision_budget.slice(0.10).deadline
         tactical = (
             self._reference_action(state, player)
             if self.search_mode == "root"
             else None
         )
-        budget = (
-            self.critical_time_budget_ms
-            if self._critical_decision(state, player)
-            else self.time_budget_ms
-        )
-        if budget > 0:
-            budget = max(1, budget - int((time.perf_counter() - decision_started) * 1000))
+        if self.last_urgent_blocking is not None:
+            self.last_urgent_blocking["stage_elapsed_seconds"] = time.perf_counter() - decision_started
+            self.last_urgent_blocking["stage_budget_ms"] = budget * 0.10 if budget > 0 else 0
+        if decision_budget.deadline is not None:
+            budget = max(1, decision_budget.remaining_ms())
 
         try:
             if self.search_mode == "root":
+                root_options: dict[str, Any] = {"decision_budget": decision_budget}
+                if self._urgent_candidates is not None:
+                    root_options["_candidate_actions"] = self._urgent_candidates
+                if self.partner_adaptation:
+                    root_options["partner_adaptation"] = True
+                if self.response_chain:
+                    root_options.update(response_chain=True, chain_worlds=8 if self.difficulty == 4 else 4)
+                if self.action_ranker:
+                    root_options["action_ranker"] = True
+                if self.reference_rollout_turns:
+                    root_options["reference_rollout_turns"] = self.reference_rollout_turns
+                if self.reference_refinement:
+                    root_options["reference_refinement"] = True
                 result = root_action_search(
                     state,
                     player,
@@ -176,6 +232,7 @@ class ProfessionalStrategy:
                     adaptive=False,
                     reference_actions=(tactical,),
                     heterogeneous_rollouts=self.heterogeneous_rollouts,
+                    **root_options,
                 )
             else:
                 result = mcts_search(
@@ -193,6 +250,7 @@ class ProfessionalStrategy:
                     widening_c=self.widening_c,
                     widening_alpha=self.widening_alpha,
                     style=self._search_style(),
+                    decision_budget=decision_budget,
                 )
         except ValueError as exc:
             # Hand-constructed test/replay states may lack a complete public
@@ -204,6 +262,9 @@ class ProfessionalStrategy:
         if result is None:  # Test doubles and defensive compatibility.
             return None
         self.last_search = result
+        if not result.simulations and self.search_mode == "tree":
+            self.last_decision_reason = "search_budget_fallback"
+            return self._fast_strategy.select_pattern(state, player)
         if self.search_mode == "root":
             tactical_key = PASS_ACTION if tactical is None else pattern_key(tactical)
             chosen_key = PASS_ACTION if result.pattern is None else pattern_key(result.pattern)
@@ -253,8 +314,41 @@ class ProfessionalStrategy:
 
     def _reference_action(self, state: GameState, player: int) -> Optional[Pattern]:
         """Lower-tier decision that additional search must demonstrably improve."""
-        return select_heuristic_action(state, player, 2, team_tactics=self.team_tactics,
+        baseline = select_heuristic_action(state, player, 2, team_tactics=self.team_tactics,
                                        lead_chain=self.lead_chain, partner_bomb_guard=self.partner_bomb_guard, deadline=self._tactical_deadline)
+        if not self.urgent_blocking:
+            return baseline
+        from ..candidates import smallest_legal_pattern
+        from ..urgent_blocking import action_key, blocking_reference
+
+        proposed, report = blocking_reference(
+            state, player, baseline, weight=self.urgent_blocking_weight,
+            deadline=self._tactical_deadline,
+        )
+        self.last_urgent_blocking = report
+        if action_key(proposed) == action_key(baseline):
+            return baseline
+        patterns = root_action_candidates(state, player, max_actions=self.max_actions,
+                                          reference_actions=(baseline,))
+        if all(action_key(p) != action_key(proposed) for p in patterns):
+            protected = {action_key(baseline), PASS_ACTION,
+                         action_key(smallest_legal_pattern(state, player))}
+            replace_at = next((i for i, candidate in reversed(list(enumerate(patterns)))
+                               if candidate is not None
+                               and action_key(candidate) not in protected
+                               and len(candidate.cards) != state.hand_size(player)
+                               and not is_bomb_type(candidate.type)), None)
+            if replace_at is None:
+                report.update(reason="no_replaceable_candidate", reference_key=action_key(baseline))
+                return baseline
+            patterns[replace_at] = proposed
+            report["candidate_replaced"] = True
+        if self._tactical_deadline is not None and time.perf_counter() >= self._tactical_deadline:
+            report.update(reason="budget_limited", reference_key=action_key(baseline),
+                          candidate_replaced=False, risks=[])
+            return baseline
+        self._urgent_candidates = patterns
+        return proposed
 
     def _forced_pass(self, state: GameState, player: int) -> bool:
         """An empty response set has no decision to sample or search."""

@@ -29,7 +29,7 @@ from ...engine.trick import (
     current_trick_actions,
 )
 from ...storage.savegame import SaveConflictError
-from ...ui.background import TurnResult, run_turn
+from ...ui.background import TurnController, TurnResult, TurnStateOwner, run_turn
 from ...ui.hand_organizer import HandOrganizer, remap_selected_indices
 from ...ui.session import GameSession, card_indices_for_selection
 from ..layout import RECOMMENDED_COLUMNS
@@ -318,7 +318,7 @@ class HandWidget(Static):
     pass
 
 
-class GameScreen(Screen):
+class GameScreen(TurnStateOwner, Screen):
     """牌桌屏。"""
 
     DEFAULT_CSS = """
@@ -442,6 +442,7 @@ class GameScreen(Screen):
         self._hand_cursor = 0
         self._hand_group_starts: frozenset[int] = frozenset()
         self._hand_organizer = HandOrganizer()
+        self._turn = TurnController()
         self._ai_running = False
         self._saving = False
         self._leave_requested = False
@@ -1008,7 +1009,7 @@ class GameScreen(Screen):
             self._refresh_all()
 
     def action_next_game(self) -> None:
-        if self._ai_running or self._saving or self.session.is_next_game_pending():
+        if self._ai_running or self._saving or self._leave_requested or self.session.is_next_game_pending():
             return
         prepared = self.session.prepare_next_game()
         if not prepared.ok:
@@ -1115,6 +1116,8 @@ class GameScreen(Screen):
         self._saving = False
         self._leave_requested = False
         self._quit_after_save = False
+        self._failed_turn = TurnResult(error=error, stage="storage")
+        self._last_action = f"保存失败：{error}；按 R 重试或 Esc 返回"
         self._refresh_all()
         from .error import ErrorModal
 
@@ -1139,7 +1142,7 @@ class GameScreen(Screen):
             return
         if self._failed_turn is not None:
             return
-        if self._ai_running or self._saving or self.session.is_next_game_pending():
+        if self._ai_running or self._saving or self._leave_requested or self.session.is_next_game_pending():
             return
         s = self._state()
         if s.finished:

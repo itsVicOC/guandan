@@ -53,15 +53,16 @@ from ..storage import (
     reconcile_settlements,
 )
 from ..storage.savegame import SaveConflictError, activate_recovery, list_recovery_games
-from ..ui.background import TurnResult
+from ..ui.background import TurnController, TurnResult, TurnStateOwner
 from ..ui.content import DIFFICULTIES
 from ..ui.formatting import card_label, pattern_type_label, rank_value_label
 from ..ui.hand_organizer import HandOrganizer, remap_selected_indices
 from ..ui.history import HISTORY_COLUMNS, history_entry_cells
-from ..ui.replay import replay_event_text
+from ..ui.replay import ReplayCursor, prepare_replay, replay_event_text
 from ..ui.session import GameSession, PendingCardChoice, card_indices_for_selection
 from .cards import HAND_HEIGHT, HandWidget, MiniCardStrip, sort_cards_for_display
 from .replay import ReplayPage, RulesPage
+from .storage_page import StoragePage
 from .table import TablePanel
 from .theme import APP_QSS, CYAN, GOLD_BRIGHT
 from .widgets import button, make_panel, page_header, set_property
@@ -263,9 +264,11 @@ class MenuPage(QWidget):
             layout.addWidget(banner)
 
 
-class DifficultyPage(QWidget):
+class DifficultyPage(StoragePage):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
+        self._main_window = window
+        self._pending_difficulty = 0
         self.setObjectName("page")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(60, 44, 60, 36)
@@ -310,17 +313,55 @@ class DifficultyPage(QWidget):
         return start
 
     def _start(self, window: "GuandanMainWindow", difficulty: int) -> None:
+        if self._storage_busy:
+            return
         try:
             make_strategy(difficulty)
         except (AINotImplementedError, ImportError, OSError, ValueError) as exc:
             QMessageBox.warning(self, "AI 档位不可用", str(exc))
             return
-        if not window.confirm_start_new_game():
+        self._pending_difficulty = difficulty
+        self._start_storage(self._read_existing, self._existing_loaded)
+
+    @staticmethod
+    def _read_existing() -> object:
+        has_save = has_savegame()
+        return has_save, load_game() if has_save else None
+
+    def _existing_loaded(self, payload: object) -> None:
+        data, error = payload if isinstance(payload, tuple) else (None, ValueError("存档结果无效"))
+        if error:
+            QMessageBox.warning(self, "无法检查存档", str(error))
             return
-        window.start_game(GameSession(difficulty=difficulty, level=2, human=0))
+        has_save, existing = data
+        if not has_save:
+            self._open_new_game()
+            return
+        choice = QMessageBox.warning(
+            self, "已有未完成存档", "继续旧存档、覆盖并开始新局，或取消？",
+            QMessageBox.StandardButton.Open | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Open,
+        )
+        if choice == QMessageBox.StandardButton.Open:
+            self._main_window.show_load()
+        elif choice == QMessageBox.StandardButton.Discard:
+            game_id = existing.get("game_id") if existing else None
+            revision = existing.get("revision", 0) if existing else None
+            self._start_storage(lambda: delete_savegame(expected_game_id=game_id, expected_revision=revision),
+                                self._existing_deleted)
+
+    def _existing_deleted(self, payload: object) -> None:
+        _, error = payload if isinstance(payload, tuple) else (None, ValueError("存档结果无效"))
+        if error:
+            QMessageBox.warning(self, "无法覆盖存档", str(error))
+        else:
+            self._open_new_game()
+
+    def _open_new_game(self) -> None:
+        self._main_window.start_game(GameSession(difficulty=self._pending_difficulty, level=2, human=0))
 
 
-class LoadPage(QWidget):
+class LoadPage(StoragePage):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
         self._main_window = window
@@ -360,10 +401,7 @@ class LoadPage(QWidget):
         self._loading = True
         self._clear_content()
         self.content.addWidget(self._message_panel("读取存档中", "请稍候…"))
-        worker = StorageWorker(self._read_save)
-        self._load_worker = worker
-        worker.signals.completed.connect(self._loaded)
-        QThreadPool.globalInstance().start(worker)
+        self._start_storage(self._read_save, self._loaded)
 
     def _loaded(self, payload: object) -> None:
         self._loading = False
@@ -418,11 +456,12 @@ class LoadPage(QWidget):
         self.content.addWidget(panel)
 
     def _restore_conflict(self, name: str) -> None:
-        try:
-            activate_recovery(name)
-        except (OSError, ValueError) as exc:
-            QMessageBox.warning(self, "恢复失败", str(exc))
-            return
+        self._start_storage(lambda: activate_recovery(name), self._mutation_finished)
+
+    def _mutation_finished(self, payload: object) -> None:
+        _, error = payload if isinstance(payload, tuple) else (None, ValueError("存档结果无效"))
+        if error is not None:
+            QMessageBox.warning(self, "存档操作失败", str(error))
         self.refresh()
 
     def _message_panel(self, title: str, detail: str) -> QFrame:
@@ -440,14 +479,18 @@ class LoadPage(QWidget):
         return panel
 
     def _continue(self, savegame: dict) -> None:
-        try:
-            session = GameSession.from_savegame(savegame)
-        except (OSError, ValueError) as exc:
-            QMessageBox.warning(self, "无法继续存档", str(exc))
-            return
-        self._main_window.start_game(session)
+        self._start_storage(lambda: GameSession.from_savegame(savegame), self._continued)
+
+    def _continued(self, payload: object) -> None:
+        session, error = payload if isinstance(payload, tuple) else (None, ValueError("存档结果无效"))
+        if error is not None:
+            QMessageBox.warning(self, "无法继续存档", str(error))
+        else:
+            self._main_window.start_game(session)
 
     def _delete_save(self) -> None:
+        if self._storage_busy:
+            return
         answer = QMessageBox.question(
             self,
             "删除存档",
@@ -457,15 +500,9 @@ class LoadPage(QWidget):
         )
         if answer != QMessageBox.StandardButton.Yes:
             return
-        try:
-            # Delete only the save this page is displaying: a parallel TUI may
-            # have written a newer one since the page was built.
-            delete_savegame(expected_game_id=self._displayed_savegame_id,
-                            expected_revision=self._displayed_revision)
-        except OSError as exc:
-            QMessageBox.warning(self, "删除失败", str(exc))
-            return
-        self.refresh()
+        game_id, revision = self._displayed_savegame_id, self._displayed_revision
+        self._start_storage(lambda: delete_savegame(expected_game_id=game_id,
+                                                   expected_revision=revision), self._mutation_finished)
 
     def _hand_sizes_text(self, sizes: list[int]) -> str:
         if not sizes:
@@ -473,7 +510,7 @@ class LoadPage(QWidget):
         return " / ".join(f"{SEAT_NAMES[i]} {size}" for i, size in enumerate(sizes))
 
 
-class HistoryPage(QWidget):
+class HistoryPage(StoragePage):
     def __init__(self, window: "GuandanMainWindow") -> None:
         super().__init__()
         self._main_window = window
@@ -512,13 +549,19 @@ class HistoryPage(QWidget):
         self.refresh()
 
     def refresh(self) -> None:
+        if self._storage_busy:
+            return
         self.table.setRowCount(0)
-        error = ""
-        try:
-            self.entries = load_history_list(limit=50)
-        except OSError as exc:
-            self.entries = []
-            error = str(exc)
+        self.table.setVisible(False)
+        self.empty.setVisible(True)
+        self.empty.setText("读取历史记录中…")
+        self.replay_button.setEnabled(False)
+        self._start_storage(lambda: load_history_list(limit=50), self._loaded)
+
+    def _loaded(self, payload: object) -> None:
+        entries, failure = payload if isinstance(payload, tuple) else (None, ValueError("历史结果无效"))
+        self.entries = entries if failure is None else []
+        error = str(failure) if failure else ""
         has_entries = bool(self.entries)
         self.table.setVisible(has_entries)
         self.empty.setVisible(not has_entries)
@@ -540,24 +583,33 @@ class HistoryPage(QWidget):
         return history_entry_cells(entry)
 
     def open_selected_replay(self, *_: object) -> None:
+        if self._storage_busy:
+            return
         row = self.table.currentRow()
         if not 0 <= row < len(self.entries):
             QMessageBox.information(self, "查看回放", "请先选择一局历史战绩。")
             return
-        try:
-            detail = load_history_detail(self.entries[row]["game_id"])
-        except OSError as exc:
-            QMessageBox.warning(self, "查看回放", f"无法读取历史记录：{exc}")
+        game_id = self.entries[row]["game_id"]
+        self.replay_button.setEnabled(False)
+        self._start_storage(lambda: prepare_replay(load_history_detail(game_id)), self._replay_loaded)
+
+    def _replay_loaded(self, payload: object) -> None:
+        detail, error = payload if isinstance(payload, tuple) else (None, ValueError("回放结果无效"))
+        self.replay_button.setEnabled(bool(self.entries))
+        if error is not None:
+            QMessageBox.warning(self, "查看回放", f"无法读取历史记录：{error}")
             return
         if detail is None:
             QMessageBox.warning(self, "查看回放", "这局历史记录无法读取。")
             return
-        self._main_window.show_replay(detail)
+        history, cursor = detail
+        self._main_window.show_replay(history, cursor=cursor)
 
 
-class GamePage(QWidget):
+class GamePage(TurnStateOwner, QWidget):
     def __init__(self, window: "GuandanMainWindow", session: GameSession) -> None:
         super().__init__()
+        self._turn = TurnController()
         self.setObjectName("page")
         self._main_window = window
         self.session = session
@@ -1234,6 +1286,8 @@ class GamePage(QWidget):
         self.schedule_ai()
 
     def schedule_ai(self) -> None:
+        if getattr(self, "_leave_requested", False):
+            return
         state = self.session.ensure_started()
         if (
             self._main_window.stack.currentWidget() is not self
@@ -1250,7 +1304,7 @@ class GamePage(QWidget):
         self.refresh()
 
     def _start_ai_worker(self) -> None:
-        if self._saving or self._failed_turn is not None:
+        if self._saving or self._failed_turn is not None or getattr(self, "_leave_requested", False):
             return
         if self._main_window.stack.currentWidget() is not self:
             return
@@ -1360,7 +1414,7 @@ class GuandanMainWindow(QMainWindow):
 
     def _replace_page(self, page: QWidget) -> None:
         current = self.stack.currentWidget()
-        if isinstance(current, GamePage) and current is not page:
+        if isinstance(current, (GamePage, StoragePage)) and current is not page:
             current.deactivate()
         self.stack.addWidget(page)
         self.stack.setCurrentWidget(page)
@@ -1389,9 +1443,9 @@ class GuandanMainWindow(QMainWindow):
     def show_history(self) -> None:
         self._replace_page(HistoryPage(self))
 
-    def show_replay(self, history: dict) -> None:
+    def show_replay(self, history: dict, *, cursor: ReplayCursor | None = None) -> None:
         try:
-            self._replace_page(ReplayPage(self, history))
+            self._replace_page(ReplayPage(self, history, cursor=cursor))
         except ValueError as exc:
             QMessageBox.warning(self, "查看回放", f"回放数据无效：{exc}")
 
@@ -1461,6 +1515,7 @@ class GuandanMainWindow(QMainWindow):
             self._finish_leave((None, None))
             return
         page.deactivate()
+        page._leave_requested = True
         if page._saving:
             return
         if page.is_ai_running():
@@ -1482,6 +1537,7 @@ class GuandanMainWindow(QMainWindow):
         page = self.game_page
         if page is not None:
             page._saving = False
+            page._leave_requested = False
             page.setEnabled(True)
         destination = self._leave_requested
         self._leave_requested = None
@@ -1490,6 +1546,7 @@ class GuandanMainWindow(QMainWindow):
         elif error is not None:
             QMessageBox.warning(self, "保存失败", str(error))
             if page is not None:
+                page._failed_turn = TurnResult(error=error, stage="storage")
                 page.session.last_action = f"保存失败：{error}"
                 page.refresh()
             return

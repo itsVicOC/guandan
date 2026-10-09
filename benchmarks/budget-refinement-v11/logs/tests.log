@@ -1,0 +1,160 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.10.20, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/itsvic/projects/guandan
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, hypothesis-6.161.1
+collected 935 items
+
+tests/test_action_ranker.py ..................................           [  3%]
+tests/test_action_ranker_validation.py .........................         [  6%]
+tests/test_action_value_baseline.py ......                               [  6%]
+tests/test_ai.py ....................................................... [ 12%]
+.....                                                                    [ 13%]
+tests/test_ai_arena.py ...............                                   [ 14%]
+tests/test_ai_benchmark.py ...................                           [ 17%]
+tests/test_ai_diagnostics.py ...                                         [ 17%]
+tests/test_ai_head_race.py ......                                        [ 17%]
+tests/test_ai_ladder.py ......................                           [ 20%]
+tests/test_ai_partner_validation.py .............                        [ 21%]
+tests/test_ai_team_trial.py ..................                           [ 23%]
+tests/test_ai_tuning.py ....                                             [ 24%]
+tests/test_card.py ....................                                  [ 26%]
+tests/test_cli.py ..                                                     [ 26%]
+tests/test_comparator.py ...........................                     [ 29%]
+tests/test_continuation_trial.py ...                                     [ 29%]
+tests/test_dachangsheng.py ............                                  [ 30%]
+tests/test_desktop_lifecycle.py ...                                      [ 31%]
+tests/test_engine_helpers.py .........                                   [ 32%]
+tests/test_fourway_table.py .......                                      [ 32%]
+tests/test_gui_session.py ......................................         [ 37%]
+tests/test_hand_organizer.py .......................                     [ 39%]
+tests/test_hypothesis.py ..........                                      [ 40%]
+tests/test_match_optimization.py ....................................... [ 44%]
+......                                                                   [ 45%]
+tests/test_mcts.py ..................................................... [ 51%]
+                                                                         [ 51%]
+tests/test_packed_hand_plan.py ...                                       [ 51%]
+tests/test_partner_adaptation.py ....................................... [ 55%]
+......                                                                   [ 56%]
+tests/test_patterns.py ................................................. [ 61%]
+..                                                                       [ 61%]
+tests/test_reference_rollout.py ..........................               [ 64%]
+tests/test_reliability.py .................                              [ 66%]
+tests/test_replay.py ...........                                         [ 67%]
+tests/test_scoring.py ......                                             [ 68%]
+tests/test_state.py ..........................................           [ 72%]
+tests/test_storage.py .................................................. [ 77%]
+.......                                                                  [ 78%]
+tests/test_team_tactics.py ............................................. [ 83%]
+........................................................................ [ 91%]
+.....                                                                    [ 91%]
+tests/test_tributes.py .........................                         [ 94%]
+tests/test_tui.py ......................................                 [ 98%]
+tests/test_visual_qa.py .                                                [ 98%]
+tests/test_wild.py ..............                                        [100%]
+
+================================ tests coverage ================================
+______________ coverage: platform darwin, python 3.10.20-final-0 _______________
+
+Name                                        Stmts   Miss Branch BrPart  Cover
+-----------------------------------------------------------------------------
+src/guandan/__init__.py                        13      0      4      0   100%
+src/guandan/ai/__init__.py                      4      0      0      0   100%
+src/guandan/ai/action_ranker.py               112      4     20      4    94%
+src/guandan/ai/arena.py                       171     13     42     11    89%
+src/guandan/ai/belief.py                       57      0     28      0   100%
+src/guandan/ai/benchmark.py                   310     33     84     20    85%
+src/guandan/ai/candidates.py                  133      6     60      8    93%
+src/guandan/ai/context.py                     224      5    100      7    96%
+src/guandan/ai/diagnostics.py                 152    106     60      0    27%
+src/guandan/ai/endgame.py                      15      4      6      2    62%
+src/guandan/ai/greedy.py                        7      0      0      0   100%
+src/guandan/ai/hand_plan.py                    81      2     36      1    97%
+src/guandan/ai/lead_chain.py                   81     10     28      8    83%
+src/guandan/ai/match_value.py                  98     30     36      5    66%
+src/guandan/ai/mcts/__init__.py                 9      0      0      0   100%
+src/guandan/ai/mcts/determinize.py             71      2     44      5    94%
+src/guandan/ai/mcts/endgame_solver.py         172      5     58      5    96%
+src/guandan/ai/mcts/information_set.py        187     16     66     12    88%
+src/guandan/ai/mcts/node.py                    23      1      2      1    92%
+src/guandan/ai/mcts/root_search.py            257     32    100     22    83%
+src/guandan/ai/mcts/search.py                 483     46    236     25    89%
+src/guandan/ai/memory.py                       37      2     14      1    94%
+src/guandan/ai/partner_model.py                48      3     24      4    90%
+src/guandan/ai/play.py                         38      9     16      5    70%
+src/guandan/ai/profiles/__init__.py            27      3     12      4    82%
+src/guandan/ai/response_chain.py              105      9     54      9    89%
+src/guandan/ai/rollout_reference.py            21      1      6      1    93%
+src/guandan/ai/stochastic.py                   37      5     20      5    82%
+src/guandan/ai/strategies/__init__.py           5      0      0      0   100%
+src/guandan/ai/strategies/advanced.py          18      0      0      0   100%
+src/guandan/ai/strategies/dachangsheng.py      78      9     20      4    87%
+src/guandan/ai/strategies/intermediate.py      10      0      0      0   100%
+src/guandan/ai/strategies/novice.py            10      0      0      0   100%
+src/guandan/ai/strategies/professional.py     160      7     50      8    93%
+src/guandan/ai/strategy.py                     22      1      2      0    96%
+src/guandan/ai/tactics.py                     140      6     80      5    95%
+src/guandan/ai/tribute.py                      48      1     24      3    94%
+src/guandan/ai/tuning.py                       99     24     22      8    72%
+src/guandan/ai/valuation.py                   154      2     72      2    98%
+src/guandan/cli.py                            146     57     50     10    56%
+src/guandan/engine/__init__.py                  1      0      0      0   100%
+src/guandan/engine/card.py                     81      2      8      0    98%
+src/guandan/engine/deck.py                     26      0      6      0   100%
+src/guandan/engine/events.py                   67      0      0      0   100%
+src/guandan/engine/hand.py                    112     12     34      2    89%
+src/guandan/engine/replay.py                   90     19     44      7    76%
+src/guandan/engine/rules/__init__.py            1      0      0      0   100%
+src/guandan/engine/rules/comparator.py         39      6     22      6    80%
+src/guandan/engine/rules/drift.py               8      8      0      0     0%
+src/guandan/engine/rules/patterns.py          284      3    166      3    99%
+src/guandan/engine/rules/scoring.py            16      0      6      0   100%
+src/guandan/engine/rules/tributes.py          188     14     70     13    90%
+src/guandan/engine/state.py                   302     38    128     21    84%
+src/guandan/engine/trick.py                    54      3     36      4    92%
+src/guandan/gui/__init__.py                     0      0      0      0   100%
+src/guandan/gui/app.py                         11     11      2      0     0%
+src/guandan/gui/cards.py                      410     54    104     21    85%
+src/guandan/gui/replay.py                     188     29     20      2    81%
+src/guandan/gui/table.py                      314      4     50      4    98%
+src/guandan/gui/theme.py                       16      0      0      0   100%
+src/guandan/gui/widgets.py                     39      0      4      0   100%
+src/guandan/gui/window.py                    1160    189    268     58    80%
+src/guandan/gui/workers.py                     25      5      0      0    80%
+src/guandan/storage/__init__.py                 8      0      0      0   100%
+src/guandan/storage/history.py                 83      6     20      4    90%
+src/guandan/storage/jsonio.py                  40      6      4      1    84%
+src/guandan/storage/locking.py                 37      1      4      1    95%
+src/guandan/storage/maintenance.py             45      4     14      4    86%
+src/guandan/storage/paths.py                   23      0      2      0   100%
+src/guandan/storage/profile.py                234     20     82     17    88%
+src/guandan/storage/savegame.py               285     53    116     43    76%
+src/guandan/storage/serialization.py           69      3     28      3    94%
+src/guandan/tui/__init__.py                     1      0      0      0   100%
+src/guandan/tui/app.py                         25      4      4      1    83%
+src/guandan/tui/layout.py                      32      9     10      2    69%
+src/guandan/tui/screens/__init__.py             1      0      0      0   100%
+src/guandan/tui/screens/confirm.py             50      3      6      1    93%
+src/guandan/tui/screens/difficulty.py          63     21      6      0    67%
+src/guandan/tui/screens/error.py               22      1      2      1    92%
+src/guandan/tui/screens/game.py               737    107    236     43    82%
+src/guandan/tui/screens/history.py             85     25     16      4    69%
+src/guandan/tui/screens/load_save.py          113     39     16      5    64%
+src/guandan/tui/screens/main_menu.py           95     26     20      5    66%
+src/guandan/tui/screens/replay.py             108     28     18      1    67%
+src/guandan/tui/screens/rule.py                23     23      0      0     0%
+src/guandan/ui/__init__.py                      0      0      0      0   100%
+src/guandan/ui/background.py                   28      1      6      1    94%
+src/guandan/ui/content.py                       7      0      0      0   100%
+src/guandan/ui/formatting.py                   43      1     18      1    97%
+src/guandan/ui/hand_organizer.py              426      7    162      8    97%
+src/guandan/ui/history.py                      31      2      6      2    89%
+src/guandan/ui/replay.py                       58     22     28      2    51%
+src/guandan/ui/session.py                     562     87    194     35    82%
+src/guandan/utils/__init__.py                   1      1      0      0     0%
+-----------------------------------------------------------------------------
+TOTAL                                       10630   1351   3462    531    85%
+Coverage JSON written to file benchmarks/budget-refinement-v11/coverage.json
+Required test coverage of 80.0% reached. Total coverage: 84.80%
+======================= 935 passed in 274.41s (0:04:34) ========================

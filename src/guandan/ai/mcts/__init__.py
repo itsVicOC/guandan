@@ -48,4 +48,9 @@ MCTS_CONFIG: Dict[str, int | float | str] = {
     "hand_threshold": 27,
     "widening_c": 1.8,
     "widening_alpha": 0.5,
+    "partner_adaptation": False,
+    "response_chain": False,
+    "action_ranker": False,
+    "urgent_blocking": False,
+    "urgent_blocking_weight": 12.0,
 }

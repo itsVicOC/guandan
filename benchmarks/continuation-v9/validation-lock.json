@@ -1,0 +1,30 @@
+{
+  "source_sha256": "3bc1c64dc69c1c69acd649477d66d833927478b8d1b5769a74879ca1e8e1bebd",
+  "baseline_sha256": "4834f59bdf4d0553131e2fbb9e26fa135ff2cff4e9b368031b308bb61b05d40a",
+  "counts": {
+    "dev-team": 32,
+    "dev-mixed": 32,
+    "holdout": 240,
+    "mixed": 240,
+    "full": 48
+  },
+  "methods": [
+    "horizon120",
+    "refined"
+  ],
+  "namespace": "continuation-v9",
+  "selection": "largest minimum of team/mixed dev mean; both positive and serial clock must pass",
+  "promotion": "both 240-pair intervals >0, all partners >=0, 48 full-pair interval >50%, replay and clock pass",
+  "selected": {
+    "3": {
+      "method": "refined",
+      "selection_score": -0.030511550159,
+      "development_passed": false
+    },
+    "4": {
+      "method": "refined",
+      "selection_score": 0.02764827903,
+      "development_passed": true
+    }
+  }
+}

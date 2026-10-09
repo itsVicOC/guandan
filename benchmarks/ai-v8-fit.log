@@ -1,0 +1,64 @@
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:361: RuntimeWarning: divide by zero encountered in matmul
+  logits = np.clip(x @ weights, -30, 30)
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:361: RuntimeWarning: overflow encountered in matmul
+  logits = np.clip(x @ weights, -30, 30)
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:361: RuntimeWarning: invalid value encountered in matmul
+  logits = np.clip(x @ weights, -30, 30)
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:362: RuntimeWarning: divide by zero encountered in matmul
+  gradient = x.T @ (1 / (1 + np.exp(-logits)) - targets) / len(targets)
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:362: RuntimeWarning: overflow encountered in matmul
+  gradient = x.T @ (1 / (1 + np.exp(-logits)) - targets) / len(targets)
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:362: RuntimeWarning: invalid value encountered in matmul
+  gradient = x.T @ (1 / (1 + np.exp(-logits)) - targets) / len(targets)
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:377: RuntimeWarning: divide by zero encountered in matmul
+  selected = int(np.argmax(features @ weights))
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:377: RuntimeWarning: overflow encountered in matmul
+  selected = int(np.argmax(features @ weights))
+/Users/itsvic/projects/guandan/scripts/fit_action_ranker.py:377: RuntimeWarning: invalid value encountered in matmul
+  selected = int(np.argmax(features @ weights))
+lambda 0.001: tune regret 0.031071
+lambda 0.01: tune regret 0.034737
+lambda 0.1: tune regret 0.039147
+{
+  "recipe": {
+    "schema": 1,
+    "name": "action-ranker-v1",
+    "deals": 576,
+    "splits": {
+      "train": 384,
+      "tune": 96,
+      "diagnostic": 96
+    },
+    "positions_per_deal": 3,
+    "actions_per_position": 16,
+    "sampled_positions_per_deal": 1,
+    "phase_sampling": "balanced-one-prefix-per-deal",
+    "worlds": 32,
+    "companions": [
+      0,
+      1,
+      2
+    ],
+    "other_policy": 2,
+    "regularization": [
+      0.001,
+      0.01,
+      0.1
+    ],
+    "epochs": 160,
+    "objective": "full-round-ranks-frozen-match-continuation",
+    "seed_schedule": "sha256-action-ranker-v1-stage-index-round",
+    "baseline_sha256": "d2082d68aef3264d88d16d64e0cbcd233eb8ce349e2d1ae99afd87b4373802de",
+    "value_model_sha256": "d1c027cb92afd356f7c6c2d2da8b06bf5f7a3755c25e28d6c2c54512bc51461c",
+    "collector_sha256": "cef7637b94a0e969bc6e83660035cb0f27f16365d84b1f9038ebaf628a8d3a5f"
+  },
+  "model_sha256": "f32b49470b2a969f7e33f4d8550ea36f2fda4ba5f52e895e3cfbecb3c9a14cc8",
+  "label_sha256": "fb1ecbae98706a68f3261e49304f9c341cc08196052d1b312e8ba98d56bab407",
+  "selected_regularization": 0.001,
+  "diagnostic_improved": true,
+  "phase_coverage": {
+    "opening": 194,
+    "middle": 209,
+    "placed_or_endgame": 173
+  }
+}
